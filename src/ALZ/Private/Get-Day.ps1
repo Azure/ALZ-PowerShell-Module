@@ -29,8 +29,7 @@ function Get-Day {
     )
     try {
         $day = (Get-Date -ErrorAction 'Stop').DayOfWeek
-    }
-    catch {
+    } catch {
         $day = 'Unknown'
     }
 
