@@ -22,15 +22,11 @@ InModuleScope 'ALZ' {
         Context 'Success' {
 
             BeforeEach {
-                Mock -CommandName Get-Day -MockWith {
-                    'Friday'
-                }
             }
 
             It 'should return the expected results' {
                 Confirm-ALZRequirement | Should -BeExactly "ALZ requirements are met."
             }
-
         }
     }
 }

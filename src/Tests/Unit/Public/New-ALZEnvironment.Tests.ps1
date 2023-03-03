@@ -12,7 +12,7 @@ Import-Module $PathToManifest -Force
 #-------------------------------------------------------------------------
 
 InModuleScope 'ALZ' {
-    Describe 'Get-HellowWorld Public Function Tests' -Tag Unit {
+    Describe 'New-ALZEnvironment Public Function Tests' -Tag Unit {
         BeforeAll {
             $WarningPreference = 'SilentlyContinue'
             $ErrorActionPreference = 'SilentlyContinue'
@@ -27,13 +27,16 @@ InModuleScope 'ALZ' {
         Context 'Success' {
 
             BeforeEach {
-                Mock -CommandName Get-Day -MockWith {
-                    'Friday'
+                Mock -CommandName New-ALZEnvironmentConfig -MockWith {
+                    'output/prefix/environment'
                 } #endMock
+
+                Mock -CommandName Copy-ALZEnvironment -MockWith {
+                }
             } #beforeEach
 
-            It 'should return the expected results' {
-                Get-HelloWorld | Should -BeExactly 'Hello, happy Friday World!'
+            It 'should return the output directory on completion' {
+                New-ALZEnvironment -destinationDirectory 'output' | Should -BeExactly 'output/prefix/environment'
             } #it
 
         } #context_Success
