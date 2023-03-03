@@ -4,6 +4,7 @@
 . $PSScriptRoot\Imports.ps1
 
 # discover all ps1 file(s) in Public and Private paths
+Write-Verbose "Discovering Public & Private src."
 
 $itemSplat = @{
     Filter      = '*.ps1'
@@ -12,6 +13,7 @@ $itemSplat = @{
 }
 try {
     $public = @(Get-ChildItem -Path "$PSScriptRoot\Public" @itemSplat)
+    Write-Verbose "Found $($public.Count) Public file(s)."
     $private = @(Get-ChildItem -Path "$PSScriptRoot\Private" @itemSplat)
 } catch {
     Write-Error $_
@@ -20,6 +22,7 @@ try {
 
 # dot source all .ps1 file(s) found
 foreach ($file in @($public + $private)) {
+    Write-Verbose "Dot sourcing [$($file.FullName)]"
     try {
         . $file.FullName
     } catch {

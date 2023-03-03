@@ -234,8 +234,14 @@ Add-BuildTask FormattingCheck {
 Add-BuildTask Test {
 
     Write-Build White "      Importing desired Pester version. Min: $script:MinPesterVersion Max: $script:MaxPesterVersion"
-    Remove-Module -Name Pester -Force -ErrorAction SilentlyContinue # there are instances where some containers have Pester already in the session
-    Import-Module -Name Pester -MinimumVersion $script:MinPesterVersion -MaximumVersion $script:MaxPesterVersion -ErrorAction 'Stop'
+    $pesterAvailable = Get-Module -Name Pester -ListAvailable -ErrorAction 'Stop'
+    if ($pesterAvailable -and ($pesterAvailable.Version -ge $script:MinPesterVersion -and $pesterAvailable.Version -le $script:MaxPesterVersion)) {
+        Write-Build Gray '        Pester already loaded and within desired version range. Skipping import.'
+    } else {
+        Write-Build Gray '        Pester not loaded or not within desired version range. Importing desired version.'
+        Remove-Module -Name Pester -Force -ErrorAction SilentlyContinue # there are instances where some containers have Pester already in the session
+        Import-Module -Name Pester -MinimumVersion $script:MinPesterVersion -MaximumVersion $script:MaxPesterVersion -ErrorAction 'Stop'
+    }
 
     $codeCovPath = "$script:ArtifactsPath\ccReport\"
     $testOutPutPath = "$script:ArtifactsPath\testOutput\"
@@ -308,8 +314,15 @@ Add-BuildTask Test {
 Add-BuildTask DevCC {
     Write-Build White '      Generating code coverage report at root...'
     Write-Build White "      Importing desired Pester version. Min: $script:MinPesterVersion Max: $script:MaxPesterVersion"
-    Remove-Module -Name Pester -Force -ErrorAction SilentlyContinue # there are instances where some containers have Pester already in the session
-    Import-Module -Name Pester -MinimumVersion $script:MinPesterVersion -MaximumVersion $script:MaxPesterVersion -ErrorAction 'Stop'
+    $pesterAvailable = Get-Module -Name Pester -ListAvailable -ErrorAction 'Stop'
+    if ($pesterAvailable -and ($pesterAvailable.Version -ge $script:MinPesterVersion -and $pesterAvailable.Version -le $script:MaxPesterVersion)) {
+        Write-Build Gray '        Pester already loaded and within desired version range. Skipping import.'
+    } else {
+        Write-Build Gray '        Pester not loaded or not within desired version range. Importing desired version.'
+        Remove-Module -Name Pester -Force -ErrorAction SilentlyContinue # there are instances where some containers have Pester already in the session
+        Import-Module -Name Pester -MinimumVersion $script:MinPesterVersion -MaximumVersion $script:MaxPesterVersion -ErrorAction 'Stop'
+    }
+
     $pesterConfiguration = New-PesterConfiguration
     $pesterConfiguration.run.Path = $script:UnitTestsPath
     $pesterConfiguration.CodeCoverage.Enabled = $true
@@ -481,8 +494,15 @@ Add-BuildTask Build {
 Add-BuildTask IntegrationTest {
     if (Test-Path -Path $script:IntegrationTestsPath) {
         Write-Build White "      Importing desired Pester version. Min: $script:MinPesterVersion Max: $script:MaxPesterVersion"
-        Remove-Module -Name Pester -Force -ErrorAction SilentlyContinue # there are instances where some containers have Pester already in the session
-        Import-Module -Name Pester -MinimumVersion $script:MinPesterVersion -MaximumVersion $script:MaxPesterVersion -ErrorAction 'Stop'
+
+        $pesterAvailable = Get-Module -Name Pester -ListAvailable -ErrorAction 'Stop'
+        if ($pesterAvailable -and ($pesterAvailable.Version -ge $script:MinPesterVersion -and $pesterAvailable.Version -le $script:MaxPesterVersion)) {
+            Write-Build Gray '        Pester already loaded and within desired version range. Skipping import.'
+        } else {
+            Write-Build Gray '        Pester not loaded or not within desired version range. Importing desired version.'
+            Remove-Module -Name Pester -Force -ErrorAction SilentlyContinue # there are instances where some containers have Pester already in the session
+            Import-Module -Name Pester -MinimumVersion $script:MinPesterVersion -MaximumVersion $script:MaxPesterVersion -ErrorAction 'Stop'
+        }
 
         Write-Build White "      Performing Pester Integration Tests in $($invokePesterParams.path)"
 
