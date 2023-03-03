@@ -1,3 +1,5 @@
+$alzBicepModulesRoot = "/infra-as-code/bicep/modules"
+
 function Update-ALZBicepConfigurationFiles {
     param(
         [Parameter(Mandatory = $true)]
