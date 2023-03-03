@@ -1,25 +1,3 @@
-using namespace System.Management.Automation
-
-Function Write-InformationColored {
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory)]
-        [Object]$MessageData,
-        [ConsoleColor]$ForegroundColor = $Host.UI.RawUI.ForegroundColor, # Make sure we use the current colours by default
-        [ConsoleColor]$BackgroundColor = $Host.UI.RawUI.BackgroundColor,
-        [Switch]$NoNewline
-    )
-
-    $msg = [HostInformationMessage]@{
-        Message         = $MessageData
-        ForegroundColor = $ForegroundColor
-        BackgroundColor = $BackgroundColor
-        NoNewline       = $NoNewline.IsPresent
-    }
-
-    Write-Information $msg
-}
-
 function Update-ALZBicepConfigurationFiles {
     param(
         [Parameter(Mandatory = $true)]
@@ -31,7 +9,6 @@ function Update-ALZBicepConfigurationFiles {
 
     $bicepModules = Join-Path $alzBicepRoot $alzBicepModulesRoot
 
-    # Find all configuration
     $files = @(Get-ChildItem -Path $bicepModules -Recurse -Filter *.parameters.*.json)
 
     foreach ($file in $files) {
@@ -47,7 +24,7 @@ function Update-ALZBicepConfigurationFiles {
 
         if ($true -eq $modified) {
             Write-Host $file.FullName
-            $bicepConfiguration | ConvertTo-Json -Depth 10 | Out-File $file.FullName
+            $bicepConfiguration | ConvertTo-Json -Depth 10  | Out-File $file.FullName
         }
     }
 }
@@ -77,20 +54,6 @@ function Initialize-ConfigurationObject {
     )
 }
 
-function Get-ConfigValueOrDefault {
-    param(
-        [Parameter(Mandatory = $true)]
-        [object] $configValue
-    )
-
-    if ($null -eq $configValue.value -or "" -eq $configValue.value) {
-        return $configValue.defaultValue
-    }
-
-    return $configValue.value
-}
-
-
 function Request-ConfigurationValue {
     param(
         [Parameter(Mandatory = $true)]
@@ -111,7 +74,8 @@ function Request-ConfigurationValue {
     do {
         Write-InformationColored "$($configValue.name) " -ForegroundColor Yellow -NoNewline -InformationAction Continue
         if ($hasDefaultValue) {
-            Write-InformationColored "(default: ${defaultValue}): " -ForegroundColor Yellow -NoNewline -InformationAction Continue
+            $displayDefaultValue = $defaultValue -eq "" ? "''" : $defaultValue
+            Write-InformationColored "(default: ${displayDefaultValue}): " -ForegroundColor Yellow -NoNewline -InformationAction Continue
         } else {
             Write-InformationColored ": " -NoNewline -InformationAction Continue
         }
@@ -147,20 +111,6 @@ function Request-CreateSubscriptionPreference {
         0 { return $true }
         1 { return $false }
     }
-}
-
-function Copy-ALZEnvironment {
-    [CmdletBinding(SupportsShouldProcess = $true)]
-    param(
-        [Parameter(Mandatory = $true)]
-        [string] $destinationDirectory
-    )
-
-    $sourceDirectory = Join-Path $PSScriptRoot "../" $internalOnlyDirectory
-
-    Write-Information "Copying from '$sourceDirectory' to '$destinationDirectory'" -InformationAction Continue
-
-    Copy-Item $sourceDirectory -Destination $destinationDirectory -Recurse -Force -WhatIf $WhatIfPreference
 }
 
 function New-ALZEnvironmentConfig {
