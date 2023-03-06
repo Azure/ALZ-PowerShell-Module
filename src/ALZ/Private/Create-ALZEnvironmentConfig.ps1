@@ -1,6 +1,6 @@
 $alzBicepModulesRoot = "/infra-as-code/bicep/modules"
 
-function Update-ALZBicepConfigurationFiles {
+function Update-ALZBicepConfigurationFilesInPlace {
     param(
         [Parameter(Mandatory = $true)]
         [string] $alzBicepRoot,
@@ -9,6 +9,7 @@ function Update-ALZBicepConfigurationFiles {
         [object] $configuration
     )
 
+    # Temporary location to the bicep modules and by extension configuration.
     $bicepModules = Join-Path $alzBicepRoot $alzBicepModulesRoot
 
     $files = @(Get-ChildItem -Path $bicepModules -Recurse -Filter *.parameters.*.json)
@@ -18,9 +19,11 @@ function Update-ALZBicepConfigurationFiles {
         $modified = $false
 
         foreach ($configurationObject in $configuration) {
-            if ($null -ne $bicepConfiguration.parameters[$configurationObject.name]) {
-                $bicepConfiguration.parameters[$configurationObject.name].value = $configurationObject.value
-                $modified = $true
+            foreach ($name in $configurationObject.names) {
+                if ($null -ne $bicepConfiguration.parameters[$name]) {
+                    $bicepConfiguration.parameters[$name].value = $configurationObject.value
+                    $modified = $true
+                }
             }
         }
 
@@ -37,19 +40,19 @@ function Initialize-ConfigurationObject {
     return @(
         @{
             description  = "The prefix that will be added to all resources created by this deployment."
-            name         = "parTopLevelManagementGroupPrefix"
+            names        = @("parTopLevelManagementGroupPrefix", "parCompanyPrefix")
             value        = "alz"
             defaultValue = "alz"
         },
         @{
             description  = "The suffix that will be added to all resources created by this deployment."
-            name         = "parTopLevelManagementGroupSuffix"
+            names        = @("parTopLevelManagementGroupSuffix")
             value        = ""
             defaultValue = ""
         },
         @{
             description   = "Deployment location."
-            name          = "parLocation"
+            name          = @("parLocation")
             allowedValues = @(Get-AzLocation | Select-Object -ExpandProperty Location | Sort-Object Location)
             value         = ""
         }
@@ -117,26 +120,22 @@ function Request-CreateSubscriptionPreference {
 
 function New-ALZEnvironmentConfig {
     param(
-        [Parameter(Mandatory = $false)]
-        [string]$destinationDirectory = "./"
     )
     <#
     .SYNOPSIS
-    This function uses Slz configuration as a template to create a new configuration file and a directory structure.
+    This function uses a template configuration to prompt for and return a user specified/modified configuration object.
     .EXAMPLE
     New-SlzEnvironmentConfig
     .EXAMPLE
     New-SlzEnvironmentConfig -sourceConfigurationFile "orchestration/scripts/parameters/sovereignLandingZone.parameters.json"
-    .PARAMETER destinationDirectory
-    The directory to create the new configuration and deployment scripts in.  Defaults to the current directory.
     .OUTPUTS
-    System.String. The name of the directory created which holds the newly created configuration.
+    System.Object. The resultant configuration values.
     #>
     $configuration = Initialize-ConfigurationObject
 
-    Request-ConfigurationValue $configuration[0]
-    Request-ConfigurationValue $configuration[1]
-    Request-ConfigurationValue $configuration[2]
+    foreach ($configurationValue in $configuration) {
+        Request-ConfigurationValue $configurationValue
+    }
 
     return $configuration
 }
