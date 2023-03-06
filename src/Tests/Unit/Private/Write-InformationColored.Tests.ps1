@@ -31,12 +31,13 @@ InModuleScope 'ALZ' {
                     BackgroundColor = $Host.UI.RawUI.BackgroundColor
                     NoNewline       = $false
                 }
+
                 # Check that Write-Information was called with the correct parameters
                 Assert-MockCalled -CommandName Write-Information -Exactly 1 -Scope It -ParameterFilter {
                     $MessageData.Message -eq $info.Message -and `
-                    $MessageData.ForegroundColor -eq $info.ForegroundColor -and `
-                    $MessageData.BackgroundColor -eq $info.BackgroundColor -and `
-                    $MessageData.NoNewline -eq $info.NoNewline
+                        $MessageData.ForegroundColor -eq $info.ForegroundColor -and `
+                        $MessageData.BackgroundColor -eq $info.BackgroundColor -and `
+                        $MessageData.NoNewline -eq $info.NoNewline
                 }
 
             }
