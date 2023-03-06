@@ -54,7 +54,7 @@ $str += 'Analyze', 'Test'
 
 $str2 = $str
 $str2 += 'Build', 'Archive'
-$str += 'Build', 'IntegrationTest', 'Archive'
+$str += 'Build', 'Archive'
 $str += 'DownloadALZReleases'
 Add-BuildTask -Name . -Jobs $str
 
