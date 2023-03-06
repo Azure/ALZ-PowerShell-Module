@@ -15,7 +15,7 @@ function Edit-ALZConfigurationFilesInPlace {
     $files = @(Get-ChildItem -Path $bicepModules -Recurse -Filter *.parameters.*.json)
 
     foreach ($file in $files) {
-        $bicepConfiguration = Get-Content $file | ConvertFrom-Json -AsHashtable
+        $bicepConfiguration = Get-Content $file.FullName | ConvertFrom-Json -AsHashtable
         $modified = $false
 
         foreach ($configurationObject in $configuration) {

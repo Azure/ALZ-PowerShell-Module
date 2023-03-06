@@ -41,7 +41,7 @@ InModuleScope 'ALZ' {
                 $content[1].value | Should -BeExactly ""
                 $content[1].defaultValue | Should -BeExactly ""
                 $content[2].description | Should -BeExactly "Deployment location."
-                $content[2].name | Should -BeExactly @("parLocation")
+                $content[2].names | Should -BeExactly @("parLocation")
                 $content[2].allowedValues | Should -BeExactly @('eastus', 'ukwest')
                 $content[2].value | Should -BeExactly ""
             }

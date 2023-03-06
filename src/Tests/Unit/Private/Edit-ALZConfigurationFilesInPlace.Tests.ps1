@@ -23,15 +23,35 @@ InModuleScope 'ALZ' {
         @{
             description  = "The suffix that will be added to all resources created by this deployment."
             names        = @("parTopLevelManagementGroupSuffix")
-            value        = ""
-            defaultValue = "bla"
+            value        = "bla"
+            defaultValue = ""
         },
         @{
             description   = "Deployment location."
-            name          = @("parLocation")
+            names          = @("parLocation")
             allowedValues = @('ukwest', 'eastus')
             value         = "eastus"
         }
+        $firstFileContent = '{
+            "parameters": {
+                "parTopLevelManagementGroupPrefix": {
+                    "value": ""
+                },
+                "parCompanyPrefix": {
+                    "value": ""
+                }
+            }
+        }'
+        $secondFileContent = '{
+            "parameters": {
+                "parTopLevelManagementGroupSuffix": {
+                    "value": ""
+                },
+                "parLocation": {
+                    "value": ""
+                }
+            }
+        }'
     )
     }
     Describe 'Edit-ALZConfigurationFilesInPlace Function Tests' -Tag Unit {
@@ -39,7 +59,7 @@ InModuleScope 'ALZ' {
             $WarningPreference = 'SilentlyContinue'
             $ErrorActionPreference = 'SilentlyContinue'
         }
-        Context 'EditConfigFiles correctly' {
+        Context 'Edit-ALZConfigurationFilesInPlace should replace the parameters correctly' {
             BeforeEach {
                 Mock -CommandName Get-ChildItem -MockWith {
                     @(
@@ -52,56 +72,28 @@ InModuleScope 'ALZ' {
                     )
                 }
                 Mock -CommandName Get-Content -ParameterFilter { $Path -eq 'test1.parameters.json' } -MockWith {
-                    '{
-                        "parameters": {
-                            "parTopLevelManagementGroupPrefix": {
-                                "value": "alz"
-                            },
-                            "parCompanyPrefix": {
-                                "value": "alz"
-                            }
-                        }
-                    }'
+                    $firstFileContent
                 }
                 Mock -CommandName Get-Content -ParameterFilter { $Path -eq 'test2.parameters.json' } -MockWith {
-                    '{
-                        "parameters": {
-                            "parTopLevelManagementGroupSuffix": {
-                                "value": ""
-                            },
-                            "parLocation": {
-                                "value": ""
-                            }
-                        }
-                    }'
+                    $secondFileContent
                 }
+                Mock -CommandName Out-File -MockWith {}
             }
             It 'Files shuld be changed correctly' {
                 Edit-ALZConfigurationFilesInPlace  -alzBicepRoot '.' -configuration $defaultConfig
                 # Assert that the file was wirte back with the new values
-                Assert-MockCalled -CommandName Set-Content -Exactly 2 -Scope It
-                Assert-MockCalled -CommandName Set-Content -ParameterFilter { $Path -eq 'test1.parameters.json' } -Scope It
-                Assert-MockCalled -CommandName Set-Content -ParameterFilter { $Path -eq 'test2.parameters.json' } -Scope It
-                Assert-MockCalled -CommandName Set-Content -ParameterFilter { $Value -eq '{
-                        "parameters": {
-                            "parTopLevelManagementGroupPrefix": {
-                                "value": "test"
-                            },
-                            "parCompanyPrefix": {
-                                "value": "test"
-                            }
-                        }
-                    }' } -Scope It
-                Assert-MockCalled -CommandName Set-Content -ParameterFilter { $Value -eq '{
-                        "parameters": {
-                            "parTopLevelManagementGroupSuffix": {
-                                "value": "bla"
-                            },
-                            "parLocation": {
-                                "value": "eastus"
-                            }
-                        }
-                    }' } -Scope It
+                Assert-MockCalled -CommandName Out-File -Exactly 2 -Scope It
+                $contentAfterParsing = ConvertFrom-Json -InputObject $firstFileContent
+                $contentAfterParsing.parameters.parTopLevelManagementGroupPrefix.value = 'test'
+                $contentAfterParsing.parameters.parCompanyPrefix.value = 'test'
+                $contentStringAfterParsing = ConvertTo-Json -InputObject $contentAfterParsing
+                Assert-MockCalled -CommandName Out-File -ParameterFilter { $FilePath -eq "test1.parameters.json" -and $InputObject -eq $contentStringAfterParsing } -Scope It
+                $contentAfterParsing = ConvertFrom-Json -InputObject $secondFileContent
+                $contentAfterParsing.parameters.parTopLevelManagementGroupSuffix.value = 'bla'
+                $contentAfterParsing.parameters.parLocation.value = 'eastus'
+                $contentStringAfterParsing = ConvertTo-Json -InputObject $contentAfterParsing
+                Assert-MockCalled -CommandName Out-File -ParameterFilter { $FilePath -eq "test2.parameters.json" -and $InputObject -eq $contentStringAfterParsing } -Scope It
+
             }
         }
     }
