@@ -70,6 +70,24 @@ InModuleScope 'ALZ' {
         Context 'Success' {
 
             BeforeEach {
+                Mock -CommandName Get-Module -MockWith {
+                    [PSCustomObject]@{
+                        Name = 'Az'
+                    }
+                }
+                Mock -CommandName Get-PSVersion -MockWith {
+                    [PSCustomObject]@{
+                        PSVersion = [PSCustomObject]@{
+                            Major = 7
+                            Minor = 1
+                        }
+                    }
+                }
+                Mock -CommandName Get-Command -MockWith {
+                    [PSCustomObject]@{
+                        Name = 'git'
+                    }
+                }
             }
 
             It 'should return the expected results' {

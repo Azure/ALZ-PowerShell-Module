@@ -28,13 +28,13 @@ Install-Module -Name ALZ
 
 ### Quick start
 
-Before start o utilize the functionality of the module ytou can verifgy if you have all the prerequisites installed, with the built in command:
+Before start o utilize the functionality of the module you can verify if you have all the prerequisites installed, with the built in command:
 
 ```powershell
 Test-ALZPrerequisites
 ```
 
-#### Example1
+#### Create a new Azure Landing Zone Environment
 
 ```powershell
 
