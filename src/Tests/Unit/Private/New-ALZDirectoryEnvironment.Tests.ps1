@@ -22,12 +22,14 @@ InModuleScope 'ALZ' {
                 Mock -CommandName New-Item
             }
             It 'Should create the correct folder structure' {
-                New-ALZDirectoryEnvironment -OutputDirectory './config'
+                $basePath = "./config"
+
+                New-ALZDirectoryEnvironment -OutputDirectory $basePath
                 Assert-MockCalled -CommandName New-Item -ParameterFilter { $Path -eq './config' } -Exactly 1
-                Assert-MockCalled -CommandName New-Item -ParameterFilter { $Path -eq './config/alz-bicep-internal' } -Exactly 1
-                Assert-MockCalled -CommandName New-Item -ParameterFilter { $Path -eq './config/.github/workflows' } -Exactly 1
-                Assert-MockCalled -CommandName New-Item -ParameterFilter { $Path -eq './config/customization' } -Exactly 1
-                Assert-MockCalled -CommandName New-Item -ParameterFilter { $Path -eq './config/orchestration' } -Exactly 1
+                Assert-MockCalled -CommandName New-Item -ParameterFilter { $Path -eq $(Join-Path $basePath 'alz-bicep-internal') } -Exactly 1
+                Assert-MockCalled -CommandName New-Item -ParameterFilter { $Path -eq $(Join-Path $basePath '.github' 'workflows') } -Exactly 1
+                Assert-MockCalled -CommandName New-Item -ParameterFilter { $Path -eq $(Join-Path $basePath 'customization') } -Exactly 1
+                Assert-MockCalled -CommandName New-Item -ParameterFilter { $Path -eq $(Join-Path $basePath 'orchestration') } -Exactly 1
             }
         }
     }
