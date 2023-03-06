@@ -16,7 +16,7 @@ function Initialize-ConfigurationObject {
         },
         @{
             description   = "Deployment location."
-            names          = @("parLocation")
+            names         = @("parLocation")
             allowedValues = @(Get-AzLocation | Sort-Object Location | Select-Object -ExpandProperty Location )
             value         = ""
         }
