@@ -1,31 +1,24 @@
-<#
-.SYNOPSIS
-    Test that the ALZ software requirements are met
-.DESCRIPTION
-    This will check for the following software:
-    - PowerShell 7.1 or higher
-    - Git
-    - Azure PowerShell module
-
-.EXAMPLE
-    C:\PS> Test-ALZRequirements
-.EXAMPLE
-    C:\PS> Test-ALZRequirements -Verbose
-.PARAMETER InputObject
-    Specifies the object to be processed.  You can also pipe the objects to this command.
-.OUTPUTS
-    Output from this cmdlet (if any)
-.NOTES
-    General notes
-.COMPONENT
-    ALZ
-#>
-
-# Used to allow mocking of the $PSVersionTable variable
-function Get-PSVersion { $PSVersionTable }
-
-
 function Test-ALZRequirement {
+    <#
+    .SYNOPSIS
+        Test that the ALZ software requirements are met
+    .DESCRIPTION
+        This will check for the following software:
+        - PowerShell 7.1 or higher
+        - Git
+        - Azure PowerShell module
+    .EXAMPLE
+        C:\PS> Test-ALZRequirements
+    .EXAMPLE
+        C:\PS> Test-ALZRequirements -Verbose
+    .OUTPUTS
+        Boolean - True if all requirements are met, false if not.
+    .NOTES
+        This function is used by the ALZ build script to ensure that the software requirements are met before attempting to
+        build the ALZ environment.
+    .COMPONENT
+        ALZ
+    #>
     [CmdletBinding()]
     param (
     )
@@ -74,4 +67,7 @@ function Test-ALZRequirement {
         return "ALZ requirements are not met."
     }
 }
+
+# Used to allow mocking of the $PSVersionTable variable
+function Get-PSVersion { $PSVersionTable }
 
