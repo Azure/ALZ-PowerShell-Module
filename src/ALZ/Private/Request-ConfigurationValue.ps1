@@ -34,5 +34,5 @@ function Request-ConfigurationValue {
     }
     while ((($null -eq $configValue.value -or "" -eq $configValue.value) -and ($configValue.value -ne $configValue.defaultValue)) -or ($hasAllowedValues -and $allowedValues.Contains($configValue.value) -eq $false))
 
-    Write-Information "" -InformationAction Continue
+    Write-InformationColored "" -InformationAction Continue
 }

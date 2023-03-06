@@ -16,16 +16,10 @@ InModuleScope 'ALZ' {
         BeforeAll {
             $WarningPreference = 'SilentlyContinue'
             $ErrorActionPreference = 'SilentlyContinue'
-        } #beforeAll
+        }
         Context 'Error' {
-
-            # It 'should ...' {
-
-            # } #it
-
-        } #context_Error
+        }
         Context 'Success' {
-
             BeforeEach {
                 Mock -CommandName Request-ALZEnvironmentConfig -MockWith {
                     @(
@@ -42,10 +36,10 @@ InModuleScope 'ALZ' {
                             "value"        = "value"
                         }
                     )
-                } #endMock
+                }
 
                 Mock -CommandName Edit-ALZConfigurationFilesInPlace
-            } #beforeEach
+            }
 
             It 'should return the output directory on completion' {
                 $result = New-ALZEnvironment
@@ -62,7 +56,6 @@ InModuleScope 'ALZ' {
 
                 Assert-MockCalled -CommandName Edit-ALZConfigurationFilesInPlace -Exactly 1
             }
-
-        } #context_Success
-    } #describe_Get-HellowWorld
-} #inModule
+        }
+    }
+}

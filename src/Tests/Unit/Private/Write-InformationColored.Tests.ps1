@@ -39,7 +39,6 @@ InModuleScope 'ALZ' {
                         $MessageData.BackgroundColor -eq $info.BackgroundColor -and `
                         $MessageData.NoNewline -eq $info.NoNewline
                 }
-
             }
         }
     }
