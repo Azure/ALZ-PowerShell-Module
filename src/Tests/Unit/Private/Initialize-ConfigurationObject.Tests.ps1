@@ -32,18 +32,26 @@ InModuleScope 'ALZ' {
             }
             It 'should return the not met for non AZ module' {
                 $content = Initialize-ConfigurationObject
-                $content[0].description | Should -BeExactly "The prefix that will be added to all resources created by this deployment."
-                $content[0].names | Should -BeExactly @("parTopLevelManagementGroupPrefix", "parCompanyPrefix")
-                $content[0].value | Should -BeExactly "alz"
-                $content[0].defaultValue | Should -BeExactly "alz"
-                $content[1].description | Should -BeExactly "The suffix that will be added to all resources created by this deployment."
-                $content[1].names | Should -BeExactly @("parTopLevelManagementGroupSuffix")
-                $content[1].value | Should -BeExactly ""
-                $content[1].defaultValue | Should -BeExactly ""
-                $content[2].description | Should -BeExactly "Deployment location."
-                $content[2].names | Should -BeExactly @("parLocation")
-                $content[2].allowedValues | Should -BeExactly @('eastus', 'ukwest')
-                $content[2].value | Should -BeExactly ""
+                $content.Prefix.Value | Should -Be 'alz'
+                $content.Prefix.DefaultValue | Should -Be 'alz'
+                $content.Prefix.Description | Should -Be 'The prefix that will be added to all resources created by this deployment.'
+                $content.Prefix.Names | Should -Be @('parTopLevelManagementGroupPrefix', 'parCompanyPrefix')
+
+                $content.Suffix.Value | Should -Be ''
+                $content.Suffix.DefaultValue | Should -Be ''
+                $content.Suffix.Description | Should -Be 'The suffix that will be added to all resources created by this deployment.'
+                $content.Suffix.Names | Should -Be @('parTopLevelManagementGroupSuffix')
+
+                $content.Location.Value | Should -Be ''
+                $content.Location.Description | Should -Be 'Deployment location.'
+                $content.Location.Names | Should -Be @('parLocation')
+                $content.Location.AllowedValues | Should -Be @('eastus', 'ukwest')
+
+                $content.Environment.Value | Should -Be ''
+                $content.Environment.Description | Should -Be 'The type of environment that will be created . Example: dev, test, qa, staging, prod'
+                $content.Environment.Names | Should -Be @('parEnvironment')
+                $content.Environment.DefaultValue | Should -Be 'prod'
+
             }
         }
     }

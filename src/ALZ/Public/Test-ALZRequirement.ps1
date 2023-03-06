@@ -68,6 +68,5 @@ function Test-ALZRequirement {
     }
 }
 
-# Used to allow mocking of the $PSVersionTable variable
-function Get-PSVersion { $PSVersionTable }
+
 

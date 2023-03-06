@@ -1,25 +1,31 @@
 
 function Initialize-ConfigurationObject {
 
-    return @(
-        @{
+    return [pscustomobject]@{
+        Prefix      = [pscustomobject]@{
             description  = "The prefix that will be added to all resources created by this deployment."
             names        = @("parTopLevelManagementGroupPrefix", "parCompanyPrefix")
             value        = "alz"
             defaultValue = "alz"
-        },
-        @{
-            description  = "The suffix that will be added to all resources created by this deployment."
-            names        = @("parTopLevelManagementGroupSuffix")
-            value        = ""
-            defaultValue = ""
-        },
-        @{
-            description   = "Deployment location."
-            names         = @("parLocation")
-            allowedValues = @(Get-AzLocation | Sort-Object Location | Select-Object -ExpandProperty Location )
-            value         = ""
         }
-    )
+        Suffix      = [pscustomobject]@{
+            Description  = "The suffix that will be added to all resources created by this deployment."
+            Names        = @("parTopLevelManagementGroupSuffix")
+            Value        = ""
+            DefaultValue = ""
+        }
+        Location    = [pscustomobject]@{
+            Description   = "Deployment location."
+            Names         = @("parLocation")
+            AllowedValues = @(Get-AzLocation | Sort-Object Location | Select-Object -ExpandProperty Location )
+            Value         = ""
+        }
+        Environment = [pscustomobject]@{
+            Description  = "The type of environment that will be created . Example: dev, test, qa, staging, prod"
+            Names        = @("parEnvironment")
+            DefaultValue = 'prod'
+            Value        = ""
+        }
+    }
 }
 

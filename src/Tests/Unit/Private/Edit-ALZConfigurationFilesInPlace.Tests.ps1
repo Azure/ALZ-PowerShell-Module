@@ -13,24 +13,31 @@ Import-Module $PathToManifest -Force
 
 InModuleScope 'ALZ' {
     BeforeAll {
-        $defaultConfig =  @(
-        @{
-            description  = "The prefix that will be added to all resources created by this deployment."
-            names        = @("parTopLevelManagementGroupPrefix", "parCompanyPrefix")
-            value        = "test"
-            defaultValue = "alz"
-        },
-        @{
-            description  = "The suffix that will be added to all resources created by this deployment."
-            names        = @("parTopLevelManagementGroupSuffix")
-            value        = "bla"
-            defaultValue = ""
-        },
-        @{
-            description   = "Deployment location."
-            names          = @("parLocation")
-            allowedValues = @('ukwest', 'eastus')
-            value         = "eastus"
+        $defaultConfig =   [pscustomobject]@{
+            Prefix = [pscustomobject]@{
+                description  = "The prefix that will be added to all resources created by this deployment."
+                names        = @("parTopLevelManagementGroupPrefix", "parCompanyPrefix")
+                value        = "test"
+                defaultValue = "alz"
+            }
+            Suffix = [pscustomobject]@{
+                Description  = "The suffix that will be added to all resources created by this deployment."
+                Names        = @("parTopLevelManagementGroupSuffix")
+                Value        = "bla"
+                DefaultValue = ""
+            }
+            Location = [pscustomobject]@{
+                Description   = "Deployment location."
+                Names         = @("parLocation")
+                AllowedValues = @('ukwest', '')
+                Value         = "eastus"
+            }
+            Environment = [pscustomobject]@{
+                Description   = "The type of environment that will be created . Example: dev, test, qa, staging, prod"
+                Names         = @("parEnvironment")
+                DefaultValue  = 'prod'
+                Value         = "dev"
+            }
         }
         $firstFileContent = '{
             "parameters": {
@@ -52,7 +59,6 @@ InModuleScope 'ALZ' {
                 }
             }
         }'
-    )
     }
     Describe 'Edit-ALZConfigurationFilesInPlace Function Tests' -Tag Unit {
         BeforeAll {

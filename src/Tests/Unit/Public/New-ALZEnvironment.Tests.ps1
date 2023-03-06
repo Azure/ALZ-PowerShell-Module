@@ -39,20 +39,15 @@ InModuleScope 'ALZ' {
                 }
 
                 Mock -CommandName Edit-ALZConfigurationFilesInPlace
+
+                Mock -CommandName Get-ALZBicepSource -MockWith {
+                    "C:\temp\source"
+                }
             }
 
             It 'should return the output directory on completion' {
                 $result = New-ALZEnvironment
-                $result[0].description | Should -BeExactly "Test configuration 1"
-                $result[0].names[0] | Should -BeExactly "value1"
-                $result[0].names[1] | Should -BeExactly "value2"
-                $result[0].defaultValue | Should -BeExactly "default"
-                $result[0].value | Should -BeExactly "value"
-
-                $result[1].description | Should -BeExactly "Test configuration 2"
-                $result[1].names[0] | Should -BeExactly "value1"
-                $result[1].defaultValue | Should -BeExactly "default"
-                $result[1].value | Should -BeExactly "value"
+                $result | Should -Be $true
 
                 Assert-MockCalled -CommandName Edit-ALZConfigurationFilesInPlace -Exactly 1
             }

@@ -17,11 +17,10 @@ function Edit-ALZConfigurationFilesInPlace {
     foreach ($file in $files) {
         $bicepConfiguration = Get-Content $file.FullName | ConvertFrom-Json -AsHashtable
         $modified = $false
-
-        foreach ($configurationObject in $configuration) {
-            foreach ($name in $configurationObject.names) {
+        foreach ($configKey in $configuration.PsObject.Properties) {
+            foreach ($name in $configKey.Value.Names) {
                 if ($null -ne $bicepConfiguration.parameters[$name]) {
-                    $bicepConfiguration.parameters[$name].value = $configurationObject.value
+                    $bicepConfiguration.parameters[$name].value = $configKey.Value.Value
                     $modified = $true
                 }
             }
