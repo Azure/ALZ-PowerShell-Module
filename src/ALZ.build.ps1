@@ -51,11 +51,12 @@ $str = @()
 $str = 'Clean', 'ValidateRequirements', 'ImportModuleManifest'
 $str += 'FormattingCheck'
 $str += 'Analyze', 'Test'
-
-$str2 = $str
-$str2 += 'Build', 'Archive'
 $str += 'Build', 'Archive'
 $str += 'DownloadALZReleases'
+
+# Do we want this?
+# $str += "Install"
+
 Add-BuildTask -Name . -Jobs $str
 
 #Local testing build process
@@ -577,3 +578,16 @@ Add-BuildTask Archive {
     Write-Build Green '        ...Archive Complete!'
 } #Archive
 
+#Synopsis: Installs the module into the current session.
+Add-BuildTask Install {
+    Write-Build White '        Installing Module...'
+
+    $module = Join-Path $script:ArtifactsPath "$($script:ModuleName).psd1"
+
+    Write-Build Gray '        Removing Previously installed instance of this module, if found.'
+
+    Remove-Module $ModuleName -Force -ErrorAction SilentlyContinue
+    Import-Module $module -Force
+
+    Write-Build Green '        ...Installation Complete!'
+}

@@ -25,7 +25,7 @@ InModuleScope 'ALZ' {
             }
             It 'should make sure that the information it is printed correctly' {
                 Write-InformationColored -Message 'test' -ForegroundColor 'Green'
-                $info = [HostInformationMessage]@{
+                $info = [System.Management.Automation.HostInformationMessage]@{
                     Message         = 'test'
                     ForegroundColor = 'Green'
                     BackgroundColor = $Host.UI.RawUI.BackgroundColor
