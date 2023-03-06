@@ -5,17 +5,18 @@ function New-ALZDirectoryEnvironment {
         [Alias("Output")]
         [Alias("OutputDirectory")]
         [Alias("O")]
-        [string] $alzEnvironmentDestination,
-
-        [Parameter(Mandatory = $true)]
-        [object] $configuration
+        [string] $alzEnvironmentDestination
     )
     # Create destination file structure
-    $alzEnvironmentDestination = Resolve-Path $alzEnvironmentDestination
+    $bicepSource = Join-Path $alzEnvironmentDestination "alz-bicep-internal"
+    $gitHubPipeline = Join-Path $alzEnvironmentDestination ".github" "workflows"
+    $customization = Join-Path $alzEnvironmentDestination "customization"
+    $orchestration = Join-Path $alzEnvironmentDestination "orchestration"
 
     New-Item -ItemType Directory -Path $alzEnvironmentDestination -Force | Out-Null
-
-    Write-Information $configuration
-
+    New-Item -ItemType Directory -Path $bicepSource -Force | Out-Null
+    New-Item -ItemType Directory -Path $gitHubPipeline -Force | Out-Null
+    New-Item -ItemType Directory -Path $customization -Force | Out-Null
+    New-Item -ItemType Directory -Path $orchestration -Force | Out-Null
 
 }

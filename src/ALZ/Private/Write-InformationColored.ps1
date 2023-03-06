@@ -1,5 +1,3 @@
-using namespace System.Management.Automation
-
 function Write-InformationColored {
     [CmdletBinding()]
     param(
@@ -10,7 +8,7 @@ function Write-InformationColored {
         [Switch]$NoNewline
     )
 
-    $msg = [HostInformationMessage]@{
+    $msg = [System.Management.Automation.HostInformationMessage]@{
         Message         = $MessageData
         ForegroundColor = $ForegroundColor
         BackgroundColor = $BackgroundColor

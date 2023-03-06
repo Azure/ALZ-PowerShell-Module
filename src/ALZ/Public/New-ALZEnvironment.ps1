@@ -35,13 +35,14 @@ function New-ALZEnvironment {
     $configuration = Request-ALZEnvironmentConfig
 
     $alzBicepSourceDirectory = Get-ALZBicepSource -alzBicepVersion $alzBicepVersion
-    # Create destination file structure
-    New-ALZDirectoryEnvironment -alzEnvironmentDestination $alzEnvironmentDestination -configuration $configuration | Out-Null
 
-    Copy-ALZAssetFile -alzBicepRoot $alzBicepSourceDirectory -alzEnvironmentDestination $alzEnvironmentDestination | Out-Null
+    New-ALZDirectoryEnvironment -alzEnvironmentDestination $alzEnvironmentDestination | Out-Null
+
+    $alzEnvironmentDestinationInternalCode = Join-Path $alzEnvironmentDestination "alz-bicep-internal"
+    Copy-Item -Path $alzBicepSourceDirectory -Destination $alzEnvironmentDestinationInternalCode -Recurse -Force -Exclude ".git,.github,.vscode,docs,tests,.gitignore" | Out-Null
 
     if ($PSCmdlet.ShouldProcess("ALZ-Bicep module configuration", "modify")) {
-        Edit-ALZConfigurationFilesInPlace -alzBicepRoot $alzBicepSourceDirectory -configuration $configuration | Out-Null
+        Edit-ALZConfigurationFilesInPlace -alzBicepRoot $alzEnvironmentDestination -configuration $configuration | Out-Null
     }
 
     return $true

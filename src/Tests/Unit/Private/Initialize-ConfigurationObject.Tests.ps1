@@ -12,12 +12,12 @@ Import-Module $PathToManifest -Force
 #-------------------------------------------------------------------------
 
 InModuleScope 'ALZ' {
-    Describe 'Initialize-ConfigurationObject Function Tests' -Tag Unit {
+    Describe 'New-ALZDirectoryEnvironment Function Tests' -Tag Unit {
         BeforeAll {
             $WarningPreference = 'SilentlyContinue'
             $ErrorActionPreference = 'SilentlyContinue'
         }
-        Context 'Initialize config get the correct base values' {
+        Context 'Create the correctr foldes for the environment' {
             BeforeEach {
                 Mock -CommandName Get-AzLocation -MockWith {
                     @(
