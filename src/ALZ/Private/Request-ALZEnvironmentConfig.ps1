@@ -13,6 +13,8 @@ function Request-ALZEnvironmentConfig {
     System.Object. The resultant configuration values.
     #>
     $configuration = Initialize-ConfigurationObject
+    Write-Verbose "Configuration object initialized."
+    Write-Verbose "Configuration object: $(ConvertTo-Json $configuration)"
 
     foreach ($configurationValue in $configuration) {
         Request-ConfigurationValue $configurationValue

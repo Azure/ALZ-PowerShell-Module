@@ -39,7 +39,7 @@ function New-ALZEnvironment {
     New-ALZDirectoryEnvironment -alzEnvironmentDestination $alzEnvironmentDestination | Out-Null
 
     $alzEnvironmentDestinationInternalCode = Join-Path $alzEnvironmentDestination "alz-bicep-internal"
-    Copy-Item -Path $alzBicepSourceDirectory -Destination $alzEnvironmentDestinationInternalCode -Recurse -Force -Exclude ".git,.github,.vscode,docs,tests,.gitignore" | Out-Null
+    Copy-Item -Path "$alzBicepSourceDirectory/*.*" -Destination $alzEnvironmentDestinationInternalCode -Recurse -Force -Exclude ".git,.github,.vscode,docs,tests,.gitignore" | Out-Null
 
     if ($PSCmdlet.ShouldProcess("ALZ-Bicep module configuration", "modify")) {
         Edit-ALZConfigurationFilesInPlace -alzBicepRoot $alzEnvironmentDestination -configuration $configuration | Out-Null
