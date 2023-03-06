@@ -13,6 +13,7 @@
         - CreateHelpStart
         - Build
         - IntegrationTest
+        - DownloadALZReleases
         - Archive
 .EXAMPLE
     Invoke-Build
@@ -54,6 +55,7 @@ $str += 'Analyze', 'Test'
 $str2 = $str
 $str2 += 'Build', 'Archive'
 $str += 'Build', 'IntegrationTest', 'Archive'
+$str += 'DownloadALZReleases'
 Add-BuildTask -Name . -Jobs $str
 
 #Local testing build process
@@ -140,8 +142,7 @@ Add-BuildTask ImportModuleManifest {
     Write-Build White '      Attempting to load the project module.'
     try {
         Import-Module $script:ModuleManifestFile -Force -PassThru -ErrorAction Stop
-    }
-    catch {
+    } catch {
         throw 'Unable to load the project module'
     }
     Write-Build Green "      ...$script:ModuleName imported successfully"
@@ -175,8 +176,7 @@ Add-BuildTask Analyze {
     if ($scriptAnalyzerResults) {
         $scriptAnalyzerResults | Format-Table
         throw '      One or more PSScriptAnalyzer errors/warnings where found.'
-    }
-    else {
+    } else {
         Write-Build Green '      ...Module Analyze Complete!'
     }
 } #Analyze
@@ -199,8 +199,7 @@ Add-BuildTask AnalyzeTests -After Analyze {
         if ($scriptAnalyzerResults) {
             $scriptAnalyzerResults | Format-Table
             throw '      One or more PSScriptAnalyzer errors/warnings where found.'
-        }
-        else {
+        } else {
             Write-Build Green '      ...Test Analyze Complete!'
         }
     }
@@ -224,8 +223,7 @@ Add-BuildTask FormattingCheck {
     if ($scriptAnalyzerResults) {
         $scriptAnalyzerResults | Format-Table
         throw '      PSScriptAnalyzer code formatting check did not adhere to {0} standards' -f $scriptAnalyzerParams.Setting
-    }
-    else {
+    } else {
         Write-Build Green '      ...Formatting Analyze Complete!'
     }
 } #FormattingCheck
@@ -296,13 +294,11 @@ Add-BuildTask Test {
             #>
             if ([Int]$coveragePercent -lt $coverageThreshold) {
                 throw ('Failed to meet code coverage threshold of {0}% with only {1}% coverage' -f $coverageThreshold, $coveragePercent)
-            }
-            else {
+            } else {
                 Write-Build Cyan "      $('Covered {0}% of {1} analyzed commands in {2} files.' -f $coveragePercent,$testResults.CodeCoverage.CommandsAnalyzedCount,$testResults.CodeCoverage.FilesAnalyzedCount)"
                 Write-Build Green '      ...Pester Unit Tests Complete!'
             }
-        }
-        else {
+        } else {
             # account for new module build condition
             Write-Build Yellow '      Code coverage check skipped. No commands to execute...'
         }
@@ -434,6 +430,35 @@ Add-BuildTask CreateHelpComplete -After CreateExternalHelp {
 } #CreateHelpStart
 
 
+Add-BuildTask DownloadALZReleases {
+    Write-Build White '      Downloading ALZ Bicep Supported releases'
+
+    $ALZReleases = Invoke-WebRequest -Uri 'https://api.github.com/repos/Azure/ALZ-Bicep/releases' -ErrorAction Stop | ConvertFrom-Json
+    $ALZReleases | ForEach-Object {
+        # Skip if the release is has been downloaded already
+        $ALZReleaseZipballFileName = $_.zipball_url.Split('/')[-1]
+        $ALZReleaseZipballFilePath = "$script:ArtifactsPath/$ALZReleaseZipballFileName.zip"
+        if (Test-Path -Path $ALZReleaseZipballFilePath) {
+            Write-Build Gray "        Skipping $ALZReleaseZipballFileName because it already exists."
+            return
+        }
+        # skip if the release it is not one of the supported releases
+        if ($script:ALZBicepSupportedReleases -notcontains $_.tag_name) {
+            Write-Build Gray "        Skipping $ALZReleaseZipballFileName because it is not a supported release."
+            return
+        }
+        Write-Build Gray "        Downloading $ALZReleaseZipballFileName..."
+        Invoke-WebRequest -Uri $_.zipball_url -OutFile $ALZReleaseZipballFilePath -ErrorAction Stop
+        Write-Build Gray '        ...Download complete.'
+        Write-Build Gray '        Extracting ALZ release...'
+        Expand-Archive -Path $ALZReleaseZipballFilePath -DestinationPath "$script:ArtifactsPath/$ALZReleaseZipballFileName/" -Force
+        Write-Build Gray '        ...Extraction complete.'
+        Write-Build Gray '        Removing zip file...'
+        Remove-Item -Path $ALZReleaseZipballFilePath -Force
+        Write-Build Gray '        ...Zip file removed.'
+    }
+    Write-Build Green '      ...ALZ releases downloaded!'
+} #DownloadALZReleases
 
 # Synopsis: Copies module assets to Artifacts folder
 Add-BuildTask AssetCopy -Before Build {
