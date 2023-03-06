@@ -51,6 +51,15 @@ function Test-ALZRequirement {
         $result = $false
     }
 
+    # Check if bicep is installed
+    $bicepPath = Get-Command bicep -ErrorAction SilentlyContinue
+    if ($bicepPath) {
+        Write-Verbose "Bicep is installed."
+    } else {
+        Write-Error "Bicep is not installed. Please install Bicep."
+        $result = $false
+    }
+
     # Check if Azure PowerShell module is installed
     $azModule = Get-Module -Name Az -ListAvailable
     if ($azModule) {

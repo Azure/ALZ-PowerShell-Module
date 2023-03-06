@@ -59,11 +59,21 @@ InModuleScope 'ALZ' {
         }
         Context 'Git not installed' {
             BeforeEach {
-                Mock -CommandName Get-Command -MockWith {
+                Mock -CommandName Get-Command -ParameterFilter { $Name -eq 'git' } -MockWith {
                     $null
                 }
             }
             It 'should return the not met for no git instalation' {
+                Test-ALZRequirement | Should -BeExactly "ALZ requirements are not met."
+            }
+        }
+        Context 'Bicep not installed' {
+            BeforeEach {
+                Mock -CommandName Get-Command -ParameterFilter { $Name -eq 'bicep' } -MockWith {
+                    $null
+                }
+            }
+            It 'should return the not met for no bicep instalation' {
                 Test-ALZRequirement | Should -BeExactly "ALZ requirements are not met."
             }
         }
@@ -83,9 +93,14 @@ InModuleScope 'ALZ' {
                         }
                     }
                 }
-                Mock -CommandName Get-Command -MockWith {
+                Mock -CommandName Get-Command -ParameterFilter { $Name -eq 'git' } -MockWith {
                     [PSCustomObject]@{
                         Name = 'git'
+                    }
+                }
+                Mock -CommandName Get-Command -ParameterFilter { $Name -eq 'bicep' } -MockWith {
+                    [PSCustomObject]@{
+                        Name = 'bicep'
                     }
                 }
             }
