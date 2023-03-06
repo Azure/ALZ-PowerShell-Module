@@ -17,9 +17,10 @@ function New-ALZEnvironment {
         [string] $alzBicepSource = "../ALZ-Bicep"
     )
 
-    if ($pscmdlet.ShouldProcess($destinationDirectory)) {
-        $configuration = New-ALZEnvironmentConfig
-        Update-ALZBicepConfigurationFilesInPlace -alzBicepRoot $alzBicepSource -configuration $configuration
+    $configuration = Request-ALZEnvironmentConfig
+
+    if ($PSCmdlet.ShouldProcess("ALZ-Bicep module configuration", "modify")) {
+        Edit-ALZBicepConfigurationFilesInPlace -alzBicepRoot $alzBicepSource -configuration $configuration
     }
 
     return $configuration

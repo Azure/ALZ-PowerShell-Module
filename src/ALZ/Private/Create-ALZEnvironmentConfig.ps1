@@ -1,6 +1,6 @@
 $alzBicepModulesRoot = "/infra-as-code/bicep/modules"
 
-function Update-ALZBicepConfigurationFilesInPlace {
+function Edit-ALZConfigurationFilesInPlace {
     param(
         [Parameter(Mandatory = $true)]
         [string] $alzBicepRoot,
@@ -28,7 +28,7 @@ function Update-ALZBicepConfigurationFilesInPlace {
         }
 
         if ($true -eq $modified) {
-            Write-Host $file.FullName
+            Write-InformationColored $file.FullName -ForegroundColor Yellow -InformationAction Continue
             $bicepConfiguration | ConvertTo-Json -Depth 10  | Out-File $file.FullName
         }
     }
@@ -118,7 +118,7 @@ function Request-CreateSubscriptionPreference {
     }
 }
 
-function New-ALZEnvironmentConfig {
+function Request-ALZEnvironmentConfig {
     param(
     )
     <#

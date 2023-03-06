@@ -27,16 +27,16 @@ InModuleScope 'ALZ' {
         Context 'Success' {
 
             BeforeEach {
-                Mock -CommandName New-ALZEnvironmentConfig -MockWith {
+                Mock -CommandName Request-ALZEnvironmentConfig -MockWith {
                     'output/prefix/environment'
                 } #endMock
 
-                Mock -CommandName Copy-ALZEnvironment -MockWith {
+                Mock -CommandName Edit-ALZConfigurationFilesInPlace -MockWith {
                 }
             } #beforeEach
 
             It 'should return the output directory on completion' {
-                New-ALZEnvironment -destinationDirectory 'output' | Should -BeExactly 'output/prefix/environment'
+                New-ALZEnvironment | Should -BeExactly 'output/prefix/environment'
             } #it
 
         } #context_Success
