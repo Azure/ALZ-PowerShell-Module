@@ -1,1 +1,1 @@
-Invoke-WebRequest -Uri "https://api.github.com/repos/Azure/ALZ-Bicep/git/matching-refs/REF" -Headers @{ Accept = "application/vnd.github+json"; "X-GitHub-Api-Version" = "2022-11-28" } | ConvertFrom-Json
+Invoke-WebRequest -Uri "https://api.github.com/repos/Azure/ALZ-Bicep/releases" -Headers @{ Accept = "application/vnd.github+json"; "X-GitHub-Api-Version" = "2022-11-28" } | ConvertFrom-Json
