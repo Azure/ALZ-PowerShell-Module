@@ -10,8 +10,14 @@ function Edit-ALZConfigurationFilesInPlace {
         [Parameter(Mandatory = $true)]
         [object] $configuration
     )
-    $bicepModules = Join-Path $alzEnvironmentDestination "orchestration"
-    $files = @(Get-ChildItem -Path $bicepModules -Recurse -Filter *.parameters.json)
+
+    $locations = @("orchestration", "customization")
+    $files = @()
+
+    foreach ($location in $locations) {
+        $bicepModules = Join-Path $alzEnvironmentDestination $location
+        $files += @(Get-ChildItem -Path $bicepModules -Recurse -Filter *.parameters.json)
+    }
 
     foreach ($file in $files) {
         $bicepConfiguration = Get-Content $file.FullName | ConvertFrom-Json -AsHashtable

@@ -67,7 +67,7 @@ InModuleScope 'ALZ' {
         }
         Context 'Edit-ALZConfigurationFilesInPlace should replace the parameters correctly' {
             BeforeEach {
-                Mock -CommandName Get-ChildItem -MockWith {
+                Mock -CommandName Get-ChildItem -ParameterFilter { $Path -match 'orchestration$' } -MockWith {
                     @(
                         [PSCustomObject]@{
                             FullName = 'test1.parameters.json'
