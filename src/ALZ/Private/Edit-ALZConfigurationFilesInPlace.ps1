@@ -1,4 +1,4 @@
-$alzBicepModulesRoot = "/infra-as-code/bicep/modules"
+$alzBicepModulesRoot = "/infra-as-code/bicep"
 
 function Edit-ALZConfigurationFilesInPlace {
     param(

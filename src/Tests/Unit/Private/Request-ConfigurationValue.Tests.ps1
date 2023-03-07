@@ -35,7 +35,7 @@ InModuleScope 'ALZ' {
                     defaultValue = "alz"
                 }
 
-                Request-ConfigurationValue $configValue
+                Request-ConfigurationValue -configName "prefix" -configValue $configValue
 
                 Assert-MockCalled -CommandName Write-InformationColored -Times 3
 

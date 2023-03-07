@@ -53,9 +53,7 @@ $str += 'FormattingCheck'
 $str += 'Analyze', 'Test'
 $str += 'Build', 'Archive'
 $str += 'DownloadALZReleases'
-
-# Do we want this?
-# $str += "Install"
+$str += "Install"
 
 Add-BuildTask -Name . -Jobs $str
 

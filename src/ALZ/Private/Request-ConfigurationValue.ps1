@@ -1,6 +1,9 @@
 function Request-ConfigurationValue {
     param(
         [Parameter(Mandatory = $true)]
+        [string] $configName,
+
+        [Parameter(Mandatory = $true)]
         [object] $configValue
     )
 
@@ -16,7 +19,7 @@ function Request-ConfigurationValue {
     }
 
     do {
-        Write-InformationColored "$($configValue.name) " -ForegroundColor Yellow -NoNewline -InformationAction Continue
+        Write-InformationColored "$($configName) " -ForegroundColor Yellow -NoNewline -InformationAction Continue
         if ($hasDefaultValue) {
             $displayDefaultValue = $defaultValue -eq "" ? "''" : $defaultValue
             Write-InformationColored "(default: ${displayDefaultValue}): " -ForegroundColor Yellow -NoNewline -InformationAction Continue

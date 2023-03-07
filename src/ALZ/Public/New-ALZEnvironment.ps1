@@ -29,20 +29,20 @@ function New-ALZEnvironment {
 
         [Parameter(Mandatory = $false)]
         [string] $alzBicepVersion = "v0.13.0"
-
     )
+
+    Write-InformationColored "Getting ready to create a new ALZ environment with you..." -ForegroundColor Green  -InformationAction Continue
 
     $configuration = Request-ALZEnvironmentConfig
 
-    $alzBicepSourceDirectory = Get-ALZBicepSource -alzBicepVersion $alzBicepVersion
-
-    New-ALZDirectoryEnvironment -alzEnvironmentDestination $alzEnvironmentDestination | Out-Null
-
-    $alzEnvironmentDestinationInternalCode = Join-Path $alzEnvironmentDestination "alz-bicep-internal"
-    Copy-Item -Path "$alzBicepSourceDirectory/*.*" -Destination $alzEnvironmentDestinationInternalCode -Recurse -Force -Exclude ".git,.github,.vscode,docs,tests,.gitignore" | Out-Null
-
     if ($PSCmdlet.ShouldProcess("ALZ-Bicep module configuration", "modify")) {
-        Edit-ALZConfigurationFilesInPlace -alzBicepRoot $alzEnvironmentDestination -configuration $configuration | Out-Null
+        $alzBicepSourceDirectory = Get-ALZBicepSource -alzBicepVersion $alzBicepVersion
+        New-ALZDirectoryEnvironment -alzEnvironmentDestination $alzEnvironmentDestination | Out-Null
+        $alzEnvironmentDestinationInternalCode = Join-Path $alzEnvironmentDestination "alz-bicep-internal"
+
+        Copy-Item -Path "$alzBicepSourceDirectory/*" -Destination $alzEnvironmentDestinationInternalCode -Recurse -Force -Exclude @(".git", ".github", ".vscode", "docs", "tests", ".gitignore") | Out-Null
+
+        Edit-ALZConfigurationFilesInPlace -alzBicepRoot $alzEnvironmentDestinationInternalCode -configuration $configuration | Out-Null
     }
 
     return $true
