@@ -43,6 +43,8 @@ InModuleScope 'ALZ' {
                 Mock -CommandName Get-ALZBicepSource -MockWith {
                     "C:\temp\source"
                 }
+
+                Mock -CommandName New-ALZDirectoryEnvironment -MockWith { }
             }
 
             It 'should return the output directory on completion' {

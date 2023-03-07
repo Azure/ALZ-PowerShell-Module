@@ -19,7 +19,7 @@ InModuleScope 'ALZ' {
         }
         Context 'Initialize config get the correct base values' {
             BeforeEach {
-                Mock -CommandName New-Item
+                Mock -CommandName New-Item -MockWith { }
             }
             It 'Should create the correct folder structure' {
                 $basePath = "./config"
