@@ -46,7 +46,7 @@ function New-ALZEnvironment {
         $alzBicepSourceDirectory = Get-ALZBicepSource -alzBicepVersion $alzBicepVersion
         Copy-Item -Path "$alzBicepSourceDirectory/*" -Destination $alzEnvironmentDestinationInternalCode -Recurse -Force -Exclude @(".git", ".github", ".vscode", "docs", "tests", ".gitignore") | Out-Null
 
-        Edit-ALZConfigurationFilesInPlace -alzBicepRoot $assetsDirectory -configuration $configuration | Out-Null
+        Edit-ALZConfigurationFilesInPlace -alzEnvironmentDestination $alzEnvironmentDestination -configuration $configuration | Out-Null
     }
 
     return $true

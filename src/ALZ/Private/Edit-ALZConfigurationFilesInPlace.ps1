@@ -1,5 +1,3 @@
-$alzBicepModulesRoot = "/infra-as-code/bicep"
-
 function Edit-ALZConfigurationFilesInPlace {
     param(
 
@@ -12,8 +10,8 @@ function Edit-ALZConfigurationFilesInPlace {
         [Parameter(Mandatory = $true)]
         [object] $configuration
     )
-    $bicepModules = Join-Path "$alzEnvironmentDestination" $alzBicepModulesRoot
-    $files = @(Get-ChildItem -Path $bicepModules -Recurse -Filter *.parameters.*.json)
+    $bicepModules = Join-Path $alzEnvironmentDestination "orchestration"
+    $files = @(Get-ChildItem -Path $bicepModules -Recurse -Filter *.parameters.json)
 
     foreach ($file in $files) {
         $bicepConfiguration = Get-Content $file.FullName | ConvertFrom-Json -AsHashtable

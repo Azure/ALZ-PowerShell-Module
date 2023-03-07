@@ -13,30 +13,30 @@ Import-Module $PathToManifest -Force
 
 InModuleScope 'ALZ' {
     BeforeAll {
-        $defaultConfig =   [pscustomobject]@{
-            Prefix = [pscustomobject]@{
+        $defaultConfig = [pscustomobject]@{
+            Prefix      = [pscustomobject]@{
                 description  = "The prefix that will be added to all resources created by this deployment."
                 names        = @("parTopLevelManagementGroupPrefix", "parCompanyPrefix")
                 value        = "test"
                 defaultValue = "alz"
             }
-            Suffix = [pscustomobject]@{
+            Suffix      = [pscustomobject]@{
                 Description  = "The suffix that will be added to all resources created by this deployment."
                 Names        = @("parTopLevelManagementGroupSuffix")
                 Value        = "bla"
                 DefaultValue = ""
             }
-            Location = [pscustomobject]@{
+            Location    = [pscustomobject]@{
                 Description   = "Deployment location."
                 Names         = @("parLocation")
                 AllowedValues = @('ukwest', '')
                 Value         = "eastus"
             }
             Environment = [pscustomobject]@{
-                Description   = "The type of environment that will be created . Example: dev, test, qa, staging, prod"
-                Names         = @("parEnvironment")
-                DefaultValue  = 'prod'
-                Value         = "dev"
+                Description  = "The type of environment that will be created . Example: dev, test, qa, staging, prod"
+                Names        = @("parEnvironment")
+                DefaultValue = 'prod'
+                Value        = "dev"
             }
         }
         $firstFileContent = '{
@@ -86,7 +86,7 @@ InModuleScope 'ALZ' {
                 Mock -CommandName Out-File -MockWith {}
             }
             It 'Files shuld be changed correctly' {
-                Edit-ALZConfigurationFilesInPlace  -alzBicepRoot '.' -configuration $defaultConfig
+                Edit-ALZConfigurationFilesInPlace  -alzEnvironmentDestination '.' -configuration $defaultConfig
                 # Assert that the file was wirte back with the new values
                 Assert-MockCalled -CommandName Out-File -Exactly 2 -Scope It
                 $contentAfterParsing = ConvertFrom-Json -InputObject $firstFileContent
