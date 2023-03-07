@@ -2,16 +2,17 @@ $alzBicepModulesRoot = "/infra-as-code/bicep"
 
 function Edit-ALZConfigurationFilesInPlace {
     param(
-        [Parameter(Mandatory = $true)]
-        [string] $alzBicepRoot,
+
+        [Parameter(Mandatory = $false)]
+        [Alias("Output")]
+        [Alias("OutputDirectory")]
+        [Alias("O")]
+        [string] $alzEnvironmentDestination = ".",
 
         [Parameter(Mandatory = $true)]
         [object] $configuration
     )
-
-    # Temporary location to the bicep modules and by extension configuration.
-    $bicepModules = Join-Path $alzBicepRoot $alzBicepModulesRoot
-
+    $bicepModules = Join-Path "$alzEnvironmentDestination" $alzBicepModulesRoot
     $files = @(Get-ChildItem -Path $bicepModules -Recurse -Filter *.parameters.*.json)
 
     foreach ($file in $files) {

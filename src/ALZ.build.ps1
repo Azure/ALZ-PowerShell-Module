@@ -88,7 +88,7 @@ Enter-Build {
     $script:ArtifactsPath = Join-Path -Path $BuildRoot -ChildPath 'Artifacts'
     $script:ArchivePath = Join-Path -Path $BuildRoot -ChildPath 'Archive'
 
-    $script:BuildModuleRootFile = Join-Path -Path $script:ArtifactsPath -ChildPath "$($script:ModuleName).psm1"
+    $script:BuildModuleRootFile = Join-Path -Path $script:ModuleSourcePath -ChildPath "$($script:ModuleName).psm1"
 
     # Ensure our builds fail until if below a minimum defined code test coverage threshold
     $script:coverageThreshold = 30
@@ -213,11 +213,15 @@ Add-BuildTask FormattingCheck {
         ExcludeRule = 'PSUseConsistentWhitespace'
         Recurse     = $true
         Verbose     = $false
+
     }
 
 
-    Write-Build White '      Performing script formatting checks...'
-    $scriptAnalyzerResults = Get-ChildItem -Path $script:ModuleSourcePath -Exclude "*.psd1" | Invoke-ScriptAnalyzer @scriptAnalyzerParams
+    Write-Build White "      Performing script formatting checks... $($script:ModuleSourcePath)"
+    $publicPath = Join-Path $script:ModuleSourcePath 'Public'
+    $privatePath = Join-Path $script:ModuleSourcePath 'Private'
+    $scriptAnalyzerResults = Invoke-ScriptAnalyzer -Path "$publicPath" @scriptAnalyzerParams
+    $scriptAnalyzerResults += Invoke-ScriptAnalyzer -Path "$privatePath" @scriptAnalyzerParams
 
     if ($scriptAnalyzerResults) {
         $scriptAnalyzerResults | Format-Table
@@ -472,30 +476,31 @@ Add-BuildTask Build {
 
     Write-Build Gray '        Copying manifest file to Artifacts...'
     Copy-Item -Path $script:ModuleManifestFile -Destination $script:ArtifactsPath -Recurse -ErrorAction Stop
+    Copy-Item -Path $script:BuildModuleRootFile -Destination $script:ArtifactsPath -Recurse -ErrorAction Stop
     #Copy-Item -Path $script:ModuleSourcePath\bin -Destination $script:ArtifactsPath -Recurse -ErrorAction Stop
     Write-Build Gray '        ...manifest copy complete.'
 
     Write-Build Gray '        Merging Public and Private functions to one module file...'
     #$private = "$script:ModuleSourcePath\Private"
-    $scriptContent = [System.Text.StringBuilder]::new()
+    # $scriptContent = [System.Text.StringBuilder]::new()
     #$powerShellScripts = Get-ChildItem -Path $script:ModuleSourcePath -Filter '*.ps1' -Recurse
-    $powerShellScripts = Get-ChildItem -Path $script:ArtifactsPath -Recurse | Where-Object { $_.Name -match '^*.ps1$' }
-    foreach ($script in $powerShellScripts) {
-        $null = $scriptContent.Append((Get-Content -Path $script.FullName -Raw))
-        $null = $scriptContent.AppendLine('')
-        $null = $scriptContent.AppendLine('')
-    }
-    $scriptContent.ToString() | Out-File -FilePath $script:BuildModuleRootFile -Encoding utf8 -Force
+    # $powerShellScripts = Get-ChildItem -Path $script:ArtifactsPath -Recurse | Where-Object { $_.Name -match '^*.ps1$' }
+    # foreach ($script in $powerShellScripts) {
+    #     $null = $scriptContent.Append((Get-Content -Path $script.FullName -Raw))
+    #     $null = $scriptContent.AppendLine('')
+    #     $null = $scriptContent.AppendLine('')
+    # }
+    # $scriptContent.ToString() | Out-File -FilePath $script:BuildModuleRootFile -Encoding utf8 -Force
     Write-Build Gray '        ...Module creation complete.'
 
     Write-Build Gray '        Cleaning up leftover artifacts...'
     #cleanup artifacts that are no longer required
-    if (Test-Path "$script:ArtifactsPath\Public") {
-        Remove-Item "$script:ArtifactsPath\Public" -Recurse -Force -ErrorAction Stop
-    }
-    if (Test-Path "$script:ArtifactsPath\Private") {
-        Remove-Item "$script:ArtifactsPath\Private" -Recurse -Force -ErrorAction Stop
-    }
+    # if (Test-Path "$script:ArtifactsPath\Public") {
+    #     Remove-Item "$script:ArtifactsPath\Public" -Recurse -Force -ErrorAction Stop
+    # }
+    # if (Test-Path "$script:ArtifactsPath\Private") {
+    #     Remove-Item "$script:ArtifactsPath\Private" -Recurse -Force -ErrorAction Stop
+    # }
     if (Test-Path "$script:ArtifactsPath\Imports.ps1") {
         Remove-Item "$script:ArtifactsPath\Imports.ps1" -Force -ErrorAction SilentlyContinue
     }

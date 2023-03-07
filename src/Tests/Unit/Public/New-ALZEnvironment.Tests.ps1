@@ -45,6 +45,8 @@ InModuleScope 'ALZ' {
                 }
 
                 Mock -CommandName New-ALZDirectoryEnvironment -MockWith { }
+
+                Mock -CommandName Copy-Item -MockWith { }
             }
 
             It 'should return the output directory on completion' {
