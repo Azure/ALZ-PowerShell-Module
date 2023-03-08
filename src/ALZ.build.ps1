@@ -132,6 +132,8 @@ Add-BuildTask ValidateRequirements {
 Add-BuildTask TestModuleManifest -Before ImportModuleManifest {
     Write-Build White '      Running module manifest tests...'
     Assert-Build (Test-Path $script:ModuleManifestFile) 'Unable to locate the module manifest file.'
+
+    Test-ModuleManifest -Path $script:ModuleManifestFile
     Assert-Build (Test-ManifestBool -Path $script:ModuleManifestFile) 'Module Manifest test did not pass verification.'
     Write-Build Green '      ...Module Manifest Verification Complete!'
 } #f5b33218-bde4-4028-b2a1-9c206f089503
