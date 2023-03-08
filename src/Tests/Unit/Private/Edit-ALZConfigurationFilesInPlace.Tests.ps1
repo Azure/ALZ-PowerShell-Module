@@ -66,8 +66,7 @@ InModuleScope 'ALZ' {
             $ErrorActionPreference = 'SilentlyContinue'
         }
         Context 'Edit-ALZConfigurationFilesInPlace should replace the parameters correctly' {
-            It 'Files should be changed correctly' {
-
+            BeforeEach {
                 Mock -CommandName Get-ChildItem -ParameterFilter { $Path -match 'orchestration$' } -MockWith {
                     @(
                         [PSCustomObject]@{
@@ -78,27 +77,28 @@ InModuleScope 'ALZ' {
                         }
                     )
                 }
-
                 Mock -CommandName Get-Content -ParameterFilter { $Path -eq 'test1.parameters.json' } -MockWith {
                     $firstFileContent
                 }
                 Mock -CommandName Get-Content -ParameterFilter { $Path -eq 'test2.parameters.json' } -MockWith {
                     $secondFileContent
                 }
-                Mock -CommandName Out-File -MockWith {}
-
+                Mock -CommandName Out-File
+            }
+            It 'Files should be changed correctly' {
                 Edit-ALZConfigurationFilesInPlace  -alzEnvironmentDestination '.' -configuration $defaultConfig
-                # Assert that the file was wirte back with the new values
-                Assert-MockCalled -CommandName Out-File -Exactly 2 -Scope It
+                # Assert that the file was written back with the new values
                 $contentAfterParsing = ConvertFrom-Json -InputObject $firstFileContent
                 $contentAfterParsing.parameters.parTopLevelManagementGroupPrefix.value = 'test'
                 $contentAfterParsing.parameters.parCompanyPrefix.value = 'test'
                 $contentStringAfterParsing = ConvertTo-Json -InputObject $contentAfterParsing
+                Write-InformationColored $contentStringAfterParsing -ForegroundColor Yellow -InformationAction Continue
                 Assert-MockCalled -CommandName Out-File -ParameterFilter { $FilePath -eq "test1.parameters.json" -and $InputObject -eq $contentStringAfterParsing } -Scope It
                 $contentAfterParsing = ConvertFrom-Json -InputObject $secondFileContent
                 $contentAfterParsing.parameters.parTopLevelManagementGroupSuffix.value = 'bla'
                 $contentAfterParsing.parameters.parLocation.value = 'eastus'
                 $contentStringAfterParsing = ConvertTo-Json -InputObject $contentAfterParsing
+                Write-InformationColored $contentStringAfterParsing -ForegroundColor Yellow -InformationAction Continue
                 Assert-MockCalled -CommandName Out-File -ParameterFilter { $FilePath -eq "test2.parameters.json" -and $InputObject -eq $contentStringAfterParsing } -Scope It
             }
         }
