@@ -30,6 +30,12 @@ $null = $modulesToInstall.Add(([PSCustomObject]@{
             ModuleVersion = '0.12.0'
         }))
 
+# Required dependency of the ALZ module itself.
+$null = $modulesToInstall.Add(([PSCustomObject]@{
+            ModuleName    = 'Az.Resources'
+            ModuleVersion = '0.12.0'
+        }))
+
 
 
 'Installing PowerShell Modules'
