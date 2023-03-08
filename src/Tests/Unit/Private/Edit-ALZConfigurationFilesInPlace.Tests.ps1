@@ -15,10 +15,10 @@ InModuleScope 'ALZ' {
     BeforeAll {
         $defaultConfig = [pscustomobject]@{
             Prefix      = [pscustomobject]@{
-                description  = "The prefix that will be added to all resources created by this deployment."
-                names        = @("parTopLevelManagementGroupPrefix", "parCompanyPrefix")
-                value        = "test"
-                defaultValue = "alz"
+                Description  = "The prefix that will be added to all resources created by this deployment."
+                Names        = @("parTopLevelManagementGroupPrefix", "parCompanyPrefix")
+                Value        = "test"
+                DefaultValue = "alz"
             }
             Suffix      = [pscustomobject]@{
                 Description  = "The suffix that will be added to all resources created by this deployment."
