@@ -33,7 +33,7 @@ $null = $modulesToInstall.Add(([PSCustomObject]@{
 # Required dependency of the ALZ module itself.
 $null = $modulesToInstall.Add(([PSCustomObject]@{
             ModuleName    = 'Az.Resources'
-            ModuleVersion = '0.12.0'
+            ModuleVersion = '5.6.0'
         }))
 
 

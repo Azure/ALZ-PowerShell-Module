@@ -128,20 +128,24 @@ Add-BuildTask ValidateRequirements {
     Write-Build Green '      ...Verification Complete!'
 } #ValidateRequirements
 
-# # Synopsis: Import the current module manifest file for processing
-# Add-BuildTask TestModuleManifest -Before ImportModuleManifest {
-#     Write-Build White '      Running module manifest tests...'
-#     Assert-Build (Test-Path $script:ModuleManifestFile) 'Unable to locate the module manifest file.'
+# Synopsis: Import the current module manifest file for processing
+Add-BuildTask TestModuleManifest -Before ImportModuleManifest {
+    Write-Build White '      Running module manifest tests...'
+    Assert-Build (Test-Path $script:ModuleManifestFile) 'Unable to locate the module manifest file.'
 
-#     Test-ModuleManifest -Path $script:ModuleManifestFile
-#     Assert-Build (Test-ManifestBool -Path $script:ModuleManifestFile) 'Module Manifest test did not pass verification.'
-#     Write-Build Green '      ...Module Manifest Verification Complete!'
-# } #f5b33218-bde4-4028-b2a1-9c206f089503
+    Test-ModuleManifest -Path $script:ModuleManifestFile
+    Assert-Build (Test-ManifestBool -Path $script:ModuleManifestFile) 'Module Manifest test did not pass verification.'
+    Write-Build Green '      ...Module Manifest Verification Complete!'
+} #f5b33218-bde4-4028-b2a1-9c206f089503
 
 # Synopsis: Load the module project
 Add-BuildTask ImportModuleManifest {
     Write-Build White '      Attempting to load the project module.'
+    try {
         Import-Module $script:ModuleManifestFile -Force -PassThru -ErrorAction Stop
+    } catch {
+        throw 'Unable to load the project module'
+    }
     Write-Build Green "      ...$script:ModuleName imported successfully"
 }
 
