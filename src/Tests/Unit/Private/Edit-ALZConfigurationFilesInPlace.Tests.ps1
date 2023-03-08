@@ -85,7 +85,7 @@ InModuleScope 'ALZ' {
                 }
                 Mock -CommandName Out-File -MockWith {}
             }
-            It 'Files shuld be changed correctly' {
+            It 'Files should be changed correctly' {
                 Edit-ALZConfigurationFilesInPlace  -alzEnvironmentDestination '.' -configuration $defaultConfig
                 # Assert that the file was wirte back with the new values
                 Assert-MockCalled -CommandName Out-File -Exactly 2 -Scope It
@@ -99,7 +99,6 @@ InModuleScope 'ALZ' {
                 $contentAfterParsing.parameters.parLocation.value = 'eastus'
                 $contentStringAfterParsing = ConvertTo-Json -InputObject $contentAfterParsing
                 Assert-MockCalled -CommandName Out-File -ParameterFilter { $FilePath -eq "test2.parameters.json" -and $InputObject -eq $contentStringAfterParsing } -Scope It
-
             }
         }
     }
