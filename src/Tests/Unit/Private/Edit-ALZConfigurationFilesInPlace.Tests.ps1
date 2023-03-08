@@ -66,7 +66,8 @@ InModuleScope 'ALZ' {
             $ErrorActionPreference = 'SilentlyContinue'
         }
         Context 'Edit-ALZConfigurationFilesInPlace should replace the parameters correctly' {
-            BeforeEach {
+            It 'Files should be changed correctly' {
+
                 Mock -CommandName Get-ChildItem -ParameterFilter { $Path -match 'orchestration$' } -MockWith {
                     @(
                         [PSCustomObject]@{
@@ -77,6 +78,7 @@ InModuleScope 'ALZ' {
                         }
                     )
                 }
+
                 Mock -CommandName Get-Content -ParameterFilter { $Path -eq 'test1.parameters.json' } -MockWith {
                     $firstFileContent
                 }
@@ -84,8 +86,7 @@ InModuleScope 'ALZ' {
                     $secondFileContent
                 }
                 Mock -CommandName Out-File -MockWith {}
-            }
-            It 'Files should be changed correctly' {
+
                 Edit-ALZConfigurationFilesInPlace  -alzEnvironmentDestination '.' -configuration $defaultConfig
                 # Assert that the file was wirte back with the new values
                 Assert-MockCalled -CommandName Out-File -Exactly 2 -Scope It
