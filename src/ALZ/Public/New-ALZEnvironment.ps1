@@ -40,7 +40,7 @@ function New-ALZEnvironment {
 
     Write-InformationColored "Getting ready to create a new ALZ environment with you..." -ForegroundColor Green  -InformationAction Continue
 
-    if($alzIacProvider -eq "terraform") {
+    if ($alzIacProvider -eq "terraform") {
         Write-InformationColored "Terraform is not yet supported." -ForegroundColor Red  -InformationAction Continue
         return $false
     }
@@ -50,13 +50,17 @@ function New-ALZEnvironment {
     if ($PSCmdlet.ShouldProcess("ALZ-Bicep module configuration", "modify")) {
 
         New-ALZDirectoryEnvironment -alzEnvironmentDestination $alzEnvironmentDestination | Out-Null
-        $alzEnvironmentDestinationInternalCode = Join-Path $alzEnvironmentDestination "alz-bicep-internal" $alzBicepVersion
 
         $assetsDirectory = Join-Path $(Get-ScriptRoot) "../Assets"
         Copy-Item -Path "$assetsDirectory/*" -Recurse -Destination $alzEnvironmentDestination -Force
 
-        $alzBicepSourceDirectory = Get-ALZBicepSource -alzBicepVersion $alzBicepVersion
-        Copy-Item -Path "$alzBicepSourceDirectory/*" -Destination $alzEnvironmentDestinationInternalCode -Recurse -Force -Exclude @(".git", ".github", ".vscode", "docs", "tests", ".gitignore") | Out-Null
+        if ($alzIacProvider -eq "bicep") {
+            $alzEnvironmentDestinationInternalCode = Join-Path $alzEnvironmentDestination "alz-bicep-internal" $alzBicepVersion
+            $alzBicepSourceDirectory = Get-ALZBicepSource -alzBicepVersion $alzBicepVersion
+            Initialize-ALZBicepConfigFiles -alzEnvironmentDestination $alzEnvironmentDestination -alzBicepVersion $alzBicepVersion | Out-Null
+
+
+        }
 
         Edit-ALZConfigurationFilesInPlace -alzEnvironmentDestination $alzEnvironmentDestination -configuration $configuration | Out-Null
     }
