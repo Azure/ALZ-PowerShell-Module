@@ -38,7 +38,7 @@ function New-ALZEnvironment {
     if ($PSCmdlet.ShouldProcess("ALZ-Bicep module configuration", "modify")) {
 
         New-ALZDirectoryEnvironment -alzEnvironmentDestination $alzEnvironmentDestination | Out-Null
-        $alzEnvironmentDestinationInternalCode = Join-Path $alzEnvironmentDestination "alz-bicep-internal"
+        $alzEnvironmentDestinationInternalCode = Join-Path $alzEnvironmentDestination "alz-bicep-internal" $alzBicepVersion
 
         $assetsDirectory = Join-Path $(Get-ScriptRoot) "../Assets"
         Copy-Item -Path "$assetsDirectory/*" -Recurse -Destination $alzEnvironmentDestination -Force
