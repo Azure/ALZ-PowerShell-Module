@@ -21,6 +21,10 @@ function Test-ALZRequirement {
     #>
     [CmdletBinding()]
     param (
+        [Parameter(Mandatory = $false)]
+        [ValidateSet("bicep", "terraform")]
+        [Alias("Iac")]
+        [string] $alzIacProvider = "bicep"
     )
 
     $result = $true
@@ -44,28 +48,50 @@ function Test-ALZRequirement {
         $result = $false
     }
 
-    # Check if bicep is installed
-    $bicepPath = Get-Command bicep -ErrorAction SilentlyContinue
-    if ($bicepPath) {
-        Write-Verbose "Bicep is installed."
-    } else {
-        Write-Error "Bicep is not installed. Please install Bicep."
-        $result = $false
+    if ($alzIacProvider -eq "terraform") {
+        # Check if Terraform is installed
+        $terraformPath = Get-Command terraform -ErrorAction SilentlyContinue
+        if ($terraformPath) {
+            Write-Verbose "Terraform is installed."
+        } else {
+            Write-Error "Terraform is not installed. Please install Terraform."
+            $result = $false
+        }
+        # Check if Azure CLI is installed
+        $azCliPath = Get-Command az -ErrorAction SilentlyContinue
+        if ($azCliPath) {
+            Write-Verbose "Azure CLI is installed."
+        } else {
+            Write-Error "Azure CLI is not installed. Please install Azure CLI."
+            $result = $false
+        }
     }
 
-    # Check if Azure PowerShell module is installed
-    $azModule = Get-Module -Name Az -ListAvailable
-    if ($azModule) {
-        Write-Verbose "Azure PowerShell module is installed."
-    } else {
-        Write-Error "Azure PowerShell module is not installed. Please install the Azure PowerShell module."
-        $result = $false
+    if ($alzIacProvider -eq "bicep") {
+        # Check if Bicep is installed
+        $bicepPath = Get-Command bicep -ErrorAction SilentlyContinue
+        if ($bicepPath) {
+            Write-Verbose "Bicep is installed."
+        } else {
+            Write-Error "Bicep is not installed. Please install Bicep."
+            $result = $false
+        }
+        # Check if Azure PowerShell module is installed
+        $azModule = Get-Module -Name Az -ListAvailable
+        if ($azModule) {
+            Write-Verbose "Azure PowerShell module is installed."
+        } else {
+            Write-Error "Azure PowerShell module is not installed. Please install the Azure PowerShell module."
+            $result = $false
+        }
+        if ($result) {
+            return "ALZ requirements are met."
+        } else {
+            return "ALZ requirements are not met."
+        }
     }
-    if ($result) {
-        return "ALZ requirements are met."
-    } else {
-        return "ALZ requirements are not met."
-    }
+
+
 }
 
 

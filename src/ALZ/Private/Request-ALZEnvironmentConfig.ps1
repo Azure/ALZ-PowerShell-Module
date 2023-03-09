@@ -1,6 +1,9 @@
 
 function Request-ALZEnvironmentConfig {
     param(
+        [Parameter(Mandatory = $false)]
+        [ValidateSet("bicep", "terraform")]
+        [string] $alzIacProvider = "bicep"
     )
     <#
     .SYNOPSIS
@@ -12,7 +15,11 @@ function Request-ALZEnvironmentConfig {
     .OUTPUTS
     System.Object. The resultant configuration values.
     #>
-    $configuration = Initialize-ConfigurationObject
+    if ($alzIacProvider -eq "terraform") {
+        throw "Terraform is not yet supported."
+    }
+
+    $configuration = Initialize-ConfigurationObject -alzIacProvider $alzIacProvider
     Write-Verbose "Configuration object initialized."
     Write-Verbose "Configuration object: $(ConvertTo-Json $configuration)"
 

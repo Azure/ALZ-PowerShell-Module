@@ -10,6 +10,8 @@ function New-ALZEnvironment {
     The directory where the ALZ environment will be created.
     .PARAMETER alzBicepVersion
     The version of the ALZ-Bicep module to use.
+    .PARAMETER alzIacProvider
+    The IaC provider to use for the ALZ environment.
     .EXAMPLE
     New-ALZEnvironment
     .EXAMPLE
@@ -28,12 +30,22 @@ function New-ALZEnvironment {
         [string] $alzEnvironmentDestination = ".",
 
         [Parameter(Mandatory = $false)]
-        [string] $alzBicepVersion = "v0.13.0"
+        [string] $alzBicepVersion = "v0.13.0",
+
+        [Parameter(Mandatory = $false)]
+        [ValidateSet("bicep", "terraform")]
+        [Alias("Iac")]
+        [string] $alzIacProvider = "bicep"
     )
 
     Write-InformationColored "Getting ready to create a new ALZ environment with you..." -ForegroundColor Green  -InformationAction Continue
 
-    $configuration = Request-ALZEnvironmentConfig
+    if($alzIacProvider -eq "terraform") {
+        Write-InformationColored "Terraform is not yet supported." -ForegroundColor Red  -InformationAction Continue
+        return $false
+    }
+
+    $configuration = Request-ALZEnvironmentConfig -alzIacProvider $alzIacProvider
 
     if ($PSCmdlet.ShouldProcess("ALZ-Bicep module configuration", "modify")) {
 
