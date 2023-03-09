@@ -1,0 +1,46 @@
+{
+    "modules_path": "infra-as-code/bicep/modules",
+    "orchestration_path": "infra-as-code/bicep/orchestration",
+    "bootstrap_modules": {
+        "01": {
+            "sources": ["managementGroups"],
+            "type": "module"
+        },
+        "02": {
+            "sources": ["policy/definitions"],
+            "type": "module"
+        },
+        "03": {
+            "sources": ["customRoleDefinitions"],
+            "type": "module"
+        },
+        "04": {
+            "sources": ["logging"],
+            "type": "module"
+        },
+        "04-1": {
+            "sources": ["mgDiagSettingsAll"],
+            "type": "orchestration"
+        },
+        "05": {
+            "sources": ["hubNetworking","vwanConnectivity"],
+            "selection_property": "networkTopology",
+            "type": "module"
+        },
+        "06": {
+            "sources": ["roleAssignments"],
+            "type": "module"
+        },
+        "07": {
+            "source": ["subPlacementAll"],
+            "type": "orchestration"
+        },
+        "08": {
+            "source": ["policy/assignments/alzDefaults"],
+            "type": "module"
+        }
+    },
+    "custom_modules" : {
+
+    }
+}

@@ -13,7 +13,6 @@
         - CreateHelpStart
         - Build
         - IntegrationTest
-        - DownloadALZReleases
         - Archive
 .EXAMPLE
     Invoke-Build
@@ -52,7 +51,6 @@ $str = 'Clean', 'ValidateRequirements', 'ImportModuleManifest'
 $str += 'FormattingCheck'
 $str += 'Analyze', 'Test'
 $str += 'Build', 'Archive'
-$str += 'DownloadALZReleases'
 $str += "Install"
 
 Add-BuildTask -Name . -Jobs $str
@@ -435,28 +433,32 @@ Add-BuildTask CreateHelpComplete -After CreateExternalHelp {
 } #CreateHelpStart
 
 
-Add-BuildTask DownloadALZReleases {
+Add-BuildTask DownloadALZReleases -After AssetCopy {
     Write-Build White '      Downloading ALZ Bicep Supported releases'
 
     $ALZReleases = Invoke-WebRequest -Uri 'https://api.github.com/repos/Azure/ALZ-Bicep/releases' -ErrorAction Stop | ConvertFrom-Json
     $ALZReleases | ForEach-Object {
         # Skip if the release is has been downloaded already
-        $ALZReleaseZipballFileName = $_.zipball_url.Split('/')[-1]
+        $tagName = $_.tag_name
+        $ALZReleaseZipballFileName = "ALZ-Bicep-$tagName"
+        # remove v from tag name
+        $alzDirectory = $tagName -replace '^v', ''
+        $downloadUrl = "https://github.com/Azure/ALZ-Bicep/archive/refs/tags/$tagName.zip"
         $ALZReleaseZipballFilePath = "$script:ArtifactsPath/$ALZReleaseZipballFileName.zip"
-        if (Test-Path -Path $ALZReleaseZipballFilePath) {
+        if (Test-Path -Path "$script:ArtifactsPath/Assets/alz-bicep-internal/ALZ-Bicep-$alzDirectory") {
             Write-Build Gray "        Skipping $ALZReleaseZipballFileName because it already exists."
             return
         }
         # skip if the release it is not one of the supported releases
-        if ($script:ALZBicepSupportedReleases -notcontains $_.tag_name) {
+        if ($script:ALZBicepSupportedReleases -notcontains $tagName) {
             Write-Build Gray "        Skipping $ALZReleaseZipballFileName because it is not a supported release."
             return
         }
         Write-Build Gray "        Downloading $ALZReleaseZipballFileName..."
-        Invoke-WebRequest -Uri $_.zipball_url -OutFile $ALZReleaseZipballFilePath -ErrorAction Stop
+        Invoke-WebRequest -Uri $downloadUrl -OutFile $ALZReleaseZipballFilePath -ErrorAction Stop
         Write-Build Gray '        ...Download complete.'
         Write-Build Gray '        Extracting ALZ release...'
-        Expand-Archive -Path $ALZReleaseZipballFilePath -DestinationPath "$script:ArtifactsPath/$ALZReleaseZipballFileName/" -Force
+        Expand-Archive -Path $ALZReleaseZipballFilePath -DestinationPath "$script:ArtifactsPath/Assets/alz-bicep-internal/" -Force
         Write-Build Gray '        ...Extraction complete.'
         Write-Build Gray '        Removing zip file...'
         Remove-Item -Path $ALZReleaseZipballFilePath -Force
