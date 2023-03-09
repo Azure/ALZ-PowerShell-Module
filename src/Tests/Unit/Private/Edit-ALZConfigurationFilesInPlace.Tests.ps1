@@ -87,6 +87,10 @@ InModuleScope 'ALZ' {
             }
             It 'Files should be changed correctly' {
                 Edit-ALZConfigurationFilesInPlace  -alzEnvironmentDestination '.' -configuration $defaultConfig
+
+                # Just trying this out
+                Start-Sleep -Seconds 1
+
                 # Assert that the file was written back with the new values
                 $contentAfterParsing = ConvertFrom-Json -InputObject $firstFileContent
                 $contentAfterParsing.parameters.parTopLevelManagementGroupPrefix.value = 'test'
