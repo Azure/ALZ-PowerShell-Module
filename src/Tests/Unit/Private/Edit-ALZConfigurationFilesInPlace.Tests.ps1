@@ -83,7 +83,10 @@ InModuleScope 'ALZ' {
                 Mock -CommandName Get-Content -ParameterFilter { $Path -eq 'test2.parameters.json' } -MockWith {
                     $secondFileContent
                 }
-                Mock -CommandName Out-File
+
+                Mock -CommandName Out-File -MockWith {
+                    Write-InformationColored "Out-File was called with $FilePath and $InputObject" -ForegroundColor Yellow -InformationAction Continue
+                }
             }
             It 'Files should be changed correctly' {
                 Edit-ALZConfigurationFilesInPlace  -alzEnvironmentDestination '.' -configuration $defaultConfig
