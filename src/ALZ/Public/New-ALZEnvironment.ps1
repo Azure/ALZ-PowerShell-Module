@@ -58,8 +58,6 @@ function New-ALZEnvironment {
             $alzEnvironmentDestinationInternalCode = Join-Path $alzEnvironmentDestination "alz-bicep-internal" $alzBicepVersion
             $alzBicepSourceDirectory = Get-ALZBicepSource -alzBicepVersion $alzBicepVersion
             Initialize-ALZBicepConfigFiles -alzEnvironmentDestination $alzEnvironmentDestination -alzBicepVersion $alzBicepVersion | Out-Null
-
-
         }
 
         Edit-ALZConfigurationFilesInPlace -alzEnvironmentDestination $alzEnvironmentDestination -configuration $configuration | Out-Null
