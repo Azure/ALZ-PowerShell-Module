@@ -1,43 +1,19 @@
 {
-    "modules_path": "infra-as-code/bicep/modules",
-    "orchestration_path": "infra-as-code/bicep/orchestration",
-    "bootstrap_modules": {
-        "01": {
-            "sources": ["managementGroups"],
-            "type": "module"
+    "orchestration": {
+        "01.managementGroups": {
+            "source": "infra-as-code/bicep/modules/managementGroups/managementGroups.bicep"
         },
-        "02": {
-            "sources": ["policy/definitions"],
-            "type": "module"
+        "02.policy.definitions": {
+            "source": "infra-as-code/bicep/modules/policy/definitions/customPolicyDefinitions.bicep"
         },
-        "03": {
-            "sources": ["customRoleDefinitions"],
-            "type": "module"
+        "03.customRoleDefinitions": {
+            "source": "infra-as-code/bicep/modules/customRoleDefinitions/customRoleDefinitions.bicep"
         },
-        "04": {
-            "sources": ["logging"],
-            "type": "module"
+        "04.logging": {
+            "source": "infra-as-code/bicep/module/logging/logging.bicep"
         },
-        "04-1": {
-            "sources": ["mgDiagSettingsAll"],
-            "type": "orchestration"
-        },
-        "05": {
-            "sources": ["hubNetworking","vwanConnectivity"],
-            "selection_property": "networkTopology",
-            "type": "module"
-        },
-        "06": {
-            "sources": ["roleAssignments"],
-            "type": "module"
-        },
-        "07": {
-            "source": ["subPlacementAll"],
-            "type": "orchestration"
-        },
-        "08": {
-            "source": ["policy/assignments/alzDefaults"],
-            "type": "module"
+        "04-1.mgdiagnostics": {
+            "source": "infra-as-code/bicep/orchestration/mgDiagSettingsAll/mgDiagSettingsAll.bicep"
         }
     },
     "custom_modules" : {
