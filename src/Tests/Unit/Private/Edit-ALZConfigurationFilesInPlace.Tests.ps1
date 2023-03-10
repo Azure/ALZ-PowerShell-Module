@@ -88,8 +88,7 @@ InModuleScope 'ALZ' {
             It 'Files should be changed correctly' {
                 Edit-ALZConfigurationFilesInPlace  -alzEnvironmentDestination '.' -configuration $defaultConfig
 
-                # Wait for the file to be written.
-                Start-Sleep -Seconds 1
+                Should -Invoke -CommandName Out-File -Scope It -Times 2
 
                 # Assert that the file was written back with the new values
                 $contentAfterParsing = ConvertFrom-Json -InputObject $firstFileContent
