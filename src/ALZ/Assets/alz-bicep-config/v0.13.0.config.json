@@ -1,0 +1,22 @@
+{
+    "orchestration": {
+        "01.managementGroups": {
+            "source": "infra-as-code/bicep/modules/managementGroups/managementGroups.bicep"
+        },
+        "02.policy.definitions": {
+            "source": "infra-as-code/bicep/modules/policy/definitions/customPolicyDefinitions.bicep"
+        },
+        "03.customRoleDefinitions": {
+            "source": "infra-as-code/bicep/modules/customRoleDefinitions/customRoleDefinitions.bicep"
+        },
+        "04.logging": {
+            "source": "infra-as-code/bicep/module/logging/logging.bicep"
+        },
+        "04-1.mgdiagnostics": {
+            "source": "infra-as-code/bicep/orchestration/mgDiagSettingsAll/mgDiagSettingsAll.bicep"
+        }
+    },
+    "custom_modules" : {
+
+    }
+}

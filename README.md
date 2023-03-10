@@ -1,14 +1,63 @@
-# Project
+# ALZ
 
-> This repo has been populated by an initial template to help get you started. Please
-> make sure to update the content to build a great experience for community-building.
+[![ActionsTest-Windows-pwsh-Build](https://github.com/Azure/ALZ-PowerShell-Module/actions/workflows/wf_Windows_Core.yml/badge.svg?branch=main)](https://github.com/Azure/ALZ-PowerShell-Module/actions/workflows/wf_Windows_Core.yml)
 
-As the maintainer of this project, please make a few updates:
+![Logo](./docs/ALZLogo-Small.png)
 
-- Improving this README.MD file to provide a great experience
-- Updating SUPPORT.MD with content about this project's support experience
-- Understanding the security reporting process in SECURITY.MD
-- Remove this section from the README
+## Synopsis
+
+This is a PowerShell module that provides a set of cmdlets to manage Azure Landing Zones.
+
+## Description
+
+This module provides a set of cmdlets to manage Azure Landing Zones.
+
+## Why
+
+The goal of this project it is to make easy to get started with Azure Landing Zones and to speed up some basic tasks that you would be using while managing your Azure Landing Zones.
+
+## Getting Started
+
+### Prerequisites
+
+In order to use this module you will need powershell 7.1 or higher.
+
+### Installation
+
+You can install this module using PowerShellGet.
+
+```powershell
+Install-Module -Name ALZ
+```
+
+### Quick start
+
+Before start o utilize the functionality of the module you can verify if you have all the prerequisites installed, with the built in command:
+
+```powershell
+Test-ALZPrerequisites
+```
+
+#### Create a new Azure Landing Zone Environment
+
+```powershell
+
+
+```
+
+## Development
+
+### Prerequisites
+
+In order to develop this module you will need powershell 7.1 or higher.
+
+### Commands to install a build locally
+
+```powershell
+# Install the module locally
+Invoke-Build -File .\src\ALZ.build.ps1
+Import-Module .\src\Artifacts\ALZ.psd1 -Force
+```
 
 ## Contributing
 
@@ -26,8 +75,8 @@ contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additio
 
 ## Trademarks
 
-This project may contain trademarks or logos for projects, products, or services. Authorized use of Microsoft 
-trademarks or logos is subject to and must follow 
+This project may contain trademarks or logos for projects, products, or services. Authorized use of Microsoft
+trademarks or logos is subject to and must follow
 [Microsoft's Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 Any use of third-party trademarks or logos are subject to those third-party's policies.
