@@ -94,13 +94,13 @@ InModuleScope 'ALZ' {
                 Should -Invoke -CommandName Out-File -Scope It -Times 2
 
                 # Assert that the file was written back with the new values
-                $contentAfterParsing = ConvertFrom-Json -InputObject $firstFileContent
+                $contentAfterParsing = ConvertFrom-Json -InputObject $firstFileContent -AsHashtable
                 $contentAfterParsing.parameters.parTopLevelManagementGroupPrefix.value = 'test'
                 $contentAfterParsing.parameters.parCompanyPrefix.value = 'test'
                 $contentStringAfterParsing = ConvertTo-Json -InputObject $contentAfterParsing
                 Write-InformationColored $contentStringAfterParsing -ForegroundColor Yellow -InformationAction Continue
                 Should -Invoke -CommandName Out-File -ParameterFilter { $FilePath -eq "test1.parameters.json" -and $InputObject -eq $contentStringAfterParsing } -Scope It
-                $contentAfterParsing = ConvertFrom-Json -InputObject $secondFileContent
+                $contentAfterParsing = ConvertFrom-Json -InputObject $secondFileContent -AsHashtable
                 $contentAfterParsing.parameters.parTopLevelManagementGroupSuffix.value = 'bla'
                 $contentAfterParsing.parameters.parLocation.value = 'eastus'
                 $contentStringAfterParsing = ConvertTo-Json -InputObject $contentAfterParsing
