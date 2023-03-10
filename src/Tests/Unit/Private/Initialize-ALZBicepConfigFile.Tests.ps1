@@ -12,7 +12,7 @@ Import-Module $PathToManifest -Force
 #-------------------------------------------------------------------------
 
 InModuleScope 'ALZ' {
-    Describe 'Initialize-ALZBicepConfigFiles test ' -Tag Unit {
+    Describe 'Initialize-ALZBicepConfigFile test ' -Tag Unit {
         BeforeAll {
             $WarningPreference = 'SilentlyContinue'
             $ErrorActionPreference = 'SilentlyContinue'
@@ -21,7 +21,7 @@ InModuleScope 'ALZ' {
             BeforeEach {
             }
             It 'should return the not met for non AZ module' {
-                $result = Initialize-ALZBicepConfigFiles -alzEnvironmentDestination 'test' -alzBicepVersion 'v0.13.0'
+                $result = Initialize-ALZBicepConfigFile -alzEnvironmentDestination 'test' -alzBicepVersion 'v0.13.0'
                 $result | Should -Be $true
             }
         }

@@ -57,7 +57,9 @@ function New-ALZEnvironment {
         if ($alzIacProvider -eq "bicep") {
             $alzEnvironmentDestinationInternalCode = Join-Path $alzEnvironmentDestination "alz-bicep-internal" $alzBicepVersion
             $alzBicepSourceDirectory = Get-ALZBicepSource -alzBicepVersion $alzBicepVersion
-            Initialize-ALZBicepConfigFiles -alzEnvironmentDestination $alzEnvironmentDestination -alzBicepVersion $alzBicepVersion | Out-Null
+            Write-InformationColored "Copying ALZ-Bicep module to $alzEnvironmentDestinationInternalCode" -ForegroundColor Green  -InformationAction Continue
+            Write-InformationColored "ALZ-Bicep source directory: $alzBicepSourceDirectory" -ForegroundColor Green  -InformationAction Continue
+            Initialize-ALZBicepConfigFile -alzEnvironmentDestination $alzEnvironmentDestination -alzBicepVersion $alzBicepVersion | Out-Null
         }
 
         Edit-ALZConfigurationFilesInPlace -alzEnvironmentDestination $alzEnvironmentDestination -configuration $configuration | Out-Null
