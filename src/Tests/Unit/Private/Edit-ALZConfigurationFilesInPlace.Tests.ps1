@@ -97,13 +97,13 @@ InModuleScope 'ALZ' {
                 $contentAfterParsing.parameters.parCompanyPrefix.value = 'test'
                 $contentStringAfterParsing = ConvertTo-Json -InputObject $contentAfterParsing
                 Write-InformationColored $contentStringAfterParsing -ForegroundColor Yellow -InformationAction Continue
-                Assert-MockCalled -CommandName Out-File -ParameterFilter { $FilePath -eq "test1.parameters.json" -and $InputObject -eq $contentStringAfterParsing } -Scope It
+                Should -Invoke -CommandName Out-File -ParameterFilter { $FilePath -eq "test1.parameters.json" -and $InputObject -eq $contentStringAfterParsing } -Scope It
                 $contentAfterParsing = ConvertFrom-Json -InputObject $secondFileContent
                 $contentAfterParsing.parameters.parTopLevelManagementGroupSuffix.value = 'bla'
                 $contentAfterParsing.parameters.parLocation.value = 'eastus'
                 $contentStringAfterParsing = ConvertTo-Json -InputObject $contentAfterParsing
                 Write-InformationColored $contentStringAfterParsing -ForegroundColor Yellow -InformationAction Continue
-                Assert-MockCalled -CommandName Out-File -ParameterFilter { $FilePath -eq "test2.parameters.json" -and $InputObject -eq $contentStringAfterParsing } -Scope It
+                Should -Invoke -CommandName Out-File -ParameterFilter { $FilePath -eq "test2.parameters.json" -and $InputObject -eq $contentStringAfterParsing } -Scope It
             }
         }
     }
