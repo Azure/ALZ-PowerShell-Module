@@ -41,10 +41,10 @@ InModuleScope 'ALZ' {
         }
         $firstFileContent = '{
             "parameters": {
-                "parTopLevelManagementGroupPrefix": {
+                "parCompanyPrefix": {
                     "value": ""
                 },
-                "parCompanyPrefix": {
+                "parTopLevelManagementGroupPrefix": {
                     "value": ""
                 }
             }
