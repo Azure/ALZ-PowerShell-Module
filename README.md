@@ -1,5 +1,9 @@
 # ALZ
 
+[![ActionsTest-Windows-pwsh-Build](https://github.com/Azure/ALZ-PowerShell-Module/actions/workflows/wf_Windows_Core.yml/badge.svg?branch=main)](https://github.com/Azure/ALZ-PowerShell-Module/actions/workflows/wf_Windows_Core.yml)
+
+![Logo](./docs/ALZLogo-Small.png)
+
 ## Synopsis
 
 This is a PowerShell module that provides a set of cmdlets to manage Azure Landing Zones.
