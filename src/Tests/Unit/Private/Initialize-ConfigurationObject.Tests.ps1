@@ -48,10 +48,9 @@ InModuleScope 'ALZ' {
                 $content.Location.AllowedValues | Should -Be @('eastus', 'ukwest')
 
                 $content.Environment.Value | Should -Be ''
-                $content.Environment.Description | Should -Be 'The type of environment that will be created . Example: dev, test, qa, staging, prod'
+                $content.Environment.Description | Should -Be 'The type of environment that will be created. Example: dev, test, qa, staging, prod'
                 $content.Environment.Names | Should -Be @('parEnvironment')
                 $content.Environment.DefaultValue | Should -Be 'prod'
-
             }
         }
     }

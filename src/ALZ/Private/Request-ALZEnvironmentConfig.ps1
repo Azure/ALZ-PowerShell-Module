@@ -9,9 +9,9 @@ function Request-ALZEnvironmentConfig {
     .SYNOPSIS
     This function uses a template configuration to prompt for and return a user specified/modified configuration object.
     .EXAMPLE
-    New-SlzEnvironmentConfig
+    Request-ALZEnvironmentConfig
     .EXAMPLE
-    New-SlzEnvironmentConfig -sourceConfigurationFile "orchestration/scripts/parameters/sovereignLandingZone.parameters.json"
+    Request-ALZEnvironmentConfig -alzIacProvider "bicep"
     .OUTPUTS
     System.Object. The resultant configuration values.
     #>

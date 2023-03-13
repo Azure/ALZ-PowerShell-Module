@@ -54,7 +54,7 @@
     RequiredModules   = @(
         @{
             ModuleName    = 'Az.Resources'
-            ModuleVersion = '5.6.0'
+            ModuleVersion = '6.5.2'
         }
     )
 

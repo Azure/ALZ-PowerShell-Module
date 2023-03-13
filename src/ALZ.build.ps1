@@ -141,7 +141,7 @@ Add-BuildTask ImportModuleManifest {
     Write-Build White '      Attempting to load the project module.'
     try {
         Import-Module $script:ModuleManifestFile -Force -PassThru -ErrorAction Stop
-    } catch {
+    } catch Exception {
         throw 'Unable to load the project module'
     }
     Write-Build Green "      ...$script:ModuleName imported successfully"
