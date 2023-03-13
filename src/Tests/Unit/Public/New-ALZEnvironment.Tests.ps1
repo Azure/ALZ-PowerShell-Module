@@ -39,6 +39,7 @@ InModuleScope 'ALZ' {
                 }
 
                 Mock -CommandName Edit-ALZConfigurationFilesInPlace
+                Mock -CommandName Build-ALZDeploymentEnvFile
 
                 Mock -CommandName Get-ALZBicepSource -MockWith {
                     "C:\temp\source"

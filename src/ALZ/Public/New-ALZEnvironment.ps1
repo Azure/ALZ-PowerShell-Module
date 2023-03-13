@@ -63,7 +63,7 @@ function New-ALZEnvironment {
         }
 
         Edit-ALZConfigurationFilesInPlace -alzEnvironmentDestination $alzEnvironmentDestination -configuration $configuration | Out-Null
-        #Create-ALZDeploymentEnvFile -configuration $configuration
+        Build-ALZDeploymentEnvFile -configuration $configuration -Destination $alzEnvironmentDestination | Out-Null
     }
 
     return $true

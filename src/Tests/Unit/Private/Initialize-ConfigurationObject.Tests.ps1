@@ -35,7 +35,7 @@ InModuleScope 'ALZ' {
                 $content.Prefix.Value | Should -Be 'alz'
                 $content.Prefix.DefaultValue | Should -Be 'alz'
                 $content.Prefix.Description | Should -Be 'The prefix that will be added to all resources created by this deployment.'
-                $content.Prefix.Names | Should -Be @('parTopLevelManagementGroupPrefix', 'parCompanyPrefix')
+                $content.Prefix.Names | Should -Be @('parTopLevelManagementGroupPrefix', 'parCompanyPrefix', 'parTargetManagementGroupId', 'parAssignableScopeManagementGroupId')
 
                 $content.Suffix.Value | Should -Be ''
                 $content.Suffix.DefaultValue | Should -Be ''

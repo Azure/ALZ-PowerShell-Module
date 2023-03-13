@@ -21,47 +21,47 @@ function Initialize-ConfigurationObject {
     }
 
     return [pscustomobject]@{
-        Prefix          = [pscustomobject]@{
+        Prefix                     = [pscustomobject]@{
             description  = "The prefix that will be added to all resources created by this deployment."
             names        = @("parTopLevelManagementGroupPrefix", "parCompanyPrefix", "parTargetManagementGroupId", "parAssignableScopeManagementGroupId")
             value        = "alz"
             defaultValue = "alz"
         }
-        Suffix          = [pscustomobject]@{
+        Suffix                     = [pscustomobject]@{
             Description  = "The suffix that will be added to all resources created by this deployment."
             Names        = @("parTopLevelManagementGroupSuffix")
             Value        = ""
             DefaultValue = ""
         }
-        Location        = [pscustomobject]@{
+        Location                   = [pscustomobject]@{
             Description   = "Deployment location."
             Names         = @("parLocation")
             AllowedValues = @(Get-AzLocation | Sort-Object Location | Select-Object -ExpandProperty Location )
             Value         = ""
         }
-        Environment     = [pscustomobject]@{
+        Environment                = [pscustomobject]@{
             Description  = "The type of environment that will be created. Example: dev, test, qa, staging, prod"
             Names        = @("parEnvironment")
             DefaultValue = 'prod'
             Value        = ""
         }
-        SecurityContact = [pscustomobject]@{
+        SecurityContact            = [pscustomobject]@{
             Description = "The email address of the security contact for the subscription."
             Names       = @("parSecurityContact", "parMsDefenderForCloudEmailSecurityContact", "emailSecurityContact")
             Value       = ""
-        },
-        IdentitySubscriptionId = [pscustomobject]@{
+        }
+        IdentitySubscriptionId     = [pscustomobject]@{
             Description = "The id of the identity subscription."
             Value       = ""
-        },
+        }
         ConnectivitySubscriptionId = [pscustomobject]@{
             Description = "The id of the connectivity subscription."
             Value       = ""
-        },
-        ManagementSubscriptionId = [pscustomobject]@{
+        }
+        ManagementSubscriptionId   = [pscustomobject]@{
             Description = "The id of the management subscription."
             Value       = ""
-        },
+        }
     }
 }
 
