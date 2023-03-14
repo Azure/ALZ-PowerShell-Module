@@ -25,7 +25,15 @@ function Edit-ALZConfigurationFilesInPlace {
         foreach ($configKey in $configuration.PsObject.Properties) {
             foreach ($name in $configKey.Value.Names) {
                 if ($null -ne $bicepConfiguration.parameters[$name]) {
-                    $bicepConfiguration.parameters[$name].value = $configKey.Value.Value
+
+                    if ($null -ne $configKey.Value.Replace) {
+                        $bicepConfiguration.parameters[$name].value = `
+                            $bicepConfiguration.parameters[$name].value -replace [regex]::escape($configKey.Value.Replace), $configKey.Value.Value
+                    } else {
+                        $bicepConfiguration.parameters[$name].value = $configKey.Value.Value
+                    }
+
+
                     $modified = $true
                 }
             }

@@ -7,16 +7,22 @@ function Request-ConfigurationValue {
         [object] $configValue
     )
 
-    $allowedValues = $configValue.allowedValues
-    $hasAllowedValues = $null -ne $configValue.allowedValues
+    $allowedValues = $configValue.AllowedValues
+    $hasAllowedValues = $null -ne $configValue.AllowedValues
 
-    $defaultValue = $configValue.defaultValue
-    $hasDefaultValue = $null -ne $configValue.defaultValue
+    $defaultValue = $configValue.DefaultValue
+    $hasDefaultValue = $null -ne $configValue.DefaultValue
 
-    Write-InformationColored $configValue.description -ForegroundColor White -InformationAction Continue
+    $hasValidator = $null -ne $configValue.Valid
+
+    Write-InformationColored $configValue.Description -ForegroundColor White -InformationAction Continue
     if ($hasAllowedValues) {
         Write-InformationColored "[allowed: $allowedValues] " -ForegroundColor Yellow -InformationAction Continue
     }
+
+    $hasInvalidText = $true
+    $isDisallowedValue = $true
+    $isNotValid = $true
 
     do {
         Write-InformationColored "$($configName) " -ForegroundColor Yellow -NoNewline -InformationAction Continue
@@ -30,12 +36,20 @@ function Request-ConfigurationValue {
         $readValue = Read-Host
 
         if ($hasDefaultValue -and $readValue -eq "") {
-            $configValue.value = $configValue.defaultValue
+            $configValue.Value = $configValue.defaultValue
         } else {
-            $configValue.value = $readValue
+            $configValue.Value = $readValue
+        }
+
+        $hasInvalidText = ($null -eq $configValue.Value -or "" -eq $configValue.Value) -and ($configValue.Value -ne $configValue.DefaultValue)
+        $isDisallowedValue = $hasAllowedValues -and $allowedValues.Contains($configValue.Value) -eq $false
+        $isNotValid = $hasValidator -and $configValue.Value -match $configValue.Valid -eq $false
+
+        if ($hasInvalidText -or $isDisallowedValue -or $isNotValid) {
+            Write-InformationColored "Please specify a valid value for this field." -ForegroundColor Red -InformationAction Continue
         }
     }
-    while ((($null -eq $configValue.value -or "" -eq $configValue.value) -and ($configValue.value -ne $configValue.defaultValue)) -or ($hasAllowedValues -and $allowedValues.Contains($configValue.value) -eq $false))
+    while ($hasInvalidText -or $isDisallowedValue -or $isNotValid)
 
     Write-InformationColored "" -InformationAction Continue
 }

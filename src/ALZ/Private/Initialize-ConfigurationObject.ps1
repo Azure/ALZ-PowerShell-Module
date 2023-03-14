@@ -22,45 +22,55 @@ function Initialize-ConfigurationObject {
 
     return [pscustomobject]@{
         Prefix                     = [pscustomobject]@{
-            description  = "The prefix that will be added to all resources created by this deployment."
-            names        = @("parTopLevelManagementGroupPrefix", "parCompanyPrefix", "parTargetManagementGroupId", "parAssignableScopeManagementGroupId")
-            value        = "alz"
-            defaultValue = "alz"
+            Type         = "Configuration"
+            Description  = "The prefix that will be added to all resources created by this deployment. (e.g. 'alz')"
+            Names        = @("parTopLevelManagementGroupPrefix", "parCompanyPrefix", "parTargetManagementGroupId", "parAssignableScopeManagementGroupId")
+            Value        = "alz"
+            DefaultValue = "alz"
+            Valid        = "^[a-zA-Z]{3,5}$"
         }
         Suffix                     = [pscustomobject]@{
-            Description  = "The suffix that will be added to all resources created by this deployment."
+            Type         = "Configuration"
+            Description  = "The suffix that will be added to all resources created by this deployment. (e.g. 'test')"
             Names        = @("parTopLevelManagementGroupSuffix")
             Value        = ""
             DefaultValue = ""
+            Valid        = "^[a-zA-Z]{0,5}$"
         }
         Location                   = [pscustomobject]@{
+            Type          = "Configuration"
             Description   = "Deployment location."
-            Names         = @("parLocation")
-            AllowedValues = @(Get-AzLocation | Sort-Object Location | Select-Object -ExpandProperty Location )
+            Names         = @("parLocation", "parAutomationAccountLocation", "parLogAnalyticsWorkspaceLocation")
+            AllowedValues = @(Get-AzLocation | Sort-Object Location | Select-Object -ExpandProperty Location)
             Value         = ""
         }
         Environment                = [pscustomobject]@{
-            Description  = "The type of environment that will be created. Example: dev, test, qa, staging, prod"
+            Type         = "Configuration"
+            Description  = "The type of environment that will be created. (e.g. 'dev', 'test', 'qa', 'staging', 'prod')"
             Names        = @("parEnvironment")
             DefaultValue = 'prod'
             Value        = ""
-        }
-        SecurityContact            = [pscustomobject]@{
-            Description = "The email address of the security contact for the subscription."
-            Names       = @("parSecurityContact", "parMsDefenderForCloudEmailSecurityContact", "emailSecurityContact")
-            Value       = ""
+            Valid        = "^[a-zA-Z0-9]{2,10}$"
         }
         IdentitySubscriptionId     = [pscustomobject]@{
-            Description = "The id of the identity subscription."
-            Value       = ""
+            ForEnvironment = $true
+            Description    = "The identifier of the Identity subscription. (e.g '00000000-0000-0000-0000-000000000000')"
+            Valid          = "^( {){0,1}[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}(}){0,1}$"
+            Value          = ""
         }
         ConnectivitySubscriptionId = [pscustomobject]@{
-            Description = "The id of the connectivity subscription."
-            Value       = ""
+            ForEnvironment = $true
+            Description    = "The identifier of the Connectivity subscription. (e.g '00000000-0000-0000-0000-000000000000')"
+            Valid          = "^( {){0,1}[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}(}){0,1}$"
+            Value          = ""
         }
         ManagementSubscriptionId   = [pscustomobject]@{
-            Description = "The id of the management subscription."
-            Value       = ""
+            ForEnvironment = $true
+            Description    = "The identifier of the Management subscription. (e.g 00000000-0000-0000-0000-000000000000)"
+            Valid          = "^( {){0,1}[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}(}){0,1}$"
+            Names          = @("parLogAnalyticsWorkspaceResourceId")
+            Replace        = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+            Value          = ""
         }
     }
 }
