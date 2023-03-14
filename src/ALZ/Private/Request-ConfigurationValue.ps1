@@ -4,7 +4,10 @@ function Request-ConfigurationValue {
         [string] $configName,
 
         [Parameter(Mandatory = $true)]
-        [object] $configValue
+        [object] $configValue,
+
+        [Parameter(Mandatory = $false)]
+        [System.Boolean] $withRetries = $true
     )
 
     $allowedValues = $configValue.AllowedValues
@@ -20,10 +23,6 @@ function Request-ConfigurationValue {
         Write-InformationColored "[allowed: $allowedValues] " -ForegroundColor Yellow -InformationAction Continue
     }
 
-    $hasInvalidText = $true
-    $isDisallowedValue = $true
-    $isNotValid = $true
-
     do {
         Write-InformationColored "$($configName) " -ForegroundColor Yellow -NoNewline -InformationAction Continue
         if ($hasDefaultValue) {
@@ -35,21 +34,27 @@ function Request-ConfigurationValue {
 
         $readValue = Read-Host
 
+        $previousValue = $configValue.Value
+
         if ($hasDefaultValue -and $readValue -eq "") {
             $configValue.Value = $configValue.defaultValue
         } else {
             $configValue.Value = $readValue
         }
 
-        $hasInvalidText = ($null -eq $configValue.Value -or "" -eq $configValue.Value) -and ($configValue.Value -ne $configValue.DefaultValue)
+        $hasNotSpecifiedValue = ($null -eq $configValue.Value -or "" -eq $configValue.Value) -and ($configValue.Value -ne $configValue.DefaultValue)
         $isDisallowedValue = $hasAllowedValues -and $allowedValues.Contains($configValue.Value) -eq $false
         $isNotValid = $hasValidator -and $configValue.Value -match $configValue.Valid -eq $false
 
-        if ($hasInvalidText -or $isDisallowedValue -or $isNotValid) {
+        if ($hasNotSpecifiedValue -or $isDisallowedValue -or $isNotValid) {
             Write-InformationColored "Please specify a valid value for this field." -ForegroundColor Red -InformationAction Continue
+            $configValue.Value = $previousValue
+            $validationError = $true
         }
+
+        $shouldRetry = $validationError -and $withRetries
     }
-    while ($hasInvalidText -or $isDisallowedValue -or $isNotValid)
+    while (($hasNotSpecifiedValue -or $isDisallowedValue -or $isNotValid) -and $shouldRetry)
 
     Write-InformationColored "" -InformationAction Continue
 }

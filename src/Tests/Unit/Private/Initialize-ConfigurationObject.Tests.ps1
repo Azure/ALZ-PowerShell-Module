@@ -52,6 +52,10 @@ InModuleScope 'ALZ' {
                 $content.Environment.Names | Should -Be @('parEnvironment')
                 $content.Environment.DefaultValue | Should -Be 'prod'
             }
+
+            It 'Throws for unsupported Terraform IAC' {
+                { Initialize-ConfigurationObject -alzIacProvider "terraform" } | Should -Throw -ExpectedMessage "Terraform is not yet supported."
+            }
         }
     }
 }
