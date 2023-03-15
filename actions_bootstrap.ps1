@@ -36,8 +36,6 @@ $null = $modulesToInstall.Add(([PSCustomObject]@{
             ModuleVersion = '6.5.2'
         }))
 
-
-
 'Installing PowerShell Modules'
 foreach ($module in $modulesToInstall) {
     $installSplat = @{
