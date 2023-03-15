@@ -22,8 +22,8 @@ function Build-ALZDeploymentEnvFile {
     New-Item -Path $envFile -ItemType file -Force | Out-Null
 
     foreach ($configurationValue in $configuration.PsObject.Properties) {
-        if ($configurationValue.Value.Type -eq "Environment") {
-            Add-Content -Path $envFile -Value "$($($configurationValue.Name))=`"$($configurationValue.Value.Value)`""
+        if ($configurationValue.Value.ForEnvironment -eq $true) {
+            Add-Content -Path $envFile -Value "$($($configurationValue.Name))=`"$($configurationValue.Value.Value)`"" | Out-Null
         }
     }
 }

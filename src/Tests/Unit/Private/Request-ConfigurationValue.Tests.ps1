@@ -42,6 +42,25 @@ InModuleScope 'ALZ' {
                 $configValue.Value | Should -BeExactly "user input value"
             }
 
+            It 'Prompt the user for configuration and providing no value selects the default value.' {
+                Mock -CommandName Read-Host -MockWith {
+                    ""
+                }
+
+                $configValue = @{
+                    Description  = "The prefix that will be added to all resources created by this deployment."
+                    Names        = @("parTopLevelManagementGroupPrefix", "parCompanyPrefix")
+                    Value        = ""
+                    DefaultValue = "alz"
+                }
+
+                Request-ConfigurationValue -configName "prefix" -configValue $configValue
+
+                Assert-MockCalled -CommandName Write-InformationColored -Times 3
+
+                $configValue.Value | Should -BeExactly "alz"
+            }
+
             It 'Prompt the user with warning text if no value is specified and no default value is present.' {
                 Mock -CommandName Read-Host -MockWith {
                     ""
