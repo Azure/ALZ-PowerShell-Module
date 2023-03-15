@@ -33,7 +33,7 @@ $null = $modulesToInstall.Add(([PSCustomObject]@{
 # Required dependency of the ALZ module itself.
 $null = $modulesToInstall.Add(([PSCustomObject]@{
             ModuleName    = 'Az.Resources'
-            ModuleVersion = '5.6.0'
+            ModuleVersion = '6.5.2'
         }))
 
 
@@ -52,8 +52,7 @@ foreach ($module in $modulesToInstall) {
         Install-Module @installSplat
         Import-Module -Name $module.ModuleName -ErrorAction Stop
         '  - Successfully installed {0}' -f $module.ModuleName
-    }
-    catch {
+    } catch {
         $message = 'Failed to install {0}' -f $module.ModuleName
         "  - $message"
         throw
