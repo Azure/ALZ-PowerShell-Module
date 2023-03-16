@@ -55,44 +55,40 @@ function Initialize-ConfigurationObject {
         IdentitySubscriptionId     = [pscustomobject]@{
             Type           = "UserInput"
             ForEnvironment = $true
-            Description    = "The identifier of the Identity subscription. (e.g '00000000-0000-0000-0000-000000000000')"
-            IsValid        = { $Value -match "^( {){0,1}[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}(}){0,1}$" }
+            Description    = "The identifier of the Identity Subscription. (e.g '00000000-0000-0000-0000-000000000000')"
+            Valid          = "^( {){0,1}[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}(}){0,1}$"
             Value          = ""
         }
         ConnectivitySubscriptionId = [pscustomobject]@{
             Type           = "UserInput"
             ForEnvironment = $true
-            Description    = "The identifier of the Connectivity subscription. (e.g '00000000-0000-0000-0000-000000000000')"
-            IsValid        = { $Value -match "^( {){0,1}[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}(}){0,1}$" }
+            Description    = "The identifier of the Connectivity Subscription. (e.g '00000000-0000-0000-0000-000000000000')"
+            Valid          = "^( {){0,1}[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}(}){0,1}$"
             Value          = ""
         }
         ManagementSubscriptionId   = [pscustomobject]@{
             Type           = "UserInput"
             ForEnvironment = $true
-            Description    = "The identifier of the Management subscription. (e.g 00000000-0000-0000-0000-000000000000)"
-            IsValid        = { $Value -match "^( {){0,1}[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}(}){0,1}$" }
+            Description    = "The identifier of the Management Subscription. (e.g 00000000-0000-0000-0000-000000000000)"
+            Valid          = "^( {){0,1}[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}(}){0,1}$"
             Value          = ""
         }
         BillingAccountId           = [pscustomobject]@{
             Type        = "UserInput"
             Description = "The identifier of the Billing Account. (e.g 00000000-0000-0000-0000-000000000000)"
-            IsValid     = { $Value -match "^( {){0,1}[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}(}){0,1}$" }
+            IValid      = "^( {){0,1}[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}(}){0,1}$"
+            Value       = ""
+        }
+        EnrollmentAccountId        = [pscustomobject]@{
+            Type        = "UserInput"
+            Description = "The identifier of the Enrollment Account. (e.g 00000000-0000-0000-0000-000000000000)"
+            Valid       = "^( {){0,1}[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}(}){0,1}$"
             Value       = ""
         }
         LogAnalyticsResourceId     = [pscustomobject]@{
             Type  = "Computed"
             Value = "/subscriptions/{%ManagementSubscriptionId%}/resourcegroups/alz-logging/providers/microsoft.operationalinsights/workspaces/alz-log-analytics"
             Names = @("parLogAnalyticsWorkspaceResourceId")
-        }
-        EnrollmentAccountId        = [pscustomobject]@{
-            Type        = "UserInput"
-            Description = "The identifier of the Enrollement Account. (e.g 00000000-0000-0000-0000-000000000000)"
-            Value       = ""
-        }
-        SubscriptionBillingScope   = [pscustomobject]@{
-            Type  = "Computed"
-            Names = @("parSubscriptionBillingScope")
-            Value = "/providers/Microsoft.Billing/billingAccounts/{%BillingAccountId$%}/enrollmentAccounts/{%EnrollmentAccountId$%}"
         }
     }
 }
