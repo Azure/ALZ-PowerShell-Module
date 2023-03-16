@@ -21,10 +21,12 @@ function Request-ALZEnvironmentConfig {
 
     $configuration = Initialize-ConfigurationObject -alzIacProvider $alzIacProvider
     Write-Verbose "Configuration object initialized."
-    Write-Verbose "Configuration object: $(ConvertTo-Json $configuration)"
+    # Write-Verbose "Configuration object: $(ConvertTo-Json $configuration -Depth 10)"
 
     foreach ($configurationValue in $configuration.PsObject.Properties) {
-        Request-ConfigurationValue $configurationValue.Name $configurationValue.Value
+        if ($configurationValue.Value.Type -eq "UserInput") {
+            Request-ConfigurationValue $configurationValue.Name $configurationValue.Value
+        }
     }
 
     return $configuration

@@ -25,17 +25,11 @@ function Edit-ALZConfigurationFilesInPlace {
         foreach ($configKey in $configuration.PsObject.Properties) {
             foreach ($name in $configKey.Value.Names) {
                 if ($null -ne $bicepConfiguration.parameters[$name]) {
-
-                    # If we've specified a string to replace - and the value contains that string, then replace it.
-                    # Otherwise overwrite the value completely.
-                    if ($null -ne $configKey.Value.Replace) {
-                        $bicepConfiguration.parameters[$name].value = `
-                            $bicepConfiguration.parameters[$name].value -replace $configKey.Value.Replace, $configKey.Value.Value
+                    if ($configKey.Value.Type -eq "Computed") {
+                        $bicepConfiguration.parameters[$name].value = Format-TokenizedConfigurationString $configKey.Value.Value $configuration
                     } else {
                         $bicepConfiguration.parameters[$name].value = $configKey.Value.Value
                     }
-
-
                     $modified = $true
                 }
             }

@@ -38,6 +38,12 @@ InModuleScope 'ALZ' {
                 DefaultValue = 'prod'
                 Value        = "dev"
             }
+            Logging     = [pscustomobject]@{
+                Type        = "Computed"
+                Description = "The type of environment that will be created . Example: dev, test, qa, staging, prod"
+                Value       = "logs/{%Environment%}/{%Location%}"
+                Names       = @("parLogging")
+            }
         }
         $firstFileContent = '{
             "parameters": {
@@ -45,6 +51,9 @@ InModuleScope 'ALZ' {
                     "value": ""
                 },
                 "parTopLevelManagementGroupPrefix": {
+                    "value": ""
+                },
+                "parLogging" : {
                     "value": ""
                 }
             }
@@ -97,9 +106,11 @@ InModuleScope 'ALZ' {
                 $contentAfterParsing = ConvertFrom-Json -InputObject $firstFileContent -AsHashtable
                 $contentAfterParsing.parameters.parTopLevelManagementGroupPrefix.value = 'test'
                 $contentAfterParsing.parameters.parCompanyPrefix.value = 'test'
+                $contentAfterParsing.parameters.parLogging.value = "logs/dev/eastus"
                 $contentStringAfterParsing = ConvertTo-Json -InputObject $contentAfterParsing
                 Write-InformationColored $contentStringAfterParsing -ForegroundColor Yellow -InformationAction Continue
                 Should -Invoke -CommandName Out-File -ParameterFilter { $FilePath -eq "test1.parameters.json" -and $InputObject -eq $contentStringAfterParsing } -Scope It
+
                 $contentAfterParsing = ConvertFrom-Json -InputObject $secondFileContent -AsHashtable
                 $contentAfterParsing.parameters.parTopLevelManagementGroupSuffix.value = 'bla'
                 $contentAfterParsing.parameters.parLocation.value = 'eastus'

@@ -23,10 +23,12 @@ InModuleScope 'ALZ' {
                 Mock -CommandName Initialize-ConfigurationObject -MockWith {
                     [pscustomobject]@{
                         Setting1 = [pscustomobject]@{
+                            Type           = "UserInput"
                             ForEnvironment = $true
                             Value          = "Test1"
                         }
                         Setting2 = [pscustomobject]@{
+                            Type           = "UserInput"
                             ForEnvironment = $true
                             Value          = "Test2"
                         }
