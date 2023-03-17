@@ -20,5 +20,5 @@ function Request-ALZEnvironmentConfig {
         }
     }
 
-    return $configuration
+    return $configurationParameters
 }
