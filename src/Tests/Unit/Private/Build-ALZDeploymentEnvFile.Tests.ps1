@@ -25,12 +25,20 @@ InModuleScope 'ALZ' {
 
                 $configuration = [pscustomobject]@{
                     Setting1 = [pscustomobject]@{
-                        ForEnvironment = $true
-                        Value          = "Test1"
+                        Targets = @(
+                            [pscustomobject]@{
+                                Name        = "Setting1"
+                                Destination = "Environment"
+                            })
+                        Value   = "Test1"
                     }
                     Setting2 = [pscustomobject]@{
-                        ForEnvironment = $true
-                        Value          = "Test2"
+                        Targets = @(
+                            [pscustomobject]@{
+                                Name        = "Setting2"
+                                Destination = "Environment"
+                            })
+                        Value   = "Test2"
                     }
                 }
 
@@ -47,12 +55,20 @@ InModuleScope 'ALZ' {
 
                 $configuration = [pscustomobject]@{
                     Setting1 = [pscustomobject]@{
-                        ForEnvironment = $true
-                        Value          = "Test1"
+                        Targets = @(
+                            [pscustomobject]@{
+                                Name        = "Setting1"
+                                Destination = "Environment"
+                            })
+                        Value   = "Test1"
                     }
                     Setting2 = [pscustomobject]@{
-                        ForEnvironment = $false
-                        Value          = "Test2"
+                        Targets = @(
+                            [pscustomobject]@{
+                                Name        = "Setting2"
+                                Destination = "Parameters"
+                            })
+                        Value   = "Test2"
                     }
                 }
 

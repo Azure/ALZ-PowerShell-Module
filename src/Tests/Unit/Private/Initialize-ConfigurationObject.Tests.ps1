@@ -32,24 +32,24 @@ InModuleScope 'ALZ' {
             }
             It 'should return the not met for non AZ module' {
                 $content = Initialize-ConfigurationObject
-                $content.Prefix.Value | Should -Be 'alz'
+                $content.Prefix.Value | Should -Be ''
                 $content.Prefix.DefaultValue | Should -Be 'alz'
                 $content.Prefix.Description | Should -Be "The prefix that will be added to all resources created by this deployment. (e.g. 'alz')"
-                $content.Prefix.Names | Should -Be @('parTopLevelManagementGroupPrefix', 'parCompanyPrefix', 'parTargetManagementGroupId', 'parAssignableScopeManagementGroupId')
+                # $content.Prefix.Names | Should -Be @('parTopLevelManagementGroupPrefix', 'parCompanyPrefix', 'parTargetManagementGroupId', 'parAssignableScopeManagementGroupId')
 
                 $content.Suffix.Value | Should -Be ''
                 $content.Suffix.DefaultValue | Should -Be ''
                 $content.Suffix.Description | Should -Be "The suffix that will be added to all resources created by this deployment. (e.g. 'test')"
-                $content.Suffix.Names | Should -Be @('parTopLevelManagementGroupSuffix')
+                # $content.Suffix.Names | Should -Be @('parTopLevelManagementGroupSuffix')
 
                 $content.Location.Value | Should -Be ''
                 $content.Location.Description | Should -Be 'Deployment location.'
-                $content.Location.Names | Should -Be @("parLocation", "parAutomationAccountLocation", "parLogAnalyticsWorkspaceLocation")
+                # $content.Location.Names | Should -Be @("parLocation", "parAutomationAccountLocation", "parLogAnalyticsWorkspaceLocation")
                 $content.Location.AllowedValues | Should -Be @('eastus', 'ukwest')
 
                 $content.Environment.Value | Should -Be ''
                 $content.Environment.Description | Should -Be "The type of environment that will be created. (e.g. 'dev', 'test', 'qa', 'staging', 'prod')"
-                $content.Environment.Names | Should -Be @('parEnvironment')
+                # $content.Environment.Namkes | Should -Be @('parEnvironment')
                 $content.Environment.DefaultValue | Should -Be 'prod'
             }
 

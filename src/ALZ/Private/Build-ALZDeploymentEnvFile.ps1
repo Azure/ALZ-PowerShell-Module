@@ -22,8 +22,10 @@ function Build-ALZDeploymentEnvFile {
     New-Item -Path $envFile -ItemType file -Force | Out-Null
 
     foreach ($configurationValue in $configuration.PsObject.Properties) {
-        if ($configurationValue.Value.ForEnvironment -eq $true) {
-            Add-Content -Path $envFile -Value "$($($configurationValue.Name))=`"$($configurationValue.Value.Value)`"" | Out-Null
+        foreach ($target in $configurationValue.Value.Targets) {
+            if ($target.Destination -eq "Environment") {
+                Add-Content -Path $envFile -Value "$($($target.Name))=`"$($configurationValue.Value.Value)`"" | Out-Null
+            }
         }
     }
 }

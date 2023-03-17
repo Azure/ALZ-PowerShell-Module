@@ -16,25 +16,45 @@ InModuleScope 'ALZ' {
         $defaultConfig = [pscustomobject]@{
             Prefix      = [pscustomobject]@{
                 Description  = "The prefix that will be added to all resources created by this deployment."
-                Names        = @("parTopLevelManagementGroupPrefix", "parCompanyPrefix")
+                Targets      = @(
+                    [pscustomobject]@{
+                        Name        = "parTopLevelManagementGroupPrefix"
+                        Destination = "Parameters"
+                    },
+                    [pscustomobject]@{
+                        Name        = "parCompanyPrefix"
+                        Destination = "Parameters"
+                    })
                 Value        = "test"
                 DefaultValue = "alz"
             }
             Suffix      = [pscustomobject]@{
                 Description  = "The suffix that will be added to all resources created by this deployment."
-                Names        = @("parTopLevelManagementGroupSuffix")
+                Targets      = @(
+                    [pscustomobject]@{
+                        Name        = "parTopLevelManagementGroupSuffix"
+                        Destination = "Parameters"
+                    })
                 Value        = "bla"
                 DefaultValue = ""
             }
             Location    = [pscustomobject]@{
                 Description   = "Deployment location."
-                Names         = @("parLocation")
+                Targets       = @(
+                    [pscustomobject]@{
+                        Name        = "parLocation"
+                        Destination = "Parameters"
+                    })
                 AllowedValues = @('ukwest', '')
                 Value         = "eastus"
             }
             Environment = [pscustomobject]@{
                 Description  = "The type of environment that will be created . Example: dev, test, qa, staging, prod"
-                Names        = @("parEnvironment")
+                Targets      = @(
+                    [pscustomobject]@{
+                        Name        = "parEnvironment"
+                        Destination = "Parameters"
+                    })
                 DefaultValue = 'prod'
                 Value        = "dev"
             }
@@ -42,7 +62,11 @@ InModuleScope 'ALZ' {
                 Type        = "Computed"
                 Description = "The type of environment that will be created . Example: dev, test, qa, staging, prod"
                 Value       = "logs/{%Environment%}/{%Location%}"
-                Names       = @("parLogging")
+                Targets     = @(
+                    [pscustomobject]@{
+                        Name        = "parLogging"
+                        Destination = "Parameters"
+                    })
             }
         }
         $firstFileContent = '{
