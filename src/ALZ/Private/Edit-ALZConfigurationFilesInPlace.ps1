@@ -11,7 +11,7 @@ function Edit-ALZConfigurationFilesInPlace {
         [object] $configuration
     )
 
-    $locations = @("orchestration", "customization")
+    $locations = @("orchestration", "config", "customization")
     $files = @()
 
     foreach ($location in $locations) {

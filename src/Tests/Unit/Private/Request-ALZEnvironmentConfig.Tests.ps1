@@ -20,31 +20,44 @@ InModuleScope 'ALZ' {
         Context 'Request-ALZEnvironmentConfig should request CLI input for configuration.' {
             It 'Based on the configuration object' {
 
-                Mock -CommandName Get-Configuration -MockWith {
-                    [pscustomobject]@{
-                        Setting1 = [pscustomobject]@{
-                            Type           = "UserInput"
-                            ForEnvironment = $true
-                            Value          = "Test1"
-                        }
-                        Setting2 = [pscustomobject]@{
-                            Type           = "UserInput"
-                            ForEnvironment = $true
-                            Value          = "Test2"
-                        }
-                    }
-                }
-
                 Mock -CommandName Request-ConfigurationValue
 
-                Request-ALZEnvironmentConfig -alzIacProvider "bicep" -alzEnvironmentDestination "." -alzBicepVersion "v0.13.0"
+                $config = @'
+                {
+                    "parameters":{
+                       "Prefix":{
+                          "Type":"UserInput",
+                          "Description":"The prefix that will be added to all resources created by this deployment. (e.g. 'alz')",
+                          "Targets":[
+                             {
+                                "Name":"parTopLevelManagementGroupPrefix",
+                                "Destination":"Parameters"
+                             }
+                          ],
+                          "DefaultValue":"alz"
+                       },
+                       "Suffix":{
+                          "Type":"UserInput",
+                          "Description":"The suffix that will be added to all resources created by this deployment. (e.g. 'test')",
+                          "Targets":[
+                             {
+                                "Name":"parTopLevelManagementGroupSuffix",
+                                "Destination":"Parameters"
+                             }
+                          ],
+                          "Value":"",
+                          "DefaultValue":"",
+                          "Valid":"^[a-zA-Z]{0,5}$"
+                       }
+                    }
+                 }
+'@ | ConvertFrom-Json
+
+                Request-ALZEnvironmentConfig -configurationParameters $config.Parameters
 
                 Should -Invoke Request-ConfigurationValue -Scope It -Times 2 -Exactly
             }
 
-            It 'Throws if the unsupported Terraform IAC is specified.' {
-                { Request-ALZEnvironmentConfig -alzIacProvider "terraform" -alzEnvironmentDestination "." -alzBicepVersion "v0.13.0" } | Should -Throw -ExpectedMessage "Terraform is not yet supported."
-            }
         }
     }
 }

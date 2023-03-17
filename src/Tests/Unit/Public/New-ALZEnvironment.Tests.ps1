@@ -41,13 +41,23 @@ InModuleScope 'ALZ' {
                 Mock -CommandName Edit-ALZConfigurationFilesInPlace
                 Mock -CommandName Build-ALZDeploymentEnvFile
 
-                Mock -CommandName Get-ALZBicepSource -MockWith {
-                    "C:\temp\source"
-                }
-
                 Mock -CommandName New-ALZDirectoryEnvironment -MockWith { }
 
                 Mock -CommandName Copy-Item -MockWith { }
+
+                Mock -CommandName Get-ALZBicepConfig -MockWith {
+                    @{
+                        "module_url" = "test"
+                        "version" = "v1.0.0"
+                        "parameters" = @{
+                            "test" = @{
+                                "type" = "string"
+                            }
+                        }
+                    }
+                 }
+
+                Mock -CommandName Get-GithubRelease -MockWith { }
 
                 Mock -CommandName Write-InformationColored
             }

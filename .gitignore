@@ -12,3 +12,4 @@ coverage.xml
 ehthumbs.db
 Thumbs.db
 src/ALZ/Assets/alz-bicep-internal/
+test_output/
