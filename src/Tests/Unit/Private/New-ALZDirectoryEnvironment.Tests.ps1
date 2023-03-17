@@ -25,11 +25,10 @@ InModuleScope 'ALZ' {
                 $basePath = "./config"
 
                 New-ALZDirectoryEnvironment -OutputDirectory $basePath
-                Assert-MockCalled -CommandName New-Item -ParameterFilter { $Path -eq './config' } -Exactly 1
-                Assert-MockCalled -CommandName New-Item -ParameterFilter { $Path -eq $(Join-Path $basePath 'alz-bicep-internal') } -Exactly 1
-                Assert-MockCalled -CommandName New-Item -ParameterFilter { $Path -eq $(Join-Path $basePath '.github' 'workflows') } -Exactly 1
-                Assert-MockCalled -CommandName New-Item -ParameterFilter { $Path -eq $(Join-Path $basePath 'customization') } -Exactly 1
-                Assert-MockCalled -CommandName New-Item -ParameterFilter { $Path -eq $(Join-Path $basePath 'orchestration') } -Exactly 1
+                Should -Invoke -CommandName New-Item -ParameterFilter { $Path -eq './config' }
+                Should -Invoke -CommandName New-Item -ParameterFilter { $Path -eq $(Join-Path $basePath 'upstream-releases') } -Exactly 1
+                Should -Invoke -CommandName New-Item -ParameterFilter { $Path -eq $(Join-Path $basePath '.github' 'workflows') } -Exactly 1
+                Should -Invoke -CommandName New-Item -ParameterFilter { $Path -eq $(Join-Path $basePath 'config') } -Exactly 1
             }
         }
     }

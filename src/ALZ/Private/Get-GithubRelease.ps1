@@ -36,7 +36,7 @@ function Get-GithubRelease {
 
         [Parameter(Mandatory = $false, Position = 4, HelpMessage = "An array of strings contianing the paths to the directories or files that you wish to keep when downloading and extracting from the releases.")]
         [array]
-        $directoryAndFilesToKeep = @()
+        $directoryAndFilesToKeep = $null
     )
 
     # Split Repo URL into parts
@@ -120,7 +120,7 @@ function Get-GithubRelease {
                 Move-Item -Path "$($extractedSubFolder.FullName)/*" -Destination "$releaseDirectory" -ErrorAction SilentlyContinue | Out-String | Write-Verbose
             }
 
-            Remove-Item -Path "$releaseDirectory/tmp" -Force -Recurse
+            # Remove-Item -Path "$releaseDirectory/tmp" -Force -Recurse
 
         } else {
             Write-Verbose "===> Content already exists in $releaseDirectory. Skipping"

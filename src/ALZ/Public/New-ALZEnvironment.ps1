@@ -47,21 +47,16 @@ function New-ALZEnvironment {
 
     if ($PSCmdlet.ShouldProcess("ALZ-Bicep module configuration", "modify")) {
 
+        $bicepConfig = Get-ALZBicepConfig -alzBicepVersion $alzBicepVersion
+
         New-ALZDirectoryEnvironment -alzEnvironmentDestination $alzEnvironmentDestination | Out-Null
 
+        $alzEnvironmentDestinationInternalCode = Join-Path $alzEnvironmentDestination "upstream-releases"
+        Get-GithubRelease -directoryForReleases $alzEnvironmentDestinationInternalCode -githubRepoUrl $bicepConfig.module_url -releases @($bicepConfig.version) | Out-Null
+        Write-InformationColored "Copying ALZ-Bicep module to $alzEnvironmentDestinationInternalCode" -ForegroundColor Green  -InformationAction Continue
+        Write-InformationColored "ALZ-Bicep source directory: $alzBicepSourceDirectory" -ForegroundColor Green  -InformationAction Continue
 
-        $assetsDirectory = Join-Path $(Get-ScriptRoot) "../Assets"
-        Copy-Item -Path "$assetsDirectory/*" -Recurse -Destination $alzEnvironmentDestination -Force
-
-        if ($alzIacProvider -eq "bicep") {
-            $alzEnvironmentDestinationInternalCode = Join-Path $alzEnvironmentDestination "alz-bicep-internal" $alzBicepVersion
-            $alzBicepSourceDirectory = Get-ALZBicepSource -alzBicepVersion $alzBicepVersion
-            Write-InformationColored "Copying ALZ-Bicep module to $alzEnvironmentDestinationInternalCode" -ForegroundColor Green  -InformationAction Continue
-            Write-InformationColored "ALZ-Bicep source directory: $alzBicepSourceDirectory" -ForegroundColor Green  -InformationAction Continue
-            Initialize-ALZBicepConfigFile -alzEnvironmentDestination $alzEnvironmentDestination -alzBicepVersion $alzBicepVersion | Out-Null
-        }
-
-        $configuration = Request-ALZEnvironmentConfig -alzIacProvider $alzIacProvider -alzEnvironmentDestination $alzEnvironmentDestination -alzBicepVersion $alzBicepVersion
+        $configuration = Request-ALZEnvironmentConfig -configurationParameters $bicepConfig.parameters
 
         Edit-ALZConfigurationFilesInPlace -alzEnvironmentDestination $alzEnvironmentDestination -configuration $configuration | Out-Null
         Build-ALZDeploymentEnvFile -configuration $configuration -Destination $alzEnvironmentDestination | Out-Null
