@@ -45,11 +45,10 @@ function New-ALZEnvironment {
         return $false
     }
 
-    $configuration = Request-ALZEnvironmentConfig -alzIacProvider $alzIacProvider
-
     if ($PSCmdlet.ShouldProcess("ALZ-Bicep module configuration", "modify")) {
 
         New-ALZDirectoryEnvironment -alzEnvironmentDestination $alzEnvironmentDestination | Out-Null
+
 
         $assetsDirectory = Join-Path $(Get-ScriptRoot) "../Assets"
         Copy-Item -Path "$assetsDirectory/*" -Recurse -Destination $alzEnvironmentDestination -Force
@@ -61,6 +60,8 @@ function New-ALZEnvironment {
             Write-InformationColored "ALZ-Bicep source directory: $alzBicepSourceDirectory" -ForegroundColor Green  -InformationAction Continue
             Initialize-ALZBicepConfigFile -alzEnvironmentDestination $alzEnvironmentDestination -alzBicepVersion $alzBicepVersion | Out-Null
         }
+
+        $configuration = Request-ALZEnvironmentConfig -alzIacProvider $alzIacProvider -alzEnvironmentDestination $alzEnvironmentDestination -alzBicepVersion $alzBicepVersion
 
         Edit-ALZConfigurationFilesInPlace -alzEnvironmentDestination $alzEnvironmentDestination -configuration $configuration | Out-Null
         Build-ALZDeploymentEnvFile -configuration $configuration -Destination $alzEnvironmentDestination | Out-Null

@@ -1,0 +1,205 @@
+{
+    "Prefix": {
+        "Type": "UserInput",
+        "Description": "The prefix that will be added to all resources created by this deployment. (e.g. 'alz')",
+        "Targets": [
+            {
+                "Name": "parTopLevelManagementGroupPrefix",
+                "Destination": "Parameters"
+            },
+            {
+                "Name": "parCompanyPrefix",
+                "Destination": "Parameters"
+            },
+            {
+                "Name": "parTargetManagementGroupId",
+                "Destination": "Parameters"
+            },
+            {
+                "Name": "parAssignableScopeManagementGroupId",
+                "Destination": "Parameters"
+            }
+        ],
+        "Value": "",
+        "DefaultValue": "alz",
+        "Valid": "^[a-zA-Z]{3,5}$"
+    },
+    "Suffix": {
+        "Type": "UserInput",
+        "Description": "The suffix that will be added to all resources created by this deployment. (e.g. 'test')",
+        "Targets": [
+            {
+                "Name": "parTopLevelManagementGroupSuffix",
+                "Destination": "Parameters"
+            }
+        ],
+        "Value": "",
+        "DefaultValue": "",
+        "Valid": "^[a-zA-Z]{0,5}$"
+    },
+    "Location": {
+        "Type": "UserInput",
+        "Description": "Deployment location.",
+        "Value": "",
+        "Targets": [
+            {
+                "Name": "parLocation",
+                "Destination": "Parameters"
+            },
+            {
+                "Name": "parAutomationAccountLocation",
+                "Destination": "Parameters"
+            },
+            {
+                "Name": "parLogAnalyticsWorkspaceLocation",
+                "Destination": "Parameters"
+            }
+        ],
+        "AllowedValues": [
+            "asia",
+            "asiapacific",
+            "australia",
+            "australiacentral",
+            "australiacentral2",
+            "australiaeast",
+            "australiasoutheast",
+            "brazil",
+            "brazilsouth",
+            "brazilsoutheast",
+            "canada",
+            "canadacentral",
+            "canadaeast",
+            "centralindia",
+            "centralus",
+            "centraluseuap",
+            "centralusstage",
+            "eastasia",
+            "eastasiastage",
+            "eastus",
+            "eastus2",
+            "eastus2euap",
+            "eastus2stage",
+            "eastusstg",
+            "europe",
+            "france",
+            "francecentral",
+            "francesouth",
+            "germany",
+            "germanynorth",
+            "germanywestcentral",
+            "global",
+            "india",
+            "japan",
+            "japaneast",
+            "japanwest",
+            "jioindiacentral",
+            "jioindiawest",
+            "korea",
+            "koreacentral",
+            "koreasouth",
+            "northcentralus",
+            "northcentralusstage",
+            "northeurope",
+            "norway",
+            "norwayeast",
+            "norwaywest",
+            "qatarcentral",
+            "singapore",
+            "southafrica",
+            "southafricanorth",
+            "southafricawest",
+            "southcentralus",
+            "southcentralusstage",
+            "southeastasia",
+            "southindia",
+            "swedencentral",
+            "switzerland",
+            "switzerlandnorth",
+            "switzerlandwest",
+            "uaecentral",
+            "uaenorth",
+            "uksouth",
+            "ukwest",
+            "unitedstates",
+            "westcentralus",
+            "westeurope",
+            "westindia",
+            "westus",
+            "westus2",
+            "westus2stage",
+            "westus3",
+            "westusstage"
+        ]
+    },
+    "Environment": {
+        "Type": "UserInput",
+        "Description": "The Type of environment that will be created. (e.g. 'dev', 'test', 'qa', 'staging', 'prod')",
+        "Targets": [
+            {
+                "Name": "parEnvironment",
+                "Destination": "Parameters"
+            }
+        ],
+        "Value": "",
+        "DefaultValue": "prod",
+        "Valid": "^[a-zA-Z0-9]{2,10}$"
+    },
+    "IdentitySubscriptionId": {
+        "Type": "UserInput",
+        "Description": "The identifier of the Identity Subscription. (e.g '00000000-0000-0000-0000-000000000000')",
+        "Valid": "^( {){0,1}[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}(}){0,1}$",
+        "Targets": [
+            {
+                "Name": "IdentitySubscriptionId",
+                "Destination": "Environment"
+            }
+        ],
+        "Value": ""
+    },
+    "ConnectivitySubscriptionId": {
+        "Type": "UserInput",
+        "Description": "The identifier of the Connectivity Subscription. (e.g '00000000-0000-0000-0000-000000000000')",
+        "Valid": "^( {){0,1}[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}(}){0,1}$",
+        "Targets": [
+            {
+                "Name": "ConnectivitySubscriptionId",
+                "Destination": "Environment"
+            }
+        ],
+        "Value": ""
+    },
+    "ManagementSubscriptionId": {
+        "Type": "UserInput",
+        "Description": "The identifier of the Management Subscription. (e.g 00000000-0000-0000-0000-000000000000)",
+        "Valid": "^( {){0,1}[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}(}){0,1}$",
+        "Targets": [
+            {
+                "Name": "ManagementSubscriptionId",
+                "Destination": "Environment"
+            }
+        ],
+        "Value": ""
+    },
+    "BillingAccountId": {
+        "Type": "UserInput",
+        "Description": "The identifier of the Billing Account. (e.g 00000000-0000-0000-0000-000000000000)",
+        "Valid": "^( {){0,1}[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}(}){0,1}$",
+        "Value": ""
+    },
+    "EnrollmentAccountId": {
+        "Type": "UserInput",
+        "Description": "The identifier of the Enrollment Account. (e.g 00000000-0000-0000-0000-000000000000)",
+        "Valid": "^( {){0,1}[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}(}){0,1}$",
+        "Value": ""
+    },
+    "LogAnalyticsResourceId": {
+        "Type": "Computed",
+        "Value": "/subscriptions/{%ManagementSubscriptionId%}/resourcegroups/alz-logging/providers/microsoft.operationalinsights/workspaces/alz-log-analytics",
+        "Targets": [
+            {
+                "Name": "parLogAnalyticsWorkspaceResourceId",
+                "Destination": "Parameters"
+            }
+        ]
+    }
+}
