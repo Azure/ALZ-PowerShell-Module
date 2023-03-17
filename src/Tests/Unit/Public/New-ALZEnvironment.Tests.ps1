@@ -39,6 +39,7 @@ InModuleScope 'ALZ' {
                 }
 
                 Mock -CommandName Edit-ALZConfigurationFilesInPlace
+                Mock -CommandName Build-ALZDeploymentEnvFile
 
                 Mock -CommandName Get-ALZBicepSource -MockWith {
                     "C:\temp\source"
@@ -47,6 +48,8 @@ InModuleScope 'ALZ' {
                 Mock -CommandName New-ALZDirectoryEnvironment -MockWith { }
 
                 Mock -CommandName Copy-Item -MockWith { }
+
+                Mock -CommandName Write-InformationColored
             }
 
             It 'should return the output directory on completion' {
@@ -54,6 +57,12 @@ InModuleScope 'ALZ' {
                 $result | Should -Be $true
 
                 Assert-MockCalled -CommandName Edit-ALZConfigurationFilesInPlace -Exactly 1
+            }
+
+            It 'Warns if the unsupported Terraform IAC is specified.' {
+                New-ALZEnvironment -alzIacProvider "terraform"
+
+                Should -Invoke -CommandName Write-InformationColored -ParameterFilter { $ForegroundColor -eq "Red" } -Scope It
             }
         }
     }

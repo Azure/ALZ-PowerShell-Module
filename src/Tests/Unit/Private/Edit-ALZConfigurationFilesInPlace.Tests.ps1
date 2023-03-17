@@ -16,27 +16,57 @@ InModuleScope 'ALZ' {
         $defaultConfig = [pscustomobject]@{
             Prefix      = [pscustomobject]@{
                 Description  = "The prefix that will be added to all resources created by this deployment."
-                Names        = @("parTopLevelManagementGroupPrefix", "parCompanyPrefix")
+                Targets      = @(
+                    [pscustomobject]@{
+                        Name        = "parTopLevelManagementGroupPrefix"
+                        Destination = "Parameters"
+                    },
+                    [pscustomobject]@{
+                        Name        = "parCompanyPrefix"
+                        Destination = "Parameters"
+                    })
                 Value        = "test"
                 DefaultValue = "alz"
             }
             Suffix      = [pscustomobject]@{
                 Description  = "The suffix that will be added to all resources created by this deployment."
-                Names        = @("parTopLevelManagementGroupSuffix")
+                Targets      = @(
+                    [pscustomobject]@{
+                        Name        = "parTopLevelManagementGroupSuffix"
+                        Destination = "Parameters"
+                    })
                 Value        = "bla"
                 DefaultValue = ""
             }
             Location    = [pscustomobject]@{
                 Description   = "Deployment location."
-                Names         = @("parLocation")
+                Targets       = @(
+                    [pscustomobject]@{
+                        Name        = "parLocation"
+                        Destination = "Parameters"
+                    })
                 AllowedValues = @('ukwest', '')
                 Value         = "eastus"
             }
             Environment = [pscustomobject]@{
                 Description  = "The type of environment that will be created . Example: dev, test, qa, staging, prod"
-                Names        = @("parEnvironment")
+                Targets      = @(
+                    [pscustomobject]@{
+                        Name        = "parEnvironment"
+                        Destination = "Parameters"
+                    })
                 DefaultValue = 'prod'
                 Value        = "dev"
+            }
+            Logging     = [pscustomobject]@{
+                Type        = "Computed"
+                Description = "The type of environment that will be created . Example: dev, test, qa, staging, prod"
+                Value       = "logs/{%Environment%}/{%Location%}"
+                Targets     = @(
+                    [pscustomobject]@{
+                        Name        = "parLogging"
+                        Destination = "Parameters"
+                    })
             }
         }
         $firstFileContent = '{
@@ -45,6 +75,9 @@ InModuleScope 'ALZ' {
                     "value": ""
                 },
                 "parTopLevelManagementGroupPrefix": {
+                    "value": ""
+                },
+                "parLogging" : {
                     "value": ""
                 }
             }
@@ -97,9 +130,11 @@ InModuleScope 'ALZ' {
                 $contentAfterParsing = ConvertFrom-Json -InputObject $firstFileContent -AsHashtable
                 $contentAfterParsing.parameters.parTopLevelManagementGroupPrefix.value = 'test'
                 $contentAfterParsing.parameters.parCompanyPrefix.value = 'test'
+                $contentAfterParsing.parameters.parLogging.value = "logs/dev/eastus"
                 $contentStringAfterParsing = ConvertTo-Json -InputObject $contentAfterParsing
                 Write-InformationColored $contentStringAfterParsing -ForegroundColor Yellow -InformationAction Continue
                 Should -Invoke -CommandName Out-File -ParameterFilter { $FilePath -eq "test1.parameters.json" -and $InputObject -eq $contentStringAfterParsing } -Scope It
+
                 $contentAfterParsing = ConvertFrom-Json -InputObject $secondFileContent -AsHashtable
                 $contentAfterParsing.parameters.parTopLevelManagementGroupSuffix.value = 'bla'
                 $contentAfterParsing.parameters.parLocation.value = 'eastus'

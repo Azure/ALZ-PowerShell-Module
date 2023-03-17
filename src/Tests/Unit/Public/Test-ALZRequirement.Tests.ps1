@@ -108,7 +108,6 @@ InModuleScope 'ALZ' {
             It 'should return the expected results' {
                 Test-ALZRequirement | Should -BeExactly "ALZ requirements are met."
             }
-
         }
     }
 }

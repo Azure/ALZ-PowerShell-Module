@@ -23,9 +23,13 @@ function Edit-ALZConfigurationFilesInPlace {
         $bicepConfiguration = Get-Content $file.FullName | ConvertFrom-Json -AsHashtable
         $modified = $false
         foreach ($configKey in $configuration.PsObject.Properties) {
-            foreach ($name in $configKey.Value.Names) {
-                if ($null -ne $bicepConfiguration.parameters[$name]) {
-                    $bicepConfiguration.parameters[$name].value = $configKey.Value.Value
+            foreach ($target in $configKey.Value.Targets) {
+                if ($target.Destination -eq "Parameters" -and $null -ne $bicepConfiguration.parameters[$target.Name]) {
+                    if ($configKey.Value.Type -eq "Computed") {
+                        $bicepConfiguration.parameters[$target.Name].value = Format-TokenizedConfigurationString $configKey.Value.Value $configuration
+                    } else {
+                        $bicepConfiguration.parameters[$target.Name].value = $configKey.Value.Value
+                    }
                     $modified = $true
                 }
             }
