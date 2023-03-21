@@ -10,8 +10,15 @@ function Request-ConfigurationValue {
         [System.Boolean] $withRetries = $true
     )
 
-    $allowedValues = $configValue.AllowedValues
-    $hasAllowedValues = $null -ne $configValue.AllowedValues
+    #if the file has a script - execute it:
+    if ($null -ne $configValue.AllowedValues -and $configValue.AllowedValues.Type -eq "PSScript") {
+        Write-InformationColored $configValue.AllowedValues.Description -ForegroundColor Yellow -InformationAction Continue
+        $script = [System.Management.Automation.ScriptBlock]::Create($configValue.AllowedValues.Script)
+        $configValue.AllowedValues.Values = Invoke-Command -ScriptBlock $script
+    }
+
+    $allowedValues = $configValue.AllowedValues.Values
+    $hasAllowedValues = $null -ne $configValue.AllowedValues -and $null -ne $configValue.AllowedValues.Values -and $configValue.AllowedValues.Values.Length -gt 0
 
     $defaultValue = $configValue.DefaultValue
     $hasDefaultValue = $null -ne $configValue.DefaultValue
@@ -19,7 +26,7 @@ function Request-ConfigurationValue {
     $hasValidator = $null -ne $configValue.Valid
 
     Write-InformationColored $configValue.Description -ForegroundColor White -InformationAction Continue
-    if ($hasAllowedValues) {
+    if ($hasAllowedValues -and $configValue.AllowedValues.Display -eq $true) {
         Write-InformationColored "[allowed: $allowedValues] " -ForegroundColor Yellow -InformationAction Continue
     }
 
@@ -54,7 +61,9 @@ function Request-ConfigurationValue {
 
         $shouldRetry = $validationError -and $withRetries
     }
-    while (($hasNotSpecifiedValue -or $isDisallowedValue -or $isNotValid) -and $shouldRetry)
+    while (
+
+    ($hasNotSpecifiedValue -or $isDisallowedValue -or $isNotValid) -and $shouldRetry)
 
     Write-InformationColored "" -InformationAction Continue
 }
