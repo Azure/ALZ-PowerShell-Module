@@ -49,17 +49,23 @@ function New-ALZEnvironment {
 
         $bicepConfig = Get-ALZBicepConfig -alzBicepVersion $alzBicepVersion
 
-        New-ALZDirectoryEnvironment -alzEnvironmentDestination $alzEnvironmentDestination | Out-Null
+        New-ALZDirectoryEnvironment -alzEnvironmentDestination $alzEnvironmentDestination | Out-String | Write-Verbose
 
         $alzEnvironmentDestinationInternalCode = Join-Path $alzEnvironmentDestination "upstream-releases"
-        Get-GithubRelease -directoryForReleases $alzEnvironmentDestinationInternalCode -githubRepoUrl $bicepConfig.module_url -releases @($bicepConfig.version) | Out-Null
+        Get-GithubRelease -directoryForReleases $alzEnvironmentDestinationInternalCode -githubRepoUrl $bicepConfig.module_url -releases @($bicepConfig.version) | Out-String | Write-Verbose
         Write-InformationColored "Copying ALZ-Bicep module to $alzEnvironmentDestinationInternalCode" -ForegroundColor Green  -InformationAction Continue
+        Copy-ALZParametersFile -alzEnvironmentDestination $alzEnvironmentDestination -upstreamReleaseDirectory $(Join-Path $alzEnvironmentDestinationInternalCode  $bicepConfig.version) -configFiles $bicepConfig.config_files | Out-String | Write-Verbose
         Write-InformationColored "ALZ-Bicep source directory: $alzBicepSourceDirectory" -ForegroundColor Green  -InformationAction Continue
 
         $configuration = Request-ALZEnvironmentConfig -configurationParameters $bicepConfig.parameters
 
-        Edit-ALZConfigurationFilesInPlace -alzEnvironmentDestination $alzEnvironmentDestination -configuration $configuration | Out-Null
-        Build-ALZDeploymentEnvFile -configuration $configuration -Destination $alzEnvironmentDestination | Out-Null
+        Edit-ALZConfigurationFilesInPlace -alzEnvironmentDestination $alzEnvironmentDestination -configuration $configuration | Out-String | Write-Verbose
+        Build-ALZDeploymentEnvFile -configuration $configuration -Destination $alzEnvironmentDestination | Out-String | Write-Verbose
+
+        $isGitRepo = Test-ALZGitRepository -alzEnvironmentDestination $alzEnvironmentDestination
+        if (-not $isGitRepo) {
+            Write-InformationColored "The directory $alzEnvironmentDestination is not a git repository.  Please make it is a git repo after initialization." -ForegroundColor Red  -InformationAction Continue
+        }
     }
 
     return $true

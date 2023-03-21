@@ -120,7 +120,7 @@ function Get-GithubRelease {
                 Move-Item -Path "$($extractedSubFolder.FullName)/*" -Destination "$releaseDirectory" -ErrorAction SilentlyContinue | Out-String | Write-Verbose
             }
 
-            # Remove-Item -Path "$releaseDirectory/tmp" -Force -Recurse
+            Remove-Item -Path "$releaseDirectory/tmp" -Force -Recurse
 
         } else {
             Write-Verbose "===> Content already exists in $releaseDirectory. Skipping"
