@@ -37,7 +37,7 @@ InModuleScope 'ALZ' {
 
                 Request-ConfigurationValue -configName "prefix" -configValue $configValue
 
-                Assert-MockCalled -CommandName Write-InformationColored -Times 3
+                Should -Invoke -CommandName Write-InformationColored -Times 4 -Exactly
 
                 $configValue.Value | Should -BeExactly "user input value"
             }
@@ -56,7 +56,7 @@ InModuleScope 'ALZ' {
 
                 Request-ConfigurationValue -configName "prefix" -configValue $configValue
 
-                Assert-MockCalled -CommandName Write-InformationColored -Times 3
+                Should -Invoke -CommandName Write-InformationColored -Times 4 -Exactly
 
                 $configValue.Value | Should -BeExactly "alz"
             }
@@ -103,12 +103,60 @@ InModuleScope 'ALZ' {
                     Description   = "The prefix that will be added to all resources created by this deployment."
                     Names         = @("parTopLevelManagementGroupPrefix", "parCompanyPrefix")
                     Value         = ""
-                    AllowedValues = @("alz", "slz")
+                    AllowedValues = @{
+                        Values = @("alz", "slz")
+                    }
                 }
                 Request-ConfigurationValue -configName "prefix" -configValue $configValue -withRetries $false
 
                 Should -Invoke -CommandName Write-InformationColored -ParameterFilter { $ForegroundColor -eq "Red" } -Scope It
                 $configValue.Value | Should -BeExactly ""
+            }
+
+            It 'Prompt user with a calculated list of AllowedValues' {
+                Mock -CommandName Read-Host -MockWith {
+                    "l"
+                }
+
+                $configValue = @{
+                    Description   = "The prefix that will be added to all resources created by this deployment."
+                    Names         = @("parTopLevelManagementGroupPrefix", "parCompanyPrefix")
+                    Value         = ""
+                    AllowedValues = @{
+                        Type = "PSScript"
+                        Values = @()
+                        Script = '"h e l l o" -split " "'
+                        Display = $true
+                        Description = "A collection of values returned by PS Script"
+                    }
+                }
+                Request-ConfigurationValue -configName "calculated" -configValue $configValue -withRetries $false
+
+                Should -Invoke -CommandName Write-InformationColored -Times 6 -Exactly
+                $configValue.Value | Should -BeExactly "l"
+            }
+
+            It 'Do not display the calculated list of AllowedValues if Display is false' {
+                Mock -CommandName Read-Host -MockWith {
+                    "l"
+                }
+
+                $configValue = @{
+                    Description   = "The prefix that will be added to all resources created by this deployment."
+                    Names         = @("parTopLevelManagementGroupPrefix", "parCompanyPrefix")
+                    Value         = ""
+                    AllowedValues = @{
+                        Type = "PSScript"
+                        Values = @()
+                        Script = '"h e l l o" -split " "'
+                        Display = $false
+                        Description = "A collection of values returned by PS Script"
+                    }
+                }
+                Request-ConfigurationValue -configName "calculated" -configValue $configValue -withRetries $false
+
+                Should -Invoke -CommandName Write-InformationColored -Times 5 -Exactly
+                $configValue.Value | Should -BeExactly "l"
             }
         }
     }
