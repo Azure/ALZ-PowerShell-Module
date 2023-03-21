@@ -49,6 +49,12 @@ InModuleScope 'ALZ' {
                     @{
                         "module_url" = "test"
                         "version" = "v1.0.0"
+                        "config_files" = @(
+                            @{
+                                "source" = "a"
+                                "destination" = "b"
+                            }
+                        )
                         "parameters" = @{
                             "test" = @{
                                 "type" = "string"
@@ -59,7 +65,12 @@ InModuleScope 'ALZ' {
 
                 Mock -CommandName Get-GithubRelease -MockWith { }
 
+                Mock -CommandName Test-ALZGitRepository -MockWith { $false }
+
+                Mock -CommandName Copy-ALZParametersFile -MockWith { }
+
                 Mock -CommandName Write-InformationColored
+
             }
 
             It 'should return the output directory on completion' {

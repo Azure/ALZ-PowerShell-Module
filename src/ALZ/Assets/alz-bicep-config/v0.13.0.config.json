@@ -3,12 +3,52 @@
     "module_url": "https://github.com/Azure/ALZ-Bicep",
     "config_files": [
         {
-            "source": "infra-as-code/bicep/modules/resourceGroup/parameters/resourceGroup.parameters.all.json",
-            "detination": "config/resourceGroup.parameters.json"
+            "source": "infra-as-code/bicep/modules/policy/definitions/parameters/customPolicyDefinitions.parameters.all.json",
+            "destination": "config/custom-parameters/customPolicyDefinitions.parameters.json"
         },
         {
-            "source": "infra-as-code/bicep/modules/policy/definitions/parameters/customPolicyDefinitions.parameters.all.json",
-            "destination": "config/customPolicyDefinitions.parameters.json"
+            "source": "infra-as-code/bicep/modules/customRoleDefinitions/parameters/customRoleDefinitions.parameters.all.json",
+            "destination": "config/custom-parameters/customRoleDefinitions.parameters.json"
+        },
+        {
+            "source": "infra-as-code/bicep/modules/hubNetworking/parameters/hubNetworking.parameters.all.json",
+            "destination": "config/custom-parameters/hubNetworking.parameters.json"
+        },
+        {
+            "source": "infra-as-code/bicep/modules/logging/parameters/logging.parameters.all.json",
+            "destination": "config/custom-parameters/logging.parameters.json"
+        },
+        {
+            "source": "infra-as-code/bicep/modules/managementGroups/parameters/managementGroups.parameters.all.json",
+            "destination": "config/custom-parameters/managementGroups.parameters.json"
+        },
+        {
+            "source": "infra-as-code/bicep/modules/mgDiagSettings/parameters/mgDiagSettings.parameters.all.json",
+            "destination": "config/custom-parameters/mgDiagSettings.parameters.json"
+        },
+        {
+            "source": "infra-as-code/bicep/modules/policy/assignments/parameters/policyAssignmentManagementGroup.dine.parameters.all.json",
+            "destination": "config/custom-parameters/policyAssignmentManagementGroup.dine.parameters.json"
+        },
+        {
+            "source": "infra-as-code/bicep/modules/resourceGroup/parameters/resourceGroup.parameters.all.json",
+            "destination": "config/custom-parameters/resourceGroupConnectivity.parameters.json"
+        },
+        {
+            "source": "infra-as-code/bicep/modules/resourceGroup/parameters/resourceGroup.parameters.all.json",
+            "destination": "config/custom-parameters/resourceGroupLoggingAndSentinel.parameters.json"
+        },
+        {
+            "source": "infra-as-code/bicep/modules/roleAssignments/parameters/roleAssignmentManagementGroupMany.servicePrincipal.parameters.all.json",
+            "destination": "config/custom-parameters/roleAssignmentManagementGroupMany.servicePrincipal.parameters.json"
+        },
+        {
+            "source": "infra-as-code/bicep/modules/subscriptionPlacement/parameters/subscriptionPlacement.parameters.all.json",
+            "destination": "config/custom-parameters/subscriptionPlacement.parameters.json"
+        },
+        {
+            "source": "infra-as-code/bicep/modules/vwanConnectivity/parameters/vwanConnectivity.parameters.all.json",
+            "destination": "config/custom-parameters/vwanConnectivity.parameters.json"
         }
     ],
     "parameters": {
