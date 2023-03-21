@@ -64,7 +64,7 @@ function New-ALZEnvironment {
 
         $isGitRepo = Test-ALZGitRepository -alzEnvironmentDestination $alzEnvironmentDestination
         if (-not $isGitRepo) {
-            Write-InformationColored "The directory $alzEnvironmentDestination is not a git repository.  Please make it s a git repo after initialization." -ForegroundColor Red  -InformationAction Continue
+            Write-InformationColored "The directory $alzEnvironmentDestination is not a git repository.  Please make it is a git repo after initialization." -ForegroundColor Red  -InformationAction Continue
         }
     }
 
