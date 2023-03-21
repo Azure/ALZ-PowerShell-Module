@@ -112,7 +112,7 @@
                 "Display": false,
                 "Description": "Getting Azure deployment locations.",
                 "Type": "PSScript",
-                "Script": "Get-AzLocation | Sort-Object Location | Select-Object -ExpandProperty Location | Where-Object {$_ -notmatch 'asia|(.*)stage$'}",
+                "Script": "Get-AzLocation | Sort-Object Location | Select-Object -ExpandProperty Location | Where-Object {$_ -notmatch 'asia|japan|india|global|norway|korea|europe|france|(.*)stage$'}",
                 "Values": []
             }
         },
