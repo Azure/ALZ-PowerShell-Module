@@ -1,54 +1,130 @@
 {
-    "version": "v0.13.0",
+    "version": "v0.14.0-pre",
     "module_url": "https://github.com/Azure/ALZ-Bicep",
     "config_files": [
         {
             "source": "infra-as-code/bicep/modules/policy/definitions/parameters/customPolicyDefinitions.parameters.all.json",
-            "destination": "config/custom-parameters/customPolicyDefinitions.parameters.json"
+            "destination": "config/custom-parameters/customPolicyDefinitions.parameters.all.json"
         },
         {
             "source": "infra-as-code/bicep/modules/customRoleDefinitions/parameters/customRoleDefinitions.parameters.all.json",
-            "destination": "config/custom-parameters/customRoleDefinitions.parameters.json"
+            "destination": "config/custom-parameters/customRoleDefinitions.parameters.all.json"
         },
         {
             "source": "infra-as-code/bicep/modules/hubNetworking/parameters/hubNetworking.parameters.all.json",
-            "destination": "config/custom-parameters/hubNetworking.parameters.json"
+            "destination": "config/custom-parameters/hubNetworking.parameters.all.json"
         },
         {
             "source": "infra-as-code/bicep/modules/logging/parameters/logging.parameters.all.json",
-            "destination": "config/custom-parameters/logging.parameters.json"
+            "destination": "config/custom-parameters/logging.parameters.all.json"
         },
         {
             "source": "infra-as-code/bicep/modules/managementGroups/parameters/managementGroups.parameters.all.json",
-            "destination": "config/custom-parameters/managementGroups.parameters.json"
+            "destination": "config/custom-parameters/managementGroups.parameters.all.json"
         },
         {
             "source": "infra-as-code/bicep/modules/mgDiagSettings/parameters/mgDiagSettings.parameters.all.json",
-            "destination": "config/custom-parameters/mgDiagSettings.parameters.json"
+            "destination": "config/custom-parameters/mgDiagSettings.parameters.all.json"
         },
         {
             "source": "infra-as-code/bicep/modules/policy/assignments/parameters/policyAssignmentManagementGroup.dine.parameters.all.json",
-            "destination": "config/custom-parameters/policyAssignmentManagementGroup.dine.parameters.json"
+            "destination": "config/custom-parameters/policyAssignmentManagementGroup.dine.parameters.all.json"
         },
         {
             "source": "infra-as-code/bicep/modules/resourceGroup/parameters/resourceGroup.parameters.all.json",
-            "destination": "config/custom-parameters/resourceGroupConnectivity.parameters.json"
+            "destination": "config/custom-parameters/resourceGroupConnectivity.parameters.all.json"
         },
         {
             "source": "infra-as-code/bicep/modules/resourceGroup/parameters/resourceGroup.parameters.all.json",
-            "destination": "config/custom-parameters/resourceGroupLoggingAndSentinel.parameters.json"
+            "destination": "config/custom-parameters/resourceGroupLoggingAndSentinel.parameters.all.json"
         },
         {
             "source": "infra-as-code/bicep/modules/roleAssignments/parameters/roleAssignmentManagementGroupMany.servicePrincipal.parameters.all.json",
-            "destination": "config/custom-parameters/roleAssignmentManagementGroupMany.servicePrincipal.parameters.json"
+            "destination": "config/custom-parameters/roleAssignmentManagementGroupMany.servicePrincipal.parameters.all.json"
         },
         {
             "source": "infra-as-code/bicep/modules/subscriptionPlacement/parameters/subscriptionPlacement.parameters.all.json",
-            "destination": "config/custom-parameters/subscriptionPlacement.parameters.json"
+            "destination": "config/custom-parameters/subscriptionPlacement.parameters.all.json"
         },
         {
             "source": "infra-as-code/bicep/modules/vwanConnectivity/parameters/vwanConnectivity.parameters.all.json",
-            "destination": "config/custom-parameters/vwanConnectivity.parameters.json"
+            "destination": "config/custom-parameters/vwanConnectivity.parameters.all.json"
+        },
+        {
+            "source": "accelerator/.github/workflows/alz-bicep-1.yml",
+            "destination": ".github/workflows/alz-bicep-1.yml"
+        },
+        {
+            "source": "accelerator/.github/workflows/alz-bicep-2.yml",
+            "destination": ".github/workflows/alz-bicep-2.yml"
+        },
+        {
+            "source": "accelerator/.github/workflows/alz-bicep-3.yml",
+            "destination": ".github/workflows/alz-bicep-3.yml"
+        },
+        {
+            "source": "accelerator/.github/workflows/alz-bicep-4a.yml",
+            "destination": ".github/workflows/alz-bicep-4a.yml"
+        },
+        {
+            "source": "accelerator/.github/workflows/alz-bicep-4b.yml",
+            "destination": ".github/workflows/alz-bicep-4b.yml"
+        },
+        {
+            "source": "accelerator/.github/workflows/alz-bicep-pr-1.yml",
+            "destination": ".github/workflows/alz-bicep-pr-1.yml"
+        },
+        {
+            "source": "accelerator/.github/workflows/alz-bicep-pr-2.yml",
+            "destination": ".github/workflows/alz-bicep-pr-2.yml"
+        },
+        {
+            "source": "accelerator/pipeline-scripts/Deploy-ALZConnectivityResourceGroup.ps1",
+            "destination": "pipeline-scripts/Deploy-ALZConnectivityResourceGroup.ps1"
+        },
+        {
+            "source": "accelerator/pipeline-scripts/Deploy-ALZCustomPolicyDefinitions.ps1",
+            "destination": "pipeline-scripts/Deploy-ALZCustomPolicyDefinitions.ps1"
+        },
+        {
+            "source": "accelerator/pipeline-scripts/Deploy-ALZCustomRoleDefinitions.ps1",
+            "destination": "pipeline-scripts/Deploy-ALZCustomRoleDefinitions.ps1"
+        },
+        {
+            "source": "accelerator/pipeline-scripts/Deploy-ALZHub-HubAndSpoke.ps1",
+            "destination": "pipeline-scripts/Deploy-ALZHub-HubAndSpoke.ps1"
+        },
+        {
+            "source": "accelerator/pipeline-scripts/Deploy-ALZHub-VWAN.ps1",
+            "destination": "pipeline-scripts/Deploy-ALZHub-VWAN.ps1"
+        },
+        {
+            "source": "accelerator/pipeline-scripts/Deploy-ALZLoggingAndSentinel.ps1",
+            "destination": "pipeline-scripts/Deploy-ALZLoggingAndSentinel.ps1"
+        },
+        {
+            "source": "accelerator/pipeline-scripts/Deploy-ALZLoggingAndSentinelResourceGroup.ps1",
+            "destination": "pipeline-scripts/Deploy-ALZLoggingAndSentinelResourceGroup.ps1"
+        },
+        {
+            "source": "accelerator/pipeline-scripts/Deploy-ALZMGDiagnosticSettings.ps1",
+            "destination": "pipeline-scripts/Deploy-ALZMGDiagnosticSettings.ps1"
+        },
+        {
+            "source": "accelerator/pipeline-scripts/Deploy-ALZManagementGroups.ps1",
+            "destination": "pipeline-scripts/Deploy-ALZManagementGroups.ps1"
+        },
+        {
+            "source": "accelerator/pipeline-scripts/Deploy-ALZPolicyAssignments.ps1",
+            "destination": "pipeline-scripts/Deploy-ALZPolicyAssignments.ps1"
+        },
+        {
+            "source": "accelerator/pipeline-scripts/Deploy-ALZRoleAssignments.ps1",
+            "destination": "pipeline-scripts/Deploy-ALZRoleAssignments.ps1"
+        },
+        {
+            "source": "accelerator/pipeline-scripts/Deploy-ALZSubscriptionPlacement.ps1",
+            "destination": "pipeline-scripts/Deploy-ALZSubscriptionPlacement.ps1"
         }
     ],
     "parameters": {
@@ -71,6 +147,10 @@
                 {
                     "Name": "parAssignableScopeManagementGroupId",
                     "Destination": "Parameters"
+                },
+                {
+                    "name": "TOP_LEVEL_MG_PREFIX",
+                    "destination": "Environment"
                 }
             ],
             "Value": "",
@@ -106,6 +186,10 @@
                 {
                     "Name": "parLogAnalyticsWorkspaceLocation",
                     "Destination": "Parameters"
+                },
+                {
+                    "Name": "LOCATION",
+                    "Destination": "Environment"
                 }
             ],
             "AllowedValues": {
@@ -149,6 +233,10 @@
                 {
                     "Name": "ConnectivitySubscriptionId",
                     "Destination": "Environment"
+                },
+                {
+                    "Name": "CONNECTIVITY_SUBSCRIPTION_ID",
+                    "Destination": "Environment"
                 }
             ],
             "Value": ""
@@ -184,6 +272,16 @@
                 {
                     "Name": "parLogAnalyticsWorkspaceResourceId",
                     "Destination": "Parameters"
+                }
+            ]
+        },
+        "UpstreamReleaseVersion": {
+            "Type": "Computed",
+            "Value": "v0.14.0-pre",
+            "Targets": [
+                {
+                    "Name": "UPSTREAM_RELEASE_VERSION",
+                    "Destination": "Environment"
                 }
             ]
         }
