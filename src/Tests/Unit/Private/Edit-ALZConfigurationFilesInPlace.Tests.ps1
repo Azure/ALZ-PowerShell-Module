@@ -178,7 +178,46 @@ InModuleScope 'ALZ' {
                 Edit-ALZConfigurationFilesInPlace  -alzEnvironmentDestination '.' -configuration $defaultConfig
             }
 
-            It 'Should handle nested values correctly' {
+
+            It 'Should handle nested values correctly 1' {
+                $defaultConfig = [pscustomobject]@{
+                    Nested     = [pscustomobject]@{
+                        Type        = "Computed"
+                        Description = "A nested value"
+                        Value       = "nested"
+                        Targets     = @(
+                            [pscustomobject]@{
+                                Name        = "parNested.value.parChildValue"
+                                Destination = "Parameters"
+                            })
+                    }
+                }
+                $firstFileContent = '{
+                    "parameters": {
+                        "parNested": {
+                            "value": {
+                                "parChildValue": "replace_me"
+                            }
+                        }
+                    }
+                }'
+
+                Mock -CommandName Get-ChildItem -ParameterFilter { $Path -match 'config$' } -MockWith {
+                    @(
+                        [PSCustomObject]@{
+                            FullName = 'test1.parameters.json'
+                        }
+                    )
+                }
+                Mock -CommandName Get-Content -ParameterFilter { $Path -eq 'test1.parameters.json' } -MockWith {
+                    $firstFileContent
+                }
+
+                Edit-ALZConfigurationFilesInPlace  -alzEnvironmentDestination '.' -configuration $defaultConfig
+
+            }
+
+            It 'Should handle nested values correctly 2' {
                 $defaultConfig = [pscustomobject]@{
                     Nested     = [pscustomobject]@{
                         Type        = "Computed"

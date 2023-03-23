@@ -262,6 +262,10 @@
                 {
                     "Name": "parEnvironment.value",
                     "Destination": "Parameters"
+                },
+                {
+                    "Name": "parTags.value.Environment",
+                    "Destination": "Parameters"
                 }
             ],
             "Value": "",
