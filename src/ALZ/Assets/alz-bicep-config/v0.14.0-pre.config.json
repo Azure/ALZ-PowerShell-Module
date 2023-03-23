@@ -188,6 +188,14 @@
                     "Destination": "Parameters"
                 },
                 {
+                    "Name": "parPolicyAssignmentParameters.value.ascExportResourceGroupLocation.value",
+                    "Destination": "Parameters"
+                },
+                {
+                    "Name": "parVirtualWanHubs.value.0.parHubLocation",
+                    "Destination": "Parameters"
+                },
+                {
                     "Name": "LOCATION",
                     "Destination": "Environment"
                 }
@@ -317,7 +325,7 @@
             "Value": "/subscriptions/{%ManagementSubscriptionId%}/resourcegroups/alz-logging/providers/microsoft.operationalinsights/workspaces/alz-log-analytics",
             "Targets": [
                 {
-                    "Name": "parLogAnalyticsWorkspaceResourceId",
+                    "Name": "parLogAnalyticsWorkspaceResourceId.value",
                     "Destination": "Parameters"
                 }
             ]

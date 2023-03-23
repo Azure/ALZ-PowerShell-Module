@@ -11,12 +11,12 @@ function Edit-ALZConfigurationFilesInPlace {
         [object] $configuration
     )
 
-    $locations = @("orchestration", "config", "customization")
+    $locations = @("config")
     $files = @()
 
     foreach ($location in $locations) {
         $bicepModules = Join-Path $alzEnvironmentDestination $location
-        $files += @(Get-ChildItem -Path $bicepModules -Recurse -Filter *.parameters.json)
+        $files += @(Get-ChildItem -Path $bicepModules -Recurse -Filter *.parameters.*.json)
     }
 
     foreach ($file in $files) {
@@ -26,26 +26,25 @@ function Edit-ALZConfigurationFilesInPlace {
             foreach ($target in $configKey.Value.Targets) {
 
                 $propertyNames = $target.Name -split "\."
-
                 $bicepConfig = $bicepConfiguration.parameters
 
-                Write-Host $target.Name
-
-                foreach($propertyName in $propertyNames) {
-                    if ($propertyName -eq $propertyNames[-1]) {
-                        continue
-                    }
-
-                    Write-Host $propertyName
-
-                    if ($bicepConfig.ContainsKey($propertyName) -eq $false) {
+                for ($index=0; $index -lt $propertyNames.Length - 1; $index++) {
+                    if ($bicepConfig -is [array]) {
+                        # If this is an array - use the property as an array index...
+                        # This is probably a bit weird...
+                        $bicepConfig = $bicepConfig[$propertyNames[$index]]
+                    } elseif ($bicepConfig.ContainsKey($propertyNames[$index]) -eq $false) {
+                        # This property doesn't exist at this level in the hierarchy,
+                        #  this isn't the property we're looking for, stop looking.
                         $bicepConfig = $null
                         break
                     } else {
-                        $bicepConfig = $bicepConfig[$propertyName]
+                        # We found the item, keep indexing into the object.
+                        $bicepConfig = $bicepConfig[$propertyNames[$index]]
                     }
                 }
 
+                # If we're here, we've got the object at the bottom of the hierarchy - and we can modify values on it.
                 if ($target.Destination -eq "Parameters" -and $null -ne $bicepConfig) {
                     if ($configKey.Value.Type -eq "Computed") {
                         if ($configKey.Value.Value -is [array]) {
@@ -57,7 +56,6 @@ function Edit-ALZConfigurationFilesInPlace {
                         } else {
                             $bicepConfig[$propertyNames[-1]] = Format-TokenizedConfigurationString -tokenizedString $configKey.Value.Value -configuration $configuration
                         }
-
                     } else {
                         $bicepConfig[$propertyNames[-1]] = $configKey.Value.Value
                     }
