@@ -102,8 +102,14 @@
 
         PSData = @{
 
+            Name                       = "ALZ"
+
             # Tags applied to this module. These help with module discovery in online galleries.
-            # Tags = @()
+            Tags                       = @(
+                'Azure'
+                'LandingZones'
+                'ALZ'
+            )
 
             # A URL to the license for this module.
             LicenseUri                 = 'https://github.com/Azure/ALZ-PowerShell-Module/blob/initial_module_config/LICENSE'
@@ -112,13 +118,13 @@
             ProjectUri                 = 'https://github.com/Azure/ALZ-Powershell-Module'
 
             # A URL to an icon representing this module.
-            # IconUri = ''
+            IconUri                    = 'https://raw.githubusercontent.com/Azure/ALZ-PowerShell-Module/main/docs/rsz_alzlogo.png?token=GHSAT0AAAAAACAOIZ6NBDR7MPRSCNBS3RQUZA4IYUQ'
 
             # ReleaseNotes of this module
-            # ReleaseNotes = ''
+            ReleaseNotes               = 'Thsi is the first release of the ALZ PowerShell Module. This module is currently in preview and is subject to change.'
 
             # Prerelease string of this module
-            # Prerelease = ''
+            Prerelease                 = 'beta'
 
             # Flag to indicate whether the module requires explicit user acceptance for install/update/save
             # RequireLicenseAcceptance = $false
