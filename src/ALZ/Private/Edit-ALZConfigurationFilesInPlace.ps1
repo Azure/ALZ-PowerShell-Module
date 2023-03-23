@@ -24,11 +24,42 @@ function Edit-ALZConfigurationFilesInPlace {
         $modified = $false
         foreach ($configKey in $configuration.PsObject.Properties) {
             foreach ($target in $configKey.Value.Targets) {
-                if ($target.Destination -eq "Parameters" -and $null -ne $bicepConfiguration.parameters[$target.Name]) {
-                    if ($configKey.Value.Type -eq "Computed") {
-                        $bicepConfiguration.parameters[$target.Name].value = Format-TokenizedConfigurationString $configKey.Value.Value $configuration
+
+                $propertyNames = $target.Name -split "\."
+
+                $bicepConfig = $bicepConfiguration.parameters
+
+                Write-Host $target.Name
+
+                foreach($propertyName in $propertyNames) {
+                    if ($propertyName -eq $propertyNames[-1]) {
+                        continue
+                    }
+
+                    Write-Host $propertyName
+
+                    if ($bicepConfig.ContainsKey($propertyName) -eq $false) {
+                        $bicepConfig = $null
+                        break
                     } else {
-                        $bicepConfiguration.parameters[$target.Name].value = $configKey.Value.Value
+                        $bicepConfig = $bicepConfig[$propertyName]
+                    }
+                }
+
+                if ($target.Destination -eq "Parameters" -and $null -ne $bicepConfig) {
+                    if ($configKey.Value.Type -eq "Computed") {
+                        if ($configKey.Value.Value -is [array]) {
+                            $formattedValues = @()
+                            foreach($formatString in $configKey.Value.Value) {
+                                $formattedValues += Format-TokenizedConfigurationString -tokenizedString $formatString -configuration $configuration
+                            }
+                            $bicepConfig[$propertyNames[-1]] = $formattedValues
+                        } else {
+                            $bicepConfig[$propertyNames[-1]] = Format-TokenizedConfigurationString -tokenizedString $configKey.Value.Value -configuration $configuration
+                        }
+
+                    } else {
+                        $bicepConfig[$propertyNames[-1]] = $configKey.Value.Value
                     }
                     $modified = $true
                 }

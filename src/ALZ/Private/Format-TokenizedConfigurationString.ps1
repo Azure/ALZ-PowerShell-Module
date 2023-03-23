@@ -1,5 +1,6 @@
 function Format-TokenizedConfigurationString {
     param(
+        [AllowEmptyString()]
         [Parameter(Mandatory = $true)]
         [string] $tokenizedString,
 

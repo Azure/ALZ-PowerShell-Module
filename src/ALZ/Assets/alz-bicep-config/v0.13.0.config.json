@@ -57,19 +57,19 @@
             "Description": "The prefix that will be added to all resources created by this deployment. (e.g. 'alz')",
             "Targets": [
                 {
-                    "Name": "parTopLevelManagementGroupPrefix",
+                    "Name": "parTopLevelManagementGroupPrefix.value",
                     "Destination": "Parameters"
                 },
                 {
-                    "Name": "parCompanyPrefix",
+                    "Name": "parCompanyPrefix.value",
                     "Destination": "Parameters"
                 },
                 {
-                    "Name": "parTargetManagementGroupId",
+                    "Name": "parTargetManagementGroupId.value",
                     "Destination": "Parameters"
                 },
                 {
-                    "Name": "parAssignableScopeManagementGroupId",
+                    "Name": "parAssignableScopeManagementGroupId.value",
                     "Destination": "Parameters"
                 }
             ],
@@ -82,7 +82,7 @@
             "Description": "The suffix that will be added to all resources created by this deployment. (e.g. 'test')",
             "Targets": [
                 {
-                    "Name": "parTopLevelManagementGroupSuffix",
+                    "Name": "parTopLevelManagementGroupSuffix.value",
                     "Destination": "Parameters"
                 }
             ],
@@ -96,24 +96,71 @@
             "Value": "",
             "Targets": [
                 {
-                    "Name": "parLocation",
+                    "Name": "parLocation.value",
                     "Destination": "Parameters"
                 },
                 {
-                    "Name": "parAutomationAccountLocation",
+                    "Name": "parAutomationAccountLocation.value",
                     "Destination": "Parameters"
                 },
                 {
-                    "Name": "parLogAnalyticsWorkspaceLocation",
+                    "Name": "parLogAnalyticsWorkspaceLocation.value",
                     "Destination": "Parameters"
                 }
             ],
             "AllowedValues": {
                 "Display": false,
-                "Description": "Getting Azure deployment locations.",
-                "Type": "PSScript",
-                "Script": "Get-AzLocation | Where-Object {$_.RegionType -eq 'Physical'} | Sort-Object Location | Select-Object -ExpandProperty Location",
-                "Values": []
+                "Values": [
+                    "australiacentral",
+                    "australiacentral2",
+                    "australiaeast",
+                    "australiasoutheast",
+                    "brazilsouth",
+                    "brazilsoutheast",
+                    "canadacentral",
+                    "canadaeast",
+                    "centralindia",
+                    "centralus",
+                    "centraluseuap",
+                    "eastasia",
+                    "eastus",
+                    "eastus2",
+                    "eastus2euap",
+                    "eastusstg",
+                    "francecentral",
+                    "francesouth",
+                    "germanynorth",
+                    "germanywestcentral",
+                    "japaneast",
+                    "japanwest",
+                    "jioindiacentral",
+                    "jioindiawest",
+                    "koreacentral",
+                    "koreasouth",
+                    "northcentralus",
+                    "northeurope",
+                    "norwayeast",
+                    "norwaywest",
+                    "qatarcentral",
+                    "southafricanorth",
+                    "southafricawest",
+                    "southcentralus",
+                    "southeastasia",
+                    "southindia",
+                    "swedencentral",
+                    "switzerlandnorth",
+                    "switzerlandwest",
+                    "uaecentral",
+                    "uaenorth",
+                    "uksouth",
+                    "ukwest",
+                    "westcentralus",
+                    "westeurope",
+                    "westindia",
+                    "westus",
+                    "westus2",
+                    "westus3"
+                ]
             }
         },
         "Environment": {
@@ -121,7 +168,7 @@
             "Description": "The Type of environment that will be created. (e.g. 'dev', 'test', 'qa', 'staging', 'prod')",
             "Targets": [
                 {
-                    "Name": "parEnvironment",
+                    "Name": "parEnvironment.value",
                     "Destination": "Parameters"
                 }
             ],
@@ -165,16 +212,16 @@
             ],
             "Value": ""
         },
-        "BillingAccountId": {
+        "SecurityContact": {
             "Type": "UserInput",
-            "Description": "The identifier of the Billing Account. (e.g 00000000-0000-0000-0000-000000000000)",
-            "Valid": "^( {){0,1}[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}(}){0,1}$",
-            "Value": ""
-        },
-        "EnrollmentAccountId": {
-            "Type": "UserInput",
-            "Description": "The identifier of the Enrollment Account. (e.g 00000000-0000-0000-0000-000000000000)",
-            "Valid": "^( {){0,1}[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}(}){0,1}$",
+            "Description": "The email address of the contact for security issues. (e.g. security@contactme.com)",
+            "Valid": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
+            "Targets": [
+                {
+                    "Name":"parPolicyAssignmentParameters.value.emailSecurityContact.value",
+                    "Destination": "Parameters"
+                }
+            ],
             "Value": ""
         },
         "LogAnalyticsResourceId": {
@@ -183,6 +230,128 @@
             "Targets": [
                 {
                     "Name": "parLogAnalyticsWorkspaceResourceId",
+                    "Destination": "Parameters"
+                }
+            ]
+        },
+        "AllSubscriptionIds": {
+            "Type": "Computed",
+            "Value": [
+                "{%ManagementSubscriptionId%}",
+                "{%ConnectivitySubscriptionId%}",
+                "{%IdentitySubscriptionId%}"
+            ],
+            "Targets": [
+                {
+                    "Name": "parSubscriptionIds.value",
+                    "Destination": "Parameters"
+                }
+            ]
+        },
+        "VirtualIdToLink": {
+            "Type": "Computed",
+            "Value": "",
+            "Targets": [
+                {
+                    "Name": "parVirtualNetworkIdToLink.value",
+                    "Destination": "Parameters"
+                }
+            ]
+        },
+        "VirtualWanName":{
+            "Type": "Computed",
+            "Value": "alz-vwan-{%Location%}",
+            "Targets": [
+                {
+                    "Name": "parVirtualWanName.value",
+                    "Destination": "Parameters"
+                }
+            ]
+        },
+        "FirewallPoliciesName":{
+            "Type": "Computed",
+            "Value": "alz-azfwpolicy-{%Location%}",
+            "Targets": [
+                {
+                    "Name": "parAzFirewallPoliciesName.value",
+                    "Destination": "Parameters"
+                }
+            ]
+        },
+        "PrivateDnsZones": {
+            "Type": "Computed",
+            "Value": [
+                      "privatelink.{%Location%}.azmk8s.io",
+                      "privatelink.{%Location%}.batch.azure.com",
+                      "privatelink.{%Location%}.kusto.windows.net",
+                      "privatelink.{%Location%}.backup.windowsazure.com",
+                      "privatelink.adf.azure.com",
+                      "privatelink.afs.azure.net",
+                      "privatelink.agentsvc.azure-automation.net",
+                      "privatelink.analysis.windows.net",
+                      "privatelink.api.azureml.ms",
+                      "privatelink.azconfig.io",
+                      "privatelink.azure-api.net",
+                      "privatelink.azure-automation.net",
+                      "privatelink.azurecr.io",
+                      "privatelink.azure-devices.net",
+                      "privatelink.azure-devices-provisioning.net",
+                      "privatelink.azurehdinsight.net",
+                      "privatelink.azurehealthcareapis.com",
+                      "privatelink.azurestaticapps.net",
+                      "privatelink.azuresynapse.net",
+                      "privatelink.azurewebsites.net",
+                      "privatelink.batch.azure.com",
+                      "privatelink.blob.core.windows.net",
+                      "privatelink.cassandra.cosmos.azure.com",
+                      "privatelink.cognitiveservices.azure.com",
+                      "privatelink.database.windows.net",
+                      "privatelink.datafactory.azure.net",
+                      "privatelink.dev.azuresynapse.net",
+                      "privatelink.dfs.core.windows.net",
+                      "privatelink.dicom.azurehealthcareapis.com",
+                      "privatelink.digitaltwins.azure.net",
+                      "privatelink.directline.botframework.com",
+                      "privatelink.documents.azure.com",
+                      "privatelink.eventgrid.azure.net",
+                      "privatelink.file.core.windows.net",
+                      "privatelink.gremlin.cosmos.azure.com",
+                      "privatelink.guestconfiguration.azure.com",
+                      "privatelink.his.arc.azure.com",
+                      "privatelink.kubernetesconfiguration.azure.com",
+                      "privatelink.managedhsm.azure.net",
+                      "privatelink.mariadb.database.azure.com",
+                      "privatelink.media.azure.net",
+                      "privatelink.mongo.cosmos.azure.com",
+                      "privatelink.monitor.azure.com",
+                      "privatelink.mysql.database.azure.com",
+                      "privatelink.notebooks.azure.net",
+                      "privatelink.ods.opinsights.azure.com",
+                      "privatelink.oms.opinsights.azure.com",
+                      "privatelink.pbidedicated.windows.net",
+                      "privatelink.postgres.database.azure.com",
+                      "privatelink.prod.migration.windowsazure.com",
+                      "privatelink.purview.azure.com",
+                      "privatelink.purviewstudio.azure.com",
+                      "privatelink.queue.core.windows.net",
+                      "privatelink.redis.cache.windows.net",
+                      "privatelink.redisenterprise.cache.azure.net",
+                      "privatelink.search.windows.net",
+                      "privatelink.service.signalr.net",
+                      "privatelink.servicebus.windows.net",
+                      "privatelink.siterecovery.windowsazure.com",
+                      "privatelink.sql.azuresynapse.net",
+                      "privatelink.table.core.windows.net",
+                      "privatelink.table.cosmos.azure.com",
+                      "privatelink.tip1.powerquery.microsoft.com",
+                      "privatelink.token.botframework.com",
+                      "privatelink.vaultcore.azure.net",
+                      "privatelink.web.core.windows.net",
+                      "privatelink.webpubsub.azure.com"
+            ],
+            "Targets": [
+                {
+                    "Name": "parPrivateDnsZones.value",
                     "Destination": "Parameters"
                 }
             ]

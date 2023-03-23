@@ -18,11 +18,11 @@ InModuleScope 'ALZ' {
                 Description  = "The prefix that will be added to all resources created by this deployment."
                 Targets      = @(
                     [pscustomobject]@{
-                        Name        = "parTopLevelManagementGroupPrefix"
+                        Name        = "parTopLevelManagementGroupPrefix.value"
                         Destination = "Parameters"
                     },
                     [pscustomobject]@{
-                        Name        = "parCompanyPrefix"
+                        Name        = "parCompanyPrefix.value"
                         Destination = "Parameters"
                     })
                 Value        = "test"
@@ -32,7 +32,7 @@ InModuleScope 'ALZ' {
                 Description  = "The suffix that will be added to all resources created by this deployment."
                 Targets      = @(
                     [pscustomobject]@{
-                        Name        = "parTopLevelManagementGroupSuffix"
+                        Name        = "parTopLevelManagementGroupSuffix.value"
                         Destination = "Parameters"
                     })
                 Value        = "bla"
@@ -42,7 +42,7 @@ InModuleScope 'ALZ' {
                 Description   = "Deployment location."
                 Targets       = @(
                     [pscustomobject]@{
-                        Name        = "parLocation"
+                        Name        = "parLocation.value"
                         Destination = "Parameters"
                     })
                 AllowedValues = @('ukwest', '')
@@ -52,7 +52,7 @@ InModuleScope 'ALZ' {
                 Description  = "The type of environment that will be created . Example: dev, test, qa, staging, prod"
                 Targets      = @(
                     [pscustomobject]@{
-                        Name        = "parEnvironment"
+                        Name        = "parEnvironment.value"
                         Destination = "Parameters"
                     })
                 DefaultValue = 'prod'
@@ -64,7 +64,17 @@ InModuleScope 'ALZ' {
                 Value       = "logs/{%Environment%}/{%Location%}"
                 Targets     = @(
                     [pscustomobject]@{
-                        Name        = "parLogging"
+                        Name        = "parLogging.value"
+                        Destination = "Parameters"
+                    })
+            }
+            Nested     = [pscustomobject]@{
+                Type        = "Computed"
+                Description = "A nested value"
+                Value       = "nested"
+                Targets     = @(
+                    [pscustomobject]@{
+                        Name        = "parNested.value.parChildValue"
                         Destination = "Parameters"
                     })
             }
@@ -79,7 +89,7 @@ InModuleScope 'ALZ' {
                 },
                 "parLogging" : {
                     "value": ""
-                }
+                },
             }
         }'
         $secondFileContent = '{
