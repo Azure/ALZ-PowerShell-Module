@@ -192,7 +192,7 @@
                     "Destination": "Parameters"
                 },
                 {
-                    "Name": "parVirtualWanHubs.value.0.parHubLocation",
+                    "Name": "parVirtualWanHubs.value.[0].parHubLocation",
                     "Destination": "Parameters"
                 },
                 {
@@ -277,8 +277,8 @@
             "Description": "The identifier of the Identity Subscription. (e.g '00000000-0000-0000-0000-000000000000')",
             "Valid": "^( {){0,1}[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}(}){0,1}$",
             "Targets": [
-                {
-                    "Name": "IdentitySubscriptionId",
+                 {
+                    "Name": "IDENTITY_SUBSCRIPTION_ID",
                     "Destination": "Environment"
                 }
             ],
@@ -289,10 +289,6 @@
             "Description": "The identifier of the Connectivity Subscription. (e.g '00000000-0000-0000-0000-000000000000')",
             "Valid": "^( {){0,1}[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}(}){0,1}$",
             "Targets": [
-                {
-                    "Name": "ConnectivitySubscriptionId",
-                    "Destination": "Environment"
-                },
                 {
                     "Name": "CONNECTIVITY_SUBSCRIPTION_ID",
                     "Destination": "Environment"
@@ -306,7 +302,7 @@
             "Valid": "^( {){0,1}[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}(}){0,1}$",
             "Targets": [
                 {
-                    "Name": "ManagementSubscriptionId",
+                    "Name": "MANAGEMENT_SUBSCRIPTION_ID",
                     "Destination": "Environment"
                 }
             ],

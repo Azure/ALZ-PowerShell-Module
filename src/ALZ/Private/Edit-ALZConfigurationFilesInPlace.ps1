@@ -25,14 +25,19 @@ function Edit-ALZConfigurationFilesInPlace {
         foreach ($configKey in $configuration.PsObject.Properties) {
             foreach ($target in $configKey.Value.Targets) {
 
+                # Find the appropriate item which will be changed in the Bicep file.
                 $propertyNames = $target.Name -split "\."
                 $bicepConfig = $bicepConfiguration.parameters
 
                 for ($index=0; $index -lt $propertyNames.Length - 1; $index++) {
                     if ($bicepConfig -is [array]) {
                         # If this is an array - use the property as an array index...
-                        # This is probably a bit weird...
-                        $bicepConfig = $bicepConfig[$propertyNames[$index]]
+                        $arrayIndex = $propertyNames[$index]
+                        if ($arrayIndex -match "\[[0-9]+\]") {
+                            $arrayIndex = $arrayIndex -replace "\[|\]",""
+                        }
+
+                        $bicepConfig = $bicepConfig[$arrayIndex]
                     } elseif ($bicepConfig.ContainsKey($propertyNames[$index]) -eq $false) {
                         # This property doesn't exist at this level in the hierarchy,
                         #  this isn't the property we're looking for, stop looking.
