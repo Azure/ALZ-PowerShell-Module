@@ -67,37 +67,151 @@ InModuleScope 'ALZ' {
         }
         Context 'Edit-ALZConfigurationFilesInPlace should replace the parameters correctly' {
 
-            # It 'Should replace array values correctly (JSON Object)' {
-            #     $config = Initialize-TestConfiguration -configTarget  "parValue.value.[0]" -withValue "value"
+            It 'Should replace array values correctly (JSON Object) - first' {
+                $config = Initialize-TestConfiguration -configTarget  "parValue.value.[0]" -withValue "value"
 
-            #     $fileContent = '{
-            #         "parameters": {
-            #             "parValue": {
-            #                 "value": ["replace_me", "dont_replace_me"]
-            #             }
-            #         }
-            #     }'
+                $fileContent = '{
+                    "parameters": {
+                        "parValue": {
+                            "value": [
+                                "replace_me",
+                                "dont_replace_me"
+                            ]
+                        }
+                    }
+                }'
 
-            #     $expectedContent = '{
-            #         "parameters": {
-            #             "parValue": {
-            #                 "value":  ["value", , "dont_replace_me"]
-            #             }
-            #         }
-            #     }'
+                $expectedContent = '{
+                    "parameters": {
+                        "parValue": {
+                            "value":  [
+                                "value",
+                                "dont_replace_me"
+                            ]
+                        }
+                    }
+                }'
 
-            #     Mock -CommandName Get-Content -ParameterFilter { $Path -eq $testFile1Name } -MockWith {
-            #         $fileContent
-            #     }
+                Mock -CommandName Get-Content -ParameterFilter { $Path -eq $testFile1Name } -MockWith {
+                    $fileContent
+                }
 
-            #     $expectedContent = Format-ExpectedResult -expectedJson $expectedContent
+                $expectedContent = Format-ExpectedResult -expectedJson $expectedContent
 
-            #     Edit-ALZConfigurationFilesInPlace  -alzEnvironmentDestination '.' -configuration $config
+                Edit-ALZConfigurationFilesInPlace  -alzEnvironmentDestination '.' -configuration $config
 
-            #     Should -Invoke -CommandName Out-File `
-            #         -ParameterFilter { $FilePath -eq $testFile1Name -and $InputObject -eq $expectedContent } `
-            #         -Scope It
-            # }
+                Should -Invoke -CommandName Out-File `
+                    -ParameterFilter { $FilePath -eq $testFile1Name -and $InputObject -eq $expectedContent } `
+                    -Scope It
+            }
+
+            It 'Should replace array an entire array correctly (JSON Object)' {
+                $config = Initialize-TestConfiguration -configTarget  "parValue.value.[1]" -withValue "value"
+
+                $fileContent = '{
+                    "parameters": {
+                        "parValue": {
+                            "value": [
+                                "dont_replace_me",
+                                "replace_me"
+                            ]
+                        }
+                    }
+                }'
+
+                $expectedContent = '{
+                    "parameters": {
+                        "parValue": {
+                            "value":  [
+                                "dont_replace_me",
+                                "value"
+                            ]
+                        }
+                    }
+                }'
+
+                Mock -CommandName Get-Content -ParameterFilter { $Path -eq $testFile1Name } -MockWith {
+                    $fileContent
+                }
+
+                $expectedContent = Format-ExpectedResult -expectedJson $expectedContent
+
+                Edit-ALZConfigurationFilesInPlace  -alzEnvironmentDestination '.' -configuration $config
+
+                Should -Invoke -CommandName Out-File `
+                    -ParameterFilter { $FilePath -eq $testFile1Name -and $InputObject -eq $expectedContent } `
+                    -Scope It
+            }
+
+            It 'Should replace array values correctly (JSON Object) - second' {
+
+                $config = [pscustomobject]@{
+                    Nested     = [pscustomobject]@{
+                        Type        = "Computed"
+                        Description = "A Test Value"
+                        Value       = @(
+                            "1",
+                            "2",
+                            "3"
+                        )
+                        Targets     = @(
+                            [pscustomobject]@{
+                                Name        = "parValue.value"
+                                Destination = "Parameters"
+                            })
+                    }
+                }
+
+                $fileContent = '{
+                    "parameters": {
+                        "parValue": {
+                            "value": ["replace_me"]
+                        }
+                    }
+                }'
+
+                $expectedContent = '{
+                    "parameters": {
+                        "parValue": {
+                            "value":  ["1", "2", "3"]
+                        }
+                    }
+                }'
+
+                Mock -CommandName Get-Content -ParameterFilter { $Path -eq $testFile1Name } -MockWith {
+                    $fileContent
+                }
+
+                $expectedContent = Format-ExpectedResult -expectedJson $expectedContent
+
+                Edit-ALZConfigurationFilesInPlace  -alzEnvironmentDestination '.' -configuration $config
+
+                Should -Invoke -CommandName Out-File `
+                    -ParameterFilter { $FilePath -eq $testFile1Name -and $InputObject -eq $expectedContent } `
+                    -Scope It
+            }
+
+            It 'Should not write to files that havent been changed.' {
+                $config = Initialize-TestConfiguration -configTarget  "DoesnotExist.value" -withValue "value"
+
+                $fileContent = '{
+                    "parameters": {
+                        "parValue": {
+                            "value": "replace_me"
+                        }
+                    }
+                }'
+
+                Mock -CommandName Get-Content -ParameterFilter { $Path -eq $testFile1Name } -MockWith {
+                    $fileContent
+                }
+
+                Edit-ALZConfigurationFilesInPlace  -alzEnvironmentDestination '.' -configuration $config
+
+                Should -Invoke -CommandName Out-File `
+                    -Scope It `
+                    -Times 0 -Exactly
+            }
 
             It 'Should replace simple values correctly (Bicep Object)' {
                 $config = Initialize-TestConfiguration -configTarget  "parValue.value" -withValue "value"
