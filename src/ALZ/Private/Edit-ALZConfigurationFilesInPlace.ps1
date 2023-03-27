@@ -11,25 +11,70 @@ function Edit-ALZConfigurationFilesInPlace {
         [object] $configuration
     )
 
-    $locations = @("orchestration", "config", "customization")
+    $locations = @("config")
     $files = @()
 
     foreach ($location in $locations) {
         $bicepModules = Join-Path $alzEnvironmentDestination $location
-        $files += @(Get-ChildItem -Path $bicepModules -Recurse -Filter *.parameters.json)
+        $files += @(Get-ChildItem -Path $bicepModules -Recurse -Filter *.parameters.*.json)
     }
 
     foreach ($file in $files) {
         $bicepConfiguration = Get-Content $file.FullName | ConvertFrom-Json -AsHashtable
         $modified = $false
+
         foreach ($configKey in $configuration.PsObject.Properties) {
             foreach ($target in $configKey.Value.Targets) {
-                if ($target.Destination -eq "Parameters" -and $null -ne $bicepConfiguration.parameters[$target.Name]) {
-                    if ($configKey.Value.Type -eq "Computed") {
-                        $bicepConfiguration.parameters[$target.Name].value = Format-TokenizedConfigurationString $configKey.Value.Value $configuration
+
+                # Find the appropriate item which will be changed in the Bicep file.
+                # Remove array '[' ']' characters so we can use the index value direct.
+                $propertyNames = $target.Name -replace "\[|\]","" -split "\."
+                $bicepConfigNode = $bicepConfiguration.parameters
+                $index = 0
+
+                # Keep navigating into properties which the configuration specifies until we reach the bottom most object,
+                #  e.g. not a value type - but the object reference so the value is persisted.
+                do {
+                    if ($bicepConfigNode -is [array]) {
+                        # If this is an array - use the property as an array index...
+                        if ($propertyNames[$index] -match "[0-9]+" -eq $false) {
+                            throw "Configuration specifies an array, but the index value '${$propertyNames[$index]}' is not a number"
+                        }
+
+                        $bicepConfigNode = $bicepConfigNode[$propertyNames[$index]]
+
+                    } elseif ($bicepConfigNode.ContainsKey($propertyNames[$index]) -eq $true) {
+                        # We found the item, keep indexing into the object.
+                        $bicepConfigNode = $bicepConfigNode[$propertyNames[$index]]
                     } else {
-                        $bicepConfiguration.parameters[$target.Name].value = $configKey.Value.Value
+                        # This property doesn't exist at this level in the hierarchy,
+                        #  this isn't the property we're looking for, stop looking.
+                        $bicepConfigNode = $null
                     }
+
+                    ++$index
+
+                } while (($null -ne $bicepConfigNode) -and ($index -lt $propertyNames.Length - 1))
+
+                # If we're here, we've got the object at the bottom of the hierarchy - and we can modify values on it.
+                if ($target.Destination -eq "Parameters" -and $null -ne $bicepConfigNode) {
+                    $leafPropertyName = $propertyNames[-1]
+
+                    if ($configKey.Value.Type -eq "Computed") {
+                        # If the value type is computed we replace the value with another which already exists in the configuration hierarchy.
+                        if ($configKey.Value.Value -is [array]) {
+                            $formattedValues = @()
+                            foreach($formatString in $configKey.Value.Value) {
+                                $formattedValues += Format-TokenizedConfigurationString -tokenizedString $formatString -configuration $configuration
+                            }
+                            $bicepConfigNode[$leafPropertyName] = $formattedValues
+                        } else {
+                            $bicepConfigNode[$leafPropertyName] = Format-TokenizedConfigurationString -tokenizedString $configKey.Value.Value -configuration $configuration
+                        }
+                    } else {
+                        $bicepConfigNode[$leafPropertyName] = $configKey.Value.Value
+                    }
+
                     $modified = $true
                 }
             }

@@ -133,19 +133,19 @@
             "Description": "The prefix that will be added to all resources created by this deployment. (e.g. 'alz')",
             "Targets": [
                 {
-                    "Name": "parTopLevelManagementGroupPrefix",
+                    "Name": "parTopLevelManagementGroupPrefix.value",
                     "Destination": "Parameters"
                 },
                 {
-                    "Name": "parCompanyPrefix",
+                    "Name": "parCompanyPrefix.value",
                     "Destination": "Parameters"
                 },
                 {
-                    "Name": "parTargetManagementGroupId",
+                    "Name": "parTargetManagementGroupId.value",
                     "Destination": "Parameters"
                 },
                 {
-                    "Name": "parAssignableScopeManagementGroupId",
+                    "Name": "parAssignableScopeManagementGroupId.value",
                     "Destination": "Parameters"
                 },
                 {
@@ -162,7 +162,7 @@
             "Description": "The suffix that will be added to all resources created by this deployment. (e.g. 'test')",
             "Targets": [
                 {
-                    "Name": "parTopLevelManagementGroupSuffix",
+                    "Name": "parTopLevelManagementGroupSuffix.value",
                     "Destination": "Parameters"
                 }
             ],
@@ -176,15 +176,23 @@
             "Value": "",
             "Targets": [
                 {
-                    "Name": "parLocation",
+                    "Name": "parLocation.value",
                     "Destination": "Parameters"
                 },
                 {
-                    "Name": "parAutomationAccountLocation",
+                    "Name": "parAutomationAccountLocation.value",
                     "Destination": "Parameters"
                 },
                 {
-                    "Name": "parLogAnalyticsWorkspaceLocation",
+                    "Name": "parLogAnalyticsWorkspaceLocation.value",
+                    "Destination": "Parameters"
+                },
+                {
+                    "Name": "parPolicyAssignmentParameters.value.ascExportResourceGroupLocation.value",
+                    "Destination": "Parameters"
+                },
+                {
+                    "Name": "parVirtualWanHubs.value.[0].parHubLocation",
                     "Destination": "Parameters"
                 },
                 {
@@ -194,23 +202,74 @@
             ],
             "AllowedValues": {
                 "Display": false,
-                "Description": "Getting Azure deployment locations.",
-                "Type": "PSScript",
-                "Script": "Get-AzLocation | Where-Object {$_.RegionType -eq 'Physical'} | Sort-Object Location | Select-Object -ExpandProperty Location",
-                "Values": []
+                "Values": [
+                    "australiacentral",
+                    "australiacentral2",
+                    "australiaeast",
+                    "australiasoutheast",
+                    "brazilsouth",
+                    "brazilsoutheast",
+                    "canadacentral",
+                    "canadaeast",
+                    "centralindia",
+                    "centralus",
+                    "centraluseuap",
+                    "eastasia",
+                    "eastus",
+                    "eastus2",
+                    "eastus2euap",
+                    "eastusstg",
+                    "francecentral",
+                    "francesouth",
+                    "germanynorth",
+                    "germanywestcentral",
+                    "japaneast",
+                    "japanwest",
+                    "jioindiacentral",
+                    "jioindiawest",
+                    "koreacentral",
+                    "koreasouth",
+                    "northcentralus",
+                    "northeurope",
+                    "norwayeast",
+                    "norwaywest",
+                    "qatarcentral",
+                    "southafricanorth",
+                    "southafricawest",
+                    "southcentralus",
+                    "southeastasia",
+                    "southindia",
+                    "swedencentral",
+                    "switzerlandnorth",
+                    "switzerlandwest",
+                    "uaecentral",
+                    "uaenorth",
+                    "uksouth",
+                    "ukwest",
+                    "westcentralus",
+                    "westeurope",
+                    "westindia",
+                    "westus",
+                    "westus2",
+                    "westus3"
+                ]
             }
         },
         "Environment": {
             "Type": "UserInput",
-            "Description": "The Type of environment that will be created. (e.g. 'dev', 'test', 'qa', 'staging', 'prod')",
+            "Description": "The Type of environment that will be created. (e.g. 'live', 'canary')",
             "Targets": [
                 {
-                    "Name": "parEnvironment",
+                    "Name": "parEnvironment.value",
+                    "Destination": "Parameters"
+                },
+                {
+                    "Name": "parTags.value.Environment",
                     "Destination": "Parameters"
                 }
             ],
             "Value": "",
-            "DefaultValue": "prod",
+            "DefaultValue": "live",
             "Valid": "^[a-zA-Z0-9]{2,10}$"
         },
         "IdentitySubscriptionId": {
@@ -218,8 +277,8 @@
             "Description": "The identifier of the Identity Subscription. (e.g '00000000-0000-0000-0000-000000000000')",
             "Valid": "^( {){0,1}[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}(}){0,1}$",
             "Targets": [
-                {
-                    "Name": "IdentitySubscriptionId",
+                 {
+                    "Name": "IDENTITY_SUBSCRIPTION_ID",
                     "Destination": "Environment"
                 }
             ],
@@ -230,10 +289,6 @@
             "Description": "The identifier of the Connectivity Subscription. (e.g '00000000-0000-0000-0000-000000000000')",
             "Valid": "^( {){0,1}[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}(}){0,1}$",
             "Targets": [
-                {
-                    "Name": "ConnectivitySubscriptionId",
-                    "Destination": "Environment"
-                },
                 {
                     "Name": "CONNECTIVITY_SUBSCRIPTION_ID",
                     "Destination": "Environment"
@@ -247,22 +302,22 @@
             "Valid": "^( {){0,1}[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}(}){0,1}$",
             "Targets": [
                 {
-                    "Name": "ManagementSubscriptionId",
+                    "Name": "MANAGEMENT_SUBSCRIPTION_ID",
                     "Destination": "Environment"
                 }
             ],
             "Value": ""
         },
-        "BillingAccountId": {
+        "SecurityContact": {
             "Type": "UserInput",
-            "Description": "The identifier of the Billing Account. (e.g 00000000-0000-0000-0000-000000000000)",
-            "Valid": "^( {){0,1}[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}(}){0,1}$",
-            "Value": ""
-        },
-        "EnrollmentAccountId": {
-            "Type": "UserInput",
-            "Description": "The identifier of the Enrollment Account. (e.g 00000000-0000-0000-0000-000000000000)",
-            "Valid": "^( {){0,1}[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}(}){0,1}$",
+            "Description": "The email address of the contact for security issues. (e.g. security@contactme.com)",
+            "Valid": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
+            "Targets": [
+                {
+                    "Name":"parPolicyAssignmentParameters.value.emailSecurityContact.value",
+                    "Destination": "Parameters"
+                }
+            ],
             "Value": ""
         },
         "LogAnalyticsResourceId": {
@@ -270,7 +325,91 @@
             "Value": "/subscriptions/{%ManagementSubscriptionId%}/resourcegroups/alz-logging/providers/microsoft.operationalinsights/workspaces/alz-log-analytics",
             "Targets": [
                 {
-                    "Name": "parLogAnalyticsWorkspaceResourceId",
+                    "Name": "parLogAnalyticsWorkspaceResourceId.value",
+                    "Destination": "Parameters"
+                }
+            ]
+        },
+        "AllSubscriptionIds": {
+            "Type": "Computed",
+            "Value": [
+                "{%ManagementSubscriptionId%}",
+                "{%ConnectivitySubscriptionId%}",
+                "{%IdentitySubscriptionId%}"
+            ],
+            "Targets": [
+                {
+                    "Name": "parSubscriptionIds.value",
+                    "Destination": "Parameters"
+                }
+            ]
+        },
+        "VirtualIdToLink": {
+            "Type": "Computed",
+            "Value": "",
+            "Targets": [
+                {
+                    "Name": "parVirtualNetworkIdToLink.value",
+                    "Destination": "Parameters"
+                }
+            ]
+        },
+        "VirtualWanName":{
+            "Type": "Computed",
+            "Value": "alz-vwan-{%Location%}",
+            "Targets": [
+                {
+                    "Name": "parVirtualWanName.value",
+                    "Destination": "Parameters"
+                }
+            ]
+        },
+        "FirewallPoliciesName":{
+            "Type": "Computed",
+            "Value": "alz-azfwpolicy-{%Location%}",
+            "Targets": [
+                {
+                    "Name": "parAzFirewallPoliciesName.value",
+                    "Destination": "Parameters"
+                }
+            ]
+        },
+        "AK8sPrivateLink": {
+            "Type": "Computed",
+            "Value": "privatelink.{%Location%}.azmk8s.io",
+            "Targets": [
+                {
+                    "Name": "parPrivateDnsZones.value.[0]",
+                    "Destination": "Parameters"
+                }
+            ]
+        },
+        "BatchPrivateLink": {
+            "Type": "Computed",
+            "Value": "privatelink.{%Location%}.batch.azure.com",
+            "Targets": [
+                {
+                    "Name": "parPrivateDnsZones.value.[1]",
+                    "Destination": "Parameters"
+                }
+            ]
+        },
+        "KustoPrivateLink": {
+            "Type": "Computed",
+            "Value": "privatelink.{%Location%}.kusto.windows.net",
+            "Targets": [
+                {
+                    "Name": "parPrivateDnsZones.value.[2]",
+                    "Destination": "Parameters"
+                }
+            ]
+        },
+        "BackupPrivateLink": {
+            "Type": "Computed",
+            "Value": "privatelink.{%Location%}.backup.windowsazure.com",
+            "Targets": [
+                {
+                    "Name": "parPrivateDnsZones.value.[3]",
                     "Destination": "Parameters"
                 }
             ]
