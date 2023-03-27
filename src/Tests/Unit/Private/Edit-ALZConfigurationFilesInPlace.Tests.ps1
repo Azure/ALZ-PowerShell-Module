@@ -468,7 +468,7 @@ InModuleScope 'ALZ' {
                 $contentAfterParsing.parameters.parTopLevelManagementGroupPrefix.value = 'test'
                 $contentAfterParsing.parameters.parCompanyPrefix.value = 'test'
                 $contentAfterParsing.parameters.parLogging.value = "logs/dev/eastus"
-                # $contentAfterParsing.parameters.parNested.value.parChildValue.value = "nested"
+
                 $contentStringAfterParsing = ConvertTo-Json -InputObject $contentAfterParsing
                 Write-InformationColored $contentStringAfterParsing -ForegroundColor Yellow -InformationAction Continue
                 Should -Invoke -CommandName Out-File -ParameterFilter { $FilePath -eq "test1.parameters.json" -and $InputObject -eq $contentStringAfterParsing } -Scope It
@@ -476,6 +476,7 @@ InModuleScope 'ALZ' {
                 $contentAfterParsing = ConvertFrom-Json -InputObject $secondFileContent -AsHashtable
                 $contentAfterParsing.parameters.parTopLevelManagementGroupSuffix.value = 'bla'
                 $contentAfterParsing.parameters.parLocation.value = 'eastus'
+
                 $contentStringAfterParsing = ConvertTo-Json -InputObject $contentAfterParsing
                 Write-InformationColored $contentStringAfterParsing -ForegroundColor Yellow -InformationAction Continue
                 Should -Invoke -CommandName Out-File -ParameterFilter { $FilePath -eq "test2.parameters.json" -and $InputObject -eq $contentStringAfterParsing } -Scope It
