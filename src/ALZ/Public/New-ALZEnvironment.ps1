@@ -42,7 +42,7 @@ function New-ALZEnvironment {
 
     if ($alzIacProvider -eq "terraform") {
         Write-InformationColored "Terraform is not yet supported." -ForegroundColor Red  -InformationAction Continue
-        return $false
+        return
     }
 
     if ($PSCmdlet.ShouldProcess("ALZ-Bicep module configuration", "modify")) {
@@ -68,5 +68,5 @@ function New-ALZEnvironment {
         }
     }
 
-    return $true
+    return
 }

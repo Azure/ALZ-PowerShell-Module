@@ -74,9 +74,7 @@ InModuleScope 'ALZ' {
             }
 
             It 'should return the output directory on completion' {
-                $result = New-ALZEnvironment
-                $result | Should -Be $true
-
+                New-ALZEnvironment
                 Assert-MockCalled -CommandName Edit-ALZConfigurationFilesInPlace -Exactly 1
             }
 
