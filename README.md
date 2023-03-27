@@ -3,7 +3,7 @@
 [![ActionsTest-Windows-pwsh-Build](https://github.com/Azure/ALZ-PowerShell-Module/actions/workflows/wf_Windows_Core.yml/badge.svg?branch=main)](https://github.com/Azure/ALZ-PowerShell-Module/actions/workflows/wf_Windows_Core.yml)
 [![license](https://img.shields.io/badge/License-MIT-purple.svg)](LICENSE)
 
-![Logo](./docs/ALZLogo-Small.png)
+![Logo](./docs/ALZLogo.png)
 
 ## Synopsis
 
