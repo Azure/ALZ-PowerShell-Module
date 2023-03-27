@@ -3,8 +3,8 @@ function Write-InformationColored {
     param(
         [Parameter(Mandatory)]
         [Object]$MessageData,
-        [ConsoleColor]$ForegroundColor = $Host.UI.RawUI.ForegroundColor, # Make sure we use the current colours by default
-        [ConsoleColor]$BackgroundColor = $Host.UI.RawUI.BackgroundColor,
+        [ConsoleColor]$ForegroundColor = $Host.UI.RawUI.ForegroundColor ?? "White", # Make sure we use the current colours by default
+        [ConsoleColor]$BackgroundColor = $Host.UI.RawUI.BackgroundColor ?? "Black",
         [Switch]$NoNewline
     )
 
