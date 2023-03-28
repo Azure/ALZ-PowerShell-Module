@@ -2,7 +2,6 @@ mode: Mainline
 branches:
   feature:
     regex: ^(?!^main$).*$
-    tag: beta
     increment: Inherit
     is-release-branch: false
     is-mainline: false
