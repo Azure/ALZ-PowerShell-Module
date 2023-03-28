@@ -14,7 +14,7 @@ on:
 jobs:
   test:
     name: Run Tests
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
