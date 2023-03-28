@@ -34,6 +34,9 @@ jobs:
     - name: Determine Version
       id:   gitversion # id to later be referenced
       uses: gittools/actions/gitversion/execute@v0
+      with:
+        useConfigFile: true
+        configFilePath: VersionConfig.yml
     - name: Display GitVersion outputs (step output with prefix)
       run: |
         echo "Major: ${{ steps.gitversion.outputs.GitVersion_Major }}"

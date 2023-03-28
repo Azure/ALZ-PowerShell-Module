@@ -1,0 +1,13 @@
+branches:
+  main:
+    regex: ^main$
+    mode: ContinuousDelivery
+    tag: ''
+    is-release-branch: false
+    is-mainline: true
+  feature:
+    regex: ^(?!^main$).*$
+    tag: useBranchName
+    increment: Inherit
+    is-release-branch: false
+    is-mainline: false
