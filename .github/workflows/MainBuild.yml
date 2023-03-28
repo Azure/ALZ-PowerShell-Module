@@ -134,14 +134,9 @@ jobs:
         if-no-files-found: warn
     - name: Package ALZ Module
       shell: pwsh
-      run: ./package_ALZ.ps1 -version ${{ steps.gitversion.outputs.majorMinorPatch }}
+      run: ./package_ALZ.ps1 -version ${{ steps.gitversion.outputs.majorMinorPatch }} -prerelease ${{ steps.gitversion.outputs.nuGetPreReleaseTagV2 }}
     - name: Publish ALZ Module
       shell: pwsh
       run: |
-        $parameters = @{
-            NuGetApiKey = "11e4b435-6cb4-4bf7-8611-5162ed75eb73"
-            Prerelease = "${{ steps.gitversion.outputs.preReleaseLabel }}"
-        }
-
-        Publish-Module -Path "./ALZ" -NuGetApiKey ${{ secrets.POWERSHELL_GALLERY_KEY }} -AllowPrerelease
+        Publish-Module -Path "./ALZ" -NuGetApiKey ${{ secrets.POWERSHELL_GALLERY_KEY }}
 
