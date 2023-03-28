@@ -134,10 +134,9 @@ jobs:
         if-no-files-found: warn
     - name: Package ALZ Module
       shell: pwsh
-      run: ./package_ALZ.ps1
-    # - name: Publish Module to PowerShell Gallery
-    #   uses: pcgeek86/publish-powershell-module-action@v20
-    #   id: publish-module
-    #   with:
-    #     NuGetApiKey: ${{ secrets.POWERSHELL_GALLERY_KEY }}
+      run: ./package_ALZ.ps1 -version ${{ steps.gitversion.outputs.GitVersion_SemVer }}
+    - name: Publish ALZ Module
+      shell: pwsh
+      run: |
+        Publish-Module -Path "./ALZ" -NuGetApiKey ${{ secrets.POWERSHELL_GALLERY_KEY }}
 
