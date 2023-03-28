@@ -11,10 +11,7 @@ on:
     paths-ignore:
       - '**.md'
       - 'docs/**'
-  push:
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
+
 jobs:
   test:
     name: Run Tests

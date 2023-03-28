@@ -22,6 +22,49 @@ jobs:
     steps:
     - name: Check out repository
       uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    - name: Install GitVersion
+      uses: gittools/actions/gitversion/setup@v0
+      with:
+        versionSpec: '5.5.0'
+    - name: Determine Version
+      id:   gitversion # id to later be referenced
+      uses: gittools/actions/gitversion/execute@v0
+    - name: Display GitVersion outputs (step output with prefix)
+      run: |
+        echo "Major: ${{ steps.gitversion.outputs.GitVersion_Major }}"
+        echo "Minor: ${{ steps.gitversion.outputs.GitVersion_Minor }}"
+        echo "Patch: ${{ steps.gitversion.outputs.GitVersion_Patch }}"
+        echo "PreReleaseTag: ${{ steps.gitversion.outputs.GitVersion_PreReleaseTag }}"
+        echo "PreReleaseTagWithDash: ${{ steps.gitversion.outputs.GitVersion_PreReleaseTagWithDash }}"
+        echo "PreReleaseLabel: ${{ steps.gitversion.outputs.GitVersion_PreReleaseLabel }}"
+        echo "PreReleaseNumber: ${{ steps.gitversion.outputs.GitVersion_PreReleaseNumber }}"
+        echo "WeightedPreReleaseNumber: ${{ steps.gitversion.outputs.GitVersion_WeightedPreReleaseNumber }}"
+        echo "BuildMetaData: ${{ steps.gitversion.outputs.GitVersion_BuildMetaData }}"
+        echo "BuildMetaDataPadded: ${{ steps.gitversion.outputs.GitVersion_BuildMetaDataPadded }}"
+        echo "FullBuildMetaData: ${{ steps.gitversion.outputs.GitVersion_FullBuildMetaData }}"
+        echo "MajorMinorPatch: ${{ steps.gitversion.outputs.GitVersion_MajorMinorPatch }}"
+        echo "SemVer: ${{ steps.gitversion.outputs.GitVersion_SemVer }}"
+        echo "LegacySemVer: ${{ steps.gitversion.outputs.GitVersion_LegacySemVer }}"
+        echo "LegacySemVerPadded: ${{ steps.gitversion.outputs.GitVersion_LegacySemVerPadded }}"
+        echo "AssemblySemVer: ${{ steps.gitversion.outputs.GitVersion_AssemblySemVer }}"
+        echo "AssemblySemFileVer: ${{ steps.gitversion.outputs.GitVersion_AssemblySemFileVer }}"
+        echo "FullSemVer: ${{ steps.gitversion.outputs.GitVersion_FullSemVer }}"
+        echo "InformationalVersion: ${{ steps.gitversion.outputs.GitVersion_InformationalVersion }}"
+        echo "BranchName: ${{ steps.gitversion.outputs.GitVersion_BranchName }}"
+        echo "EscapedBranchName: ${{ steps.gitversion.outputs.GitVersion_EscapedBranchName }}"
+        echo "Sha: ${{ steps.gitversion.outputs.GitVersion_Sha }}"
+        echo "ShortSha: ${{ steps.gitversion.outputs.GitVersion_ShortSha }}"
+        echo "NuGetVersionV2: ${{ steps.gitversion.outputs.GitVersion_NuGetVersionV2 }}"
+        echo "NuGetVersion: ${{ steps.gitversion.outputs.GitVersion_NuGetVersion }}"
+        echo "NuGetPreReleaseTagV2: ${{ steps.gitversion.outputs.GitVersion_NuGetPreReleaseTagV2 }}"
+        echo "NuGetPreReleaseTag: ${{ steps.gitversion.outputs.GitVersion_NuGetPreReleaseTag }}"
+        echo "VersionSourceSha: ${{ steps.gitversion.outputs.GitVersion_VersionSourceSha }}"
+        echo "CommitsSinceVersionSource: ${{ steps.gitversion.outputs.GitVersion_CommitsSinceVersionSource }}"
+        echo "CommitsSinceVersionSourcePadded: ${{ steps.gitversion.outputs.GitVersion_CommitsSinceVersionSourcePadded }}"
+        echo "UncommittedChanges: ${{ steps.gitversion.outputs.GitVersion_UncommittedChanges }}"
+        echo "CommitDate: ${{ steps.gitversion.outputs.GitVersion_CommitDate }}"
     - name: Display the path
       shell: pwsh
       run: echo ${env:PATH}
