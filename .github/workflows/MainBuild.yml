@@ -13,7 +13,7 @@ on:
       - 'docs/**'
 jobs:
   test:
-    name: Run Tests
+    name: Run Tests & Publish
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -134,7 +134,7 @@ jobs:
         if-no-files-found: warn
     - name: Package ALZ Module
       shell: pwsh
-      run: ./package_ALZ.ps1 -version ${{ steps.gitversion.outputs.GitVersion_SemVer }}
+      run: ./package_ALZ.ps1 -version ${{ steps.gitversion.outputs.semVer }}
     - name: Publish ALZ Module
       shell: pwsh
       run: |
