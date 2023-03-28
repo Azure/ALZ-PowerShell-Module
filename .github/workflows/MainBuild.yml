@@ -36,7 +36,7 @@ jobs:
       uses: gittools/actions/gitversion/execute@v0
       with:
         useConfigFile: true
-        configFilePath: VersionConfig.yml
+        configFilePath: GitVersion.yml
     - name: Display GitVersion outputs (step output with prefix)
       run: |
         echo "Major: ${{ steps.gitversion.outputs.GitVersion_Major }}"
