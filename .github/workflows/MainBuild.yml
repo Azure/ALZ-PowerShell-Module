@@ -132,6 +132,9 @@ jobs:
         name: zip-archive
         path: .\src\Archive
         if-no-files-found: warn
+    - name: Package ALZ Module
+      shell: pwsh
+      run: ./package_ALZ.ps1
     # - name: Publish Module to PowerShell Gallery
     #   uses: pcgeek86/publish-powershell-module-action@v20
     #   id: publish-module

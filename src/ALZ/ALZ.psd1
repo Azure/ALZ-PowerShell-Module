@@ -116,7 +116,7 @@
             IconUri                    = 'https://raw.githubusercontent.com/Azure/ALZ-PowerShell-Module/main/docs/rsz_alzlogo.png?token=GHSAT0AAAAAACAOIZ6NBDR7MPRSCNBS3RQUZA4IYUQ'
 
             # ReleaseNotes of this module
-            ReleaseNotes               = 'Thsi is the first release of the ALZ PowerShell Module. This module is currently in preview and is subject to change.'
+            ReleaseNotes               = 'This is the first release of the ALZ PowerShell Module. This module is currently in preview and is subject to change.'
 
             # Prerelease string of this module
             Prerelease                 = 'beta'
@@ -125,9 +125,7 @@
             # RequireLicenseAcceptance = $false
 
             # External dependent modules of this module
-            ExternalModuleDependencies = @(
-                'Az.Resources'
-            )
+            ExternalModuleDependencies = @()
 
         } # End of PSData hashtable
 
