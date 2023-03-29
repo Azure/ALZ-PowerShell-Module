@@ -1,0 +1,63 @@
+name: Branch-Build
+on:
+  pull_request:
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+
+jobs:
+  test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        pwsh: [ '7.1.3' ]
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    - uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '3.1.x'
+    - name: Install GitVersion
+      uses: gittools/actions/gitversion/setup@v0
+      with:
+        versionSpec: '5.5.0'
+    - name: Determine Version
+      id:   gitversion # id to later be referenced
+      uses: gittools/actions/gitversion/execute@v0
+      with:
+        useConfigFile: true
+    - name: Display the path
+      shell: pwsh
+      run: echo ${env:PATH}
+    - name: Version Display
+      shell: pwsh
+      run: $PSVersionTable
+    - name: Bootstrap
+      shell: pwsh
+      run: ./actions_bootstrap.ps1
+    - name: Test and Build
+      shell: pwsh
+      run: Invoke-Build -File .\src\ALZ.build.ps1
+    - name: Upload pester results
+      uses: actions/upload-artifact@v3
+      with:
+        name: pester-results
+        path: .\src\Artifacts\testOutput
+        if-no-files-found: warn
+    - name: Upload zip module archive build
+      uses: actions/upload-artifact@v3
+      with:
+        name: zip-archive
+        path: .\src\Archive
+        if-no-files-found: warn
+    - name: Package ALZ Module
+      shell: pwsh
+      run: ./package_ALZ.ps1 -version ${{ steps.gitversion.outputs.majorMinorPatch }} -prerelease ${{ steps.gitversion.outputs.nuGetPreReleaseTagV2 }}
+    - name: Publish ALZ Module
+      shell: pwsh
+      run: |
+        Publish-Module -Path "./ALZ" -NuGetApiKey ${{ secrets.POWERSHELL_GALLERY_KEY }} -Force
