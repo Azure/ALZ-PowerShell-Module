@@ -64,7 +64,8 @@ jobs:
         if-no-files-found: warn
     - name: Package ALZ Module
       shell: pwsh
-      run: ./package_ALZ.ps1 -version ${{ steps.gitversion.outputs.majorMinorPatch }}
+      # hardcode this as beta until we're ready to take this live
+      run: ./package_ALZ.ps1 -version ${{ steps.gitversion.outputs.majorMinorPatch }} -prerelease beta
     - name: Publish ALZ Module
       shell: pwsh
       run: |

@@ -2,7 +2,7 @@ mode: ContinuousDeployment
 branches:
   feature:
     regex: ^(?!^main$).*$
-    tag: beta
+    tag: alpha
     increment: Inherit
     is-release-branch: false
     is-mainline: false
