@@ -1,0 +1,81 @@
+name: Prerelease Drafter
+
+on:
+  push:
+    # branches to consider in the event; optional, defaults to all
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  update_release_draft:
+    permissions:
+      # write permission is required to create a github release
+      contents: write
+      # write permission is required for autolabeler
+      # otherwise, read permission is required at least
+      pull-requests: write
+    runs-on: ubuntu-latest
+    steps:
+      # Drafts your next Release notes as Pull Requests are merged into "master"
+    - name: Check out repository
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    - name: Display the path
+      shell: pwsh
+      run: echo ${env:PATH}
+    - name: Version Display
+      shell: pwsh
+      run: $PSVersionTable
+    - name: Bootstrap
+      shell: pwsh
+      run: ./actions_bootstrap.ps1
+    - name: Test and Build
+      shell: pwsh
+      run: Invoke-Build -File .\src\ALZ.build.ps1
+    - name: Upload pester results
+      uses: actions/upload-artifact@v3
+      with:
+        name: pester-results
+        path: .\src\Artifacts\testOutput
+        if-no-files-found: warn
+    - name: Upload zip module archive build
+      uses: actions/upload-artifact@v3
+      with:
+        name: zip-archive
+        path: .\src\Archive
+        if-no-files-found: warn
+    - uses: release-drafter/release-drafter@v5
+      id: create_release
+      with:
+        config-name: prerelease-drafter.yml
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Package ALZ Module
+      shell: pwsh
+      run: |
+        $tag_version = "${{ steps.create_release.outputs.tag_name }}".Replace("-alpha", "")
+        ./package_ALZ.ps1 -version $tag_version -prerelease alpha
+    - uses: montudor/action-zip@v1
+      with:
+          args: zip -qq -r ALZ.zip ALZ
+    - uses: actions/upload-release-asset@v1.0.1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./ALZ.zip
+        asset_name: ALZ.zip
+        asset_content_type: application/zip
+    - uses: eregon/publish-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        release_id: ${{ steps.create_release.outputs.id }}
+    - name: Publish ALZ Module
+      shell: pwsh
+      run: |
+        Publish-Module -Path "./ALZ" -NuGetApiKey ${{ secrets.POWERSHELL_GALLERY_KEY }}
