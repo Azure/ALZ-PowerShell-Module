@@ -1,5 +1,5 @@
 {
-    "version": "v0.14.0-pre",
+    "version": "v0.14.1-pre",
     "module_url": "https://github.com/Azure/ALZ-Bicep",
     "config_files": [
         {
@@ -416,7 +416,7 @@
         },
         "UpstreamReleaseVersion": {
             "Type": "Computed",
-            "Value": "v0.14.0-pre",
+            "Value": "v0.14.1-pre",
             "Targets": [
                 {
                     "Name": "UPSTREAM_RELEASE_VERSION",
