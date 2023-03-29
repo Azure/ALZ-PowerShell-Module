@@ -1,11 +1,4 @@
-# https://help.github.com/en/actions/automating-your-workflow-with-github-actions
-# https://help.github.com/en/actions/automating-your-workflow-with-github-actions/virtual-environments-for-github-hosted-runners
-# https://help.github.com/en/actions/automating-your-workflow-with-github-actions/software-installed-on-github-hosted-runners
-# https://help.github.com/en/actions/automating-your-workflow-with-github-actions/workflow-syntax-for-github-actions#using-a-specific-shell
-# https://help.github.com/en/actions/automating-your-workflow-with-github-actions/workflow-syntax-for-github-actions
-# https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-powershell
-# https://github.com/actions/upload-artifact#where-does-the-upload-go
-name: ActionsTest-Windows-pwsh-Build
+name: Branch-Build
 on:
   pull_request:
     paths-ignore:
@@ -51,4 +44,10 @@ jobs:
         name: zip-archive
         path: .\src\Archive
         if-no-files-found: warn
-
+    - name: Package ALZ Module
+      shell: pwsh
+      run: ./package_ALZ.ps1 -version ${{ steps.gitversion.outputs.majorMinorPatch }} -prerelease ${{ steps.gitversion.outputs.nuGetPreReleaseTagV2 }}
+    - name: Publish ALZ Module
+      shell: pwsh
+      run: |
+        Publish-Module -Path "./ALZ" -NuGetApiKey ${{ secrets.POWERSHELL_GALLERY_KEY }}

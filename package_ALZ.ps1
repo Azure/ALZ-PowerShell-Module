@@ -1,6 +1,6 @@
 param(
     [string]$version,
-    [string]$prerelease
+    [string]$prerelease = ""
 )
 
 New-Item "ALZ" -ItemType Directory -Force
