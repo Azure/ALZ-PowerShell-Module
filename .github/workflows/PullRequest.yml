@@ -7,7 +7,7 @@ on:
 
 jobs:
   test:
-    name: Run Tests
+    name: Build & Test
     runs-on: windows-latest
     strategy:
       fail-fast: false
@@ -16,6 +16,18 @@ jobs:
     steps:
     - name: Check out repository
       uses: actions/checkout@v3
+    - uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '3.1.x'
+    - name: Install GitVersion
+      uses: gittools/actions/gitversion/setup@v0
+      with:
+        versionSpec: '5.5.0'
+    - name: Determine Version
+      id:   gitversion # id to later be referenced
+      uses: gittools/actions/gitversion/execute@v0
+      with:
+        useConfigFile: true
     - name: Display the path
       shell: pwsh
       run: echo ${env:PATH}
