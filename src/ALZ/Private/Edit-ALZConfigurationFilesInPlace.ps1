@@ -67,9 +67,23 @@ function Edit-ALZConfigurationFilesInPlace {
                             foreach($formatString in $configKey.Value.Value) {
                                 $formattedValues += Format-TokenizedConfigurationString -tokenizedString $formatString -configuration $configuration
                             }
+
+                            if ($null -ne $configKey.Value.Process) {
+                                $scriptBlock = [ScriptBlock]::Create($configKey.Value.Process)
+                                $formattedValues = Invoke-Command -ScriptBlock $scriptBlock -ArgumentList $formattedValues
+                            }
+
                             $bicepConfigNode[$leafPropertyName] = $formattedValues
                         } else {
-                            $bicepConfigNode[$leafPropertyName] = Format-TokenizedConfigurationString -tokenizedString $configKey.Value.Value -configuration $configuration
+
+                            $formattedValue = Format-TokenizedConfigurationString -tokenizedString $configKey.Value.Value -configuration $configuration
+
+                            if ($null -ne $configKey.Value.Process) {
+                                $scriptBlock = [ScriptBlock]::Create($configKey.Value.Process)
+                                $formattedValue = Invoke-Command -ScriptBlock $scriptBlock -ArgumentList $formattedValue
+                            }
+
+                            $bicepConfigNode[$leafPropertyName] = $formattedValue
                         }
                     } else {
                         $bicepConfigNode[$leafPropertyName] = $configKey.Value.Value

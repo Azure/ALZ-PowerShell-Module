@@ -184,10 +184,6 @@
                     "Destination": "Parameters"
                 },
                 {
-                    "Name": "parLogAnalyticsWorkspaceLocation.value",
-                    "Destination": "Parameters"
-                },
-                {
                     "Name": "parPolicyAssignmentParameters.value.ascExportResourceGroupLocation.value",
                     "Destination": "Parameters"
                 },
@@ -320,6 +316,18 @@
             ],
             "Value": ""
         },
+        "LogAnalyticsWorkspaceLocation": {
+            "Type": "Computed",
+            "Value": "{%Location%}",
+            "Process": "($args[0] -eq \"eastus\") ? \"eastus2\" : ($args[0] -eq \"eastus2\") ? \"eastus\" : $args[0]",
+            "Targets": [
+                {
+                    "Name": "parLogAnalyticsWorkspaceLocation.value",
+                    "Destination": "Parameters"
+                }
+            ]
+        },
+
         "LogAnalyticsResourceId": {
             "Type": "Computed",
             "Value": "/subscriptions/{%ManagementSubscriptionId%}/resourcegroups/alz-logging/providers/microsoft.operationalinsights/workspaces/alz-log-analytics",
@@ -332,6 +340,7 @@
         },
         "AllSubscriptionIds": {
             "Type": "Computed",
+            "Process": "@($args | Select-Object -Unique)",
             "Value": [
                 "{%ManagementSubscriptionId%}",
                 "{%ConnectivitySubscriptionId%}",
