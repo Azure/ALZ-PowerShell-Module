@@ -1,4 +1,4 @@
-name: Branch-Build
+name: Pull Request Validator
 on:
   pull_request:
     paths-ignore:

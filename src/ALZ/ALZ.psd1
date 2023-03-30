@@ -107,19 +107,19 @@
             )
 
             # A URL to the license for this module.
-            LicenseUri                 = 'https://github.com/Azure/ALZ-PowerShell-Module/blob/initial_module_config/LICENSE'
+            LicenseUri                 = 'https://github.com/Azure/ALZ-PowerShell-Module/blob/main/LICENSE'
 
             # A URL to the main website for this project.
             ProjectUri                 = 'https://github.com/Azure/ALZ-Powershell-Module'
 
             # A URL to an icon representing this module.
-            IconUri                    = 'https://raw.githubusercontent.com/Azure/ALZ-PowerShell-Module/main/docs/rsz_alzlogo.png?token=GHSAT0AAAAAACAOIZ6NBDR7MPRSCNBS3RQUZA4IYUQ'
+            IconUri                    = 'https://raw.githubusercontent.com/Azure/ALZ-PowerShell-Module/main/docs/rsz_alzlogo.png'
 
             # ReleaseNotes of this module
-            ReleaseNotes               = 'This is the first release of the ALZ PowerShell Module. This module is currently in preview and is subject to change.'
+            # ReleaseNotes               = 'This is the first release of the ALZ PowerShell Module. This module is currently in preview and is subject to change.'
 
             # Prerelease string of this module
-            Prerelease                 = 'beta'
+            # Prerelease                 = 'beta'
 
             # Flag to indicate whether the module requires explicit user acceptance for install/update/save
             # RequireLicenseAcceptance = $false
