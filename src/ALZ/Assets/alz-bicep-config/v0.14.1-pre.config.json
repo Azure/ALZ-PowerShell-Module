@@ -43,8 +43,8 @@
             "destination": "config/custom-parameters/roleAssignmentManagementGroupMany.servicePrincipal.parameters.all.json"
         },
         {
-            "source": "infra-as-code/bicep/modules/subscriptionPlacement/parameters/subscriptionPlacement.parameters.all.json",
-            "destination": "config/custom-parameters/subscriptionPlacement.parameters.all.json"
+            "source": "infra-as-code/bicep/orchestration/subPlacementAll/parameters/subPlacementAll.parameters.all.json",
+            "destination": "config/custom-parameters/subPlacementAll.parameters.all.json"
         },
         {
             "source": "infra-as-code/bicep/modules/vwanConnectivity/parameters/vwanConnectivity.parameters.all.json",
@@ -338,17 +338,38 @@
                 }
             ]
         },
-        "AllSubscriptionIds": {
+        "ManagementSubscriptionGroup": {
             "Type": "Computed",
-            "Process": "@($args | ForEach-Object { $_.ToLower() } | Select-Object -Unique)",
             "Value": [
-                "{%ManagementSubscriptionId%}",
-                "{%ConnectivitySubscriptionId%}",
+                "{%ManagementSubscriptionId%}"
+            ],
+            "Targets": [
+                {
+                    "Name": "parPlatformManagementMgSubs.value",
+                    "Destination": "Parameters"
+                }
+            ]
+        },
+        "ConnectivitySubscriptionGroup": {
+            "Type": "Computed",
+            "Value": [
+                "{%ConnectivitySubscriptionId%}"
+            ],
+            "Targets": [
+                {
+                    "Name": "parPlatformConnectivityMgSubs.value",
+                    "Destination": "Parameters"
+                }
+            ]
+        },
+        "IdentitySubscriptionGroup": {
+            "Type": "Computed",
+            "Value": [
                 "{%IdentitySubscriptionId%}"
             ],
             "Targets": [
                 {
-                    "Name": "parSubscriptionIds.value",
+                    "Name": "parPlatformIdentityMgSubs.value",
                     "Destination": "Parameters"
                 }
             ]
