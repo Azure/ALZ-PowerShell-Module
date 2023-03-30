@@ -1,5 +1,5 @@
-name-template: '$NEXT_PATCH_VERSION-alpha'
-tag-template: '$NEXT_PATCH_VERSION-alpha'
+name-template: '$RESOLVED_VERSION-alpha'
+tag-template: '$RESOLVED_VERSION-alpha'
 prerelease: true
 categories:
   - title: '🚀 Features'
