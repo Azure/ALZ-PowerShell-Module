@@ -1,4 +1,4 @@
-name: Prerelease Drafter
+name: Prerelease Build
 
 on:
   push:
@@ -78,4 +78,4 @@ jobs:
     - name: Publish ALZ Module
       shell: pwsh
       run: |
-        Publish-Module -Path "./ALZ" -NuGetApiKey ${{ secrets.POWERSHELL_GALLERY_KEY }} -Force
+        Publish-Module -Path "./ALZ" -NuGetApiKey ${{ secrets.POWERSHELL_GALLERY_KEY }} -ReleaseNotes "${{ steps.create_release.outputs.body }}" -Force
