@@ -340,7 +340,7 @@
         },
         "AllSubscriptionIds": {
             "Type": "Computed",
-            "Process": "@($args | Select-Object -Unique)",
+            "Process": "@($args | ForEach-Object { $_.ToLower() } | Select-Object -Unique)",
             "Value": [
                 "{%ManagementSubscriptionId%}",
                 "{%ConnectivitySubscriptionId%}",
