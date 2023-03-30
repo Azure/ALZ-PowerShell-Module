@@ -71,6 +71,7 @@ function Edit-ALZConfigurationFilesInPlace {
                             if ($null -ne $configKey.Value.Process) {
                                 $scriptBlock = [ScriptBlock]::Create($configKey.Value.Process)
                                 $formattedValues = Invoke-Command -ScriptBlock $scriptBlock -ArgumentList $formattedValues
+                                $formattedValues = @( $formattedValues)
                             }
 
                             $bicepConfigNode[$leafPropertyName] = $formattedValues

@@ -531,6 +531,55 @@ InModuleScope 'ALZ' {
                     -Scope It
             }
 
+
+            It 'Computed, Processed array values replace values correctly and keep array type when only one item remains.' {
+                $config = [pscustomobject]@{
+                    Nested     = [pscustomobject]@{
+                        Type        = "Computed"
+                        Description = "A Test Value"
+                        Process = '@($args | Select-Object -Unique)'
+                        Value   = @(
+                            "1",
+                            "1",
+                            "1"
+                        )
+                        Targets     = @(
+                            [pscustomobject]@{
+                                Name        = "parValue.value"
+                                Destination = "Parameters"
+                            })
+                    }
+                }
+
+                $fileContent = '{
+                    "parameters": {
+                        "parValue": {
+                            "value": []
+                        }
+                    }
+                }'
+
+                $expectedContent = '{
+                    "parameters": {
+                        "parValue": {
+                            "value": [ "1" ]
+                        }
+                    }
+                }'
+
+                Mock -CommandName Get-Content -ParameterFilter { $Path -eq $testFile1Name } -MockWith {
+                    $fileContent
+                }
+
+                $expectedContent = Format-ExpectedResult -expectedJson $expectedContent
+
+                Edit-ALZConfigurationFilesInPlace  -alzEnvironmentDestination '.' -configuration $config
+
+                Should -Invoke -CommandName Out-File `
+                    -ParameterFilter { $FilePath -eq $testFile1Name -and $InputObject -eq $expectedContent } `
+                    -Scope It
+            }
+
             It 'Computed, Processed values replace values correctly' {
                 $config = [pscustomobject]@{
                     Nested     = [pscustomobject]@{
