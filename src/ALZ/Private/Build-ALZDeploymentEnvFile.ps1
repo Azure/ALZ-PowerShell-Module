@@ -24,7 +24,13 @@ function Build-ALZDeploymentEnvFile {
     foreach ($configurationValue in $configuration.PsObject.Properties) {
         foreach ($target in $configurationValue.Value.Targets) {
             if ($target.Destination -eq "Environment") {
-                Add-Content -Path $envFile -Value "$($($target.Name))=`"$($configurationValue.Value.Value)`"" | Out-String | Write-Verbose
+
+                $formattedValue = $configurationValue.Value.Value
+                if ($configurationValue.Value.Type -eq "Computed") {
+                    $formattedValue = Format-TokenizedConfigurationString -tokenizedString $configurationValue.Value.Value -configuration $configuration
+                }
+
+                Add-Content -Path $envFile -Value "$($($target.Name))=`"$formattedValue`"" | Out-String | Write-Verbose
             }
         }
     }

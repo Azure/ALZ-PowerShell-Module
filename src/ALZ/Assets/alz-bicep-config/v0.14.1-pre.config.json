@@ -273,7 +273,7 @@
             "Description": "The identifier of the Identity Subscription. (e.g '00000000-0000-0000-0000-000000000000')",
             "Valid": "^( {){0,1}[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}(}){0,1}$",
             "Targets": [
-                 {
+                {
                     "Name": "IDENTITY_SUBSCRIPTION_ID",
                     "Destination": "Environment"
                 }
@@ -310,7 +310,7 @@
             "Valid": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
             "Targets": [
                 {
-                    "Name":"parPolicyAssignmentParameters.value.emailSecurityContact.value",
+                    "Name": "parPolicyAssignmentParameters.value.emailSecurityContact.value",
                     "Destination": "Parameters"
                 }
             ],
@@ -327,7 +327,6 @@
                 }
             ]
         },
-
         "LogAnalyticsResourceId": {
             "Type": "Computed",
             "Value": "/subscriptions/{%ManagementSubscriptionId%}/resourcegroups/alz-logging/providers/microsoft.operationalinsights/workspaces/alz-log-analytics",
@@ -384,7 +383,7 @@
                 }
             ]
         },
-        "VirtualWanName":{
+        "VirtualWanName": {
             "Type": "Computed",
             "Value": "alz-vwan-{%Location%}",
             "Targets": [
@@ -394,7 +393,7 @@
                 }
             ]
         },
-        "FirewallPoliciesName":{
+        "FirewallPoliciesName": {
             "Type": "Computed",
             "Value": "alz-azfwpolicy-{%Location%}",
             "Targets": [
@@ -451,6 +450,36 @@
                 {
                     "Name": "UPSTREAM_RELEASE_VERSION",
                     "Destination": "Environment"
+                }
+            ]
+        },
+        "ConnectivityResourceGroupName": {
+            "Type": "Computed",
+            "Value": "rg-{%Prefix%}-connectivity",
+            "Targets": [
+                {
+                    "Name": "CONNECTIVITY_RESOURCE_GROUP",
+                    "Destination": "Environment"
+                },
+                {
+                    "File": "resourceGroupConnectivity.parameters.all.json",
+                    "Name": "parResourceGroupName.value",
+                    "Destination": "Parameters"
+                }
+            ]
+        },
+        "LoggingResourceGroupName": {
+            "Type": "Computed",
+            "Value": "rg-{%Prefix%}-logging",
+            "Targets": [
+                {
+                    "Name": "LOGGING_RESOURCE_GROUP",
+                    "Destination": "Environment"
+                },
+                {
+                    "File": "resourceGroupLoggingAndSentinel.parameters.all.json",
+                    "Name": "parResourceGroupName.value",
+                    "Destination": "Parameters"
                 }
             ]
         }

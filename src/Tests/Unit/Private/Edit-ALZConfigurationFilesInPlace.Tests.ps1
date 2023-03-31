@@ -715,6 +715,88 @@ InModuleScope 'ALZ' {
                     -ParameterFilter { $FilePath -eq $testFile1Name -and $InputObject -eq $expectedContent } `
                     -Scope It
             }
+
+            It 'Multiple files with file specific configuration should be changed correctly' {
+                $defaultConfig = [pscustomobject]@{
+                    Value1      = [pscustomobject]@{
+                        Description  = "The prefix that will be added to all resources created by this deployment."
+                        Targets      = @(
+                            [pscustomobject]@{
+                                File        = "test1.parameters.json"
+                                Name        = "parCompanyPrefix.value"
+                                Destination = "Parameters"
+                            })
+                        Value        = "value1"
+                        DefaultValue = "alz"
+                    }
+                    Value2      = [pscustomobject]@{
+                        Description  = "The prefix that will be added to all resources created by this deployment."
+                        Targets      = @(
+                            [pscustomobject]@{
+                                File        = "test2.parameters.json"
+                                Name        = "parCompanyPrefix.value"
+                                Destination = "Parameters"
+                            })
+                        Value        = "value2"
+                        DefaultValue = "alz"
+                    }
+                }
+
+                $firstFileContent = '{
+                    "parameters": {
+                        "parCompanyPrefix": {
+                            "value": ""
+                        },
+                    }
+                }'
+                $secondFileContent = '{
+                    "parameters": {
+                        "parCompanyPrefix": {
+                            "value": ""
+                        },
+                    }
+                }'
+
+                Mock -CommandName Get-ChildItem -ParameterFilter { $Path -match 'config$' } -MockWith {
+                    @(
+                        [PSCustomObject]@{
+                            Name = 'test1.parameters.json'
+                            FullName = 'test1.parameters.json'
+                        },
+                        [PSCustomObject]@{
+                            Name = 'test2.parameters.json'
+                            FullName = 'test2.parameters.json'
+                        }
+                    )
+                }
+
+                Mock -CommandName Get-Content -ParameterFilter { $Path -eq 'test1.parameters.json' } -MockWith {
+                    $firstFileContent
+                }
+                Mock -CommandName Get-Content -ParameterFilter { $Path -eq 'test2.parameters.json' } -MockWith {
+                    $secondFileContent
+                }
+
+                Edit-ALZConfigurationFilesInPlace  -alzEnvironmentDestination '.' -configuration $defaultConfig
+
+                Should -Invoke -CommandName Out-File -Scope It -Times 2
+
+                # Assert that the file was written back with the new values
+                $contentAfterParsing = ConvertFrom-Json -InputObject $firstFileContent -AsHashtable
+                $contentAfterParsing.parameters.parCompanyPrefix.value = 'value1'
+
+                $contentStringAfterParsing = ConvertTo-Json -InputObject $contentAfterParsing
+                Write-InformationColored $contentStringAfterParsing -ForegroundColor Yellow -InformationAction Continue
+                Should -Invoke -CommandName Out-File -ParameterFilter { $FilePath -eq "test1.parameters.json" -and $InputObject -eq $contentStringAfterParsing } -Scope It
+
+                $contentAfterParsing = ConvertFrom-Json -InputObject $secondFileContent -AsHashtable
+                $contentAfterParsing.parameters.parCompanyPrefix.value = 'value2'
+
+                $contentStringAfterParsing = ConvertTo-Json -InputObject $contentAfterParsing
+                Write-InformationColored $contentStringAfterParsing -ForegroundColor Yellow -InformationAction Continue
+                Should -Invoke -CommandName Out-File -ParameterFilter { $FilePath -eq "test2.parameters.json" -and $InputObject -eq $contentStringAfterParsing } -Scope It
+
+            }
         }
     }
 }
