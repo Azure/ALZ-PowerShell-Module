@@ -77,6 +77,38 @@ InModuleScope 'ALZ' {
                 Should -Invoke New-Item -ParameterFilter { $Path -match ".env$" } -Scope It -Times 1 -Exactly
                 Should -Invoke Add-Content -Scope It -Times 1 -Exactly
             }
+
+            It 'Handles Computed values correctly and adds to the .env file.' {
+
+                Mock -CommandName New-Item
+                Mock -CommandName Add-Content
+
+                $configuration = [pscustomobject]@{
+                    Setting1 = [pscustomobject]@{
+                        Targets = @(
+                            [pscustomobject]@{
+                                Name        = "Setting1"
+                                Destination = "Environment"
+                            })
+                        Value   = "Test"
+                    }
+                    Setting2 = [pscustomobject]@{
+                        Targets = @(
+                            [pscustomobject]@{
+                                Name        = "Setting2"
+                                Destination = "Environment"
+                            })
+                        Type    = "Computed"
+                        Value   = "{%Setting1%}"
+                    }
+                }
+
+                Build-ALZDeploymentEnvFile -configuration $configuration -destination "test"
+
+                Should -Invoke New-Item -ParameterFilter { $Path -match ".env$" } -Scope It -Times 1 -Exactly
+                Should -Invoke Add-Content -ParameterFilter { $Value -match "^Setting1=`"Test`"$" } -Scope It -Times 1 -Exactly
+                Should -Invoke Add-Content -ParameterFilter { $Value -match "^Setting2=`"Test`"$" } -Scope It -Times 1 -Exactly
+            }
         }
     }
 }

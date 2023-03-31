@@ -25,6 +25,11 @@ function Edit-ALZConfigurationFilesInPlace {
 
         foreach ($configKey in $configuration.PsObject.Properties) {
             foreach ($target in $configKey.Value.Targets) {
+                # Is this configuration value for this file?
+                $targetedAtThisFile = $null -eq $target.File -or $target.File -eq $file.Name
+                if ($targetedAtThisFile -eq $false) {
+                    continue
+                }
 
                 # Find the appropriate item which will be changed in the Bicep file.
                 # Remove array '[' ']' characters so we can use the index value direct.
@@ -56,7 +61,7 @@ function Edit-ALZConfigurationFilesInPlace {
 
                 } while (($null -ne $bicepConfigNode) -and ($index -lt $propertyNames.Length - 1))
 
-                # If we're here, we've got the object at the bottom of the hierarchy - and we can modify values on it.
+                # If we're here, we can modify this file and we've got an actual object specified by the Name path value - and we can modify values on it.
                 if ($target.Destination -eq "Parameters" -and $null -ne $bicepConfigNode) {
                     $leafPropertyName = $propertyNames[-1]
 
