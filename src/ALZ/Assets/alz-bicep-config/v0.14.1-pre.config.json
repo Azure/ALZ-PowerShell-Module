@@ -23,8 +23,8 @@
             "destination": "config/custom-parameters/managementGroups.parameters.all.json"
         },
         {
-            "source": "infra-as-code/bicep/modules/mgDiagSettings/parameters/mgDiagSettings.parameters.all.json",
-            "destination": "config/custom-parameters/mgDiagSettings.parameters.all.json"
+            "source": "infra-as-code/bicep/orchestration/mgDiagSettingsAll/parameters/mgDiagSettingsAll.parameters.min.json",
+            "destination": "config/custom-parameters/mgDiagSettingsAll.parameters.all.json"
         },
         {
             "source": "infra-as-code/bicep/modules/policy/assignments/alzDefaults/parameters/alzDefaultPolicyAssignments.parameters.all.json",
