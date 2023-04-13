@@ -10,7 +10,7 @@ function New-ALZDirectoryEnvironment {
     # Create destination file structure
     $gitHubPipeline = Join-Path $alzEnvironmentDestination ".github" "workflows"
     $config = Join-Path $alzEnvironmentDestination "config"
-    $configModules = Join-Path $alzEnvironmentDestination "config" "modules"
+    $configModules = Join-Path $alzEnvironmentDestination "config" "custom-modules"
     $upstream = Join-Path $alzEnvironmentDestination "upstream-releases"
 
     New-Item -ItemType Directory -Path $alzEnvironmentDestination -Force | Out-String | Write-Verbose

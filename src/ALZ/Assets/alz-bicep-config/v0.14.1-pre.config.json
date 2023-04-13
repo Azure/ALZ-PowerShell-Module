@@ -23,12 +23,12 @@
             "destination": "config/custom-parameters/managementGroups.parameters.all.json"
         },
         {
-            "source": "infra-as-code/bicep/modules/mgDiagSettings/parameters/mgDiagSettings.parameters.all.json",
-            "destination": "config/custom-parameters/mgDiagSettings.parameters.all.json"
+            "source": "infra-as-code/bicep/orchestration/mgDiagSettingsAll/parameters/mgDiagSettingsAll.parameters.all.json",
+            "destination": "config/custom-parameters/mgDiagSettingsAll.parameters.all.json"
         },
         {
-            "source": "infra-as-code/bicep/modules/policy/assignments/parameters/policyAssignmentManagementGroup.dine.parameters.all.json",
-            "destination": "config/custom-parameters/policyAssignmentManagementGroup.dine.parameters.all.json"
+            "source": "infra-as-code/bicep/modules/policy/assignments/alzDefaults/parameters/alzDefaultPolicyAssignments.parameters.all.json",
+            "destination": "config/custom-parameters/alzDefaultPolicyAssignments.parameters.all.json"
         },
         {
             "source": "infra-as-code/bicep/modules/resourceGroup/parameters/resourceGroup.parameters.all.json",
@@ -310,7 +310,7 @@
             "Valid": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
             "Targets": [
                 {
-                    "Name": "parPolicyAssignmentParameters.value.emailSecurityContact.value",
+                    "Name": "parMsDefenderForCloudEmailSecurityContact.value",
                     "Destination": "Parameters"
                 }
             ],
@@ -324,6 +324,10 @@
                 {
                     "Name": "parLogAnalyticsWorkspaceLocation.value",
                     "Destination": "Parameters"
+                },
+                {
+                    "Name": "parLogAnalyticsWorkSpaceAndAutomationAccountLocation.value",
+                    "Destination": "Parameters"
                 }
             ]
         },
@@ -333,6 +337,26 @@
             "Targets": [
                 {
                     "Name": "parLogAnalyticsWorkspaceResourceId.value",
+                    "Destination": "Parameters"
+                }
+            ]
+        },
+        "DdosPretectionPlanId": {
+            "Type": "Computed",
+            "Value": "/subscriptions/{%ConnectivitySubscriptionId%}/resourceGroups/rg-{%Prefix%}-connectivity/providers/Microsoft.Network/ddosProtectionPlans/alz-ddos-plan",
+            "Targets": [
+                {
+                    "Name": "parDdosProtectionPlanId.value",
+                    "Destination": "Parameters"
+                }
+            ]
+        },
+        "PrivateDnsResourceGroupId": {
+            "Type": "Computed",
+            "Value": "/subscriptions/{%ConnectivitySubscriptionId%}/resourceGroups/rg-{%Prefix%}-connectivity",
+            "Targets": [
+                {
+                    "Name": "parPrivateDnsResourceGroupId.value",
                     "Destination": "Parameters"
                 }
             ]
