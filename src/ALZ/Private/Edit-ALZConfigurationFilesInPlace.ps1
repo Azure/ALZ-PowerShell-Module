@@ -64,12 +64,7 @@ function Edit-ALZConfigurationFilesInPlace {
                 # If we're here, we can modify this file and we've got an actual object specified by the Name path value - and we can modify values on it.
                 if ($target.Destination -eq "Parameters" -and $null -ne $bicepConfigNode) {
                     $leafPropertyName = $propertyNames[-1]
-
-
-                    } else {
-                        $bicepConfigNode[$leafPropertyName] = $configKey.Value.Value
-                    }
-
+                    $bicepConfigNode[$leafPropertyName] = $configKey.Value.Value
                     $modified = $true
                 }
             }

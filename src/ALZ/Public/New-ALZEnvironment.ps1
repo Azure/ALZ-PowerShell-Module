@@ -59,7 +59,7 @@ function New-ALZEnvironment {
 
         $configuration = Request-ALZEnvironmentConfig -configurationParameters $bicepConfig.parameters
 
-        Update-ComputedParameters -configuration $configuration -Destination $alzEnvironmentDestination | Out-String | Write-Verbose
+        Edit-ComputedConfiguration -configuration $configuration | Out-String | Write-Verbose
         Edit-ALZConfigurationFilesInPlace -alzEnvironmentDestination $alzEnvironmentDestination -configuration $configuration | Out-String | Write-Verbose
         Build-ALZDeploymentEnvFile -configuration $configuration -Destination $alzEnvironmentDestination | Out-String | Write-Verbose
 

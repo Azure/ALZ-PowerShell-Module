@@ -1,13 +1,13 @@
 # If the value type is computed we replace the value with another which already exists in the configuration hierarchy.
-function Update-ComputedParameters {
+function Edit-ComputedConfiguration {
     param (
         [Parameter(Mandatory = $true)]
         [PSCustomObject] $configuration
     )
 
-    foreach ($configKey in $configuration.PsObject.Properties.Parameters) {
-        if ($configKey.Value.Type -eq "Computed") {
-            $formattedValue = Format-TokenizedConfigurationString -tokenizedString $configurationValue.Value.Value -configuration $configuration
+    foreach ($configKey in $configuration.PsObject.Properties) {
+        if ($configKey.Value.Type -ne "Computed") {
+            continue;
         }
 
         if ($configKey.Value.Value -is [array]) {
@@ -22,7 +22,7 @@ function Update-ComputedParameters {
                 $formattedValues = @($formattedValues)
             }
 
-            $bicepConfigNode[$leafPropertyName] = $formattedValues
+            $configKey.Value.Value = $formattedValues
         } else {
 
             $formattedValue = Format-TokenizedConfigurationString -tokenizedString $configKey.Value.Value -configuration $configuration
@@ -32,8 +32,7 @@ function Update-ComputedParameters {
                 $formattedValue = Invoke-Command -ScriptBlock $scriptBlock -ArgumentList $formattedValue
             }
 
-            $bicepConfigNode[$leafPropertyName] = $formattedValue
-
+            $configKey.Value.Value = $formattedValue
         }
     }
 }
