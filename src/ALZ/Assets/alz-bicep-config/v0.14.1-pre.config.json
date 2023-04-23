@@ -157,19 +157,6 @@
             "DefaultValue": "alz",
             "Valid": "^[a-zA-Z]{3,5}$"
         },
-        "Suffix": {
-            "Type": "UserInput",
-            "Description": "The suffix that will be added to all resources created by this deployment. (e.g. 'test')",
-            "Targets": [
-                {
-                    "Name": "parTopLevelManagementGroupSuffix.value",
-                    "Destination": "Parameters"
-                }
-            ],
-            "Value": "",
-            "DefaultValue": "",
-            "Valid": "^[a-zA-Z]{0,5}$"
-        },
         "Location": {
             "Type": "UserInput",
             "Description": "Deployment location. (e.g. 'uksouth')",
