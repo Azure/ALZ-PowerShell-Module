@@ -56,7 +56,8 @@ New-ALZEnvironment -o <output_directory>
 
 ### Update an existing Azure Landing Zone Environment
 
-#### Downloads and pulls down release version from the remote GitHub repository to a local directory
+#### Downloads and pulls down the specified release version from the remote GitHub repository to a local directory
+
 
 ```powershell
 Get-ALZGithubRelease -githubRepoUrl "https://github.com/Azure/ALZ-Bicep" -releases "v0.13.0" -directoryForReleases "C:\Repos\ALZ\accelerator\upstream-releases\"
