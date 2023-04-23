@@ -1,5 +1,5 @@
 {
-    "version": "v0.14.1-pre",
+    "version": "v0.14.0",
     "module_url": "https://github.com/Azure/ALZ-Bicep",
     "config_files": [
         {
@@ -125,6 +125,10 @@
         {
             "source": "accelerator/pipeline-scripts/Deploy-ALZSubscriptionPlacement.ps1",
             "destination": "pipeline-scripts/Deploy-ALZSubscriptionPlacement.ps1"
+        },
+        {
+            "source": "accelerator/README.md",
+            "destination": "README.md"
         }
     ],
     "parameters": {
@@ -456,7 +460,7 @@
         },
         "UpstreamReleaseVersion": {
             "Type": "Computed",
-            "Value": "v0.14.1-pre",
+            "Value": "v0.14.0",
             "Targets": [
                 {
                     "Name": "UPSTREAM_RELEASE_VERSION",
