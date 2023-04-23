@@ -19,7 +19,7 @@ function New-ALZEnvironment {
     .EXAMPLE
     New-ALZEnvironment -alzEnvironmentDestination "."
     .EXAMPLE
-    New-ALZEnvironment -alzEnvironmentDestination "." -alzBicepVersion "v0.14.1-pre"
+    New-ALZEnvironment -alzEnvironmentDestination "." -alzBicepVersion "v0.14.0"
     #>
     [CmdletBinding(SupportsShouldProcess = $true)]
     param (
@@ -30,7 +30,7 @@ function New-ALZEnvironment {
         [string] $alzEnvironmentDestination = ".",
 
         [Parameter(Mandatory = $false)]
-        [string] $alzBicepVersion = "v0.14.1-pre",
+        [string] $alzBicepVersion = "v0.14.0",
 
         [Parameter(Mandatory = $false)]
         [ValidateSet("bicep", "terraform")]
@@ -52,7 +52,9 @@ function New-ALZEnvironment {
         New-ALZDirectoryEnvironment -alzEnvironmentDestination $alzEnvironmentDestination | Out-String | Write-Verbose
 
         $alzEnvironmentDestinationInternalCode = Join-Path $alzEnvironmentDestination "upstream-releases"
+
         Get-ALZGithubRelease -directoryForReleases $alzEnvironmentDestinationInternalCode -githubRepoUrl $bicepConfig.module_url -releases @($bicepConfig.version) | Out-String | Write-Verbose
+        
         Write-InformationColored "Copying ALZ-Bicep module to $alzEnvironmentDestinationInternalCode" -ForegroundColor Green -InformationAction Continue
         Copy-ALZParametersFile -alzEnvironmentDestination $alzEnvironmentDestination -upstreamReleaseDirectory $(Join-Path $alzEnvironmentDestinationInternalCode $bicepConfig.version) -configFiles $bicepConfig.config_files | Out-String | Write-Verbose
         Write-InformationColored "ALZ-Bicep source directory: $alzBicepSourceDirectory" -ForegroundColor Green -InformationAction Continue
