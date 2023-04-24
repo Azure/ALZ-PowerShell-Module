@@ -388,6 +388,18 @@
                 }
             ]
         },
+        "HubNetworkName": {
+            "Type": "Computed",
+            "Value": [
+                "alz-hub-{%Location%}"
+            ],
+            "Targets": [
+                {
+                    "Name": "parHubNetworkName.value",
+                    "Destination": "Parameters"
+                }
+            ]
+        },
         "VirtualIdToLink": {
             "Type": "Computed",
             "Value": "",
@@ -404,6 +416,18 @@
             "Targets": [
                 {
                     "Name": "parVirtualWanName.value",
+                    "Destination": "Parameters"
+                }
+            ]
+        },
+        "AzFirewallName": {
+            "Type": "Computed",
+            "Value": [
+                "alz-azfw-{%Location%}"
+            ],
+            "Targets": [
+                {
+                    "Name": "parAzFirewallName.value",
                     "Destination": "Parameters"
                 }
             ]
