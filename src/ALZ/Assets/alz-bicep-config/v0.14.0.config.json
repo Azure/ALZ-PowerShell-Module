@@ -324,7 +324,7 @@
         },
         "LogAnalyticsResourceId": {
             "Type": "Computed",
-            "Value": "/subscriptions/{%ManagementSubscriptionId%}/resourcegroups/alz-logging/providers/microsoft.operationalinsights/workspaces/alz-log-analytics",
+            "Value": "/subscriptions/{%ManagementSubscriptionId%}/resourcegroups/rg-{%Prefix%}-logging/providers/microsoft.operationalinsights/workspaces/alz-log-analytics",
             "Targets": [
                 {
                     "Name": "parLogAnalyticsWorkspaceResourceId.value",
