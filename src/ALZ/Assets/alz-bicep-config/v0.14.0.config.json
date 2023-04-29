@@ -129,6 +129,35 @@
         {
             "source": "accelerator/.github/workflows/alz-bicep-pr-2.yml",
             "destination": ".github/workflows/alz-bicep-pr-2.yml"
+        },
+        {
+            "source": "accelerator/.azuredevops/pipelines/alz-bicep-1.yml",
+            "destination": ".azuredevops/pipelines/alz-bicep-1.yml"
+        },
+        {
+            "source": "accelerator/.azuredevops/pipelines/alz-bicep-2.yml",
+            "destination": ".azuredevops/pipelines/alz-bicep-2.yml"
+        },
+        {
+            "source": "accelerator/.azuredevops/pipelines/alz-bicep-3.yml",
+            "destination": ".azuredevops/pipelines/alz-bicep-3.yml"
+        },
+        {
+            "source": "accelerator/.azuredevops/pipelines/alz-bicep-4a.yml",
+            "destination": ".azuredevops/pipelines/alz-bicep-4a.yml"
+
+        },
+        {
+            "source": "accelerator/.azuredevops/pipelines/alz-bicep-4b.yml",
+            "destination": ".azuredevops/pipelines/alz-bicep-4b.yml"
+        },
+        {
+            "source": "accelerator/.azuredevops/pipelines/alz-bicep-pr-1.yml",
+            "destination": ".azuredevops/pipelines/alz-bicep-pr-1.yml"
+        },
+        {
+            "source": "accelerator/.azuredevops/pipelines/alz-bicep-pr-2.yml",
+            "destination": ".azuredevops/pipelines/alz-bicep-pr-2.yml"
         }
     ],
     "parameters": {
