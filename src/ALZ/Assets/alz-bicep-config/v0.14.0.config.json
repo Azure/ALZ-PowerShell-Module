@@ -51,6 +51,10 @@
             "destination": "config/custom-parameters/vwanConnectivity.parameters.all.json"
         },
         {
+            "source": "accelerator/README.md",
+            "destination": "README.md"
+        },
+        {
             "source": "accelerator/.github/workflows/alz-bicep-1.yml",
             "destination": ".github/workflows/alz-bicep-1.yml"
         },
@@ -125,10 +129,6 @@
         {
             "source": "accelerator/pipeline-scripts/Deploy-ALZSubscriptionPlacement.ps1",
             "destination": "pipeline-scripts/Deploy-ALZSubscriptionPlacement.ps1"
-        },
-        {
-            "source": "accelerator/README.md",
-            "destination": "README.md"
         }
     ],
     "parameters": {
