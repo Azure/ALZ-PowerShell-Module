@@ -55,34 +55,6 @@
             "destination": "README.md"
         },
         {
-            "source": "accelerator/.github/workflows/alz-bicep-1.yml",
-            "destination": ".github/workflows/alz-bicep-1.yml"
-        },
-        {
-            "source": "accelerator/.github/workflows/alz-bicep-2.yml",
-            "destination": ".github/workflows/alz-bicep-2.yml"
-        },
-        {
-            "source": "accelerator/.github/workflows/alz-bicep-3.yml",
-            "destination": ".github/workflows/alz-bicep-3.yml"
-        },
-        {
-            "source": "accelerator/.github/workflows/alz-bicep-4a.yml",
-            "destination": ".github/workflows/alz-bicep-4a.yml"
-        },
-        {
-            "source": "accelerator/.github/workflows/alz-bicep-4b.yml",
-            "destination": ".github/workflows/alz-bicep-4b.yml"
-        },
-        {
-            "source": "accelerator/.github/workflows/alz-bicep-pr-1.yml",
-            "destination": ".github/workflows/alz-bicep-pr-1.yml"
-        },
-        {
-            "source": "accelerator/.github/workflows/alz-bicep-pr-2.yml",
-            "destination": ".github/workflows/alz-bicep-pr-2.yml"
-        },
-        {
             "source": "accelerator/pipeline-scripts/Deploy-ALZConnectivityResourceGroup.ps1",
             "destination": "pipeline-scripts/Deploy-ALZConnectivityResourceGroup.ps1"
         },
@@ -129,6 +101,34 @@
         {
             "source": "accelerator/pipeline-scripts/Deploy-ALZSubscriptionPlacement.ps1",
             "destination": "pipeline-scripts/Deploy-ALZSubscriptionPlacement.ps1"
+        },
+        {
+            "source": "accelerator/.github/workflows/alz-bicep-1.yml",
+            "destination": ".github/workflows/alz-bicep-1.yml"
+        },
+        {
+            "source": "accelerator/.github/workflows/alz-bicep-2.yml",
+            "destination": ".github/workflows/alz-bicep-2.yml"
+        },
+        {
+            "source": "accelerator/.github/workflows/alz-bicep-3.yml",
+            "destination": ".github/workflows/alz-bicep-3.yml"
+        },
+        {
+            "source": "accelerator/.github/workflows/alz-bicep-4a.yml",
+            "destination": ".github/workflows/alz-bicep-4a.yml"
+        },
+        {
+            "source": "accelerator/.github/workflows/alz-bicep-4b.yml",
+            "destination": ".github/workflows/alz-bicep-4b.yml"
+        },
+        {
+            "source": "accelerator/.github/workflows/alz-bicep-pr-1.yml",
+            "destination": ".github/workflows/alz-bicep-pr-1.yml"
+        },
+        {
+            "source": "accelerator/.github/workflows/alz-bicep-pr-2.yml",
+            "destination": ".github/workflows/alz-bicep-pr-2.yml"
         }
     ],
     "parameters": {
