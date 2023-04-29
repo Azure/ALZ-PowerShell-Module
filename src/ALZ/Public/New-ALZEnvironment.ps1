@@ -35,7 +35,12 @@ function New-ALZEnvironment {
         [Parameter(Mandatory = $false)]
         [ValidateSet("bicep", "terraform")]
         [Alias("Iac")]
-        [string] $alzIacProvider = "bicep"
+        [string] $alzIacProvider = "bicep",
+
+        [Parameter(Mandatory = $false)]
+        [ValidateSet("github", "azuredevops")]
+        [Alias("Cicd")]
+        [string] $alzCicdPlatform = "github"
     )
 
     Write-InformationColored "Getting ready to create a new ALZ environment with you..." -ForegroundColor Green -InformationAction Continue
@@ -54,9 +59,10 @@ function New-ALZEnvironment {
         $alzEnvironmentDestinationInternalCode = Join-Path $alzEnvironmentDestination "upstream-releases"
 
         Get-ALZGithubRelease -directoryForReleases $alzEnvironmentDestinationInternalCode -githubRepoUrl $bicepConfig.module_url -releases @($bicepConfig.version) | Out-String | Write-Verbose
-        
+
         Write-InformationColored "Copying ALZ-Bicep module to $alzEnvironmentDestinationInternalCode" -ForegroundColor Green -InformationAction Continue
         Copy-ALZParametersFile -alzEnvironmentDestination $alzEnvironmentDestination -upstreamReleaseDirectory $(Join-Path $alzEnvironmentDestinationInternalCode $bicepConfig.version) -configFiles $bicepConfig.config_files | Out-String | Write-Verbose
+        Copy-ALZParametersFile -alzEnvironmentDestination $alzEnvironmentDestination -upstreamReleaseDirectory $(Join-Path $alzEnvironmentDestinationInternalCode $bicepConfig.version) -configFiles $bicepConfig.cicd.$alzCicdPlatform | Out-String | Write-Verbose
         Write-InformationColored "ALZ-Bicep source directory: $alzBicepSourceDirectory" -ForegroundColor Green -InformationAction Continue
 
         $configuration = Request-ALZEnvironmentConfig -configurationParameters $bicepConfig.parameters
