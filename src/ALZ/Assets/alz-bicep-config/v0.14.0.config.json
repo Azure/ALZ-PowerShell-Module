@@ -159,7 +159,7 @@
             ],
             "Value": "",
             "DefaultValue": "alz",
-            "Valid": "^[a-zA-Z]{2,5}$"
+            "Valid": "^[a-zA-Z]{2,5}(-[a-zA-Z]{2,5})?$"
         },
         "Location": {
             "Type": "UserInput",
