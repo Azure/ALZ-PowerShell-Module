@@ -1,5 +1,5 @@
 ####################################
-# Get-GithubRelease.ps1 #
+# Get-ALZGithubRelease.ps1 #
 ####################################
 # Version: 0.1.0
 # Based on Invoke-GitHubReleaseFetcher by Jack Tracey:
@@ -19,7 +19,7 @@ Checks for the releases of a GitHub repository and downloads the latest release 
 #>
 
 
-function Get-GithubRelease {
+function Get-ALZGithubRelease {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory = $true, Position = 1, HelpMessage = "Please the provide the full URL of the GitHub repository you wish to check for the latest release.")]

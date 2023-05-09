@@ -35,20 +35,20 @@ InModuleScope 'ALZ' {
                 [Parameter(Mandatory = $true)]
                 [string]$withValue
             )
-                $config = [pscustomobject]@{
-                    Nested     = [pscustomobject]@{
-                        Type        = "Computed"
-                        Description = "A Test Value"
-                        Value       = $withValue
-                        Targets     = @(
-                            [pscustomobject]@{
-                                Name        = $configTarget
-                                Destination = "Parameters"
-                            })
-                    }
+            $config = [pscustomobject]@{
+                Nested = [pscustomobject]@{
+                    Type        = "Computed"
+                    Description = "A Test Value"
+                    Value       = $withValue
+                    Targets     = @(
+                        [pscustomobject]@{
+                            Name        = $configTarget
+                            Destination = "Parameters"
+                        })
                 }
+            }
 
-                return $config
+            return $config
         }
 
         function Format-ExpectedResult {
@@ -69,7 +69,7 @@ InModuleScope 'ALZ' {
         Context 'Edit-ALZConfigurationFilesInPlace should replace the parameters correctly' {
 
             It 'Should replace array values correctly (JSON Object) - first' {
-                $config = Initialize-TestConfiguration -configTarget  "parValue.value.[0]" -withValue "value"
+                $config = Initialize-TestConfiguration -configTarget "parValue.value.[0]" -withValue "value"
 
                 $fileContent = '{
                     "parameters": {
@@ -99,7 +99,7 @@ InModuleScope 'ALZ' {
 
                 $expectedContent = Format-ExpectedResult -expectedJson $expectedContent
 
-                Edit-ALZConfigurationFilesInPlace  -alzEnvironmentDestination '.' -configuration $config
+                Edit-ALZConfigurationFilesInPlace -alzEnvironmentDestination '.' -configuration $config
 
                 Should -Invoke -CommandName Out-File `
                     -ParameterFilter { $FilePath -eq $testFile1Name -and $InputObject -eq $expectedContent } `
@@ -107,7 +107,7 @@ InModuleScope 'ALZ' {
             }
 
             It 'Should replace array an entire array correctly (JSON Object)' {
-                $config = Initialize-TestConfiguration -configTarget  "parValue.value.[1]" -withValue "value"
+                $config = Initialize-TestConfiguration -configTarget "parValue.value.[1]" -withValue "value"
 
                 $fileContent = '{
                     "parameters": {
@@ -137,7 +137,7 @@ InModuleScope 'ALZ' {
 
                 $expectedContent = Format-ExpectedResult -expectedJson $expectedContent
 
-                Edit-ALZConfigurationFilesInPlace  -alzEnvironmentDestination '.' -configuration $config
+                Edit-ALZConfigurationFilesInPlace -alzEnvironmentDestination '.' -configuration $config
 
                 Should -Invoke -CommandName Out-File `
                     -ParameterFilter { $FilePath -eq $testFile1Name -and $InputObject -eq $expectedContent } `
@@ -147,7 +147,7 @@ InModuleScope 'ALZ' {
             It 'Should replace array values correctly (JSON Object) - second' {
 
                 $config = [pscustomobject]@{
-                    Nested     = [pscustomobject]@{
+                    Nested = [pscustomobject]@{
                         Type        = "Computed"
                         Description = "A Test Value"
                         Value       = @(
@@ -185,7 +185,7 @@ InModuleScope 'ALZ' {
 
                 $expectedContent = Format-ExpectedResult -expectedJson $expectedContent
 
-                Edit-ALZConfigurationFilesInPlace  -alzEnvironmentDestination '.' -configuration $config
+                Edit-ALZConfigurationFilesInPlace -alzEnvironmentDestination '.' -configuration $config
 
                 Should -Invoke -CommandName Out-File `
                     -ParameterFilter { $FilePath -eq $testFile1Name -and $InputObject -eq $expectedContent } `
@@ -193,7 +193,7 @@ InModuleScope 'ALZ' {
             }
 
             It 'Should not write to files that havent been changed.' {
-                $config = Initialize-TestConfiguration -configTarget  "DoesnotExist.value" -withValue "value"
+                $config = Initialize-TestConfiguration -configTarget "DoesnotExist.value" -withValue "value"
 
                 $fileContent = '{
                     "parameters": {
@@ -207,7 +207,7 @@ InModuleScope 'ALZ' {
                     $fileContent
                 }
 
-                Edit-ALZConfigurationFilesInPlace  -alzEnvironmentDestination '.' -configuration $config
+                Edit-ALZConfigurationFilesInPlace -alzEnvironmentDestination '.' -configuration $config
 
                 Should -Invoke -CommandName Out-File `
                     -Scope It `
@@ -215,7 +215,7 @@ InModuleScope 'ALZ' {
             }
 
             It 'Should replace simple values correctly (Bicep Object)' {
-                $config = Initialize-TestConfiguration -configTarget  "parValue.value" -withValue "value"
+                $config = Initialize-TestConfiguration -configTarget "parValue.value" -withValue "value"
 
                 $fileContent = '{
                     "parameters": {
@@ -239,7 +239,7 @@ InModuleScope 'ALZ' {
 
                 $expectedContent = Format-ExpectedResult -expectedJson $expectedContent
 
-                Edit-ALZConfigurationFilesInPlace  -alzEnvironmentDestination '.' -configuration $config
+                Edit-ALZConfigurationFilesInPlace -alzEnvironmentDestination '.' -configuration $config
 
                 Should -Invoke -CommandName Out-File `
                     -ParameterFilter { $FilePath -eq $testFile1Name -and $InputObject -eq $expectedContent } `
@@ -247,7 +247,7 @@ InModuleScope 'ALZ' {
             }
 
             It "Should replace 'Parameter' destinations to nested array objects correctly" {
-                $config = Initialize-TestConfiguration -configTarget  "parNested.value.[0].parChildValue.value" -withValue "nested"
+                $config = Initialize-TestConfiguration -configTarget "parNested.value.[0].parChildValue.value" -withValue "nested"
 
                 $fileContent = '{
                     "parameters": {
@@ -279,7 +279,7 @@ InModuleScope 'ALZ' {
 
                 $expectedContent = Format-ExpectedResult -expectedJson $expectedContent
 
-                Edit-ALZConfigurationFilesInPlace  -alzEnvironmentDestination '.' -configuration $config
+                Edit-ALZConfigurationFilesInPlace -alzEnvironmentDestination '.' -configuration $config
 
                 Should -Invoke -CommandName Out-File `
                     -ParameterFilter { $FilePath -eq $testFile1Name -and $InputObject -eq $expectedContent } `
@@ -287,7 +287,7 @@ InModuleScope 'ALZ' {
             }
 
             It 'Should replace nested values correctly (Plain JSON Object)' {
-                $config = Initialize-TestConfiguration -configTarget  "parNested.value.parChildValue" -withValue "nested"
+                $config = Initialize-TestConfiguration -configTarget "parNested.value.parChildValue" -withValue "nested"
 
                 $fileContent = '{
                     "parameters": {
@@ -315,7 +315,7 @@ InModuleScope 'ALZ' {
 
                 $expectedContent = Format-ExpectedResult -expectedJson $expectedContent
 
-                Edit-ALZConfigurationFilesInPlace  -alzEnvironmentDestination '.' -configuration $config
+                Edit-ALZConfigurationFilesInPlace -alzEnvironmentDestination '.' -configuration $config
 
                 Should -Invoke -CommandName Out-File `
                     -ParameterFilter { $FilePath -eq $testFile1Name -and $InputObject -eq $expectedContent } `
@@ -323,7 +323,7 @@ InModuleScope 'ALZ' {
             }
 
             It 'Should replace nested values correctly (Bicep Object)' {
-                $config = Initialize-TestConfiguration -configTarget  "parNested.value.parChildValue.value" -withValue "nested"
+                $config = Initialize-TestConfiguration -configTarget "parNested.value.parChildValue.value" -withValue "nested"
 
                 $fileContent = '{
                     "parameters": {
@@ -355,7 +355,7 @@ InModuleScope 'ALZ' {
 
                 $expectedContent = Format-ExpectedResult -expectedJson $expectedContent
 
-                Edit-ALZConfigurationFilesInPlace  -alzEnvironmentDestination '.' -configuration $config
+                Edit-ALZConfigurationFilesInPlace -alzEnvironmentDestination '.' -configuration $config
 
                 Should -Invoke -CommandName Out-File `
                     -ParameterFilter { $FilePath -eq $testFile1Name -and $InputObject -eq $expectedContent } `
@@ -377,16 +377,6 @@ InModuleScope 'ALZ' {
                             })
                         Value        = "test"
                         DefaultValue = "alz"
-                    }
-                    Suffix      = [pscustomobject]@{
-                        Description  = "The suffix that will be added to all resources created by this deployment."
-                        Targets      = @(
-                            [pscustomobject]@{
-                                Name        = "parTopLevelManagementGroupSuffix.value"
-                                Destination = "Parameters"
-                            })
-                        Value        = "bla"
-                        DefaultValue = ""
                     }
                     Location    = [pscustomobject]@{
                         Description   = "Deployment location."
@@ -434,9 +424,6 @@ InModuleScope 'ALZ' {
                 }'
                 $secondFileContent = '{
                     "parameters": {
-                        "parTopLevelManagementGroupSuffix": {
-                            "value": ""
-                        },
                         "parLocation": {
                             "value": ""
                         }
@@ -461,7 +448,7 @@ InModuleScope 'ALZ' {
                 }
 
                 Edit-ComputedConfiguration -configuration $defaultConfig
-                Edit-ALZConfigurationFilesInPlace  -alzEnvironmentDestination '.' -configuration $defaultConfig
+                Edit-ALZConfigurationFilesInPlace -alzEnvironmentDestination '.' -configuration $defaultConfig
 
                 Should -Invoke -CommandName Out-File -Scope It -Times 2
 
@@ -476,7 +463,6 @@ InModuleScope 'ALZ' {
                 Should -Invoke -CommandName Out-File -ParameterFilter { $FilePath -eq "test1.parameters.json" -and $InputObject -eq $contentStringAfterParsing } -Scope It
 
                 $contentAfterParsing = ConvertFrom-Json -InputObject $secondFileContent -AsHashtable
-                $contentAfterParsing.parameters.parTopLevelManagementGroupSuffix.value = 'bla'
                 $contentAfterParsing.parameters.parLocation.value = 'eastus'
 
                 $contentStringAfterParsing = ConvertTo-Json -InputObject $contentAfterParsing
@@ -484,9 +470,245 @@ InModuleScope 'ALZ' {
                 Should -Invoke -CommandName Out-File -ParameterFilter { $FilePath -eq "test2.parameters.json" -and $InputObject -eq $contentStringAfterParsing } -Scope It
             }
 
+<<<<<<< HEAD
+=======
+            It 'Computed, Processed array values replace values correctly' {
+                $config = [pscustomobject]@{
+                    Nested = [pscustomobject]@{
+                        Type        = "Computed"
+                        Description = "A Test Value"
+                        Process     = '@($args | Select-Object -Unique)'
+                        Value       = @(
+                            "1",
+                            "1",
+                            "3"
+                        )
+                        Targets     = @(
+                            [pscustomobject]@{
+                                Name        = "parValue.value"
+                                Destination = "Parameters"
+                            })
+                    }
+                }
+
+                $fileContent = '{
+                    "parameters": {
+                        "parValue": {
+                            "value": []
+                        }
+                    }
+                }'
+
+                $expectedContent = '{
+                    "parameters": {
+                        "parValue": {
+                            "value": [ "1", "3" ]
+                        }
+                    }
+                }'
+
+                Mock -CommandName Get-Content -ParameterFilter { $Path -eq $testFile1Name } -MockWith {
+                    $fileContent
+                }
+
+                $expectedContent = Format-ExpectedResult -expectedJson $expectedContent
+
+                Edit-ALZConfigurationFilesInPlace -alzEnvironmentDestination '.' -configuration $config
+
+                Should -Invoke -CommandName Out-File `
+                    -ParameterFilter { $FilePath -eq $testFile1Name -and $InputObject -eq $expectedContent } `
+                    -Scope It
+            }
+
+            It 'Computed, Processed array values replace values correctly in a case insensitive deduplication.' {
+                $config = [pscustomobject]@{
+                    Nested = [pscustomobject]@{
+                        Type        = "Computed"
+                        Description = "A Test Value"
+                        Process     = '@($args | ForEach-Object { $_.ToLower() } | Select-Object -Unique)'
+                        Value       = @(
+                            "A",
+                            "a",
+                            "A",
+                            "a"
+                        )
+                        Targets     = @(
+                            [pscustomobject]@{
+                                Name        = "parValue.value"
+                                Destination = "Parameters"
+                            })
+                    }
+                }
+
+                $fileContent = '{
+                    "parameters": {
+                        "parValue": {
+                            "value": []
+                        }
+                    }
+                }'
+
+                $expectedContent = '{
+                    "parameters": {
+                        "parValue": {
+                            "value": [ "a" ]
+                        }
+                    }
+                }'
+
+                Mock -CommandName Get-Content -ParameterFilter { $Path -eq $testFile1Name } -MockWith {
+                    $fileContent
+                }
+
+                $expectedContent = Format-ExpectedResult -expectedJson $expectedContent
+
+                Edit-ALZConfigurationFilesInPlace -alzEnvironmentDestination '.' -configuration $config
+
+                Should -Invoke -CommandName Out-File `
+                    -ParameterFilter { $FilePath -eq $testFile1Name -and $InputObject -eq $expectedContent } `
+                    -Scope It
+            }
+
+            It 'Computed, Processed array values replace values correctly and keep array type when only one item remains.' {
+                $config = [pscustomobject]@{
+                    Nested = [pscustomobject]@{
+                        Type        = "Computed"
+                        Description = "A Test Value"
+                        Process     = '@($args | Select-Object -Unique)'
+                        Value       = @(
+                            "1",
+                            "1",
+                            "1"
+                        )
+                        Targets     = @(
+                            [pscustomobject]@{
+                                Name        = "parValue.value"
+                                Destination = "Parameters"
+                            })
+                    }
+                }
+
+                $fileContent = '{
+                    "parameters": {
+                        "parValue": {
+                            "value": []
+                        }
+                    }
+                }'
+
+                $expectedContent = '{
+                    "parameters": {
+                        "parValue": {
+                            "value": [ "1" ]
+                        }
+                    }
+                }'
+
+                Mock -CommandName Get-Content -ParameterFilter { $Path -eq $testFile1Name } -MockWith {
+                    $fileContent
+                }
+
+                $expectedContent = Format-ExpectedResult -expectedJson $expectedContent
+
+                Edit-ALZConfigurationFilesInPlace -alzEnvironmentDestination '.' -configuration $config
+
+                Should -Invoke -CommandName Out-File `
+                    -ParameterFilter { $FilePath -eq $testFile1Name -and $InputObject -eq $expectedContent } `
+                    -Scope It
+            }
+
+            It 'Computed, Processed values replace values correctly' {
+                $config = [pscustomobject]@{
+                    Nested = [pscustomobject]@{
+                        Type        = "Computed"
+                        Description = "A Test Value"
+                        Process     = '($args[0] -eq "eastus") ? "eastus2" : ($args[0] -eq "eastus2") ? "eastus" : $args[0]'
+                        Value       = "eastus"
+                        Targets     = @(
+                            [pscustomobject]@{
+                                Name        = "parValue.value"
+                                Destination = "Parameters"
+                            })
+                    }
+                }
+
+                $fileContent = '{
+                    "parameters": {
+                        "parValue": {
+                            "value": "replace_me"
+                        }
+                    }
+                }'
+
+                $expectedContent = '{
+                    "parameters": {
+                        "parValue": {
+                            "value": "eastus2"
+                        }
+                    }
+                }'
+
+                Mock -CommandName Get-Content -ParameterFilter { $Path -eq $testFile1Name } -MockWith {
+                    $fileContent
+                }
+
+                $expectedContent = Format-ExpectedResult -expectedJson $expectedContent
+
+                Edit-ALZConfigurationFilesInPlace -alzEnvironmentDestination '.' -configuration $config
+
+                Should -Invoke -CommandName Out-File `
+                    -ParameterFilter { $FilePath -eq $testFile1Name -and $InputObject -eq $expectedContent } `
+                    -Scope It
+            }
+
+            It 'Computed, Processed values replace values correctly' {
+                $config = [pscustomobject]@{
+                    Nested = [pscustomobject]@{
+                        Type        = "Computed"
+                        Description = "A Test Value"
+                        Process     = '($args[0] -eq "goodbye") ? "Hello" : "Goodbye"'
+                        Value       = "goodbye"
+                        Targets     = @(
+                            [pscustomobject]@{
+                                Name        = "parValue.value"
+                                Destination = "Parameters"
+                            })
+                    }
+                }
+
+                $fileContent = '{
+                    "parameters": {
+                        "parValue": {
+                            "value": "replace_me"
+                        }
+                    }
+                }'
+
+                $expectedContent = '{
+                    "parameters": {
+                        "parValue": {
+                            "value": "Hello"
+                        }
+                    }
+                }'
+
+                Mock -CommandName Get-Content -ParameterFilter { $Path -eq $testFile1Name } -MockWith {
+                    $fileContent
+                }
+
+                $expectedContent = Format-ExpectedResult -expectedJson $expectedContent
+
+                Edit-ALZConfigurationFilesInPlace -alzEnvironmentDestination '.' -configuration $config
+
+                Should -Invoke -CommandName Out-File `
+                    -ParameterFilter { $FilePath -eq $testFile1Name -and $InputObject -eq $expectedContent } `
+                    -Scope It
+            }
+
+>>>>>>> 21d2e0442c3bd96cc8db505a8e18eb771bc63f84
             It 'Multiple files with file specific configuration should be changed correctly' {
                 $defaultConfig = [pscustomobject]@{
-                    Value1      = [pscustomobject]@{
+                    Value1 = [pscustomobject]@{
                         Description  = "The prefix that will be added to all resources created by this deployment."
                         Targets      = @(
                             [pscustomobject]@{
@@ -497,7 +719,7 @@ InModuleScope 'ALZ' {
                         Value        = "value1"
                         DefaultValue = "alz"
                     }
-                    Value2      = [pscustomobject]@{
+                    Value2 = [pscustomobject]@{
                         Description  = "The prefix that will be added to all resources created by this deployment."
                         Targets      = @(
                             [pscustomobject]@{
@@ -528,11 +750,11 @@ InModuleScope 'ALZ' {
                 Mock -CommandName Get-ChildItem -ParameterFilter { $Path -match 'config$' } -MockWith {
                     @(
                         [PSCustomObject]@{
-                            Name = 'test1.parameters.json'
+                            Name     = 'test1.parameters.json'
                             FullName = 'test1.parameters.json'
                         },
                         [PSCustomObject]@{
-                            Name = 'test2.parameters.json'
+                            Name     = 'test2.parameters.json'
                             FullName = 'test2.parameters.json'
                         }
                     )
@@ -545,7 +767,7 @@ InModuleScope 'ALZ' {
                     $secondFileContent
                 }
 
-                Edit-ALZConfigurationFilesInPlace  -alzEnvironmentDestination '.' -configuration $defaultConfig
+                Edit-ALZConfigurationFilesInPlace -alzEnvironmentDestination '.' -configuration $defaultConfig
 
                 Should -Invoke -CommandName Out-File -Scope It -Times 2
 

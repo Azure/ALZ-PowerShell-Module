@@ -85,7 +85,7 @@ InModuleScope 'ALZ' {
                     Names        = @("parTopLevelManagementGroupPrefix", "parCompanyPrefix")
                     Value        = ""
                     DefaultValue = "alz"
-                    Valid        = "^[a-zA-Z]{3,5}$"
+                    Valid        = "^[a-zA-Z0-9]{2,10}(-[a-zA-Z0-9]{2,10})?$"
                 }
 
                 Request-ConfigurationValue -configName "prefix" -configValue $configValue -withRetries $false

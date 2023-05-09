@@ -1,5 +1,5 @@
 {
-    "version": "v0.14.1-pre",
+    "version": "v0.14.0",
     "module_url": "https://github.com/Azure/ALZ-Bicep",
     "config_files": [
         {
@@ -125,6 +125,10 @@
         {
             "source": "accelerator/pipeline-scripts/Deploy-ALZSubscriptionPlacement.ps1",
             "destination": "pipeline-scripts/Deploy-ALZSubscriptionPlacement.ps1"
+        },
+        {
+            "source": "accelerator/README.md",
+            "destination": "README.md"
         }
     ],
     "parameters": {
@@ -155,20 +159,7 @@
             ],
             "Value": "",
             "DefaultValue": "alz",
-            "Valid": "^[a-zA-Z]{3,5}$"
-        },
-        "Suffix": {
-            "Type": "UserInput",
-            "Description": "The suffix that will be added to all resources created by this deployment. (e.g. 'test')",
-            "Targets": [
-                {
-                    "Name": "parTopLevelManagementGroupSuffix.value",
-                    "Destination": "Parameters"
-                }
-            ],
-            "Value": "",
-            "DefaultValue": "",
-            "Valid": "^[a-zA-Z]{0,5}$"
+            "Valid": "^[a-zA-Z0-9]{2,10}(-[a-zA-Z0-9]{2,10})?$"
         },
         "Location": {
             "Type": "UserInput",
@@ -333,7 +324,7 @@
         },
         "LogAnalyticsResourceId": {
             "Type": "Computed",
-            "Value": "/subscriptions/{%ManagementSubscriptionId%}/resourcegroups/alz-logging/providers/microsoft.operationalinsights/workspaces/alz-log-analytics",
+            "Value": "/subscriptions/{%ManagementSubscriptionId%}/resourcegroups/rg-{%Prefix%}-logging/providers/microsoft.operationalinsights/workspaces/alz-log-analytics",
             "Targets": [
                 {
                     "Name": "parLogAnalyticsWorkspaceResourceId.value",
@@ -397,6 +388,18 @@
                 }
             ]
         },
+        "HubNetworkName": {
+            "Type": "Computed",
+            "Value": [
+                "alz-hub-{%Location%}"
+            ],
+            "Targets": [
+                {
+                    "Name": "parHubNetworkName.value",
+                    "Destination": "Parameters"
+                }
+            ]
+        },
         "VirtualIdToLink": {
             "Type": "Computed",
             "Value": "",
@@ -413,6 +416,18 @@
             "Targets": [
                 {
                     "Name": "parVirtualWanName.value",
+                    "Destination": "Parameters"
+                }
+            ]
+        },
+        "AzFirewallName": {
+            "Type": "Computed",
+            "Value": [
+                "alz-azfw-{%Location%}"
+            ],
+            "Targets": [
+                {
+                    "Name": "parAzFirewallName.value",
                     "Destination": "Parameters"
                 }
             ]
@@ -469,7 +484,7 @@
         },
         "UpstreamReleaseVersion": {
             "Type": "Computed",
-            "Value": "v0.14.1-pre",
+            "Value": "v0.14.0",
             "Targets": [
                 {
                     "Name": "UPSTREAM_RELEASE_VERSION",

@@ -47,23 +47,23 @@ InModuleScope 'ALZ' {
 
                 Mock -CommandName Get-ALZBicepConfig -MockWith {
                     @{
-                        "module_url" = "test"
-                        "version" = "v1.0.0"
+                        "module_url"   = "test"
+                        "version"      = "v1.0.0"
                         "config_files" = @(
                             @{
-                                "source" = "a"
+                                "source"      = "a"
                                 "destination" = "b"
                             }
                         )
-                        "parameters" = @{
+                        "parameters"   = @{
                             "test" = @{
                                 "type" = "string"
                             }
                         }
                     }
-                 }
+                }
 
-                Mock -CommandName Get-GithubRelease -MockWith { }
+                Mock -CommandName Get-ALZGithubRelease -MockWith { }
 
                 Mock -CommandName Test-ALZGitRepository -MockWith { $false }
 

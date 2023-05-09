@@ -12,7 +12,7 @@ Import-Module $PathToManifest -Force
 #-------------------------------------------------------------------------
 
 InModuleScope 'ALZ' {
-    Describe 'Get-GithubRelease Function Tests' -Tag Unit {
+    Describe 'Get-ALZGithubRelease Function Tests' -Tag Unit {
         BeforeAll {
             $WarningPreference = 'SilentlyContinue'
             $ErrorActionPreference = 'SilentlyContinue'
@@ -99,18 +99,18 @@ InModuleScope 'ALZ' {
             }
 
             It 'Should get the correct releases' {
-                Get-GithubRelease -githubRepoUrl "http://github.com/test/repo" -directoryAndFilesToKeep @('repo-1.0.0') -directoryForReleases "output"
+                Get-ALZGithubRelease -githubRepoUrl "http://github.com/test/repo" -directoryAndFilesToKeep @('repo-1.0.0') -directoryForReleases "output"
                 Should -Invoke Expand-Archive
                 Should -Not -Invoke Write-Warning
             }
 
             It 'Should warn when you ask for a release that does not exist' {
-                Get-GithubRelease -githubRepoUrl "http://github.com/test/repo" -releases @('v2.0.0') -directoryAndFilesToKeep @('repo-1.0.0') -directoryForReleases "output"
+                Get-ALZGithubRelease -githubRepoUrl "http://github.com/test/repo" -releases @('v2.0.0') -directoryAndFilesToKeep @('repo-1.0.0') -directoryForReleases "output"
                 Should -Invoke Write-Warning
             }
 
             It 'Should download all the releases with all' {
-                Get-GithubRelease -githubRepoUrl "http://github.com/test/repo" -releases @('all') -directoryAndFilesToKeep @('repo-1.0.0') -directoryForReleases "output"
+                Get-ALZGithubRelease -githubRepoUrl "http://github.com/test/repo" -releases @('all') -directoryAndFilesToKeep @('repo-1.0.0') -directoryForReleases "output"
                 Should -Invoke Expand-Archive -Times 2
                 Should -Not -Invoke Write-Warning
             }
