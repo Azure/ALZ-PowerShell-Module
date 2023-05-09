@@ -55,6 +55,20 @@ InModuleScope 'ALZ' {
                                 "destination" = "b"
                             }
                         )
+                        "cicd"         = @{
+                            "azuredevops" = @(
+                                @{
+                                    "source"      = "a"
+                                    "destination" = "b"
+                                }
+                            )
+                            "github"      = @(
+                                @{
+                                    "source"      = "a"
+                                    "destination" = "b"
+                                }
+                            )
+                        }
                         "parameters"   = @{
                             "test" = @{
                                 "type" = "string"
