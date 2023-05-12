@@ -54,14 +54,14 @@ function New-ALZEnvironment {
         $alzEnvironmentDestinationInternalCode = Join-Path $alzEnvironmentDestination "upstream-releases"
 
         Get-ALZGithubRelease -directoryForReleases $alzEnvironmentDestinationInternalCode -githubRepoUrl $bicepConfig.module_url -releases @($bicepConfig.version) | Out-String | Write-Verbose
-        
+
         Write-InformationColored "Copying ALZ-Bicep module to $alzEnvironmentDestinationInternalCode" -ForegroundColor Green -InformationAction Continue
         Copy-ALZParametersFile -alzEnvironmentDestination $alzEnvironmentDestination -upstreamReleaseDirectory $(Join-Path $alzEnvironmentDestinationInternalCode $bicepConfig.version) -configFiles $bicepConfig.config_files | Out-String | Write-Verbose
         Write-InformationColored "ALZ-Bicep source directory: $alzBicepSourceDirectory" -ForegroundColor Green -InformationAction Continue
 
         $configuration = Request-ALZEnvironmentConfig -configurationParameters $bicepConfig.parameters
 
-        Edit-ComputedConfiguration -configuration $configuration | Out-String | Write-Verbose
+        Set-ComputedConfiguration -configuration $configuration | Out-String | Write-Verbose
         Edit-ALZConfigurationFilesInPlace -alzEnvironmentDestination $alzEnvironmentDestination -configuration $configuration | Out-String | Write-Verbose
         Build-ALZDeploymentEnvFile -configuration $configuration -Destination $alzEnvironmentDestination | Out-String | Write-Verbose
 

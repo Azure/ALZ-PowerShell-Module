@@ -447,7 +447,7 @@ InModuleScope 'ALZ' {
                     $secondFileContent
                 }
 
-                Edit-ComputedConfiguration -configuration $defaultConfig
+                Set-ComputedConfiguration -configuration $defaultConfig
                 Edit-ALZConfigurationFilesInPlace -alzEnvironmentDestination '.' -configuration $defaultConfig
 
                 Should -Invoke -CommandName Out-File -Scope It -Times 2

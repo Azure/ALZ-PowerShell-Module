@@ -12,12 +12,12 @@ Import-Module $PathToManifest -Force
 #-------------------------------------------------------------------------
 
 InModuleScope 'ALZ' {
-    Describe 'Edit-ComputedConfiguration Private Function Tests' -Tag Unit {
+    Describe 'Set-ComputedConfiguration Private Function Tests' -Tag Unit {
         BeforeAll {
             $WarningPreference = 'SilentlyContinue'
             $ErrorActionPreference = 'SilentlyContinue'
         }
-        Context 'Edit-ComputedConfiguration should update the configuration correctly' {
+        Context 'Set-ComputedConfiguration should update the configuration correctly' {
             It 'Handles Computed values correctly.' {
                 $configuration = [pscustomobject]@{
                     Setting1 = [pscustomobject]@{
@@ -39,7 +39,7 @@ InModuleScope 'ALZ' {
                     }
                 }
 
-                Edit-ComputedConfiguration -configuration $configuration
+                Set-ComputedConfiguration -configuration $configuration
                 $configuration.Setting2.Value | Should -BeExactly "Test"
             }
 
@@ -62,7 +62,7 @@ InModuleScope 'ALZ' {
                     }
                 }
 
-                Edit-ComputedConfiguration -configuration $configuration
+                Set-ComputedConfiguration -configuration $configuration
                 $configuration.Nested.Value | Should -BeExactly @("1", "3")
             }
 
@@ -86,7 +86,7 @@ InModuleScope 'ALZ' {
                     }
                 }
 
-                Edit-ComputedConfiguration -configuration $configuration
+                Set-ComputedConfiguration -configuration $configuration
                 $configuration.Nested.Value | Should -BeExactly @("a")
             }
 
@@ -109,7 +109,7 @@ InModuleScope 'ALZ' {
                     }
                 }
 
-                Edit-ComputedConfiguration -configuration $configuration
+                Set-ComputedConfiguration -configuration $configuration
                 $configuration.Nested.Value | Should -BeExactly @("1")
             }
 
@@ -128,7 +128,7 @@ InModuleScope 'ALZ' {
                     }
                 }
 
-                Edit-ComputedConfiguration -configuration $configuration
+                Set-ComputedConfiguration -configuration $configuration
                 $configuration.Nested.Value | Should -BeExactly "eastus2"
             }
 
@@ -147,7 +147,7 @@ InModuleScope 'ALZ' {
                     }
                 }
 
-                Edit-ComputedConfiguration -configuration $configuration
+                Set-ComputedConfiguration -configuration $configuration
                 $configuration.Nested.Value | Should -BeExactly "Hello"
             }
         }
