@@ -424,9 +424,7 @@
         },
         "HubNetworkName": {
             "Type": "Computed",
-            "Value": [
-                "alz-hub-{%Location%}"
-            ],
+            "Value": "alz-hub-{%Location%}",
             "Targets": [
                 {
                     "Name": "parHubNetworkName.value",
@@ -456,9 +454,7 @@
         },
         "AzFirewallName": {
             "Type": "Computed",
-            "Value": [
-                "alz-azfw-{%Location%}"
-            ],
+            "Value": "alz-azfw-{%Location%}",
             "Targets": [
                 {
                     "Name": "parAzFirewallName.value",
