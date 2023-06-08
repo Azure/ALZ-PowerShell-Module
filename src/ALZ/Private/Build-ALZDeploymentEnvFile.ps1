@@ -26,10 +26,6 @@ function Build-ALZDeploymentEnvFile {
             if ($target.Destination -eq "Environment") {
 
                 $formattedValue = $configurationValue.Value.Value
-                if ($configurationValue.Value.Type -eq "Computed") {
-                    $formattedValue = Format-TokenizedConfigurationString -tokenizedString $configurationValue.Value.Value -configuration $configuration
-                }
-
                 Add-Content -Path $envFile -Value "$($($target.Name))=`"$formattedValue`"" | Out-String | Write-Verbose
             }
         }

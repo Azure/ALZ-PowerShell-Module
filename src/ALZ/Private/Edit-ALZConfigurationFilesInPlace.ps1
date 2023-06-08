@@ -64,37 +64,7 @@ function Edit-ALZConfigurationFilesInPlace {
                 # If we're here, we can modify this file and we've got an actual object specified by the Name path value - and we can modify values on it.
                 if ($target.Destination -eq "Parameters" -and $null -ne $bicepConfigNode) {
                     $leafPropertyName = $propertyNames[-1]
-
-                    if ($configKey.Value.Type -eq "Computed") {
-                        # If the value type is computed we replace the value with another which already exists in the configuration hierarchy.
-                        if ($configKey.Value.Value -is [array]) {
-                            $formattedValues = @()
-                            foreach($formatString in $configKey.Value.Value) {
-                                $formattedValues += Format-TokenizedConfigurationString -tokenizedString $formatString -configuration $configuration
-                            }
-
-                            if ($null -ne $configKey.Value.Process) {
-                                $scriptBlock = [ScriptBlock]::Create($configKey.Value.Process)
-                                $formattedValues = Invoke-Command -ScriptBlock $scriptBlock -ArgumentList $formattedValues
-                                $formattedValues = @($formattedValues)
-                            }
-
-                            $bicepConfigNode[$leafPropertyName] = $formattedValues
-                        } else {
-
-                            $formattedValue = Format-TokenizedConfigurationString -tokenizedString $configKey.Value.Value -configuration $configuration
-
-                            if ($null -ne $configKey.Value.Process) {
-                                $scriptBlock = [ScriptBlock]::Create($configKey.Value.Process)
-                                $formattedValue = Invoke-Command -ScriptBlock $scriptBlock -ArgumentList $formattedValue
-                            }
-
-                            $bicepConfigNode[$leafPropertyName] = $formattedValue
-                        }
-                    } else {
-                        $bicepConfigNode[$leafPropertyName] = $configKey.Value.Value
-                    }
-
+                    $bicepConfigNode[$leafPropertyName] = $configKey.Value.Value
                     $modified = $true
                 }
             }
