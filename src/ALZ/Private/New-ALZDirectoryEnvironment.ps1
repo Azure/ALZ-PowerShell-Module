@@ -18,5 +18,4 @@ function New-ALZDirectoryEnvironment {
     New-Item -ItemType Directory -Path $config -Force | Out-String | Write-Verbose
     New-Item -ItemType Directory -Path $upstream -Force | Out-String | Write-Verbose
     New-Item -ItemType Directory -Path $configModules -Force | Out-String | Write-Verbose
-
 }
