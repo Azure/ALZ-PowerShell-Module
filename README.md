@@ -45,7 +45,6 @@ Currently this tests for:
 * Git
 * Azure CLI
 * Bicep
-* Visual Studio Code
 
 #### Create a new Azure Landing Zone Environment with GitHub Actions Workflows
 
