@@ -67,6 +67,16 @@ InModuleScope 'ALZ' {
                 Test-ALZRequirement | Should -BeExactly "ALZ requirements are not met."
             }
         }
+        Context 'Visual Studio Code not installed' {
+            BeforeEach {
+                Mock -CommandName Get-Command -ParameterFilter { $Name -eq 'code' } -MockWith {
+                    $null
+                }
+            }
+            It 'should return the not met for no Visual Studio Code instalation' {
+                Test-ALZRequirement | Should -BeExactly "ALZ requirements are not met."
+            }
+        }
         Context 'Bicep not installed' {
             BeforeEach {
                 Mock -CommandName Get-Command -ParameterFilter { $Name -eq 'bicep' } -MockWith {
@@ -78,7 +88,6 @@ InModuleScope 'ALZ' {
             }
         }
         Context 'Success' {
-
             BeforeEach {
                 Mock -CommandName Get-Module -MockWith {
                     [PSCustomObject]@{
@@ -96,6 +105,11 @@ InModuleScope 'ALZ' {
                 Mock -CommandName Get-Command -ParameterFilter { $Name -eq 'git' } -MockWith {
                     [PSCustomObject]@{
                         Name = 'git'
+                    }
+                }
+                Mock -CommandName Get-Command -ParameterFilter { $Name -eq 'code' } -MockWith {
+                    [PSCustomObject]@{
+                        Name = 'code'
                     }
                 }
                 Mock -CommandName Get-Command -ParameterFilter { $Name -eq 'bicep' } -MockWith {
