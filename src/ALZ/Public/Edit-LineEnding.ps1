@@ -39,3 +39,5 @@ function Edit-LineEnding {
     }
 
 }
+
+New-Alias -Name "Edit-LineEndings" -Value "Edit-LineEnding"

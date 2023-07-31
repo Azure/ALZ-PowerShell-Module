@@ -57,4 +57,9 @@
     #    }
     #}
     #________________________________________
+    'Rules' = @{
+        'PSAvoidUsingCmdletAliases' = @{
+            'allowlist' = @('Edit-LineEndings')
+        }
+    }
 }
