@@ -107,14 +107,14 @@ InModuleScope 'ALZ' {
                         Name = 'git'
                     }
                 }
-                Mock -CommandName Get-Command -ParameterFilter { $Name -eq 'bicep' } -MockWith {
-                    [PSCustomObject]@{
-                        Name = 'bicep'
-                    }
-                }
                 Mock -CommandName Get-Command -ParameterFilter { $Name -eq 'code' } -MockWith {
                     [PSCustomObject]@{
                         Name = 'code'
+                    }
+                }
+                Mock -CommandName Get-Command -ParameterFilter { $Name -eq 'bicep' } -MockWith {
+                    [PSCustomObject]@{
+                        Name = 'bicep'
                     }
                 }
             }
