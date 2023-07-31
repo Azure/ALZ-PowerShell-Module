@@ -88,7 +88,6 @@ InModuleScope 'ALZ' {
             }
         }
         Context 'Success' {
-
             BeforeEach {
                 Mock -CommandName Get-Module -MockWith {
                     [PSCustomObject]@{
@@ -111,6 +110,11 @@ InModuleScope 'ALZ' {
                 Mock -CommandName Get-Command -ParameterFilter { $Name -eq 'bicep' } -MockWith {
                     [PSCustomObject]@{
                         Name = 'bicep'
+                    }
+                }
+                Mock -CommandName Get-Command -ParameterFilter { $Name -eq 'code' } -MockWith {
+                    [PSCustomObject]@{
+                        Name = 'code'
                     }
                 }
             }
