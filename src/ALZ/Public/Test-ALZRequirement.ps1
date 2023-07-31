@@ -48,6 +48,15 @@ function Test-ALZRequirement {
         $result = $false
     }
 
+    # Check if VS Code is installed
+    $vsCodePath = Get-Command code -ErrorAction SilentlyContinue
+    if ($vsCodePath) {
+        Write-Verbose "Visual Studio Code is installed."
+    } else {
+        Write-Error "Visual Studio Code is not installed. Please install Visual Studio Code."
+        $result = $false
+    }
+
     if ($alzIacProvider -eq "terraform") {
         # Check if Terraform is installed
         $terraformPath = Get-Command terraform -ErrorAction SilentlyContinue
