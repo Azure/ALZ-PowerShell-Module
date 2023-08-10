@@ -19,7 +19,7 @@ function New-ALZEnvironment {
     .EXAMPLE
     New-ALZEnvironment -alzEnvironmentDestination "."
     .EXAMPLE
-    New-ALZEnvironment -alzEnvironmentDestination "." -alzBicepVersion "v0.16.1"
+    New-ALZEnvironment -alzEnvironmentDestination "." -alzBicepVersion "v0.16.2"
     #>
     [CmdletBinding(SupportsShouldProcess = $true)]
     param (
@@ -30,7 +30,7 @@ function New-ALZEnvironment {
         [string] $alzEnvironmentDestination = ".",
 
         [Parameter(Mandatory = $false)]
-        [string] $alzBicepVersion = "v0.16.1",
+        [string] $alzBicepVersion = "v0.16.2",
 
         [Parameter(Mandatory = $false)]
         [ValidateSet("bicep", "terraform")]
