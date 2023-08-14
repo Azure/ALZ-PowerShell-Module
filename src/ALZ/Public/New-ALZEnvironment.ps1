@@ -54,7 +54,11 @@ function New-ALZEnvironment {
 
         $bicepConfig = Get-ALZBicepConfig -alzBicepVersion $alzBicepVersion
 
-        New-ALZDirectoryEnvironment -alzEnvironmentDestination $alzEnvironmentDestination | Out-String | Write-Verbose
+        if ($alzCicdPlatform -eq "github") {
+            New-ALZDirectoryEnvironment -alzEnvironmentDestination $alzEnvironmentDestination -alzCicdDestination "github" | Out-String | Write-Verbose
+        } else {
+            New-ALZDirectoryEnvironment -alzEnvironmentDestination $alzEnvironmentDestination -alzCicdDestination "azuredevops" | Out-String | Write-Verbose
+        }
 
         $alzEnvironmentDestinationInternalCode = Join-Path $alzEnvironmentDestination "upstream-releases"
 
