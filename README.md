@@ -40,8 +40,8 @@ Test-ALZRequirement
 
 Currently this tests for:
 
-* Supported minimum PowerShell version
-* Azure PowerShell Module
+* Supported minimum PowerShell version (7.1)
+* Supported minimum Az PowerShell module version (10.0.0)
 * Git
 * Azure CLI
 * Bicep
