@@ -27,8 +27,7 @@ InModuleScope 'ALZ' {
                 New-ALZDirectoryEnvironment -OutputDirectory $basePath
                 Should -Invoke -CommandName New-Item -ParameterFilter { $Path -eq './config' }
                 Should -Invoke -CommandName New-Item -ParameterFilter { $Path -eq $(Join-Path $basePath 'upstream-releases') } -Exactly 1
-                Should -Invoke -CommandName New-Item -ParameterFilter { $Path -eq $(Join-Path $basePath '.github' 'workflows') } -Exactly 1
-                Should -Invoke -CommandName New-Item -ParameterFilter { $Path -eq $(Join-Path $basePath '.azuredevops' 'pipelines') } -Exactly 1
+                Should -Invoke -CommandName New-Item -ParameterFilter { $Path -eq $(Join-Path $basePath '.github' 'workflows') -or $Path -eq $(Join-Path $basePath '.azuredevops' 'pipelines') } -Exactly 1
                 Should -Invoke -CommandName New-Item -ParameterFilter { $Path -eq $(Join-Path $basePath 'config') } -Exactly 1
             }
         }
