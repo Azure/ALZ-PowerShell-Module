@@ -85,13 +85,13 @@ function Test-ALZRequirement {
             Write-Error "Bicep is not installed. Please install Bicep."
             $result = $false
         }
-        # Check if Azure PowerShell module is installed
-        $azModule = Get-Module -Name Az -ListAvailable
-        if ($azModule) {
-            Write-Verbose "Azure PowerShell module is installed."
-        } else {
-            Write-Error "Azure PowerShell module is not installed. Please install the Azure PowerShell module."
+        # Check if AZ PowerShell module is the correct version
+        $azModule = Get-AZVersion
+        if ($azModule.Version.Major -lt 10) {
+            Write-Error "Az module version $($azModule.Version) is not supported. Please Upgrade to AZ module version 10.0.0 or higher."
             $result = $false
+        } else {
+            Write-Verbose "Az module version is supported."
         }
         if ($result) {
             return "ALZ requirements are met."

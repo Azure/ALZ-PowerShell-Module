@@ -17,17 +17,22 @@ InModuleScope 'ALZ' {
             $WarningPreference = 'SilentlyContinue'
             $ErrorActionPreference = 'SilentlyContinue'
         }
-        Context 'Non Az Module' {
+        Context 'Incompatible Az module version lower than 10.0.0' {
             BeforeEach {
-                Mock -CommandName Get-Module -MockWith {
-                    $null
+                Mock -CommandName Get-AZVersion -MockWith {
+                    [PSCustomObject]@{
+                        Version = [PSCustomObject]@{
+                            Major = 9
+                            Minor = 7
+                        }
+                    }
                 }
             }
-            It 'should return the not met for non AZ module' {
+            It 'should return the not met for non compatible az module versions' {
                 Test-ALZRequirement | Should -BeExactly "ALZ requirements are not met."
             }
         }
-        Context 'Incompatible Powershell version lower them 7' {
+        Context 'Incompatible Powershell version lower than 7' {
             BeforeEach {
                 Mock -CommandName Get-PSVersion -MockWith {
                     [PSCustomObject]@{
@@ -63,7 +68,7 @@ InModuleScope 'ALZ' {
                     $null
                 }
             }
-            It 'should return the not met for no git instalation' {
+            It 'should return the not met for no git installation' {
                 Test-ALZRequirement | Should -BeExactly "ALZ requirements are not met."
             }
         }
@@ -73,7 +78,7 @@ InModuleScope 'ALZ' {
                     $null
                 }
             }
-            It 'should return the not met for no Visual Studio Code instalation' {
+            It 'should return the not met for no Visual Studio Code installation' {
                 Test-ALZRequirement | Should -BeExactly "ALZ requirements are not met."
             }
         }
@@ -83,15 +88,18 @@ InModuleScope 'ALZ' {
                     $null
                 }
             }
-            It 'should return the not met for no bicep instalation' {
+            It 'should return the not met for no bicep installation' {
                 Test-ALZRequirement | Should -BeExactly "ALZ requirements are not met."
             }
         }
         Context 'Success' {
             BeforeEach {
-                Mock -CommandName Get-Module -MockWith {
+                Mock -CommandName Get-AZVersion -MockWith {
                     [PSCustomObject]@{
-                        Name = 'Az'
+                        Version = [PSCustomObject]@{
+                            Major = 10
+                            Minor = 0
+                        }
                     }
                 }
                 Mock -CommandName Get-PSVersion -MockWith {
