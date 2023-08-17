@@ -18,14 +18,15 @@ BeforeAll {
     $manifestContent = Test-ModuleManifest -Path $PathToManifest
     $moduleExported = Get-Command -Module $ModuleName | Select-Object -ExpandProperty Name
     $manifestExported = ($manifestContent.ExportedFunctions).Keys
+    $aliasesExported = ($manifestContent.ExportedAliases).Keys
 }
 Describe $ModuleName {
 
     Context 'Exported Commands' -Fixture {
 
         Context 'Number of commands' -Fixture {
-            It -Name 'Exports the same number of public functions as what is listed in the Module Manifest' -Test {
-                $manifestExported.Count | Should -BeExactly $moduleExported.Count
+            It -Name 'Exports the same number of public functions and aliases as what is listed in the Module Manifest' -Test {
+                ($manifestExported.Count + $aliasesExported.Count) | Should -BeExactly $moduleExported.Count
             }
         }
 

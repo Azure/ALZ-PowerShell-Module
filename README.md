@@ -56,17 +56,25 @@ Test-ALZRequirement
 
 Currently this tests for:
 
-* Supported minimum PowerShell version
-* Azure PowerShell Module
+* Supported minimum PowerShell version (7.1)
+* Supported minimum Az PowerShell module version (10.0.0)
 * Git
 * Azure CLI
 * Bicep
+* Visual Studio Code
 
-#### Create a new Azure Landing Zone Environment
+#### Create a new Azure Landing Zone Environment with GitHub Actions Workflows
 
 ```powershell
 New-ALZEnvironment -o <output_directory>
 ```
+
+#### Azure Landing Zone Environment with Azure DevOps Pipelines
+```powershell
+New-ALZEnvironment -o <output_directory> -cicd "azuredevops"
+```
+> **Note**
+> Azure Devops Pipelines are only supported in v0.2.6 or later.
 
 ## Additonal Cmdlets
 
@@ -76,14 +84,14 @@ New-ALZEnvironment -o <output_directory>
 
 
 ```powershell
-Get-ALZGithubRelease -githubRepoUrl "https://github.com/Azure/ALZ-Bicep" -releases "v0.13.0" -directoryForReleases "C:\Repos\ALZ\accelerator\upstream-releases\"
+Get-ALZGithubRelease -githubRepoUrl "https://github.com/Azure/ALZ-Bicep" -releases "v0.14.0" -directoryForReleases "C:\Repos\ALZ\accelerator\upstream-releases\"
 ```
 
 ## Development
 
 ### Development Prerequisites
 
-In order to develop this module you will need PowerShell 7.1 or higher.
+In order to develop this module you will need PowerShell 7.1 or later.
 
 ### Commands to install a build locally
 

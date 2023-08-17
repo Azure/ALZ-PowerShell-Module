@@ -48,6 +48,15 @@ function Test-ALZRequirement {
         $result = $false
     }
 
+    # Check if VS Code is installed
+    $vsCodePath = Get-Command code -ErrorAction SilentlyContinue
+    if ($vsCodePath) {
+        Write-Verbose "Visual Studio Code is installed."
+    } else {
+        Write-Error "Visual Studio Code is not installed. Please install Visual Studio Code."
+        $result = $false
+    }
+
     if ($alzIacProvider -eq "terraform") {
         # Check if Terraform is installed
         $terraformPath = Get-Command terraform -ErrorAction SilentlyContinue
@@ -76,13 +85,13 @@ function Test-ALZRequirement {
             Write-Error "Bicep is not installed. Please install Bicep."
             $result = $false
         }
-        # Check if Azure PowerShell module is installed
-        $azModule = Get-Module -Name Az -ListAvailable
-        if ($azModule) {
-            Write-Verbose "Azure PowerShell module is installed."
-        } else {
-            Write-Error "Azure PowerShell module is not installed. Please install the Azure PowerShell module."
+        # Check if AZ PowerShell module is the correct version
+        $azModule = Get-AZVersion
+        if ($azModule.Version.Major -lt 10) {
+            Write-Error "Az module version $($azModule.Version) is not supported. Please Upgrade to AZ module version 10.0.0 or higher."
             $result = $false
+        } else {
+            Write-Verbose "Az module version is supported."
         }
         if ($result) {
             return "ALZ requirements are met."
@@ -90,8 +99,6 @@ function Test-ALZRequirement {
             return "ALZ requirements are not met."
         }
     }
-
-
 }
 
 
