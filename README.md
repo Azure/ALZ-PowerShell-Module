@@ -30,6 +30,22 @@ You can install this module using PowerShellGet.
 Install-Module -Name ALZ
 ```
 
+### Update
+
+Whenever a new release from the module has been released, you can update it easily. The changelog can be found [here](/docs/CHANGELOG.md).
+
+```powershell
+# find out which version you have installed
+PS C:\Users\you> Get-InstalledModule -Name ALZ
+
+Version    Name                                Repository           Description
+-------    ----                                ----------           -----------
+0.2.6      ALZ                                 PSGallery            Azure Landing Zones Powershell Module
+
+# update to the latest version
+Update-Module -Name ALZ
+```
+
 ### Quick start
 
 Before you start you can utilize the functionality of the module to verify if you have all the prerequisites installed with the built in command:
