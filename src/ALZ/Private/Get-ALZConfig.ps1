@@ -11,6 +11,6 @@ function Get-ALZConfig {
         [string] $alzIacProvider = "bicep"
     )
     # import the config from the json file inside assets and tranform it to a powershell object
-    $bicepConfig = Get-Content -Path (Join-Path $(Get-ScriptRoot) "../Assets/alz-$alzIacPRovider-config" "$alzVersion.config.json" ) | ConvertFrom-Json
-    return $bicepConfig
+    $config = Get-Content -Path (Join-Path $(Get-ScriptRoot) "../Assets/alz-$alzIacPRovider-config" "$alzVersion.config.json" ) | ConvertFrom-Json
+    return $config
 }

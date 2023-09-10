@@ -2,7 +2,7 @@
     "version": "v0.0.1",
     "module_url": "https://github.com/Azure/ALZ-Bicep",
     "parameters": {
-        "StarterModule": {
+        "starter_module": {
             "Type": "UserInput",
             "Description": "The starter module to use for the deployment. (e.g. 'basic')",
             "Value": "",
@@ -15,21 +15,21 @@
                 ]
             }
         },
-        "Environment": {
+        "environment_name": {
             "Type": "UserInput",
             "Description": "Used to build up the default resource names (e.g. rg-{{service_name}}-{{environment_name}}-state-{{azure_location}}-{{postfix_number}}",
             "Value": "",
             "DefaultValue": "mgmt",
             "Valid": "^[a-zA-Z0-9]{2,10}(-[a-zA-Z0-9]{2,10})?$"
         },
-        "Service": {
+        "service_name": {
             "Type": "UserInput",
             "Description": "Used to build up the default resource names (e.g. rg-{{service_name}}-{{environment_name}}-state-{{azure_location}}-{{postfix_number}}",
             "Value": "",
             "DefaultValue": "alz",
             "Valid": "^[a-zA-Z0-9]{2,10}(-[a-zA-Z0-9]{2,10})?$"
         },
-        "Location": {
+        "azure_location": {
             "Type": "UserInput",
             "Description": "Azure Deployment location for the landing zone management resources (e.g. state file storage account)  (e.g. 'uksouth')",
             "Value": "",
@@ -88,31 +88,31 @@
                 ]
             }
         },
-        "PostFixNumber": {
+        "postfix_number": {
             "Type": "UserInput",
             "Description": "Used to build up the defaul resource names (e.g. rg-{{service_name}}-{{environment_name}}-state-{{azure_location}}-{{postfix_number}}",
             "Value": "",
             "DefaultValue": "1",
             "Valid": "^[0-9]$"
         },
-        "VersionControlSystemAccessToken": {
+        "version_control_system_access_token": {
             "Type": "UserInput",
             "Description": "The personal access token for the version control system to use for the deployment.",
             "Value": "",
             "Secure": true
         },
-        "VersionControlSystemOrganization": {
+        "version_control_system_organization": {
             "Type": "UserInput",
             "Description": "The organization for the version control system to use for the deployment.",
             "Value": ""
         },
-        "VersionControlSystemApplyApprovers" : {
+        "apply_approvers" : {
             "Type": "UserInput",
             "Description": "Apply stage approvers to the action / pipeline, must be a list of SPNs separate by a comma (e.g. abcdef@microsoft.com,ghijklm@microsoft.com)",
             "Value": "",
             "DefaultValue": ""
         },
-        "AzureDevOpsUseLegacyUrl" : {
+        "azure_devops_use_organisation_legacy_url" : {
             "Type": "UserInput",
             "Description": "Use the legacy Azure DevOps URL ({{organisation}}.visualstudio.com) instead of the new URL (dev.azure.com/{{organization}}).",
             "Value": "",
@@ -125,7 +125,7 @@
                 ]
             }
         },
-        "AzureDevOpsCreateProject" : {
+        "azure_devops_create_project" : {
             "Type": "UserInput",
             "Description": "Create the Azure DevOps project if it does not exist.",
             "Value": "",
@@ -138,12 +138,12 @@
                 ]
             }
         },
-        "AzureDevOpsProjectName" : {
+        "azure_devops_project_name" : {
             "Type": "UserInput",
             "Description": "The name of the Azure DevOps project to use or create for the deployment.",
             "Value": ""
         },
-        "AzureDevOpsAuthenticationScheme" : {
+        "azure_devops_authentication_scheme" : {
             "Type": "UserInput",
             "Description": "The authentication scheme to use for the Azure DevOps Pipelines.",
             "Value": "",
