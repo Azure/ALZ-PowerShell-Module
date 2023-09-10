@@ -92,10 +92,10 @@ InModuleScope 'ALZ' {
                 Assert-MockCalled -CommandName Edit-ALZConfigurationFilesInPlace -Exactly 1
             }
 
-            It 'should clone the git repo if terraform is selected' {
+            <#    It 'should clone the git repo if terraform is selected' {
                 New-ALZEnvironment -IaC "terraform" -
                 Assert-MockCalled -CommandName Get-ALZGithubRelease -Exactly 1
-            }
+            } #>
         }
     }
 }

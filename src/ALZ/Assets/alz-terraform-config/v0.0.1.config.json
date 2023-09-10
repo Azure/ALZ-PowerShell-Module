@@ -6,6 +6,7 @@
             "Type": "UserInput",
             "Description": "The starter module to use for the deployment. (e.g. 'basic')",
             "Value": "",
+            "DefaultValue": "basic",
             "AllowedValues": {
                 "Display": true,
                 "Values": [
