@@ -48,7 +48,9 @@ Update-Module -Name ALZ
 
 ### Quick start
 
-Before you start you can utilize the functionality of the module to verify if you have all the prerequisites installed with the built in command:
+Before you start you can utilize the functionality of the module to verify if you have all the prerequisites installed with the built in command.
+
+#### Bicep
 
 ```powershell
 Test-ALZRequirement
@@ -61,6 +63,22 @@ Currently this tests for:
 * Git
 * Azure CLI
 * Bicep
+* Visual Studio Code
+
+#### Terraform
+
+For Terraform, pass the parameter `IaC`:
+
+```powershell
+Test-ALZRequirement -IaC "terraform"
+```
+
+This currently tests for:
+
+* Supported minimum PowerShell version (7.1)
+* Git
+* Azure CLI
+* Terraform
 * Visual Studio Code
 
 #### Create a new Azure Landing Zone Environment with GitHub Actions Workflows
@@ -97,6 +115,8 @@ In order to develop this module you will need PowerShell 7.1 or later.
 
 ```powershell
 # Install the module locally
+Install-Module InvokeBuild
+Install-Module -F Pester 
 Invoke-Build -File .\src\ALZ.build.ps1
 Import-Module .\src\Artifacts\ALZ.psd1 -Force
 ```

@@ -126,5 +126,5 @@ function Get-ALZGithubRelease {
             Write-Verbose "===> Content already exists in $releaseDirectory. Skipping"
         }
     }
-    return $true
+    return $selectedReleases
 }
