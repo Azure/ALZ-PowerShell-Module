@@ -15,7 +15,24 @@ function Write-TfvarsFile {
         }
 
         foreach($configurationProperty in $configuration.PSObject.Properties) {
-            Add-Content -Path $tfvarsFilePath -Value "$($configurationProperty.Name) = `"$($configurationProperty.Value.Value)`""
+            $configurationValueRaw = $configurationProperty.Value.Value
+            $configurationValue = "`"$($configurationValueRaw)`""
+
+            if($configurationProperty.Value.DataType -eq "list(string)") {
+                if($configurationValueRaw -eq "") {
+                    $configurationValue = "[]"
+                } else {
+                    $split = $configurationValueRaw -split ","
+                    $join = $split -join "`",`""
+                    $configurationValue = "[`"$join`"]"
+                }
+            }
+
+            if($configurationProperty.Value.DataType -eq "number" -or $configurationProperty.Value.DataType -eq "bool") {
+                $configurationValue = $configurationValueRaw
+            }
+
+            Add-Content -Path $tfvarsFilePath -Value "$($configurationProperty.Name) = $($configurationValue)"
         }
 
         $tfvarsFolderPath = Split-Path -Path $tfvarsFilePath -Parent

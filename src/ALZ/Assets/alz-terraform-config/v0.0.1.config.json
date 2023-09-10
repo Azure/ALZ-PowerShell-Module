@@ -93,7 +93,8 @@
             "Description": "Used to build up the defaul resource names (e.g. rg-{{service_name}}-{{environment_name}}-state-{{azure_location}}-{{postfix_number}}",
             "Value": "",
             "DefaultValue": "1",
-            "Valid": "^[0-9]$"
+            "Valid": "^[0-9]$",
+            "DataType": "number"
         },
         "version_control_system_access_token": {
             "Type": "UserInput",
@@ -110,7 +111,8 @@
             "Type": "UserInput",
             "Description": "Apply stage approvers to the action / pipeline, must be a list of SPNs separate by a comma (e.g. abcdef@microsoft.com,ghijklm@microsoft.com)",
             "Value": "",
-            "DefaultValue": ""
+            "DefaultValue": "",
+            "DataType": "list(string)"
         },
         "azure_devops_use_organisation_legacy_url" : {
             "Type": "UserInput",
@@ -123,7 +125,8 @@
                     "true",
                     "false"
                 ]
-            }
+            },
+            "DataType": "bool"
         },
         "azure_devops_create_project" : {
             "Type": "UserInput",
@@ -136,7 +139,8 @@
                     "true",
                     "false"
                 ]
-            }
+            },
+            "DataType": "bool"
         },
         "azure_devops_project_name" : {
             "Type": "UserInput",

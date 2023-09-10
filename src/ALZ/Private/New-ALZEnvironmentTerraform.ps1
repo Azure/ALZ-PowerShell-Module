@@ -56,8 +56,6 @@ function New-ALZEnvironmentTerraform {
         Write-TfvarsFile -tfvarsFilePath $bootstrapTfvarsPath -configuration $bootstrapConfiguration
         Write-TfvarsFile -tfvarsFilePath $starterModuleTfvarsPath -configuration $starterModuleConfiguration
 
-        Write-InformationColored $starterModuleConfiguration.PSObject.Properties -ForegroundColor Green -InformationAction Continue
-        Write-InformationColored "--------" -ForegroundColor Green -InformationAction Continue
-        Write-InformationColored $bootstrapConfiguration.PsObject.Properties -ForegroundColor Green -InformationAction Continue
+        Invoke-Terraform -moduleFolderPath $bootstrapPath -tfvarsFileName "override.tfvars"
     }
 }
