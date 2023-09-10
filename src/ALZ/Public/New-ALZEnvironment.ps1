@@ -31,7 +31,7 @@ function New-ALZEnvironment {
 
         [Parameter(Mandatory = $false)]
         [Alias("alzBicepVersion")]
-        [string] $alzVersion = "latest",
+        [string] $alzVersion = "",
 
         [Parameter(Mandatory = $false)]
         [ValidateSet("bicep", "terraform")]
@@ -49,12 +49,15 @@ function New-ALZEnvironment {
     if ($PSCmdlet.ShouldProcess("Accelerator setup", "modify")) {
         switch($alzIacProvider) {
             "bicep" {
-                if($alzVersion -eq "latest") {
+                if($alzVersion -eq "") {
                     $alzVersion = "v0.16.3"
                 }
                 New-ALZEnvironmentBicep -alzEnvironmentDestination $alzEnvironmentDestination -alzVersion $alzersion -alzCicdPlatform $alzCicdPlatform
             }
             "terraform" {
+                if($alzVersion -eq "") {
+                    $alzVersion = "latest"
+                }
                 New-ALZEnvironmentTerraform -alzEnvironmentDestination $alzEnvironmentDestination -alzVersion $alzVersion -alzCicdPlatform $alzCicdPlatform
             }
         }
