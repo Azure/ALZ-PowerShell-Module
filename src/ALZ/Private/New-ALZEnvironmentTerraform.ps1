@@ -22,13 +22,15 @@ function New-ALZEnvironmentTerraform {
 
         Write-InformationColored "Downloading alz-terraform-accelerator Terraform module to $alzEnvironmentDestination" -ForegroundColor Green -InformationAction Continue
 
-        $release = Get-ALZGithubRelease -directoryForReleases $alzEnvironmentDestination -githubRepoUrl $terraformModuleUrl -releases $alzVersion | Out-String | Write-Verbose
+        $releaseObject = Get-ALZGithubRelease -directoryForReleases $alzEnvironmentDestination -githubRepoUrl $terraformModuleUrl -releases $alzVersion
+        $release = $($releaseObject.name)
+
+        Write-InformationColored "Downloaded alz-terraform-accelerator Terraform module version $release to $alzEnvironmentDestination" -ForegroundColor Green -InformationAction Continue
+
         $terraformConfig = Get-ALZConfig -alzVersion $release -alzIacProvider "terraform"
 
         $configuration = Request-ALZEnvironmentConfig -configurationParameters $terraformConfig.parameters
 
-        if($null -ne $configuration -and $alzCicdPlatform -eq "github") {
-            Write-InformationColored "$($configuration.parameters)" -ForegroundColor Green -InformationAction Continue
-        }
+        Write-InformationColored "$alzCicdPlatform $($configuration.PsObject.Properties)" -ForegroundColor Green -InformationAction Continue
     }
 }
