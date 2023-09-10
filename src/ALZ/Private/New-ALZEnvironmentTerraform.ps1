@@ -8,7 +8,7 @@ function New-ALZEnvironmentTerraform {
         [string] $alzEnvironmentDestination,
 
         [Parameter(Mandatory = $false)]
-        [string] $alzTerraformVersion,
+        [string] $alzVersion,
 
         [Parameter(Mandatory = $false)]
         [ValidateSet("github", "azuredevops")]
@@ -22,17 +22,13 @@ function New-ALZEnvironmentTerraform {
 
         Write-InformationColored "Downloading alz-terraform-accelerator Terraform module to $alzEnvironmentDestination" -ForegroundColor Green -InformationAction Continue
 
-        $release = Get-ALZGithubRelease -directoryForReleases $alzEnvironmentDestination -githubRepoUrl $terraformModuleUrl -releases $alzTerraformVersion | Out-String | Write-Verbose
+        $release = Get-ALZGithubRelease -directoryForReleases $alzEnvironmentDestination -githubRepoUrl $terraformModuleUrl -releases $alzVersion | Out-String | Write-Verbose
         $terraformConfig = Get-ALZConfig -alzVersion $release -alzIacProvider "terraform"
 
         $configuration = Request-ALZEnvironmentConfig -configurationParameters $terraformConfig.parameters
 
-        if($alzCicdPlatform -eq "github") {
-            $configuration = $configuration | Where-Object { $_.Name -like "AzureDevOps" }
-        }
-
-        if($configuration.Length -gt 0) {
-            Write-InformationColored "Creating ALZ-Terraform environment in $configuration" -ForegroundColor Green -InformationAction Continue
+        if($null -ne $configuration -and $alzCicdPlatform -eq "github") {
+            Write-InformationColored "$($configuration.parameters)" -ForegroundColor Green -InformationAction Continue
         }
     }
 }

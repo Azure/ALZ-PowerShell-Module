@@ -77,7 +77,7 @@ InModuleScope 'ALZ' {
                     }
                 }
 
-                Mock -CommandName Get-ALZGithubRelease -MockWith { }
+                Mock -CommandName Get-ALZGithubRelease -MockWith { $("v0.0.1") }
 
                 Mock -CommandName Test-ALZGitRepository -MockWith { $false }
 
@@ -90,6 +90,11 @@ InModuleScope 'ALZ' {
             It 'should return the output directory on completion' {
                 New-ALZEnvironment
                 Assert-MockCalled -CommandName Edit-ALZConfigurationFilesInPlace -Exactly 1
+            }
+
+            It 'should clone the git repo if terraform is selected' {
+                New-ALZEnvironment -IaC "terraform" -
+                Assert-MockCalled -CommandName Get-ALZGithubRelease -Exactly 1
             }
         }
     }

@@ -8,7 +8,7 @@ function New-ALZEnvironmentBicep {
         [string] $alzEnvironmentDestination,
 
         [Parameter(Mandatory = $false)]
-        [string] $alzBicepVersion,
+        [string] $alzVersion,
 
         [Parameter(Mandatory = $false)]
         [ValidateSet("github", "azuredevops")]
@@ -18,7 +18,7 @@ function New-ALZEnvironmentBicep {
 
     if ($PSCmdlet.ShouldProcess("ALZ-Bicep module configuration", "modify")) {
 
-        $bicepConfig = Get-ALZConfig -alzVersion $alzBicepVersion
+        $bicepConfig = Get-ALZConfig -alzVersion $alzVersion
 
         New-ALZDirectoryEnvironment -alzEnvironmentDestination $alzEnvironmentDestination -alzCicdDestination $alzCicdPlatform | Out-String | Write-Verbose
 

@@ -111,12 +111,23 @@ Get-ALZGithubRelease -githubRepoUrl "https://github.com/Azure/ALZ-Bicep" -releas
 
 In order to develop this module you will need PowerShell 7.1 or later.
 
-### Commands to install a build locally
+### Pre-requisites
+```powershell
+# Required to run Invoke-Build
+Install-Module InvokeBuild
+Install-Module -F Pester
+```
 
+### Commands to build and test locally
+```powershell
+# Build and test locally
+Remove-Module "ALZ" -Force
+Invoke-Build -File .\src\ALZ.build.ps1
+```
+
+### Commands to install a build locally
 ```powershell
 # Install the module locally
-Install-Module InvokeBuild
-Install-Module -F Pester 
 Invoke-Build -File .\src\ALZ.build.ps1
 Import-Module .\src\Artifacts\ALZ.psd1 -Force
 ```
