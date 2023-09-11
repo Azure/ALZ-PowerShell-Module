@@ -53,7 +53,7 @@ Before you start you can utilize the functionality of the module to verify if yo
 #### Bicep
 
 ```powershell
-Test-ALZRequirement
+Test-ALZRequirement -IaC "bicep"
 ```
 
 Currently this tests for:
@@ -67,8 +67,6 @@ Currently this tests for:
 
 #### Terraform
 
-For Terraform, pass the parameter `IaC`:
-
 ```powershell
 Test-ALZRequirement -IaC "terraform"
 ```
@@ -78,28 +76,37 @@ This currently tests for:
 * Supported minimum PowerShell version (7.1)
 * Git
 * Azure CLI
-* Terraform
+* Terraform CLI
 * Visual Studio Code
 
-#### Create a new Azure Landing Zone Environment with GitHub Actions Workflows
+#### Azure Landing Zone Environment with Bicep and GitHub Actions Workflows
 
 ```powershell
-New-ALZEnvironment -o <output_directory>
+New-ALZEnvironment -o <output_directory> -IaC "bicep" -cicd "github
 ```
 
-#### Azure Landing Zone Environment with Azure DevOps Pipelines
+#### Azure Landing Zone Environment with Bicep and Azure DevOps Pipelines
 ```powershell
-New-ALZEnvironment -o <output_directory> -cicd "azuredevops"
+New-ALZEnvironment -o <output_directory> -IaC "bicep" -cicd "azuredevops"
 ```
 > **Note**
 > Azure Devops Pipelines are only supported in v0.2.6 or later.
+
+#### Azure Landing Zone Environment with Terraform and GitHub Pipelines
+```powershell
+New-ALZEnvironment -o <output_directory> -IaC "terraform" -cicd "github"
+```
+
+#### Azure Landing Zone Environment with Terraform and Azure DevOps Pipelines
+```powershell
+New-ALZEnvironment -o <output_directory> -IaC "terraform" -cicd "azuredevops"
+```
 
 ## Additonal Cmdlets
 
 ### Update an existing Azure Landing Zone Environment
 
 #### Downloads and pulls down the specified release version from the remote GitHub repository to a local directory
-
 
 ```powershell
 Get-ALZGithubRelease -githubRepoUrl "https://github.com/Azure/ALZ-Bicep" -releases "v0.14.0" -directoryForReleases "C:\Repos\ALZ\accelerator\upstream-releases\"

@@ -85,6 +85,29 @@ InModuleScope 'ALZ' {
 
                 Mock -CommandName Write-InformationColored
 
+                Mock -CommandName Get-HCLParserTool -MockWith { "test" }
+
+                Mock -CommandName Convert-HCLVariablesToUserInputConfig -MockWith {
+                    @(
+                        @{
+                            "description"  = "Test configuration 1"
+                            "names"        = @("value1", "value2")
+                            "defaultValue" = "default"
+                            "value"        = "value"
+                        },
+                        @{
+                            "description"  = "Test configuration 2"
+                            "names"        = @("value1")
+                            "defaultValue" = "default"
+                            "value"        = "value"
+                        }
+                    )
+                }
+
+                Mock -CommandName Write-TfvarsFile -MockWith { }
+
+                Mock -CommandName Invoke-Terraform -MockWith { }
+
             }
 
             It 'should return the output directory on completion' {
@@ -92,10 +115,11 @@ InModuleScope 'ALZ' {
                 Assert-MockCalled -CommandName Edit-ALZConfigurationFilesInPlace -Exactly 1
             }
 
-            <#    It 'should clone the git repo if terraform is selected' {
+            It 'should clone the git repo and apply if terraform is selected' {
                 New-ALZEnvironment -IaC "terraform" -
                 Assert-MockCalled -CommandName Get-ALZGithubRelease -Exactly 1
-            } #>
+                Assert-MockCalled -CommandName Invoke-Terraform -Exactly 1
+            }
         }
     }
 }
