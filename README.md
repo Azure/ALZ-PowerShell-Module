@@ -114,7 +114,8 @@ In order to develop this module you will need PowerShell 7.1 or later.
 ### Pre-requisites
 ```powershell
 # Required to run Invoke-Build
-Install-Module InvokeBuild
+Install-Module -F PSScriptAnalyzer
+Install-Module -F InvokeBuild
 Install-Module -F Pester
 ```
 
