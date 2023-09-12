@@ -52,7 +52,7 @@ function New-ALZEnvironment {
                 if($alzVersion -eq "") {
                     $alzVersion = "v0.16.3"
                 }
-                New-ALZEnvironmentBicep -alzEnvironmentDestination $alzEnvironmentDestination -alzVersion $alzersion -alzCicdPlatform $alzCicdPlatform
+                New-ALZEnvironmentBicep -alzEnvironmentDestination $alzEnvironmentDestination -alzVersion $alzVersion -alzCicdPlatform $alzCicdPlatform
             }
             "terraform" {
                 if($alzVersion -eq "") {
