@@ -12,11 +12,15 @@ function Get-ALZConfig {
         [Parameter(Mandatory = $false)]
         [string] $configFilePath = ""
     )
+
     # Import the config from the json file inside assets and transform it to a PowerShell object
-    if ($filePath -ne "") {
+    if ($configFilePath -ne "") {
         $config = Get-Content -Path $configFilePath | ConvertFrom-Json
         return $config
     }
-    $config = Get-Content -Path (Join-Path $(Get-ScriptRoot) "../Assets/alz-$alzIacProvider-config" "$alzVersion.config.json" ) | ConvertFrom-Json
-    return $config
+
+    else {
+        $config = Get-Content -Path (Join-Path $(Get-ScriptRoot) "../Assets/alz-$alzIacProvider-config" "$alzVersion.config.json" ) | ConvertFrom-Json
+        return $config
+    }
 }
