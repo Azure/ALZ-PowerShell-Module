@@ -93,11 +93,11 @@ function Test-ALZRequirement {
         } else {
             Write-Verbose "Az module version is supported."
         }
-        if ($result) {
-            return "ALZ requirements are met."
-        } else {
-            return "ALZ requirements are not met."
-        }
+    }
+    if ($result) {
+        return "ALZ requirements are met."
+    } else {
+        return "ALZ requirements are not met."
     }
 }
 
