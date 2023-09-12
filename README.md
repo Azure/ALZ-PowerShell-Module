@@ -86,23 +86,27 @@ New-ALZEnvironment -o <output_directory> -IaC "bicep" -cicd "github
 ```
 
 #### Azure Landing Zone Environment with Bicep and Azure DevOps Pipelines
+
 ```powershell
 New-ALZEnvironment -o <output_directory> -IaC "bicep" -cicd "azuredevops"
 ```
+
 > **Note**
 > Azure Devops Pipelines are only supported in v0.2.6 or later.
 
 #### Azure Landing Zone Environment with Terraform and GitHub Pipelines
+
 ```powershell
 New-ALZEnvironment -o <output_directory> -IaC "terraform" -cicd "github"
 ```
 
 #### Azure Landing Zone Environment with Terraform and Azure DevOps Pipelines
+
 ```powershell
 New-ALZEnvironment -o <output_directory> -IaC "terraform" -cicd "azuredevops"
 ```
 
-## Additonal Cmdlets
+## Additional Cmdlets
 
 ### Update an existing Azure Landing Zone Environment
 
@@ -119,6 +123,7 @@ Get-ALZGithubRelease -githubRepoUrl "https://github.com/Azure/ALZ-Bicep" -releas
 In order to develop this module you will need PowerShell 7.1 or later.
 
 ### Pre-requisites
+
 ```powershell
 # Required to run Invoke-Build
 Install-Module -F PSScriptAnalyzer
@@ -126,14 +131,16 @@ Install-Module -F InvokeBuild
 Install-Module -F Pester
 ```
 
-### Commands to build and test locally
+### Commands to build locally
+
 ```powershell
 # Build and test locally
 Remove-Module "ALZ" -Force
 Invoke-Build -File .\src\ALZ.build.ps1
 ```
 
-### Commands to install a build locally
+### Commands to import a build locally
+
 ```powershell
 # Install the module locally
 Invoke-Build -File .\src\ALZ.build.ps1
