@@ -108,6 +108,8 @@ InModuleScope 'ALZ' {
 
                 Mock -CommandName Invoke-Terraform -MockWith { }
 
+                Mock -CommandName Import-SubscriptionData -MockWith { }
+
             }
 
             It 'should return the output directory on completion' {

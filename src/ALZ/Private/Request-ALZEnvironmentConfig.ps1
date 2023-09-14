@@ -2,7 +2,9 @@
 function Request-ALZEnvironmentConfig {
     param(
         [Parameter(Mandatory = $true)]
-        [object] $configurationParameters
+        [object] $configurationParameters,
+        [Parameter(Mandatory = $false)]
+        [switch] $respectOrdering
     )
     <#
     .SYNOPSIS
@@ -14,7 +16,14 @@ function Request-ALZEnvironmentConfig {
     .OUTPUTS
     System.Object. The resultant configuration values.
     #>
-    foreach ($configurationValue in $configurationParameters.PsObject.Properties) {
+
+    $configurations = $configurationParameters.PsObject.Properties
+
+    if($respectOrdering) {
+        $configurations = $configurationParameters.PSObject.Properties | Sort-Object { $_.Value.Order }
+    }
+
+    foreach ($configurationValue in $configurations) {
         if ($configurationValue.Value.Type -eq "UserInput") {
             Request-ConfigurationValue $configurationValue.Name $configurationValue.Value
         }

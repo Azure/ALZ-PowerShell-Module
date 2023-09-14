@@ -27,34 +27,36 @@ function New-ALZEnvironmentTerraform {
         $release = $($releaseObject.name)
         $releasePath = Join-Path -Path $alzEnvironmentDestination -ChildPath $release
 
-        # Getting the configuration for the bootstrap user input
+        # Getting the configuration for the initial bootstrap user input and validators
         $bootstrapConfigFilePath = Join-Path -Path $releasePath -ChildPath "bootstrap/.config/ALZ-Powershell.config.json"
         $bootstrapConfig = Get-ALZConfig -configFilePath $bootstrapConfigFilePath
-        $bootstrapParameters = $bootstrapConfig.parameters
 
-        if($alzCicdPlatform -eq "github") {
-            $bootstrapParameters = Select-Object -InputObject $bootstrapParameters -Property * -ExcludeProperty "azure_devops_*"
-        }
+        # Getting additional configuration for the bootstrap module user input
+        $bootstrapPath = Join-Path -Path $releasePath -ChildPath "bootstrap/$alzCicdPlatform"
+        $bootstrapVariableFilesPath = Join-Path -Path $bootstrapPath -ChildPath "variables.tf"
+        $hclParserToolPath = Get-HCLParserTool -alzEnvironmentDestination $releasePath -toolVersion "v0.6.0"
+        $bootstrapParameters = Convert-HCLVariablesToUserInputConfig -targetVariableFile $bootstrapVariableFilesPath -hclParserToolPath $hclParserToolPath -validators $bootstrapConfig.validators
 
         Write-InformationColored "Got configuration and downloaded alz-terraform-accelerator Terraform module version $release to $alzEnvironmentDestination" -ForegroundColor Green -InformationAction Continue
 
         # Getting the user input for the bootstrap module
-        $bootstrapConfiguration = Request-ALZEnvironmentConfig -configurationParameters $bootstrapParameters
+        $bootstrapConfiguration = Request-ALZEnvironmentConfig -configurationParameters $bootstrapParameters -respectOrdering
 
         # Getting the configuration for the starter module user input
         $starterTemplate = $bootstrapConfiguration.PsObject.Properties["starter_module"].Value.Value
         $starterTemplatePath = Join-Path -Path $releasePath -ChildPath "templates/$($starterTemplate)"
-        $hclParserToolPath = Get-HCLParserTool -alzEnvironmentDestination $releasePath -toolVersion "v0.6.0"
         $targetVariableFilePath = Join-Path -Path $starterTemplatePath -ChildPath "variables.tf"
         $starterModuleParameters = Convert-HCLVariablesToUserInputConfig -targetVariableFile $targetVariableFilePath -hclParserToolPath $hclParserToolPath -validators $bootstrapConfig.validators
 
         Write-InformationColored "The following inputs are specific to the '$starterTemplate' starter module that you selected..." -ForegroundColor Green -InformationAction Continue
 
         # Getting the user input for the starter module
-        $starterModuleConfiguration = Request-ALZEnvironmentConfig -configurationParameters $starterModuleParameters
+        $starterModuleConfiguration = Request-ALZEnvironmentConfig -configurationParameters $starterModuleParameters -respectOrdering
+
+        # Getting subscription ids
+        Import-SubscriptionData -starterModuleConfiguration $starterModuleConfiguration -bootstrapConfiguration $bootstrapConfiguration
 
         # Creating the tfvars files for the bootstrap and starter module
-        $bootstrapPath = Join-Path -Path $releasePath -ChildPath "bootstrap/$alzCicdPlatform"
         $bootstrapTfvarsPath = Join-Path -Path $bootstrapPath -ChildPath "override.tfvars"
         $starterModuleTfvarsPath = Join-Path -Path $starterTemplatePath -ChildPath "terraform.tfvars"
         Write-TfvarsFile -tfvarsFilePath $bootstrapTfvarsPath -configuration $bootstrapConfiguration
