@@ -63,6 +63,9 @@ function New-ALZEnvironmentTerraform {
         Write-TfvarsFile -tfvarsFilePath $starterModuleTfvarsPath -configuration $starterModuleConfiguration
 
         # Running terraform init and apply
+        Write-InformationColored "Thank you for providing those inputs, we are now initializing and applying Terraform to bootstrap your environment..." -ForegroundColor Green -InformationAction Continue
+        Write-InformationColored "Once the plan is complete you will be prompted to confirm the apply. You must enter 'yes' to apply." -ForegroundColor Green -InformationAction Continue
+
         Invoke-Terraform -moduleFolderPath $bootstrapPath -tfvarsFileName "override.tfvars"
     }
 }
