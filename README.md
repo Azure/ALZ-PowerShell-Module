@@ -77,7 +77,6 @@ This currently tests for:
 * Git
 * Azure CLI
 * Terraform CLI
-* Visual Studio Code
 
 #### Azure Landing Zone Environment with Bicep and GitHub Actions Workflows
 
