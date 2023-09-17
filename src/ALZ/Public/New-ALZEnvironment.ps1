@@ -12,6 +12,8 @@ function New-ALZEnvironment {
     The version of the ALZ-Bicep module to use.
     .PARAMETER alzIacProvider
     The IaC provider to use for the ALZ environment.
+    .PARAMETER userInputOverridePath
+    A json file containing user input overrides for the user input prompts. This will cause the tool to by pass requesting user input for that field and use the value(s) provided. E.g { "starter_module": "basic", "azure_location": "uksouth" }
     .EXAMPLE
     New-ALZEnvironment
     .EXAMPLE
@@ -41,7 +43,11 @@ function New-ALZEnvironment {
         [Parameter(Mandatory = $false)]
         [ValidateSet("github", "azuredevops")]
         [Alias("Cicd")]
-        [string] $alzCicdPlatform = "github"
+        [string] $alzCicdPlatform = "github",
+
+        [Parameter(Mandatory = $false)]
+        [Alias("inputs")]
+        [string] $userInputOverridePath = ""
     )
 
     Write-InformationColored "Getting ready to create a new ALZ environment with you..." -ForegroundColor Green -InformationAction Continue
@@ -58,7 +64,7 @@ function New-ALZEnvironment {
                 if($alzVersion -eq "") {
                     $alzVersion = "latest"
                 }
-                New-ALZEnvironmentTerraform -alzEnvironmentDestination $alzEnvironmentDestination -alzVersion $alzVersion -alzCicdPlatform $alzCicdPlatform
+                New-ALZEnvironmentTerraform -alzEnvironmentDestination $alzEnvironmentDestination -alzVersion $alzVersion -alzCicdPlatform $alzCicdPlatform -userInputOverridePath $userInputOverridePath
             }
         }
     }
