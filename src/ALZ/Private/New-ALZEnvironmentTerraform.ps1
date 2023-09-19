@@ -17,7 +17,10 @@ function New-ALZEnvironmentTerraform {
 
         [Parameter(Mandatory = $false)]
         [Alias("inputs")]
-        [string] $userInputOverridePath = ""
+        [string] $userInputOverridePath = "",
+
+        [Parameter(Mandatory = $false)]
+        [switch] $autoApprove
     )
 
     $terraformModuleUrl = "https://github.com/Azure/alz-terraform-accelerator"
@@ -74,8 +77,12 @@ function New-ALZEnvironmentTerraform {
 
         # Running terraform init and apply
         Write-InformationColored "Thank you for providing those inputs, we are now initializing and applying Terraform to bootstrap your environment..." -ForegroundColor Green -InformationAction Continue
-        Write-InformationColored "Once the plan is complete you will be prompted to confirm the apply. You must enter 'yes' to apply." -ForegroundColor Green -InformationAction Continue
 
-        Invoke-Terraform -moduleFolderPath $bootstrapPath -tfvarsFileName "override.tfvars"
+        if($autoApprove) {
+            Invoke-Terraform -moduleFolderPath $bootstrapPath -tfvarsFileName "override.tfvars" -autoApprove
+        } else {
+            Write-InformationColored "Once the plan is complete you will be prompted to confirm the apply. You must enter 'yes' to apply." -ForegroundColor Green -InformationAction Continue
+            Invoke-Terraform -moduleFolderPath $bootstrapPath -tfvarsFileName "override.tfvars"
+        }
     }
 }
