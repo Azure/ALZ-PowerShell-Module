@@ -5,11 +5,19 @@ function Invoke-Terraform {
         [string] $moduleFolderPath,
 
         [Parameter(Mandatory = $false)]
-        [string] $tfvarsFileName
+        [string] $tfvarsFileName,
+
+        [Parameter(Mandatory = $false)]
+        [switch] $autoApprove
     )
 
     if ($PSCmdlet.ShouldProcess("Apply Terraform", "modify")) {
         terraform -chdir="$moduleFolderPath" init
-        terraform -chdir="$moduleFolderPath" apply -var-file="$tfvarsFileName"
+        Write-InformationColored "Terraform init has completed, now running the apply..." -ForegroundColor Green -InformationAction Continue
+        if($autoApprove) {
+            terraform -chdir="$moduleFolderPath" apply -var-file="$tfvarsFileName" -auto-approve
+        } else {
+            terraform -chdir="$moduleFolderPath" apply -var-file="$tfvarsFileName"
+        }
     }
 }

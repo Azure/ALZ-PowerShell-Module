@@ -14,6 +14,8 @@ function New-ALZEnvironment {
     The IaC provider to use for the ALZ environment.
     .PARAMETER userInputOverridePath
     A json file containing user input overrides for the user input prompts. This will cause the tool to by pass requesting user input for that field and use the value(s) provided. E.g { "starter_module": "basic", "azure_location": "uksouth" }
+    .PARAMETER autoApprove
+    Automatically approve the terraform apply.
     .EXAMPLE
     New-ALZEnvironment
     .EXAMPLE
@@ -47,7 +49,10 @@ function New-ALZEnvironment {
 
         [Parameter(Mandatory = $false)]
         [Alias("inputs")]
-        [string] $userInputOverridePath = ""
+        [string] $userInputOverridePath = "",
+
+        [Parameter(Mandatory = $false)]
+        [switch] $autoApprove
     )
 
     Write-InformationColored "Getting ready to create a new ALZ environment with you..." -ForegroundColor Green -InformationAction Continue
@@ -64,7 +69,11 @@ function New-ALZEnvironment {
                 if($alzVersion -eq "") {
                     $alzVersion = "latest"
                 }
-                New-ALZEnvironmentTerraform -alzEnvironmentDestination $alzEnvironmentDestination -alzVersion $alzVersion -alzCicdPlatform $alzCicdPlatform -userInputOverridePath $userInputOverridePath
+                if($autoApprove) {
+                    New-ALZEnvironmentTerraform -alzEnvironmentDestination $alzEnvironmentDestination -alzVersion $alzVersion -alzCicdPlatform $alzCicdPlatform -userInputOverridePath $userInputOverridePath -autoApprove
+                } else {
+                    New-ALZEnvironmentTerraform -alzEnvironmentDestination $alzEnvironmentDestination -alzVersion $alzVersion -alzCicdPlatform $alzCicdPlatform -userInputOverridePath $userInputOverridePath
+                }
             }
         }
     }
