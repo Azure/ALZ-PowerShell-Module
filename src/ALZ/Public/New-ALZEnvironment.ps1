@@ -12,6 +12,8 @@ function New-ALZEnvironment {
     The version of the ALZ-Bicep module to use.
     .PARAMETER alzIacProvider
     The IaC provider to use for the ALZ environment.
+    .PARAMETER userInputOverridePath
+    A json file containing user input overrides for the user input prompts. This will cause the tool to by pass requesting user input for that field and use the value(s) provided. E.g { "starter_module": "basic", "azure_location": "uksouth" }
     .EXAMPLE
     New-ALZEnvironment
     .EXAMPLE
@@ -30,7 +32,8 @@ function New-ALZEnvironment {
         [string] $alzEnvironmentDestination = ".",
 
         [Parameter(Mandatory = $false)]
-        [string] $alzBicepVersion = "v0.16.3",
+        [Alias("alzBicepVersion")]
+        [string] $alzVersion = "",
 
         [Parameter(Mandatory = $false)]
         [ValidateSet("bicep", "terraform")]
@@ -40,40 +43,29 @@ function New-ALZEnvironment {
         [Parameter(Mandatory = $false)]
         [ValidateSet("github", "azuredevops")]
         [Alias("Cicd")]
-        [string] $alzCicdPlatform = "github"
+        [string] $alzCicdPlatform = "github",
+
+        [Parameter(Mandatory = $false)]
+        [Alias("inputs")]
+        [string] $userInputOverridePath = ""
     )
 
     Write-InformationColored "Getting ready to create a new ALZ environment with you..." -ForegroundColor Green -InformationAction Continue
 
-    if ($alzIacProvider -eq "terraform") {
-        Write-InformationColored "Terraform is not yet supported." -ForegroundColor Red -InformationAction Continue
-        return
-    }
-
-    if ($PSCmdlet.ShouldProcess("ALZ-Bicep module configuration", "modify")) {
-
-        $bicepConfig = Get-ALZBicepConfig -alzBicepVersion $alzBicepVersion
-
-        New-ALZDirectoryEnvironment -alzEnvironmentDestination $alzEnvironmentDestination -alzCicdDestination $alzCicdPlatform | Out-String | Write-Verbose
-
-        $alzEnvironmentDestinationInternalCode = Join-Path $alzEnvironmentDestination "upstream-releases"
-
-        Get-ALZGithubRelease -directoryForReleases $alzEnvironmentDestinationInternalCode -githubRepoUrl $bicepConfig.module_url -releases @($bicepConfig.version) | Out-String | Write-Verbose
-
-        Write-InformationColored "Copying ALZ-Bicep module to $alzEnvironmentDestinationInternalCode" -ForegroundColor Green -InformationAction Continue
-        Copy-ALZParametersFile -alzEnvironmentDestination $alzEnvironmentDestination -upstreamReleaseDirectory $(Join-Path $alzEnvironmentDestinationInternalCode $bicepConfig.version) -configFiles $bicepConfig.config_files | Out-String | Write-Verbose
-        Copy-ALZParametersFile -alzEnvironmentDestination $alzEnvironmentDestination -upstreamReleaseDirectory $(Join-Path $alzEnvironmentDestinationInternalCode $bicepConfig.version) -configFiles $bicepConfig.cicd.$alzCicdPlatform | Out-String | Write-Verbose
-        Write-InformationColored "ALZ-Bicep source directory: $alzBicepSourceDirectory" -ForegroundColor Green -InformationAction Continue
-
-        $configuration = Request-ALZEnvironmentConfig -configurationParameters $bicepConfig.parameters
-
-        Set-ComputedConfiguration -configuration $configuration | Out-String | Write-Verbose
-        Edit-ALZConfigurationFilesInPlace -alzEnvironmentDestination $alzEnvironmentDestination -configuration $configuration | Out-String | Write-Verbose
-        Build-ALZDeploymentEnvFile -configuration $configuration -Destination $alzEnvironmentDestination | Out-String | Write-Verbose
-
-        $isGitRepo = Test-ALZGitRepository -alzEnvironmentDestination $alzEnvironmentDestination
-        if (-not $isGitRepo) {
-            Write-InformationColored "The directory $alzEnvironmentDestination is not a git repository.  Please make it is a git repo after initialization." -ForegroundColor Red -InformationAction Continue
+    if ($PSCmdlet.ShouldProcess("Accelerator setup", "modify")) {
+        switch($alzIacProvider) {
+            "bicep" {
+                if($alzVersion -eq "") {
+                    $alzVersion = "v0.16.3"
+                }
+                New-ALZEnvironmentBicep -alzEnvironmentDestination $alzEnvironmentDestination -alzVersion $alzVersion -alzCicdPlatform $alzCicdPlatform
+            }
+            "terraform" {
+                if($alzVersion -eq "") {
+                    $alzVersion = "latest"
+                }
+                New-ALZEnvironmentTerraform -alzEnvironmentDestination $alzEnvironmentDestination -alzVersion $alzVersion -alzCicdPlatform $alzCicdPlatform -userInputOverridePath $userInputOverridePath
+            }
         }
     }
 

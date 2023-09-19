@@ -2,7 +2,11 @@
 function Request-ALZEnvironmentConfig {
     param(
         [Parameter(Mandatory = $true)]
-        [object] $configurationParameters
+        [object] $configurationParameters,
+        [Parameter(Mandatory = $false)]
+        [switch] $respectOrdering,
+        [Parameter(Mandatory = $false)]
+        [PSCustomObject] $userInputOverrides = $null
     )
     <#
     .SYNOPSIS
@@ -14,9 +18,30 @@ function Request-ALZEnvironmentConfig {
     .OUTPUTS
     System.Object. The resultant configuration values.
     #>
-    foreach ($configurationValue in $configurationParameters.PsObject.Properties) {
+
+    $configurations = $configurationParameters.PsObject.Properties
+
+    $hasInputOverrides = $false
+    if($userInputOverrides -ne $null) {
+        $hasInputOverrides = $true
+    }
+
+    if($respectOrdering) {
+        $configurations = $configurationParameters.PSObject.Properties | Sort-Object { $_.Value.Order }
+    }
+
+    foreach ($configurationValue in $configurations) {
         if ($configurationValue.Value.Type -eq "UserInput") {
-            Request-ConfigurationValue $configurationValue.Name $configurationValue.Value
+            if($hasInputOverrides) {
+                $userInputOverride = $userInputOverrides.PsObject.Properties | Where-Object { $_.Name -eq $configurationValue.Name }
+                if($null -ne $userInputOverride) {
+                    $configurationValue.Value.Value = $userInputOverride.Value
+                } else {
+                    Request-ConfigurationValue $configurationValue.Name $configurationValue.Value
+                }
+            } else {
+                Request-ConfigurationValue $configurationValue.Name $configurationValue.Value
+            }
         }
     }
 

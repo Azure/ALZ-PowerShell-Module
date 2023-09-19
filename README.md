@@ -48,10 +48,12 @@ Update-Module -Name ALZ
 
 ### Quick start
 
-Before you start you can utilize the functionality of the module to verify if you have all the prerequisites installed with the built in command:
+Before you start you can utilize the functionality of the module to verify if you have all the prerequisites installed with the built in command.
+
+#### Bicep
 
 ```powershell
-Test-ALZRequirement
+Test-ALZRequirement -IaC "bicep"
 ```
 
 Currently this tests for:
@@ -63,25 +65,51 @@ Currently this tests for:
 * Bicep
 * Visual Studio Code
 
-#### Create a new Azure Landing Zone Environment with GitHub Actions Workflows
+#### Terraform
 
 ```powershell
-New-ALZEnvironment -o <output_directory>
+Test-ALZRequirement -IaC "terraform"
 ```
 
-#### Azure Landing Zone Environment with Azure DevOps Pipelines
+This currently tests for:
+
+* Supported minimum PowerShell version (7.1)
+* Git
+* Azure CLI
+* Terraform CLI
+
+#### Azure Landing Zone Environment with Bicep and GitHub Actions Workflows
+
 ```powershell
-New-ALZEnvironment -o <output_directory> -cicd "azuredevops"
+New-ALZEnvironment -o <output_directory> -IaC "bicep" -cicd "github
 ```
+
+#### Azure Landing Zone Environment with Bicep and Azure DevOps Pipelines
+
+```powershell
+New-ALZEnvironment -o <output_directory> -IaC "bicep" -cicd "azuredevops"
+```
+
 > **Note**
 > Azure Devops Pipelines are only supported in v0.2.6 or later.
 
-## Additonal Cmdlets
+#### Azure Landing Zone Environment with Terraform and GitHub Pipelines
+
+```powershell
+New-ALZEnvironment -o <output_directory> -IaC "terraform" -cicd "github"
+```
+
+#### Azure Landing Zone Environment with Terraform and Azure DevOps Pipelines
+
+```powershell
+New-ALZEnvironment -o <output_directory> -IaC "terraform" -cicd "azuredevops"
+```
+
+## Additional Cmdlets
 
 ### Update an existing Azure Landing Zone Environment
 
 #### Downloads and pulls down the specified release version from the remote GitHub repository to a local directory
-
 
 ```powershell
 Get-ALZGithubRelease -githubRepoUrl "https://github.com/Azure/ALZ-Bicep" -releases "v0.14.0" -directoryForReleases "C:\Repos\ALZ\accelerator\upstream-releases\"
@@ -93,7 +121,24 @@ Get-ALZGithubRelease -githubRepoUrl "https://github.com/Azure/ALZ-Bicep" -releas
 
 In order to develop this module you will need PowerShell 7.1 or later.
 
-### Commands to install a build locally
+### Pre-requisites
+
+```powershell
+# Required to run Invoke-Build
+Install-Module -F PSScriptAnalyzer
+Install-Module -F InvokeBuild
+Install-Module -F Pester
+```
+
+### Commands to build locally
+
+```powershell
+# Build and test locally
+Remove-Module "ALZ" -Force
+Invoke-Build -File .\src\ALZ.build.ps1
+```
+
+### Commands to import a build locally
 
 ```powershell
 # Install the module locally

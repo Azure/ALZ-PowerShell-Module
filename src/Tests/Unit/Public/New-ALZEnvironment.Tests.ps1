@@ -45,7 +45,7 @@ InModuleScope 'ALZ' {
 
                 Mock -CommandName Copy-Item -MockWith { }
 
-                Mock -CommandName Get-ALZBicepConfig -MockWith {
+                Mock -CommandName Get-ALZConfig -MockWith {
                     @{
                         "module_url"   = "test"
                         "version"      = "v1.0.0"
@@ -77,13 +77,38 @@ InModuleScope 'ALZ' {
                     }
                 }
 
-                Mock -CommandName Get-ALZGithubRelease -MockWith { }
+                Mock -CommandName Get-ALZGithubRelease -MockWith { $("v0.0.1") }
 
                 Mock -CommandName Test-ALZGitRepository -MockWith { $false }
 
                 Mock -CommandName Copy-ALZParametersFile -MockWith { }
 
                 Mock -CommandName Write-InformationColored
+
+                Mock -CommandName Get-HCLParserTool -MockWith { "test" }
+
+                Mock -CommandName Convert-HCLVariablesToUserInputConfig -MockWith {
+                    @(
+                        @{
+                            "description"  = "Test configuration 1"
+                            "names"        = @("value1", "value2")
+                            "defaultValue" = "default"
+                            "value"        = "value"
+                        },
+                        @{
+                            "description"  = "Test configuration 2"
+                            "names"        = @("value1")
+                            "defaultValue" = "default"
+                            "value"        = "value"
+                        }
+                    )
+                }
+
+                Mock -CommandName Write-TfvarsFile -MockWith { }
+
+                Mock -CommandName Invoke-Terraform -MockWith { }
+
+                Mock -CommandName Import-SubscriptionData -MockWith { }
 
             }
 
@@ -92,10 +117,10 @@ InModuleScope 'ALZ' {
                 Assert-MockCalled -CommandName Edit-ALZConfigurationFilesInPlace -Exactly 1
             }
 
-            It 'Warns if the unsupported Terraform IAC is specified.' {
-                New-ALZEnvironment -alzIacProvider "terraform"
-
-                Should -Invoke -CommandName Write-InformationColored -ParameterFilter { $ForegroundColor -eq "Red" } -Scope It
+            It 'should clone the git repo and apply if terraform is selected' {
+                New-ALZEnvironment -IaC "terraform" -
+                Assert-MockCalled -CommandName Get-ALZGithubRelease -Exactly 1
+                Assert-MockCalled -CommandName Invoke-Terraform -Exactly 1
             }
         }
     }

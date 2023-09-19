@@ -36,7 +36,11 @@ function Get-ALZGithubRelease {
 
         [Parameter(Mandatory = $false, Position = 4, HelpMessage = "An array of strings contianing the paths to the directories or files that you wish to keep when downloading and extracting from the releases.")]
         [array]
-        $directoryAndFilesToKeep = $null
+        $directoryAndFilesToKeep = $null,
+
+        [Parameter(Mandatory = $false, Position = 4, HelpMessage = "Whether to just query the API and return the release versions.")]
+        [switch]
+        $queryOnly
     )
 
     # Split Repo URL into parts
@@ -86,6 +90,10 @@ function Get-ALZGithubRelease {
 
     $selectedReleases = $allRepoReleases | Where-Object { $releases -contains $_.tag_name }
 
+    if($queryOnly) {
+        return $selectedReleases
+    }
+
     foreach ($release in $selectedReleases) {
         # Check the firectory for this release
         $releaseDirectory = "$directoryForReleases/$($release.tag_name)"
@@ -126,5 +134,5 @@ function Get-ALZGithubRelease {
             Write-Verbose "===> Content already exists in $releaseDirectory. Skipping"
         }
     }
-    return $true
+    return $selectedReleases
 }
