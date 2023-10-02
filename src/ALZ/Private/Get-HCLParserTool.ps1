@@ -20,6 +20,7 @@ function Get-HCLParserTool {
             $os = "darwin"
         }
 
+        # Enum values can be seen here: https://learn.microsoft.com/en-us/dotnet/api/system.runtime.interopservices.architecture?view=net-7.0#fields
         $architecture = ([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture).ToString().ToLower()
 
         if($architecture -eq "x64") {
