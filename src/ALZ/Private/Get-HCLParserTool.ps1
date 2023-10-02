@@ -12,7 +12,6 @@ function Get-HCLParserTool {
         $os = ""
         if ($IsWindows) {
             $os = "windows"
-            $architecture = $($env:PROCESSOR_ARCHITECTURE).ToLower()
         }
         if($IsLinux) {
             $os = "linux"
