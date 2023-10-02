@@ -58,22 +58,21 @@ function New-ALZEnvironment {
     Write-InformationColored "Getting ready to create a new ALZ environment with you..." -ForegroundColor Green -InformationAction Continue
 
     if ($PSCmdlet.ShouldProcess("Accelerator setup", "modify")) {
-        switch($alzIacProvider) {
-            "bicep" {
-                if($alzVersion -eq "") {
-                    $alzVersion = "v0.16.3"
-                }
-                New-ALZEnvironmentBicep -alzEnvironmentDestination $alzEnvironmentDestination -alzVersion $alzVersion -alzCicdPlatform $alzCicdPlatform
+        if($alzIacProvider -eq "bicep") {
+            if($alzVersion -eq "") {
+                $alzVersion = "v0.16.3"
             }
-            "terraform" {
-                if($alzVersion -eq "") {
-                    $alzVersion = "latest"
-                }
-                if($autoApprove) {
-                    New-ALZEnvironmentTerraform -alzEnvironmentDestination $alzEnvironmentDestination -alzVersion $alzVersion -alzCicdPlatform $alzCicdPlatform -userInputOverridePath $userInputOverridePath -autoApprove
-                } else {
-                    New-ALZEnvironmentTerraform -alzEnvironmentDestination $alzEnvironmentDestination -alzVersion $alzVersion -alzCicdPlatform $alzCicdPlatform -userInputOverridePath $userInputOverridePath
-                }
+            New-ALZEnvironmentBicep -alzEnvironmentDestination $alzEnvironmentDestination -alzVersion $alzVersion -alzCicdPlatform $alzCicdPlatform
+        }
+
+        if($alzIacProvider -eq "terraform") {
+            if($alzVersion -eq "") {
+                $alzVersion = "latest"
+            }
+            if($autoApprove) {
+                New-ALZEnvironmentTerraform -alzEnvironmentDestination $alzEnvironmentDestination -alzVersion $alzVersion -alzCicdPlatform $alzCicdPlatform -userInputOverridePath $userInputOverridePath -autoApprove
+            } else {
+                New-ALZEnvironmentTerraform -alzEnvironmentDestination $alzEnvironmentDestination -alzVersion $alzVersion -alzCicdPlatform $alzCicdPlatform -userInputOverridePath $userInputOverridePath
             }
         }
     }
