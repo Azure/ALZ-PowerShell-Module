@@ -23,7 +23,7 @@ function New-ALZEnvironment {
     .EXAMPLE
     New-ALZEnvironment -alzEnvironmentDestination "."
     .EXAMPLE
-    New-ALZEnvironment -alzEnvironmentDestination "." -alzBicepVersion "v0.16.3"
+    New-ALZEnvironment -alzEnvironmentDestination "." -alzBicepVersion "v0.16.4"
     #>
     [CmdletBinding(SupportsShouldProcess = $true)]
     param (
@@ -58,9 +58,9 @@ function New-ALZEnvironment {
     Write-InformationColored "Getting ready to create a new ALZ environment with you..." -ForegroundColor Green -InformationAction Continue
 
     if ($PSCmdlet.ShouldProcess("Accelerator setup", "modify")) {
-        if($alzIacProvider -eq "bicep") {
-            if($alzVersion -eq "") {
-                $alzVersion = "v0.16.3"
+        if ($alzIacProvider -eq "bicep") {
+            if ($alzVersion -eq "") {
+                $alzVersion = "v0.16.4"
             }
             New-ALZEnvironmentBicep -alzEnvironmentDestination $alzEnvironmentDestination -alzVersion $alzVersion -alzCicdPlatform $alzCicdPlatform
         }
