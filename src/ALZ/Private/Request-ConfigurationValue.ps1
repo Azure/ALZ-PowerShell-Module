@@ -7,7 +7,10 @@ function Request-ConfigurationValue {
         [object] $configValue,
 
         [Parameter(Mandatory = $false)]
-        [System.Boolean] $withRetries = $true
+        [System.Boolean] $withRetries = $true,
+
+        [Parameter(Mandatory = $false)]
+        [System.Boolean] $treatEmptyDefaultAsValid = $false
     )
 
     #if the file has a script - execute it:
@@ -51,7 +54,13 @@ function Request-ConfigurationValue {
 
         $hasNotSpecifiedValue = ($null -eq $configValue.Value -or "" -eq $configValue.Value) -and ($configValue.Value -ne $configValue.DefaultValue)
         $isDisallowedValue = $hasAllowedValues -and $allowedValues.Contains($configValue.Value) -eq $false
-        $isNotValid = $hasValidator -and $configValue.Value -match $configValue.Valid -eq $false
+        $skipValidationForEmptyDefault = $treatEmptyDefaultAsValid -and $hasDefaultValue -and $defaultValue -eq "" -and $configValue.Value -eq ""
+        
+        if($skipValidationForEmptyDefault) {
+            $isNotValid = $false
+        } else {
+            $isNotValid = $hasValidator -and $configValue.Value -match $configValue.Valid -eq $false
+        }
 
         if ($hasNotSpecifiedValue -or $isDisallowedValue -or $isNotValid) {
             Write-InformationColored "Please specify a valid value for this field." -ForegroundColor Red -InformationAction Continue

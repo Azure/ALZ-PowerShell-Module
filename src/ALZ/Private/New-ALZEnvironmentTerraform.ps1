@@ -53,7 +53,7 @@ function New-ALZEnvironmentTerraform {
         Write-InformationColored "Got configuration and downloaded alz-terraform-accelerator Terraform module version $release to $alzEnvironmentDestination" -ForegroundColor Green -InformationAction Continue
 
         # Getting the user input for the bootstrap module
-        $bootstrapConfiguration = Request-ALZEnvironmentConfig -configurationParameters $bootstrapParameters -respectOrdering -userInputOverrides $userInputOverrides
+        $bootstrapConfiguration = Request-ALZEnvironmentConfig -configurationParameters $bootstrapParameters -respectOrdering -userInputOverrides $userInputOverrides -treatEmptyDefaultAsValid $true
 
         # Getting the configuration for the starter module user input
         $starterTemplate = $bootstrapConfiguration.PsObject.Properties["starter_module"].Value.Value
@@ -64,7 +64,7 @@ function New-ALZEnvironmentTerraform {
         Write-InformationColored "The following inputs are specific to the '$starterTemplate' starter module that you selected..." -ForegroundColor Green -InformationAction Continue
 
         # Getting the user input for the starter module
-        $starterModuleConfiguration = Request-ALZEnvironmentConfig -configurationParameters $starterModuleParameters -respectOrdering -userInputOverrides $userInputOverrides
+        $starterModuleConfiguration = Request-ALZEnvironmentConfig -configurationParameters $starterModuleParameters -respectOrdering -userInputOverrides $userInputOverrides -treatEmptyDefaultAsValid $true
 
         # Getting subscription ids
         Import-SubscriptionData -starterModuleConfiguration $starterModuleConfiguration -bootstrapConfiguration $bootstrapConfiguration
