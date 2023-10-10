@@ -50,7 +50,7 @@ function Get-ALZGithubRelease {
 
     # Get releases on repo
     $repoReleasesUrl = "https://api.github.com/repos/$repoOrgPlusRepo/releases"
-    $allRepoReleases = Invoke-RestMethod $repoReleasesUrl
+    $allRepoReleases = Invoke-RestMethod $repoReleasesUrl -RetryIntervalSec 3 -MaximumRetryCount 100
 
     Write-Verbose "=====> All available releases on GitHub Repo: $repoOrgPlusRepo"
     $allRepoReleases | Select-Object name, tag_name, published_at, prerelease, draft, html_url | Format-Table -AutoSize | Out-String | Write-Verbose
@@ -112,7 +112,7 @@ function Get-ALZGithubRelease {
         if ($null -eq $contentInReleaseDirectory) {
             Write-Verbose "===> Pulling and extracting release $($release.tag_name) into $releaseDirectory"
             New-Item -ItemType Directory -Path "$releaseDirectory/tmp" | Out-String | Write-Verbose
-            Invoke-WebRequest -Uri "https://github.com/$repoOrgPlusRepo/archive/refs/tags/$($release.tag_name).zip" -OutFile "$releaseDirectory/tmp/$($release.tag_name).zip" | Out-String | Write-Verbose
+            Invoke-WebRequest -Uri "https://github.com/$repoOrgPlusRepo/archive/refs/tags/$($release.tag_name).zip" -OutFile "$releaseDirectory/tmp/$($release.tag_name).zip" -RetryIntervalSec 3 -MaximumRetryCount 100 | Out-String | Write-Verbose
             Expand-Archive -Path "$releaseDirectory/tmp/$($release.tag_name).zip" -DestinationPath "$releaseDirectory/tmp/extracted" | Out-String | Write-Verbose
             $extractedSubFolder = Get-ChildItem -Path "$releaseDirectory/tmp/extracted" -Directory
 
