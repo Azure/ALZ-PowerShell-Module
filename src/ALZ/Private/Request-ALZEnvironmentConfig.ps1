@@ -6,7 +6,9 @@ function Request-ALZEnvironmentConfig {
         [Parameter(Mandatory = $false)]
         [switch] $respectOrdering,
         [Parameter(Mandatory = $false)]
-        [PSCustomObject] $userInputOverrides = $null
+        [PSCustomObject] $userInputOverrides = $null,
+        [Parameter(Mandatory = $false)]
+        [System.Boolean] $treatEmptyDefaultAsValid = $false
     )
     <#
     .SYNOPSIS
@@ -37,10 +39,10 @@ function Request-ALZEnvironmentConfig {
                 if($null -ne $userInputOverride) {
                     $configurationValue.Value.Value = $userInputOverride.Value
                 } else {
-                    Request-ConfigurationValue $configurationValue.Name $configurationValue.Value
+                    Request-ConfigurationValue -configName $configurationValue.Name -configValue $configurationValue.Value -treatEmptyDefaultAsValid $treatEmptyDefaultAsValid
                 }
             } else {
-                Request-ConfigurationValue $configurationValue.Name $configurationValue.Value
+                Request-ConfigurationValue -configName $configurationValue.Name -configValue $configurationValue.Value -treatEmptyDefaultAsValid $treatEmptyDefaultAsValid
             }
         }
     }
