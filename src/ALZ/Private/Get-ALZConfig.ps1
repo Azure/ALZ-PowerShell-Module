@@ -4,7 +4,7 @@ function Get-ALZConfig {
     #>
     param(
         [Parameter(Mandatory = $false)]
-        [string] $alzVersion = "v0.16.4",
+        [string] $alzVersion = "v0.16.5",
         [Parameter(Mandatory = $false)]
         [ValidateSet("bicep", "terraform")]
         [Alias("Iac")]
