@@ -42,7 +42,11 @@ function Request-ConfigurationValue {
             Write-InformationColored ": " -NoNewline -InformationAction Continue
         }
 
-        $readValue = Read-Host
+        if($configValue.Sensitive) {
+            $readValue = Read-Host -MaskInput
+        } else {
+            $readValue = Read-Host
+        }
 
         $previousValue = $configValue.Value
 
@@ -55,7 +59,7 @@ function Request-ConfigurationValue {
         $hasNotSpecifiedValue = ($null -eq $configValue.Value -or "" -eq $configValue.Value) -and ($configValue.Value -ne $configValue.DefaultValue)
         $isDisallowedValue = $hasAllowedValues -and $allowedValues.Contains($configValue.Value) -eq $false
         $skipValidationForEmptyDefault = $treatEmptyDefaultAsValid -and $hasDefaultValue -and $defaultValue -eq "" -and $configValue.Value -eq ""
-        
+
         if($skipValidationForEmptyDefault) {
             $isNotValid = $false
         } else {

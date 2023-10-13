@@ -58,6 +58,11 @@ function Convert-HCLVariablesToUserInputConfig {
                 $inputType = "AzureSubscriptionIds"
             }
 
+            $sensitive = $false
+            if($variable.Value[0].PSObject.Properties.Name -contains "sensitive") {
+                $sensitive = $true
+            }
+
             $dataType = $variable.Value[0].type
             $dataType = $dataType.Replace("`${", "").Replace("}", "")
 
@@ -66,6 +71,7 @@ function Convert-HCLVariablesToUserInputConfig {
             $starterModuleConfigurationInstance | Add-Member -NotePropertyName "Type" -NotePropertyValue $inputType
             $starterModuleConfigurationInstance | Add-Member -NotePropertyName "Value" -NotePropertyValue ""
             $starterModuleConfigurationInstance | Add-Member -NotePropertyName "DataType" -NotePropertyValue $dataType
+            $starterModuleConfigurationInstance | Add-Member -NotePropertyName "Sensitive" -NotePropertyValue $sensitive
 
             if($variable.Value[0].PSObject.Properties.Name -contains "default") {
                 $defaultValue = $variable.Value[0].default
@@ -83,6 +89,8 @@ function Convert-HCLVariablesToUserInputConfig {
                 }
                 $starterModuleConfigurationInstance | Add-Member -NotePropertyName "DefaultValue" -NotePropertyValue $defaultValue
             }
+
+
 
             if($hasValidation) {
                 $validator = $validators.PSObject.Properties[$validationType].Value
