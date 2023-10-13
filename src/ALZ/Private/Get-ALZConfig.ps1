@@ -25,7 +25,7 @@ function Get-ALZConfig {
         } elseif($extension -eq ".json") {
             $config = Get-Content -Path $configFilePath | ConvertFrom-Json
         } else {
-            throw "The config file must be a json or yaml file"
+            throw "The config file must be a json or yaml/yml file"
         }
 
         return $config
