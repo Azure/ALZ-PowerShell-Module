@@ -60,7 +60,7 @@ function New-ALZEnvironment {
     if ($PSCmdlet.ShouldProcess("Accelerator setup", "modify")) {
         if ($alzIacProvider -eq "bicep") {
             if ($alzVersion -eq "") {
-                $alzVersion = "v0.16.4"
+                $alzVersion = "v0.16.5"
             }
             New-ALZEnvironmentBicep -alzEnvironmentDestination $alzEnvironmentDestination -alzVersion $alzVersion -alzCicdPlatform $alzCicdPlatform
         }
