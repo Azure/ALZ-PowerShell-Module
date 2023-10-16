@@ -56,7 +56,7 @@ function Get-ALZGithubRelease {
     do {
         Write-Verbose "=====> Retrieving page $page of releases on GitHub Repo: $repoOrgPlusRepo"
         $results = Invoke-RestMethod ($repoReleasesUrl + "?per_page=$perPage&page=$page") -RetryIntervalSec 3 -MaximumRetryCount 100
-        $allRepoReleases += $releases
+        $allRepoReleases += $results
         $page++
     }
     while ($results.count -eq $perPage)
