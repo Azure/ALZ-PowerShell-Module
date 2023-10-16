@@ -55,11 +55,11 @@ function Get-ALZGithubRelease {
     $allRepoReleases = @()
     do {
         Write-Verbose "=====> Retrieving page $page of releases on GitHub Repo: $repoOrgPlusRepo"
-        $releases = Invoke-RestMethod ($repoReleasesUrl + "?per_page=$perPage&page=$page") -RetryIntervalSec 3 -MaximumRetryCount 100
+        $results = Invoke-RestMethod ($repoReleasesUrl + "?per_page=$perPage&page=$page") -RetryIntervalSec 3 -MaximumRetryCount 100
         $allRepoReleases += $releases
         $page++
     }
-    while ($releases.count -eq $perPage)
+    while ($results.count -eq $perPage)
 
     Write-Verbose "=====> All available releases on GitHub Repo: $repoOrgPlusRepo"
     $allRepoReleases | Select-Object name, tag_name, published_at, prerelease, draft, html_url | Format-Table -AutoSize | Out-String | Write-Verbose
