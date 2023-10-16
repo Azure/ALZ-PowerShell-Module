@@ -25,7 +25,7 @@ function New-ALZEnvironmentBicep {
             $targetVersion = [System.Version]($alzVersion -replace "v", "")
 
             if($targetVersion -le $lastSupportedLocalVersion) {
-                throw "The version of the ALZ-Bicep accelerator you are targetting is not supported by this version of the ALZ PowerShell. In order to target versions prior to v0.6.16 you will need to downgrade to version v0.2.20 or lower of this module."
+                throw "The version of the ALZ-Bicep accelerator you are targetting is not supported by this version of the ALZ PowerShell module. In order to target versions prior to v0.16.6 you will need to downgrade to version v0.2.20 or lower of this module."
             }
         }
 
