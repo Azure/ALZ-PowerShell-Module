@@ -19,25 +19,23 @@ InModuleScope 'ALZ' {
         }
         Context 'Initialize config get the correct base values' {
             BeforeEach {
-                Mock -CommandName Invoke-RestMethod -ParameterFilter { $Uri -eq "https://api.github.com/repos/test/repo/releases" } -MockWith {
-                    @(
-                        [PSCustomObject]@{
-                            name         = "v1.0.0"
-                            tag_name     = "v1.0.0"
-                            published_at = "2020-01-01T00:00:00Z"
-                            prerelease   = $false
-                            draft        = $false
-                            html_url     = ""
-                        },
-                        [PSCustomObject]@{
-                            name         = "v1.0.1"
-                            tag_name     = "v1.0.1"
-                            published_at = "2020-01-02T00:00:00Z"
-                            prerelease   = $false
-                            draft        = $false
-                            html_url     = ""
-                        }
-                    )
+                Mock -CommandName Invoke-RestMethod -ParameterFilter { $Uri -eq "https://api.github.com/repos/test/repo/releases/latest" } -MockWith {
+                    Set-Variable -Scope 3 'statusCode' 200
+                    [PSCustomObject]@{
+                        name         = "v1.0.0"
+                        tag_name     = "v1.0.0"
+                        published_at = "2020-01-01T00:00:00Z"
+                        prerelease   = $false
+                        draft        = $false
+                        html_url     = ""
+                    }
+                }
+
+                Mock -CommandName Invoke-RestMethod -ParameterFilter { $Uri -eq "https://api.github.com/repos/test/repo/releases/tags/v2.0.0" } -MockWith {
+                    Set-Variable -Scope 3 'statusCode' 404
+                    [PSCustomObject]@{
+                        message       = "Not Found"
+                    }
                 }
 
                 Mock -CommandName Invoke-WebRequest -ParameterFilter { $Uri -eq "https://github.com/test/repo/archive/refs/tags/v1.0.1.zip" } -MockWith {
@@ -96,6 +94,9 @@ InModuleScope 'ALZ' {
                     $null
                 }
 
+                Mock -CommandName Write-Error -MockWith {
+                    $null
+                }
             }
 
             It 'Should get the correct releases' {
@@ -104,15 +105,9 @@ InModuleScope 'ALZ' {
                 Should -Not -Invoke Write-Warning
             }
 
-            It 'Should warn when you ask for a release that does not exist' {
-                Get-ALZGithubRelease -githubRepoUrl "http://github.com/test/repo" -releases @('v2.0.0') -directoryAndFilesToKeep @('repo-1.0.0') -directoryForReleases "output"
-                Should -Invoke Write-Warning
-            }
-
-            It 'Should download all the releases with all' {
-                Get-ALZGithubRelease -githubRepoUrl "http://github.com/test/repo" -releases @('all') -directoryAndFilesToKeep @('repo-1.0.0') -directoryForReleases "output"
-                Should -Invoke Expand-Archive -Times 2
-                Should -Not -Invoke Write-Warning
+            It 'Should throw an exception when you ask for a release that does not exist' {
+                { Get-ALZGithubRelease -githubRepoUrl "http://github.com/test/repo" -release 'v2.0.0' -directoryAndFilesToKeep @('repo-1.0.0') -directoryForReleases "output" } | Should -Throw
+                Should -Invoke Write-Error
             }
         }
     }
