@@ -36,9 +36,8 @@ function New-ALZEnvironmentTerraform {
         }
 
         # Downloading the latest or specified version of the alz-terraform-accelerator module
-        $releaseObject = Get-ALZGithubRelease -directoryForReleases $alzEnvironmentDestination -githubRepoUrl $terraformModuleUrl -releases $alzVersion
-        $release = $($releaseObject.name)
-        $releasePath = Join-Path -Path $alzEnvironmentDestination -ChildPath $release
+        $releaseTag = Get-ALZGithubRelease -directoryForReleases $alzEnvironmentDestination -githubRepoUrl $terraformModuleUrl -release $alzVersion
+        $releasePath = Join-Path -Path $alzEnvironmentDestination -ChildPath $releaseTag
 
         # Getting the configuration for the initial bootstrap user input and validators
         $bootstrapConfigFilePath = Join-Path -Path $releasePath -ChildPath "bootstrap/.config/ALZ-Powershell.config.json"
@@ -50,7 +49,7 @@ function New-ALZEnvironmentTerraform {
         $hclParserToolPath = Get-HCLParserTool -alzEnvironmentDestination $releasePath -toolVersion "v0.6.0"
         $bootstrapParameters = Convert-HCLVariablesToUserInputConfig -targetVariableFile $bootstrapVariableFilesPath -hclParserToolPath $hclParserToolPath -validators $bootstrapConfig.validators
 
-        Write-InformationColored "Got configuration and downloaded alz-terraform-accelerator Terraform module version $release to $alzEnvironmentDestination" -ForegroundColor Green -InformationAction Continue
+        Write-InformationColored "Got configuration and downloaded alz-terraform-accelerator Terraform module version $releaseTag to $alzEnvironmentDestination" -ForegroundColor Green -InformationAction Continue
 
         # Getting the user input for the bootstrap module
         $bootstrapConfiguration = Request-ALZEnvironmentConfig -configurationParameters $bootstrapParameters -respectOrdering -userInputOverrides $userInputOverrides -treatEmptyDefaultAsValid $true
