@@ -4,7 +4,10 @@ function Build-ALZDeploymentEnvFile {
         [PSCustomObject] $configuration,
 
         [Parameter(Mandatory = $false)]
-        [string] $destination = "."
+        [string] $destination = ".",
+
+        [Parameter(Mandatory = $false)]
+        [string] $version = ""
     )
     <#
     .SYNOPSIS
@@ -24,9 +27,14 @@ function Build-ALZDeploymentEnvFile {
     foreach ($configurationValue in $configuration.PsObject.Properties) {
         foreach ($target in $configurationValue.Value.Targets) {
             if ($target.Destination -eq "Environment") {
+                Write-InformationColored $configurationValue.Name -ForegroundColor Green -InformationAction Continue
 
-                $formattedValue = $configurationValue.Value.Value
-                Add-Content -Path $envFile -Value "$($($target.Name))=`"$formattedValue`"" | Out-String | Write-Verbose
+                if($configurationValue.Name -eq "UpstreamReleaseVersion") {
+                    Add-Content -Path $envFile -Value "$($($target.Name))=`"$version`"" | Out-String | Write-Verbose
+                } else {
+                    $formattedValue = $configurationValue.Value.Value
+                    Add-Content -Path $envFile -Value "$($($target.Name))=`"$formattedValue`"" | Out-String | Write-Verbose
+                }
             }
         }
     }
