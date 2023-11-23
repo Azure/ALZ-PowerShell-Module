@@ -22,16 +22,28 @@ Checks for the releases of a GitHub repository and downloads the latest release 
 function Get-ALZGithubRelease {
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory = $true, Position = 1, HelpMessage = "Please the provide the full URL of the GitHub repository you wish to check for the latest release.")]
+        [Parameter(Mandatory = $true, Position = 0, HelpMessage = "The IaC provider to use for the ALZ environment.")]
+        [ValidateSet("bicep", "terraform")]
+        [Alias("Iac")]
+        [Alias("i")]
         [string]
-        $githubRepoUrl,
+        $alzIacProvider,
+
+        [Parameter(Mandatory = $false, Position = 1, HelpMessage = "Please the provide the full URL of the GitHub repository you wish to check for the latest release.")]
+        [string]
+        $githubRepoUrl = "",
 
         [Parameter(Mandatory = $false, Position = 2, HelpMessage = "The releases to download. Specify 'all' to download all releases or 'latest' to download the latest release. Defaults to the latest release.")]
         [array]
+        [Alias("version")]
+        [Alias("v")]
         $release = "latest",
 
         [Parameter(Mandatory = $false, Position = 3, HelpMessage = "The directory to download the releases to. Defaults to the current directory.")]
         [string]
+        [Alias("Output")]
+        [Alias("OutputDirectory")]
+        [Alias("O")]
         $directoryForReleases = "$PWD/releases",
 
         [Parameter(Mandatory = $false, Position = 4, HelpMessage = "An array of strings contianing the paths to the directories or files that you wish to keep when downloading and extracting from the releases.")]
@@ -42,6 +54,23 @@ function Get-ALZGithubRelease {
         [switch]
         $queryOnly
     )
+
+    # Set the repository URL if not provided
+    $bicepModuleUrl = "https://github.com/Azure/ALZ-Bicep"
+    $terraformModuleUrl = "https://github.com/Azure/alz-terraform-accelerator"
+    if($githubRepoUrl -eq "") {
+        if($alzIacProvider -eq "bicep") {
+            $githubRepoUrl = $bicepModuleUrl
+        } elseif($alzIacProvider -eq "terraform") {
+            $githubRepoUrl = $terraformModuleUrl
+        }
+    }
+
+    $parentDirectory = $directoryForReleases
+    # Bicep specific path setup
+    if($alzIacProvider -eq "bicep") {
+        $directoryForReleases = Join-Path $directoryForReleases "upstream-releases"
+    }
 
     # Split Repo URL into parts
     $repoOrgPlusRepo = $githubRepoUrl.Split("/")[-2..-1] -join "/"
@@ -81,7 +110,7 @@ function Get-ALZGithubRelease {
         New-Item -ItemType Directory -Path $directoryForReleases | Out-String | Write-Verbose
     }
 
-    # Check the firectory for this release
+    # Check the directory for this release
     $releaseDirectory = "$directoryForReleases/$releaseTag"
 
     Write-Verbose "===> Checking if directory for release version exists: $releaseDirectory"
@@ -117,7 +146,17 @@ function Get-ALZGithubRelease {
         Remove-Item -Path "$releaseDirectory/tmp" -Force -Recurse
 
     } else {
+        Write-InformationColored "The release directory for this version already exists and has content in it, so we are not over-writing it." -ForegroundColor Yellow -InformationAction Continue
         Write-Verbose "===> Content already exists in $releaseDirectory. Skipping"
+    }
+
+    # Check and replace the .env file release version if it is Bicep
+    if($alzIacProvider -eq "bicep") {
+        $envFilePath = Join-Path -Path $parentDirectory -ChildPath ".env"
+        if(Test-Path $envFilePath) {
+            Write-Verbose "===> Replacing the .env file release version with $releaseTag"
+            (Get-Content $envFilePath) -replace "UPSTREAM_RELEASE_VERSION=.*", "UPSTREAM_RELEASE_VERSION=$releaseTag" | Set-Content $envFilePath
+        }
     }
 
     return $releaseTag

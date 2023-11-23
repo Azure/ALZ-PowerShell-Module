@@ -35,16 +35,20 @@ function New-ALZEnvironment {
 
         [Parameter(Mandatory = $false)]
         [Alias("alzBicepVersion")]
+        [Alias("version")]
+        [Alias("v")]
         [string] $alzVersion = "latest",
 
         [Parameter(Mandatory = $false)]
         [ValidateSet("bicep", "terraform")]
         [Alias("Iac")]
+        [Alias("i")]
         [string] $alzIacProvider = "bicep",
 
         [Parameter(Mandatory = $false)]
         [ValidateSet("github", "azuredevops")]
         [Alias("Cicd")]
+        [Alias("c")]
         [string] $alzCicdPlatform = "github",
 
         [Parameter(Mandatory = $false)]

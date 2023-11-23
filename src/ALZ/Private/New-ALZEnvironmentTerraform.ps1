@@ -23,8 +23,6 @@ function New-ALZEnvironmentTerraform {
         [switch] $autoApprove
     )
 
-    $terraformModuleUrl = "https://github.com/Azure/alz-terraform-accelerator"
-
     if ($PSCmdlet.ShouldProcess("ALZ-Terraform module configuration", "modify")) {
 
         Write-InformationColored "Downloading alz-terraform-accelerator Terraform module to $alzEnvironmentDestination" -ForegroundColor Green -InformationAction Continue
@@ -36,7 +34,7 @@ function New-ALZEnvironmentTerraform {
         }
 
         # Downloading the latest or specified version of the alz-terraform-accelerator module
-        $releaseTag = Get-ALZGithubRelease -directoryForReleases $alzEnvironmentDestination -githubRepoUrl $terraformModuleUrl -release $alzVersion
+        $releaseTag = Get-ALZGithubRelease -directoryForReleases $alzEnvironmentDestination -iac "terraform" -release $alzVersion
         $releasePath = Join-Path -Path $alzEnvironmentDestination -ChildPath $releaseTag
 
         # Getting the configuration for the initial bootstrap user input and validators

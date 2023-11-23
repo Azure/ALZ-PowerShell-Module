@@ -81,13 +81,13 @@ This currently tests for:
 #### Azure Landing Zone Environment with Bicep and GitHub Actions Workflows
 
 ```powershell
-New-ALZEnvironment -o <output_directory> -IaC "bicep" -cicd "github
+New-ALZEnvironment -o <output_directory> -i "bicep" -c "github"
 ```
 
 #### Azure Landing Zone Environment with Bicep and Azure DevOps Pipelines
 
 ```powershell
-New-ALZEnvironment -o <output_directory> -IaC "bicep" -cicd "azuredevops"
+New-ALZEnvironment -o <output_directory> -i "bicep" -c "azuredevops"
 ```
 
 > **Note**
@@ -96,13 +96,13 @@ New-ALZEnvironment -o <output_directory> -IaC "bicep" -cicd "azuredevops"
 #### Azure Landing Zone Environment with Terraform and GitHub Pipelines
 
 ```powershell
-New-ALZEnvironment -o <output_directory> -IaC "terraform" -cicd "github"
+New-ALZEnvironment -o <output_directory> -i "terraform" -c "github"
 ```
 
 #### Azure Landing Zone Environment with Terraform and Azure DevOps Pipelines
 
 ```powershell
-New-ALZEnvironment -o <output_directory> -IaC "terraform" -cicd "azuredevops"
+New-ALZEnvironment -o <output_directory> -i "terraform" -c "azuredevops"
 ```
 
 ## Additional Cmdlets
