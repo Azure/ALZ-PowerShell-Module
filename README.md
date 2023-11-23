@@ -112,7 +112,7 @@ New-ALZEnvironment -o <output_directory> -i "terraform" -c "azuredevops"
 #### Downloads and pulls down the specified release version from the remote GitHub repository to a local directory
 
 ```powershell
-Get-ALZGithubRelease -i "bicep" -releases "v0.14.0" -o "C:\Repos\ALZ\accelerator"
+Get-ALZGithubRelease -i "bicep" -v "v0.14.0" -o "C:\Repos\ALZ\accelerator"
 ```
 
 ## Development
