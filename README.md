@@ -81,13 +81,13 @@ This currently tests for:
 #### Azure Landing Zone Environment with Bicep and GitHub Actions Workflows
 
 ```powershell
-New-ALZEnvironment -o <output_directory> -IaC "bicep" -cicd "github
+New-ALZEnvironment -o <output_directory> -i "bicep" -c "github"
 ```
 
 #### Azure Landing Zone Environment with Bicep and Azure DevOps Pipelines
 
 ```powershell
-New-ALZEnvironment -o <output_directory> -IaC "bicep" -cicd "azuredevops"
+New-ALZEnvironment -o <output_directory> -i "bicep" -c "azuredevops"
 ```
 
 > **Note**
@@ -96,13 +96,13 @@ New-ALZEnvironment -o <output_directory> -IaC "bicep" -cicd "azuredevops"
 #### Azure Landing Zone Environment with Terraform and GitHub Pipelines
 
 ```powershell
-New-ALZEnvironment -o <output_directory> -IaC "terraform" -cicd "github"
+New-ALZEnvironment -o <output_directory> -i "terraform" -c "github"
 ```
 
 #### Azure Landing Zone Environment with Terraform and Azure DevOps Pipelines
 
 ```powershell
-New-ALZEnvironment -o <output_directory> -IaC "terraform" -cicd "azuredevops"
+New-ALZEnvironment -o <output_directory> -i "terraform" -c "azuredevops"
 ```
 
 ## Additional Cmdlets
@@ -112,7 +112,7 @@ New-ALZEnvironment -o <output_directory> -IaC "terraform" -cicd "azuredevops"
 #### Downloads and pulls down the specified release version from the remote GitHub repository to a local directory
 
 ```powershell
-Get-ALZGithubRelease -githubRepoUrl "https://github.com/Azure/ALZ-Bicep" -releases "v0.14.0" -directoryForReleases "C:\Repos\ALZ\accelerator\upstream-releases\"
+Get-ALZGithubRelease -i "bicep" -v "v0.14.0" -o "C:\Repos\ALZ\accelerator"
 ```
 
 ## Development
