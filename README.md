@@ -20,8 +20,15 @@ The goal of this project it is to make easy to get started with Azure Landing Zo
 
 ### Prerequisites
 
-In order to use this module you will need PowerShell 7.1 or higher.
+In order to use this module you will need PowerShell 7.1 or higher.  
+Download and install the latest version from the official PowerShell GitHub releases page: [PowerShell Releases](https://github.com/PowerShell/PowerShell/releases)
 
+To make PowerShell 7 your default instead of version 5, consider setting an alias.
+   Open a PowerShell session and run the following command:
+   ```powershell
+   $PSVersionTable.PSVersion
+   Set-Alias powershell pwsh
+  ```
 ### Installation
 
 You can install this module using PowerShellGet.
