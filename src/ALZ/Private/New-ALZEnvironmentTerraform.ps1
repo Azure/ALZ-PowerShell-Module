@@ -24,6 +24,9 @@ function New-ALZEnvironmentTerraform {
     )
 
     if ($PSCmdlet.ShouldProcess("ALZ-Terraform module configuration", "modify")) {
+        Write-InformationColored "Checking you have the latest version of Terraform installed..." -ForegroundColor Green -InformationAction Continue
+        $toolsPath = Join-Path -Path $alzEnvironmentDestination -ChildPath ".tools"
+        Get-TerraformTool -version "latest" -toolsPath $toolsPath
 
         Write-InformationColored "Downloading alz-terraform-accelerator Terraform module to $alzEnvironmentDestination" -ForegroundColor Green -InformationAction Continue
 

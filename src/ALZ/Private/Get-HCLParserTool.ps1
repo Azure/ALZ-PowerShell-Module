@@ -9,47 +9,11 @@ function Get-HCLParserTool {
     )
 
     if ($PSCmdlet.ShouldProcess("Download Terraform Tools", "modify")) {
-        $os = ""
-        if ($IsWindows) {
-            $os = "windows"
-        }
-        if($IsLinux) {
-            $os = "linux"
-        }
-        if($IsMacOS) {
-            $os = "darwin"
-        }
+        $osArchitecture = Get-OSArchitecture
 
-        # Enum values can be seen here: https://learn.microsoft.com/en-us/dotnet/api/system.runtime.interopservices.architecture?view=net-7.0#fields
-        $architecture = ([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture).ToString().ToLower()
+        $toolFileName = "hcl2json_$($osArchitecture.osAndArchitecture)"
 
-        if($architecture -eq "x64") {
-            $architecture = "amd64"
-        }
-        if($architecture -eq "x86") {
-            $architecture = "386"
-        }
-
-        $osAndArchitecture = "$($os)_$($architecture)"
-
-        $supportedOsAndArchitectures = @(
-            "darwin_amd64",
-            "darwin_arm64",
-            "linux_386",
-            "linux_amd64",
-            "linux_arm64",
-            "windows_386",
-            "windows_amd64"
-        )
-
-        if($supportedOsAndArchitectures -notcontains $osAndArchitecture) {
-            Write-Error "Unsupported OS and architecture combination: $osAndArchitecture"
-            exit 1
-        }
-
-        $toolFileName = "hcl2json_$osAndArchitecture"
-
-        if($os -eq "windows") {
+        if($osArchitecture.os -eq "windows") {
             $toolFileName = "$($toolFileName).exe"
         }
 
@@ -59,7 +23,7 @@ function Get-HCLParserTool {
             Invoke-WebRequest -Uri "https://github.com/tmccombs/hcl2json/releases/download/$($toolVersion)/$($toolFileName)" -OutFile "$toolFilePath" | Out-String | Write-Verbose
         }
 
-        if($os -ne "windows") {
+        if($osArchitecture.os -ne "windows") {
             $isExecutable = $(test -x $toolFilePath; 0 -eq $LASTEXITCODE)
             if(!($isExecutable)) {
                 chmod +x $toolFilePath
