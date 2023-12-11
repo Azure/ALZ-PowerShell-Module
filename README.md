@@ -20,7 +20,7 @@ The goal of this project it is to make easy to get started with Azure Landing Zo
 
 ### Prerequisites
 
-In order to use this module you will need PowerShell 7.1 or higher.  
+In order to use this module you will need PowerShell 7.1 or higher.
 Download and install the latest version from the official PowerShell GitHub releases page: [PowerShell Releases](https://github.com/PowerShell/PowerShell/releases)
 
 To make PowerShell 7 your default instead of version 5, consider setting an alias.
@@ -81,9 +81,9 @@ Test-ALZRequirement -IaC "terraform"
 This currently tests for:
 
 * Supported minimum PowerShell version (7.1)
-* Git
 * Azure CLI
-* Terraform CLI
+
+> NOTE: Terraform CLI is downloaded as part of the module if you don't already have the latest version.
 
 #### Azure Landing Zone Environment with Bicep and GitHub Actions Workflows
 

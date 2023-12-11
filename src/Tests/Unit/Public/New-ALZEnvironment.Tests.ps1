@@ -87,6 +87,8 @@ InModuleScope 'ALZ' {
 
                 Mock -CommandName Get-HCLParserTool -MockWith { "test" }
 
+                Mock -CommandName Get-TerraformTool -MockWith { }
+
                 Mock -CommandName Convert-HCLVariablesToUserInputConfig -MockWith {
                     @(
                         @{
