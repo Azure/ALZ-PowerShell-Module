@@ -20,7 +20,10 @@ function New-ALZEnvironmentTerraform {
         [string] $userInputOverridePath = "",
 
         [Parameter(Mandatory = $false)]
-        [switch] $autoApprove
+        [switch] $autoApprove,
+
+        [Parameter(Mandatory = $false)]
+        [switch] $destroy
     )
 
     if ($PSCmdlet.ShouldProcess("ALZ-Terraform module configuration", "modify")) {
@@ -41,11 +44,14 @@ function New-ALZEnvironmentTerraform {
         $starterCacheFileNamePattern = "cache-starter-*.json"
 
         # Downloading the latest or specified version of the alz-terraform-accelerator module
+        if(!($alzVersion.StartsWith("v"))) {
+            $alzVersion = "v$alzVersion"
+        }
         $releaseTag = Get-ALZGithubRelease -directoryForReleases $alzEnvironmentDestination -iac "terraform" -release $alzVersion
         $releasePath = Join-Path -Path $alzEnvironmentDestination -ChildPath $releaseTag
 
         # Run upgrade
-        Invoke-Upgrade -alzEnvironmentDestination $alzEnvironmentDestination -bootstrapCacheFileName $bootstrapCacheFileName -starterCacheFileNamePattern $starterCacheFileNamePattern -stateFilePathAndFileName "bootstrap/$alzCicdPlatform/terraform.tfstate" -currentVersion $releaseTag
+        Invoke-Upgrade -alzEnvironmentDestination $alzEnvironmentDestination -bootstrapCacheFileName $bootstrapCacheFileName -starterCacheFileNamePattern $starterCacheFileNamePattern -stateFilePathAndFileName "bootstrap/$alzCicdPlatform/terraform.tfstate" -currentVersion $releaseTag -autoApprove:$autoApprove.IsPresent
 
         # Getting the configuration for the initial bootstrap user input and validators
         $bootstrapConfigFilePath = Join-Path -Path $releasePath -ChildPath "bootstrap/.config/ALZ-Powershell.config.json"
@@ -99,10 +105,10 @@ function New-ALZEnvironmentTerraform {
         Write-InformationColored "Thank you for providing those inputs, we are now initializing and applying Terraform to bootstrap your environment..." -ForegroundColor Green -InformationAction Continue
 
         if($autoApprove) {
-            Invoke-Terraform -moduleFolderPath $bootstrapPath -tfvarsFileName "override.tfvars" -autoApprove
+            Invoke-Terraform -moduleFolderPath $bootstrapPath -tfvarsFileName "override.tfvars" -autoApprove -destroy:$destroy.IsPresent
         } else {
             Write-InformationColored "Once the plan is complete you will be prompted to confirm the apply. You must enter 'yes' to apply." -ForegroundColor Green -InformationAction Continue
-            Invoke-Terraform -moduleFolderPath $bootstrapPath -tfvarsFileName "override.tfvars"
+            Invoke-Terraform -moduleFolderPath $bootstrapPath -tfvarsFileName "override.tfvars" -destroy:$destroy.IsPresent
         }
     }
 }

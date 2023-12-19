@@ -10,7 +10,9 @@ function Request-ALZEnvironmentConfig {
         [Parameter(Mandatory = $false)]
         [PSCustomObject] $userInputDefaultOverrides = $null,
         [Parameter(Mandatory = $false)]
-        [System.Boolean] $treatEmptyDefaultAsValid = $false
+        [System.Boolean] $treatEmptyDefaultAsValid = $false,
+        [Parameter(Mandatory = $false)]
+        [switch] $autoApprove
     )
     <#
     .SYNOPSIS
@@ -29,7 +31,12 @@ function Request-ALZEnvironmentConfig {
     if($userInputDefaultOverrides -ne $null) {
         $hasDefaultOverrides = $true
         Write-InformationColored "We found you have cached values from a previous run." -ForegroundColor Yellow -InformationAction Continue
-        $useDefaults = Read-Host "Would you like to use these values or see each of them to validate and change them? Enter 'use' to use the cached value or just hit 'enter' to see and validate each value. (use/see)"
+        $useDefaults = ""
+        if($autoApprove) {
+            $useDefaults = "use"
+        } else {
+            $useDefaults = Read-Host "Would you like to use these values or see each of them to validate and change them? Enter 'use' to use the cached value or just hit 'enter' to see and validate each value. (use/see)"
+        }
         if($useDefaults.ToLower() -eq "use") {
             $userInputOverrides = $userInputDefaultOverrides
         }

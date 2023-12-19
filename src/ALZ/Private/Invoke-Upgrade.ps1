@@ -14,7 +14,10 @@ function Invoke-Upgrade {
         [string] $stateFilePathAndFileName,
 
         [Parameter(Mandatory = $false)]
-        [string] $currentVersion
+        [string] $currentVersion,
+
+        [Parameter(Mandatory = $false)]
+        [switch] $autoApprove
     )
 
     if ($PSCmdlet.ShouldProcess("Upgrade Release", "Operation")) {
@@ -59,7 +62,12 @@ function Invoke-Upgrade {
 
         if($foundPreviousRelease) {
             Write-InformationColored "AUTOMATIC UPGRADE: We found version $previousVersion that has been previously run. You can upgrade from this version to the new version $currentVersion" -ForegroundColor Yellow -InformationAction Continue
-            $upgrade = Read-Host "If you would like to upgrade, enter 'upgrade' or just hit 'enter' to continue with a new environment. (upgrade/exit)"
+            $upgrade = ""
+            if($autoApprove) {
+                $upgrade = "upgrade"
+            } else {
+                $upgrade = Read-Host "If you would like to upgrade, enter 'upgrade' or just hit 'enter' to continue with a new environment. (upgrade/exit)"
+            }
 
             if($upgrade.ToLower() -eq "upgrade") {
                 $currentPath = Join-Path -Path $alzEnvironmentDestination -ChildPath $currentVersion
@@ -81,7 +89,6 @@ function Invoke-Upgrade {
                 Copy-Item -Path $previousStateFilePath -Destination $currentStateFilePath -Force | Out-String | Write-Verbose
 
                 Write-InformationColored "AUTOMATIC UPGRADE: Upgrade complete. If any files in the starter have been updated, you will need to remove branch protection in order for the Terraform apply to succeed..." -ForegroundColor Yellow -InformationAction Continue
-                Read-Host "Press any key to continue to acknowlege the requirement to remove branch protection..."
             }
         }
     }

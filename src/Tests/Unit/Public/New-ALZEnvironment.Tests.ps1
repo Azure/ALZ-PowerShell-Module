@@ -123,7 +123,7 @@ InModuleScope 'ALZ' {
             }
 
             It 'should clone the git repo and apply if terraform is selected' {
-                New-ALZEnvironment -IaC "terraform" -
+                New-ALZEnvironment -IaC "terraform"
                 Assert-MockCalled -CommandName Get-ALZGithubRelease -Exactly 1
                 Assert-MockCalled -CommandName Invoke-Terraform -Exactly 1
             }
