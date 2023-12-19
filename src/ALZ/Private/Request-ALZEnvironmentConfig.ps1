@@ -8,6 +8,8 @@ function Request-ALZEnvironmentConfig {
         [Parameter(Mandatory = $false)]
         [PSCustomObject] $userInputOverrides = $null,
         [Parameter(Mandatory = $false)]
+        [PSCustomObject] $userInputDefaultOverrides = $null,
+        [Parameter(Mandatory = $false)]
         [System.Boolean] $treatEmptyDefaultAsValid = $false
     )
     <#
@@ -23,6 +25,16 @@ function Request-ALZEnvironmentConfig {
 
     $configurations = $configurationParameters.PsObject.Properties
 
+    $hasDefaultOverrides = $false
+    if($userInputDefaultOverrides -ne $null) {
+        $hasDefaultOverrides = $true
+        Write-InformationColored "We found you have cached values from a previous run." -ForegroundColor Yellow -InformationAction Continue
+        $useDefaults = Read-Host "Would you like to use these values or see each of them to validate and change them? Enter 'use' to use the cached value or just hit 'enter' to see and validate each value. (use/see)"
+        if($useDefaults.ToLower() -eq "use") {
+            $userInputOverrides = $userInputDefaultOverrides
+        }
+    }
+
     $hasInputOverrides = $false
     if($userInputOverrides -ne $null) {
         $hasInputOverrides = $true
@@ -34,6 +46,20 @@ function Request-ALZEnvironmentConfig {
 
     foreach ($configurationValue in $configurations) {
         if ($configurationValue.Value.Type -eq "UserInput") {
+
+            # Check for and add cached as default
+            if($hasDefaultOverrides) {
+                $defaultOverride = $userInputDefaultOverrides.PsObject.Properties | Where-Object { $_.Name -eq $configurationValue.Name }
+                if($null -ne $defaultOverride) {
+                    if(!($configurationValue.Value.PSObject.Properties.Name -match "DefaultValue")) {
+                        $configurationValue.Value | Add-Member -NotePropertyName "DefaultValue" -NotePropertyValue $defaultOverride.Value
+                    } else {
+                        $configurationValue.Value.DefaultValue = $defaultOverride.Value
+                    }
+                }
+            }
+
+            # Check for and use override
             if($hasInputOverrides) {
                 $userInputOverride = $userInputOverrides.PsObject.Properties | Where-Object { $_.Name -eq $configurationValue.Name }
                 if($null -ne $userInputOverride) {

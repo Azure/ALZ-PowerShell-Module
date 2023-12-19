@@ -108,10 +108,13 @@ InModuleScope 'ALZ' {
 
                 Mock -CommandName Write-TfvarsFile -MockWith { }
 
+                Mock -CommandName Write-ConfigurationCache -MockWith { }
+
                 Mock -CommandName Invoke-Terraform -MockWith { }
 
                 Mock -CommandName Import-SubscriptionData -MockWith { }
 
+                Mock -CommandName Invoke-Upgrade -MockWith { }
             }
 
             It 'should return the output directory on completion' {
