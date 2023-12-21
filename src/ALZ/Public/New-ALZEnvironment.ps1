@@ -16,6 +16,8 @@ function New-ALZEnvironment {
     A json file containing user input overrides for the user input prompts. This will cause the tool to by pass requesting user input for that field and use the value(s) provided. E.g { "starter_module": "basic", "azure_location": "uksouth" }
     .PARAMETER autoApprove
     Automatically approve the terraform apply.
+    .PARAMETER destroy
+    Destroy the terraform environment.
     .EXAMPLE
     New-ALZEnvironment
     .EXAMPLE
@@ -56,7 +58,10 @@ function New-ALZEnvironment {
         [string] $userInputOverridePath = "",
 
         [Parameter(Mandatory = $false)]
-        [switch] $autoApprove
+        [switch] $autoApprove,
+
+        [Parameter(Mandatory = $false)]
+        [switch] $destroy
     )
 
     Write-InformationColored "Getting ready to create a new ALZ environment with you..." -ForegroundColor Green -InformationAction Continue
@@ -67,11 +72,7 @@ function New-ALZEnvironment {
         }
 
         if($alzIacProvider -eq "terraform") {
-            if($autoApprove) {
-                New-ALZEnvironmentTerraform -alzEnvironmentDestination $alzEnvironmentDestination -alzVersion $alzVersion -alzCicdPlatform $alzCicdPlatform -userInputOverridePath $userInputOverridePath -autoApprove
-            } else {
-                New-ALZEnvironmentTerraform -alzEnvironmentDestination $alzEnvironmentDestination -alzVersion $alzVersion -alzCicdPlatform $alzCicdPlatform -userInputOverridePath $userInputOverridePath
-            }
+            New-ALZEnvironmentTerraform -alzEnvironmentDestination $alzEnvironmentDestination -alzVersion $alzVersion -alzCicdPlatform $alzCicdPlatform -userInputOverridePath $userInputOverridePath -autoApprove:$autoApprove.IsPresent -destroy:$destroy.IsPresent
         }
     }
 

@@ -108,10 +108,13 @@ InModuleScope 'ALZ' {
 
                 Mock -CommandName Write-TfvarsFile -MockWith { }
 
+                Mock -CommandName Write-ConfigurationCache -MockWith { }
+
                 Mock -CommandName Invoke-Terraform -MockWith { }
 
                 Mock -CommandName Import-SubscriptionData -MockWith { }
 
+                Mock -CommandName Invoke-Upgrade -MockWith { }
             }
 
             It 'should return the output directory on completion' {
@@ -120,7 +123,7 @@ InModuleScope 'ALZ' {
             }
 
             It 'should clone the git repo and apply if terraform is selected' {
-                New-ALZEnvironment -IaC "terraform" -
+                New-ALZEnvironment -IaC "terraform"
                 Assert-MockCalled -CommandName Get-ALZGithubRelease -Exactly 1
                 Assert-MockCalled -CommandName Invoke-Terraform -Exactly 1
             }
