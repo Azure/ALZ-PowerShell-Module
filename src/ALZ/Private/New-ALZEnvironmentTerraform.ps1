@@ -44,7 +44,7 @@ function New-ALZEnvironmentTerraform {
         $starterCacheFileNamePattern = "cache-starter-*.json"
 
         # Downloading the latest or specified version of the alz-terraform-accelerator module
-        if(!($alzVersion.StartsWith("v"))) {
+        if(!($alzVersion.StartsWith("v")) -and ($alzVersion -ne "latest")) {
             $alzVersion = "v$alzVersion"
         }
         $releaseTag = Get-ALZGithubRelease -directoryForReleases $alzEnvironmentDestination -iac "terraform" -release $alzVersion
