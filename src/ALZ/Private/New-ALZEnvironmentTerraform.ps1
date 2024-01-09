@@ -11,7 +11,6 @@ function New-ALZEnvironmentTerraform {
         [string] $alzVersion,
 
         [Parameter(Mandatory = $false)]
-        [ValidateSet("github", "azuredevops")]
         [Alias("Cicd")]
         [string] $alzCicdPlatform,
 
