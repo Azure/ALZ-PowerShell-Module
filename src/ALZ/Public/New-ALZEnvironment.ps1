@@ -48,7 +48,6 @@ function New-ALZEnvironment {
         [string] $alzIacProvider = "bicep",
 
         [Parameter(Mandatory = $false)]
-        [ValidateSet("github", "azuredevops")]
         [Alias("Cicd")]
         [Alias("c")]
         [string] $alzCicdPlatform = "github",
