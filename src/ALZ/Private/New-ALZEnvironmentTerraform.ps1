@@ -69,7 +69,7 @@ function New-ALZEnvironmentTerraform {
         $cachedBootstrapConfig = Get-ALZConfig -configFilePath $bootstrapCachedValuesPath
 
         # Getting the user input for the bootstrap module
-        $bootstrapConfiguration = Request-ALZEnvironmentConfig -configurationParameters $bootstrapParameters -respectOrdering -userInputOverrides $userInputOverrides -userInputDefaultOverrides $cachedBootstrapConfig -treatEmptyDefaultAsValid $true
+        $bootstrapConfiguration = Request-ALZEnvironmentConfig -configurationParameters $bootstrapParameters -respectOrdering -userInputOverrides $userInputOverrides -userInputDefaultOverrides $cachedBootstrapConfig -treatEmptyDefaultAsValid $true -autoApprove:$autoApprove.IsPresent
 
         # Getting the configuration for the starter module user input
         $starterTemplate = $bootstrapConfiguration.PsObject.Properties["starter_module"].Value.Value
@@ -85,7 +85,7 @@ function New-ALZEnvironmentTerraform {
         $cachedStarterModuleConfig = Get-ALZConfig -configFilePath $starterModuleCachedValuesPath
 
         # Getting the user input for the starter module
-        $starterModuleConfiguration = Request-ALZEnvironmentConfig -configurationParameters $starterModuleParameters -respectOrdering -userInputOverrides $userInputOverrides -userInputDefaultOverrides $cachedStarterModuleConfig -treatEmptyDefaultAsValid $true
+        $starterModuleConfiguration = Request-ALZEnvironmentConfig -configurationParameters $starterModuleParameters -respectOrdering -userInputOverrides $userInputOverrides -userInputDefaultOverrides $cachedStarterModuleConfig -treatEmptyDefaultAsValid $true -autoApprove:$autoApprove.IsPresent
 
         # Getting subscription ids
         Import-SubscriptionData -starterModuleConfiguration $starterModuleConfiguration -bootstrapConfiguration $bootstrapConfiguration
