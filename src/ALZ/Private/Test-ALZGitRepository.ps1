@@ -14,13 +14,12 @@ function Test-ALZGitRepository {
     }
     $gitInit = Read-Host "Initialize the directory $alzEnvironmentDestination as a git repository? (y/n)"
     if ($gitInit -ieq "y" -and $PSCmdlet.ShouldProcess("gitrepository", "initialize")) {
-        if ((git config --get init.defaultbranch) -eq "master") {
-            git init -b main $alzEnvironmentDestination
-            return $true
-        } else {
-            git init $alzEnvironmentDestination
-            return $true
+        $gitBranch = Read-Host "Enter the default branch name. (Hit enter to skip and use 'main')"
+        if($gitBranch -eq "") {
+          $gitBranch = "main"
         }
+        git init -b $gitBranch $alzEnvironmentDestination
+        return $true
     }
     return $false
 }
