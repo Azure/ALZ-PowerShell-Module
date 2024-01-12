@@ -16,8 +16,6 @@ function New-ALZEnvironmentBicep {
         [string] $alzCicdPlatform
     )
 
-    $bicepModuleUrl = "https://github.com/Azure/ALZ-Bicep"
-
     if ($PSCmdlet.ShouldProcess("ALZ-Bicep module configuration", "modify")) {
 
         if($alzVersion -ne "latest" -and $alzVersion -notlike "*-preview") {
@@ -34,7 +32,7 @@ function New-ALZEnvironmentBicep {
         $alzEnvironmentDestinationInternalCode = Join-Path $alzEnvironmentDestination "upstream-releases"
 
         # Downloading the latest or specified version of the bicep accelerator module
-        $releaseTag = Get-ALZGithubRelease -directoryForReleases $alzEnvironmentDestinationInternalCode -githubRepoUrl $bicepModuleUrl -release $alzVersion
+        $releaseTag = Get-ALZGithubRelease -directoryForReleases $alzEnvironmentDestination -iac "bicep" -release $alzVersion
         $releasePath = Join-Path -Path $alzEnvironmentDestinationInternalCode -ChildPath $releaseTag
 
         # Getting the configuration
@@ -50,7 +48,7 @@ function New-ALZEnvironmentBicep {
 
         Set-ComputedConfiguration -configuration $configuration | Out-String | Write-Verbose
         Edit-ALZConfigurationFilesInPlace -alzEnvironmentDestination $alzEnvironmentDestination -configuration $configuration | Out-String | Write-Verbose
-        Build-ALZDeploymentEnvFile -configuration $configuration -Destination $alzEnvironmentDestination | Out-String | Write-Verbose
+        Build-ALZDeploymentEnvFile -configuration $configuration -Destination $alzEnvironmentDestination -version $releaseTag | Out-String | Write-Verbose
 
         $isGitRepo = Test-ALZGitRepository -alzEnvironmentDestination $alzEnvironmentDestination
         if (-not $isGitRepo) {

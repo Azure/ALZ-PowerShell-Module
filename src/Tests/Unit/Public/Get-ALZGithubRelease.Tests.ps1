@@ -100,13 +100,13 @@ InModuleScope 'ALZ' {
             }
 
             It 'Should get the correct releases' {
-                Get-ALZGithubRelease -githubRepoUrl "http://github.com/test/repo" -directoryAndFilesToKeep @('repo-1.0.0') -directoryForReleases "output"
+                Get-ALZGithubRelease -iac "bicep" -githubRepoUrl "http://github.com/test/repo" -directoryAndFilesToKeep @('repo-1.0.0') -directoryForReleases "output"
                 Should -Invoke Expand-Archive
                 Should -Not -Invoke Write-Warning
             }
 
             It 'Should throw an exception when you ask for a release that does not exist' {
-                { Get-ALZGithubRelease -githubRepoUrl "http://github.com/test/repo" -release 'v2.0.0' -directoryAndFilesToKeep @('repo-1.0.0') -directoryForReleases "output" } | Should -Throw
+                { Get-ALZGithubRelease -iac "bicep" -githubRepoUrl "http://github.com/test/repo" -release 'v2.0.0' -directoryAndFilesToKeep @('repo-1.0.0') -directoryForReleases "output" } | Should -Throw
                 Should -Invoke Write-Error
             }
         }

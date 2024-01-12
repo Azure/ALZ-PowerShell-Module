@@ -7,6 +7,10 @@ function Get-ALZConfig {
         [string] $configFilePath = ""
     )
 
+    if(!(Test-Path $configFilePath)) {
+        return $null
+    }
+
     # Import the config and transform it to a PowerShell object
     $extension = (Get-Item -Path $configFilePath).Extension.ToLower()
     if($extension -eq ".yml" -or $extension -eq ".yaml") {

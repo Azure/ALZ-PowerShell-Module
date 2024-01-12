@@ -21,7 +21,14 @@ The goal of this project it is to make easy to get started with Azure Landing Zo
 ### Prerequisites
 
 In order to use this module you will need PowerShell 7.1 or higher.
+Download and install the latest version from the official PowerShell GitHub releases page: [PowerShell Releases](https://github.com/PowerShell/PowerShell/releases)
 
+To make PowerShell 7 your default instead of version 5, consider setting an alias.
+   Open a PowerShell session and run the following command:
+   ```powershell
+   $PSVersionTable.PSVersion
+   Set-Alias powershell pwsh
+  ```
 ### Installation
 
 You can install this module using PowerShellGet.
@@ -74,20 +81,20 @@ Test-ALZRequirement -IaC "terraform"
 This currently tests for:
 
 * Supported minimum PowerShell version (7.1)
-* Git
 * Azure CLI
-* Terraform CLI
+
+> NOTE: Terraform CLI is downloaded as part of the module if you don't already have the latest version.
 
 #### Azure Landing Zone Environment with Bicep and GitHub Actions Workflows
 
 ```powershell
-New-ALZEnvironment -o <output_directory> -IaC "bicep" -cicd "github
+New-ALZEnvironment -o <output_directory> -i "bicep" -c "github"
 ```
 
 #### Azure Landing Zone Environment with Bicep and Azure DevOps Pipelines
 
 ```powershell
-New-ALZEnvironment -o <output_directory> -IaC "bicep" -cicd "azuredevops"
+New-ALZEnvironment -o <output_directory> -i "bicep" -c "azuredevops"
 ```
 
 > **Note**
@@ -96,13 +103,13 @@ New-ALZEnvironment -o <output_directory> -IaC "bicep" -cicd "azuredevops"
 #### Azure Landing Zone Environment with Terraform and GitHub Pipelines
 
 ```powershell
-New-ALZEnvironment -o <output_directory> -IaC "terraform" -cicd "github"
+New-ALZEnvironment -o <output_directory> -i "terraform" -c "github"
 ```
 
 #### Azure Landing Zone Environment with Terraform and Azure DevOps Pipelines
 
 ```powershell
-New-ALZEnvironment -o <output_directory> -IaC "terraform" -cicd "azuredevops"
+New-ALZEnvironment -o <output_directory> -i "terraform" -c "azuredevops"
 ```
 
 ## Additional Cmdlets
@@ -112,7 +119,7 @@ New-ALZEnvironment -o <output_directory> -IaC "terraform" -cicd "azuredevops"
 #### Downloads and pulls down the specified release version from the remote GitHub repository to a local directory
 
 ```powershell
-Get-ALZGithubRelease -githubRepoUrl "https://github.com/Azure/ALZ-Bicep" -releases "v0.14.0" -directoryForReleases "C:\Repos\ALZ\accelerator\upstream-releases\"
+Get-ALZGithubRelease -i "bicep" -v "v0.14.0" -o "C:\Repos\ALZ\accelerator"
 ```
 
 ## Development

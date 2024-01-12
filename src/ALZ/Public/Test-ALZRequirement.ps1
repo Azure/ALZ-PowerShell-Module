@@ -39,26 +39,7 @@ function Test-ALZRequirement {
         Write-Verbose "PowerShell version $psMajorVersion.$psMinorVersion is supported."
     }
 
-    # Check if Git is installed
-    $gitPath = Get-Command git -ErrorAction SilentlyContinue
-    if ($gitPath) {
-        Write-Verbose "Git is installed."
-    } else {
-        Write-Error "Git is not installed. Please install Git."
-        $result = $false
-    }
-
-
-
     if ($alzIacProvider -eq "terraform") {
-        # Check if Terraform is installed
-        $terraformPath = Get-Command terraform -ErrorAction SilentlyContinue
-        if ($terraformPath) {
-            Write-Verbose "Terraform is installed."
-        } else {
-            Write-Error "Terraform is not installed. Please install Terraform."
-            $result = $false
-        }
         # Check if Azure CLI is installed
         $azCliPath = Get-Command az -ErrorAction SilentlyContinue
         if ($azCliPath) {
@@ -70,6 +51,15 @@ function Test-ALZRequirement {
     }
 
     if ($alzIacProvider -eq "bicep") {
+        # Check if Git is installed
+        $gitPath = Get-Command git -ErrorAction SilentlyContinue
+        if ($gitPath) {
+            Write-Verbose "Git is installed."
+        } else {
+            Write-Error "Git is not installed. Please install Git."
+            $result = $false
+        }
+
         # Check if VS Code is installed
         $vsCodePath = Get-Command code -ErrorAction SilentlyContinue
         if ($vsCodePath) {
