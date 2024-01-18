@@ -58,7 +58,12 @@ function Request-ConfigurationValue {
 
         $hasNotSpecifiedValue = ($null -eq $configValue.Value -or "" -eq $configValue.Value) -and ($configValue.Value -ne $configValue.DefaultValue)
         $isDisallowedValue = $hasAllowedValues -and $allowedValues.Contains($configValue.Value) -eq $false
-        $skipValidationForEmptyDefault = $treatEmptyDefaultAsValid -and $hasDefaultValue -and $defaultValue -eq "" -and $configValue.Value -eq ""
+        $skipValidationForEmptyDefault = $treatEmptyDefaultAsValid -and $hasDefaultValue -and (($defaultValue -eq "" -and $configValue.Value -eq "") -or ($configValue.Value -eq "-"))
+
+        # Reset the value to empty if we have a default and the user entered a dash (this is to handle cached situations and provide a method to clear a value)
+        if($skipValidationForEmptyDefault -and $configValue.Value -eq "-") {
+            $configValue.Value = ""
+        }
 
         if($skipValidationForEmptyDefault) {
             $isNotValid = $false
