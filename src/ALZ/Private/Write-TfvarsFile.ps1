@@ -16,6 +16,11 @@ function Write-TfvarsFile {
 
         foreach($configurationProperty in $configuration.PSObject.Properties) {
             $configurationValueRaw = $configurationProperty.Value.Value
+
+            if($configurationProperty.Value.Validator -eq "configuration_file_path") {
+                $configurationValueRaw = [System.IO.Path]::GetFileName($configurationValueRaw)
+            }
+
             $configurationValue = "`"$($configurationValueRaw)`""
 
             if($configurationProperty.Value.DataType -eq "list(string)") {
@@ -30,6 +35,8 @@ function Write-TfvarsFile {
 
             if($configurationProperty.Value.DataType -eq "number" -or $configurationProperty.Value.DataType -eq "bool") {
                 $configurationValue = $configurationValueRaw
+            } else {
+                $configurationValue = $configurationValue.Replace("\", "\\")
             }
 
             Add-Content -Path $tfvarsFilePath -Value "$($configurationProperty.Name) = $($configurationValue)"

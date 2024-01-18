@@ -16,6 +16,9 @@ function Write-ConfigurationCache {
 
         $cache = [PSCustomObject]@{}
         foreach ($configurationItem in $configuration.PSObject.Properties) {
+            if($configurationItem.Value.Type -eq "ComputedInput") {
+                continue
+            }
             $cache | Add-Member -NotePropertyName $configurationItem.Name -NotePropertyValue $configurationItem.Value.Value
         }
 
