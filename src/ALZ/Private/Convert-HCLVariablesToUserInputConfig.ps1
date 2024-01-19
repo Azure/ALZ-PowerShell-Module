@@ -54,8 +54,8 @@ function Convert-HCLVariablesToUserInputConfig {
             }
 
             $inputType = "UserInput"
-            if($hasValidation -and $validationType -eq "hidden_azure_subscription_ids") {
-                $inputType = "AzureSubscriptionIds"
+            if($hasValidation -and $validationType -like "hidden_*") {
+                $inputType = "ComputedInput"
             }
 
             $sensitive = $false
@@ -89,8 +89,6 @@ function Convert-HCLVariablesToUserInputConfig {
                 }
                 $starterModuleConfigurationInstance | Add-Member -NotePropertyName "DefaultValue" -NotePropertyValue $defaultValue
             }
-
-
 
             if($hasValidation) {
                 $validator = $validators.PSObject.Properties[$validationType].Value

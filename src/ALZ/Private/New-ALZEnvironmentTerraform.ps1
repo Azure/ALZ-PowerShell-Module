@@ -87,8 +87,9 @@ function New-ALZEnvironmentTerraform {
         # Getting the user input for the starter module
         $starterModuleConfiguration = Request-ALZEnvironmentConfig -configurationParameters $starterModuleParameters -respectOrdering -userInputOverrides $userInputOverrides -userInputDefaultOverrides $cachedStarterModuleConfig -treatEmptyDefaultAsValid $true -autoApprove:$autoApprove.IsPresent
 
-        # Getting subscription ids
+        # Getting computed inputs
         Import-SubscriptionData -starterModuleConfiguration $starterModuleConfiguration -bootstrapConfiguration $bootstrapConfiguration
+        Import-ConfigurationFileData -starterModuleConfiguration $starterModuleConfiguration -bootstrapConfiguration $bootstrapConfiguration
 
         # Creating the tfvars files for the bootstrap and starter module
         $bootstrapTfvarsPath = Join-Path -Path $bootstrapPath -ChildPath "override.tfvars"
