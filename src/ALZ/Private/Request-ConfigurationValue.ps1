@@ -37,6 +37,9 @@ function Request-ConfigurationValue {
         Write-InformationColored "$($configName) " -ForegroundColor Yellow -NoNewline -InformationAction Continue
         if ($hasDefaultValue) {
             $displayDefaultValue = $defaultValue -eq "" ? "''" : $defaultValue
+            if($configValue.Sensitive -and $defaultValue -ne "") {
+                $displayDefaultValue = "<sensitive>"
+            }
             Write-InformationColored "(default: ${displayDefaultValue}): " -ForegroundColor Yellow -NoNewline -InformationAction Continue
         } else {
             Write-InformationColored ": " -NoNewline -InformationAction Continue
