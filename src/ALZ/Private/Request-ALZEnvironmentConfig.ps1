@@ -27,24 +27,36 @@ function Request-ALZEnvironmentConfig {
 
     $configurations = $configurationParameters.PsObject.Properties
 
+    $hasInputOverrides = $false
+    if($userInputOverrides -ne $null) {
+        $hasInputOverrides = $true
+    }
+
     $hasDefaultOverrides = $false
     if($userInputDefaultOverrides -ne $null) {
         $hasDefaultOverrides = $true
-        Write-InformationColored "We found you have cached values from a previous run." -ForegroundColor Yellow -InformationAction Continue
         $useDefaults = ""
-        if($autoApprove) {
-            $useDefaults = "use"
+        if($hasInputOverrides) {
+            Write-InformationColored "We found you have cached values from a previous run, but have also supplied inputs." -ForegroundColor Yellow -InformationAction Continue
+            if($autoApprove) {
+                $useDefaults = "skip"
+            } else {
+                $useDefaults = Read-Host "Would you like to the cached values or use the inputs you have supplied intead? Enter 'use' to use the cached value or just hit 'enter' to use your inputs. (use/skip)"
+            }
+            if($useDefaults.ToLower() -eq "use") {
+                $userInputOverrides = $userInputDefaultOverrides
+            }
         } else {
-            $useDefaults = Read-Host "Would you like to use these values or see each of them to validate and change them? Enter 'use' to use the cached value or just hit 'enter' to see and validate each value. (use/see)"
+            Write-InformationColored "We found you have cached values from a previous run." -ForegroundColor Yellow -InformationAction Continue
+            if($autoApprove) {
+                $useDefaults = "use"
+            } else {
+                $useDefaults = Read-Host "Would you like to use these values or see each of them to validate and change them? Enter 'use' to use the cached value or just hit 'enter' to see and validate each value. (use/verify)"
+            }
         }
         if($useDefaults.ToLower() -eq "use") {
             $userInputOverrides = $userInputDefaultOverrides
         }
-    }
-
-    $hasInputOverrides = $false
-    if($userInputOverrides -ne $null) {
-        $hasInputOverrides = $true
     }
 
     if($respectOrdering) {
