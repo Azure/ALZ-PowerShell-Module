@@ -1,22 +1,20 @@
-function New-ALZEnvironmentTerraform {
+function New-Bootstrap {
     [CmdletBinding(SupportsShouldProcess = $true)]
     param (
         [Parameter(Mandatory = $false)]
-        [Alias("Output")]
-        [Alias("OutputDirectory")]
-        [Alias("O")]
-        [string] $alzEnvironmentDestination,
+        [string] $bootstrapName,
 
         [Parameter(Mandatory = $false)]
-        [string] $alzVersion,
-
-        [Parameter(Mandatory = $false)]
-        [Alias("Cicd")]
-        [string] $alzCicdPlatform,
-
-        [Parameter(Mandatory = $false)]
-        [Alias("inputs")]
         [string] $userInputOverridePath = "",
+
+        [Parameter(Mandatory = $false)]
+        [string] $bootstrapFolderPath,
+
+        [Parameter(Mandatory = $false)]
+        [string] $starterFolderPath,
+
+        [Parameter(Mandatory = $false)]
+        [string] $starterPipelineFolder,
 
         [Parameter(Mandatory = $false)]
         [switch] $autoApprove,
@@ -26,12 +24,6 @@ function New-ALZEnvironmentTerraform {
     )
 
     if ($PSCmdlet.ShouldProcess("ALZ-Terraform module configuration", "modify")) {
-        Write-InformationColored "Checking you have the latest version of Terraform installed..." -ForegroundColor Green -InformationAction Continue
-        $toolsPath = Join-Path -Path $alzEnvironmentDestination -ChildPath ".tools"
-        Get-TerraformTool -version "latest" -toolsPath $toolsPath
-
-        Write-InformationColored "Downloading alz-terraform-accelerator Terraform module to $alzEnvironmentDestination" -ForegroundColor Green -InformationAction Continue
-
         # Get User Input Overrides (used for automated testing purposes and advanced use cases)
         $userInputOverrides = $null
         if($userInputOverridePath -ne "") {
@@ -39,33 +31,26 @@ function New-ALZEnvironmentTerraform {
         }
 
         # Setup Cache Paths
-        $bootstrapCacheFileName = "cache-bootstrap-$alzCicdPlatform.json"
+        $bootstrapCacheFileName = "cache-bootstrap-$bootstrapName.json"
         $starterCacheFileNamePattern = "cache-starter-*.json"
-
-        # Downloading the latest or specified version of the alz-terraform-accelerator module
-        if(!($alzVersion.StartsWith("v")) -and ($alzVersion -ne "latest")) {
-            $alzVersion = "v$alzVersion"
-        }
-        $releaseTag = Get-ALZGithubRelease -directoryForReleases $alzEnvironmentDestination -iac "terraform" -release $alzVersion
-        $releasePath = Join-Path -Path $alzEnvironmentDestination -ChildPath $releaseTag
 
         # Run upgrade
         Invoke-Upgrade -alzEnvironmentDestination $alzEnvironmentDestination -bootstrapCacheFileName $bootstrapCacheFileName -starterCacheFileNamePattern $starterCacheFileNamePattern -stateFilePathAndFileName "bootstrap/$alzCicdPlatform/terraform.tfstate" -currentVersion $releaseTag -autoApprove:$autoApprove.IsPresent
 
         # Getting the configuration for the initial bootstrap user input and validators
-        $bootstrapConfigFilePath = Join-Path -Path $releasePath -ChildPath "bootstrap/.config/ALZ-Powershell.config.json"
+        $bootstrapConfigFilePath = Join-Path -Path $bootstrapFolderPath -ChildPath ".config/ALZ-Powershell.config.json"
         $bootstrapConfig = Get-ALZConfig -configFilePath $bootstrapConfigFilePath
 
         # Getting additional configuration for the bootstrap module user input
-        $bootstrapPath = Join-Path -Path $releasePath -ChildPath "bootstrap/$alzCicdPlatform"
+        $bootstrapPath = Join-Path -Path $bootstrapFolderPath -ChildPath $bootstrapName
         $bootstrapVariableFilesPath = Join-Path -Path $bootstrapPath -ChildPath "variables.tf"
-        $hclParserToolPath = Get-HCLParserTool -alzEnvironmentDestination $releasePath -toolVersion "v0.6.0"
+        $hclParserToolPath = Get-HCLParserTool -alzEnvironmentDestination $bootstrapPath -toolVersion "v0.6.0"
         $bootstrapParameters = Convert-HCLVariablesToUserInputConfig -targetVariableFile $bootstrapVariableFilesPath -hclParserToolPath $hclParserToolPath -validators $bootstrapConfig.validators
 
-        Write-InformationColored "Got configuration and downloaded alz-terraform-accelerator Terraform module version $releaseTag to $alzEnvironmentDestination" -ForegroundColor Green -InformationAction Continue
+        Write-InformationColored "Got configuration" -ForegroundColor Green -InformationAction Continue
 
-        #Checking for cached bootstrap values for retry / upgrade scenarios
-        $bootstrapCachedValuesPath = Join-Path -Path $releasePath -ChildPath $bootstrapCacheFileName
+        # Checking for cached bootstrap values for retry / upgrade scenarios
+        $bootstrapCachedValuesPath = Join-Path -Path $bootstrapPath -ChildPath $bootstrapCacheFileName
         $cachedBootstrapConfig = Get-ALZConfig -configFilePath $bootstrapCachedValuesPath
 
         # Getting the user input for the bootstrap module
@@ -73,7 +58,7 @@ function New-ALZEnvironmentTerraform {
 
         # Getting the configuration for the starter module user input
         $starterTemplate = $bootstrapConfiguration.PsObject.Properties["starter_module"].Value.Value
-        $starterTemplatePath = Join-Path -Path $releasePath -ChildPath "templates/$($starterTemplate)"
+        $starterTemplatePath = Join-Path -Path $starterFolderPath -ChildPath $starterTemplate
         $targetVariableFilePath = Join-Path -Path $starterTemplatePath -ChildPath "variables.tf"
         $starterModuleParameters = Convert-HCLVariablesToUserInputConfig -targetVariableFile $targetVariableFilePath -hclParserToolPath $hclParserToolPath -validators $bootstrapConfig.validators
 
@@ -81,13 +66,16 @@ function New-ALZEnvironmentTerraform {
 
         # Checking for cached starter module values for retry / upgrade scenarios
         $starterCacheFileName = "cache-starter-$starterTemplate.json"
-        $starterModuleCachedValuesPath = Join-Path -Path $releasePath -ChildPath $starterCacheFileName
+        $starterModuleCachedValuesPath = Join-Path -Path $starterFolderPath -ChildPath $starterCacheFileName
         $cachedStarterModuleConfig = Get-ALZConfig -configFilePath $starterModuleCachedValuesPath
 
         # Getting the user input for the starter module
         $starterModuleConfiguration = Request-ALZEnvironmentConfig -configurationParameters $starterModuleParameters -respectOrdering -userInputOverrides $userInputOverrides -userInputDefaultOverrides $cachedStarterModuleConfig -treatEmptyDefaultAsValid $true -autoApprove:$autoApprove.IsPresent
 
         # Getting computed inputs
+        $starterPipelinePath = Join-Path -Path $starterFolderPath -ChildPath $starterPipelineFolder
+
+        Import-StarterPath -bootstrapConfiguration $bootstrapConfiguration -starterPath starterTemplatePath -starterPipelinePath $starterPipelinePath
         Import-SubscriptionData -starterModuleConfiguration $starterModuleConfiguration -bootstrapConfiguration $bootstrapConfiguration
         Import-ConfigurationFileData -starterModuleConfiguration $starterModuleConfiguration -bootstrapConfiguration $bootstrapConfiguration
 

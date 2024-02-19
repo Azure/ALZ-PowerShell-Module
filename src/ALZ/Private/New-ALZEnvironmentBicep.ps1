@@ -36,7 +36,7 @@ function New-ALZEnvironmentBicep {
 
         $isGitRepo = Test-ALZGitRepository -alzEnvironmentDestination $targetDirectory
         if (-not $isGitRepo) {
-            Write-InformationColored "The directory $targetDirectory is not a git repository.  Please make it is a git repo after initialization." -ForegroundColor Red -InformationAction Continue
+            Write-InformationColored "The directory $targetDirectory is not a git repository.  Please make sure it is a git repo after initialization." -ForegroundColor Red -InformationAction Continue
         }
     }
 }

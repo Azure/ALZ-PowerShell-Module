@@ -34,15 +34,20 @@ function New-FolderStructure {
         [string] $bootstrapModuleOverrideFolderPath = "",
 
         [Parameter(Mandatory = $false, HelpMessage = "Used to override the starter folder location.")]
-        [string] $starterModuleOverrideFolderPath = ""
+        [string] $starterModuleOverrideFolderPath = "",
+
+        [Parameter(Mandatory = $false)]
+        [switch] $skipBootstrap
     )
 
     if ($PSCmdlet.ShouldProcess("ALZ-Terraform module configuration", "modify")) {
         $ProgressPreference = "SilentlyContinue"
 
-        Write-InformationColored "Checking you have the latest version of Terraform installed..." -ForegroundColor Green -InformationAction Continue
-        $toolsPath = Join-Path -Path $targetDirectory -ChildPath ".tools"
-        Get-TerraformTool -version "latest" -toolsPath $toolsPath
+        if(!$skipBootstrap) {
+            Write-InformationColored "Checking you have the latest version of Terraform installed..." -ForegroundColor Green -InformationAction Continue
+            $toolsPath = Join-Path -Path $targetDirectory -ChildPath ".tools"
+            Get-TerraformTool -version "latest" -toolsPath $toolsPath
+        }
 
         Write-InformationColored "Downloading modules to $targetDirectory" -ForegroundColor Green -InformationAction Continue
 
@@ -60,7 +65,7 @@ function New-FolderStructure {
         $bootstrapPath = $bootstrapModuleOverrideFolderPath
         $starterPath = $starterModuleOverrideFolderPath
 
-        if($bootstrapModuleOverrideFolderPath -eq "") {
+        if($bootstrapModuleOverrideFolderPath -eq "" -and !$skipBootstrap) {
             $bootstrapReleaseTag = Get-GithubRelease -githubRepoUrl $bootstrapUrl -targetDirectory $targetDirectory -moduleSourceFolder $bootstrapModuleSourceFolder -moduleTargetFolder $bootstrapTargetFolder -release $bootstrapVersion
             $bootstrapPath = Join-Path $targetDirectory $bootstrapTargetFolder $bootstrapReleaseTag
         }
@@ -68,9 +73,6 @@ function New-FolderStructure {
             $starterReleaseTag = Get-GithubRelease -githubRepoUrl $starterUrl -targetDirectory $targetDirectory -moduleSourceFolder $starterModuleSourceFolder -moduleTargetFolder $starterTargetFolder -release $starterVersion
             $starterPath = Join-Path $targetDirectory $starterTargetFolder $starterReleaseTag
         }
-
-        # Run upgrade
-        Invoke-Upgrade -alzEnvironmentDestination $alzEnvironmentDestination -bootstrapCacheFileName $bootstrapCacheFileName -starterCacheFileNamePattern $starterCacheFileNamePattern -stateFilePathAndFileName "bootstrap/$alzCicdPlatform/terraform.tfstate" -currentVersion $releaseTag -autoApprove:$autoApprove.IsPresent
 
         Write-InformationColored "Downloaded bootstrap module version $bootstrapReleaseTag to $bootstrapPath" -ForegroundColor Green -InformationAction Continue
         Write-InformationColored "Downloaded starter module version $starterReleaseTag to $starterPath" -ForegroundColor Green -InformationAction Continue

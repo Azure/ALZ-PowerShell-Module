@@ -88,7 +88,12 @@ function New-ALZEnvironment {
 
         [Parameter(Mandatory = $false, HelpMessage = "Used to override the starter folder location.")]
         [string]
-        $starterModuleOverrideFolderPath = ""
+        $starterModuleOverrideFolderPath = "",
+
+        [Parameter(Mandatory = $false, HelpMessage = "Whether to use legacy local mode for Bicep.")]
+        [switch]
+        $local
+
     )
 
     Write-InformationColored "Getting ready to create a new ALZ environment with you..." -ForegroundColor Green -InformationAction Continue
@@ -107,6 +112,9 @@ function New-ALZEnvironment {
 
         $starterModuleTargetFolder = $starterFolder
         if($alzIacProvider -eq "bicep") {
+            if($local) {
+                $starterFolder = "."
+            }
             $starterModuleTargetFolder = "$starterFolder/upstream-releases"
         }
 
@@ -117,7 +125,18 @@ function New-ALZEnvironment {
             $starterUrl = $terraformModuleUrl
         }
 
-        $versionsAndPaths = New-FolderStructure -targetDirectory $alzEnvironmentDestination -bootstrapModuleSourceFolder $bootstrapModuleSourceFolder -starterModuleSourceFolder $starterModuleSourceFolder -bootstrapUrl $bootstrapModuleUrl -starterUrl $starterUrl -bootstrapVersion "latest" -starterVersion $alzVersion -starterTargetFolder $starterModuleTargetFolder -bootstrapModuleOverrideFolderPath $bootstrapModuleOverrideFolderPath -starterModuleOverrideFolderPath $starterModuleOverrideFolderPath
+        $versionsAndPaths = New-FolderStructure `
+            -targetDirectory $alzEnvironmentDestination `
+            -bootstrapModuleSourceFolder $bootstrapModuleSourceFolder `
+            -starterModuleSourceFolder $starterModuleSourceFolder `
+            -bootstrapUrl $bootstrapModuleUrl `
+            -starterUrl $starterUrl `
+            -bootstrapVersion "latest" `
+            -starterVersion $alzVersion `
+            -starterTargetFolder $starterModuleTargetFolder `
+            -bootstrapModuleOverrideFolderPath $bootstrapModuleOverrideFolderPath `
+            -starterModuleOverrideFolderPath $starterModuleOverrideFolderPath `
+            -skipBootstrap:$local.IsPresent
 
         Write-InformationColored $versionsAndPaths -ForegroundColor Green -InformationAction Continue
 
@@ -126,9 +145,18 @@ function New-ALZEnvironment {
             New-ALZEnvironmentBicep -targetDirectory $starterPath -upstreamReleaseVersion $versionsAndPaths.starterReleaseTag -upstreamReleaseFolderPath $versionsAndPaths.starterPath -vcs $alzCicdPlatform
         }
 
-        if($alzIacProvider -eq "terraform") {
-            return
-            New-ALZEnvironmentTerraform -alzEnvironmentDestination $alzEnvironmentDestination -alzVersion $alzVersion -alzCicdPlatform $alzCicdPlatform -userInputOverridePath $userInputOverridePath -autoApprove:$autoApprove.IsPresent -destroy:$destroy.IsPresent
+        $starterPipelineFolder = "ci_cd"
+        if($alzIacProvider -eq "bicep") {
+            if($alzCicdPlatform -eq "azuredevops") {
+                $starterPipelineFolder = ".azuredevops/pipelines"
+            }
+            if($alzCicdPlatform -eq "github") {
+                $starterPipelineFolder = ".github/workflows"
+            }
+        }
+
+        if(!$local) {
+            New-Bootstrap -bootstrapName $alzCicdPlatform -bootstrapFolderPath $versionsAndPaths.bootstrapPath -starterFolderPath $versionsAndPaths.starterPath -starterPipelineFolder $starterPipelineFolder -userInputOverridePath $userInputOverridePath -autoApprove:$autoApprove.IsPresent -destroy:$destroy.IsPresent
         }
     }
 
