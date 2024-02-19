@@ -75,15 +75,19 @@ function New-ALZEnvironment {
         $bicepModuleUrl = "https://github.com/Azure/ALZ-Bicep",
 
         [Parameter(Mandatory = $false, HelpMessage = "The directory location of the bootstrap modules.")]
+        [string]
         $bootstrapModuleSourceFolder = "bootstrap",
 
         [Parameter(Mandatory = $false, HelpMessage = "The directory location of the starter modules.")]
+        [string]
         $starterModuleSourceFolder = "",
 
         [Parameter(Mandatory = $false, HelpMessage = "Used to override the bootstrap folder location.")]
+        [string]
         $bootstrapModuleOverrideFolderPath = "",
 
         [Parameter(Mandatory = $false, HelpMessage = "Used to override the starter folder location.")]
+        [string]
         $starterModuleOverrideFolderPath = ""
     )
 
@@ -99,6 +103,11 @@ function New-ALZEnvironment {
             }
         }
 
+        $starterModuleTargetFolder = "starter"
+        if($alzIacProvider -eq "bicep") {
+            $starterModuleTargetFolder = "starter/upstream-releases"
+        }
+
         if($alzIacProvider -eq "bicep") {
             $starterUrl = $bicepModuleUrl
         }
@@ -106,25 +115,19 @@ function New-ALZEnvironment {
             $starterUrl = $terraformModuleUrl
         }
 
-        $versions = New-FolderStructure -targetDirectory $alzEnvironmentDestination `
-            -bootstrapModuleSourceFolder $bootstrapModuleSourceFolder `
-            -starterModuleSourceFolder $starterModuleSourceFolder `
-            -bootstrapUrl $bootstrapModuleUrl `
-            -starterUrl $starterUrl `
-            -bootstrapVersion "latest" `
-            -starterVersion $alzVersion `
+        $versions = New-FolderStructure -targetDirectory $alzEnvironmentDestination -bootstrapModuleSourceFolder $bootstrapModuleSourceFolder -starterModuleSourceFolder $starterModuleSourceFolder -bootstrapUrl $bootstrapModuleUrl -starterUrl $starterUrl -bootstrapVersion "latest" -starterVersion $alzVersion -starterTargetFolder $starterModuleTargetFolder -bootstrapModuleOverrideFolderPath $bootstrapModuleOverrideFolderPath -starterModuleOverrideFolderPath $starterModuleOverrideFolderPath
 
         Write-InformationColored $versions -ForegroundColor Green -InformationAction Continue
 
-        <#
         if ($alzIacProvider -eq "bicep") {
+            return
             New-ALZEnvironmentBicep -alzEnvironmentDestination $alzEnvironmentDestination -alzVersion $alzVersion -alzCicdPlatform $alzCicdPlatform
         }
 
         if($alzIacProvider -eq "terraform") {
+            return
             New-ALZEnvironmentTerraform -alzEnvironmentDestination $alzEnvironmentDestination -alzVersion $alzVersion -alzCicdPlatform $alzCicdPlatform -userInputOverridePath $userInputOverridePath -autoApprove:$autoApprove.IsPresent -destroy:$destroy.IsPresent
         }
-        #>
     }
 
     return

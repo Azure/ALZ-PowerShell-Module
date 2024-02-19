@@ -5,7 +5,7 @@ function New-FolderStructure {
         [string] $targetDirectory,
 
         [Parameter(Mandatory = $false, HelpMessage = "The directory location of the bootstrap modules.")]
-        [sting] $bootstrapModuleSourceFolder = "bootstrap",
+        [string] $bootstrapModuleSourceFolder = "bootstrap",
 
         [Parameter(Mandatory = $false, HelpMessage = "The directory location of the starter modules.")]
         [string] $starterModuleSourceFolder = "",
@@ -22,16 +22,26 @@ function New-FolderStructure {
         [Parameter(Mandatory = $false)]
         [string] $starterVersion = "latest",
 
+        [Parameter(Mandatory = $false)]
+        [string]
+        $bootstrapTargetFolder = "bootstrap",
+
+        [Parameter(Mandatory = $true)]
+        [string]
+        $starterTargetFolder,
+
         [Parameter(Mandatory = $false, HelpMessage = "Used to override the bootstrap folder location.")]
-        $bootstrapModuleOverrideFolderPath = "",
+        [string] $bootstrapModuleOverrideFolderPath = "",
 
         [Parameter(Mandatory = $false, HelpMessage = "Used to override the starter folder location.")]
-        $starterModuleOverrideFolderPath = ""
+        [string] $starterModuleOverrideFolderPath = ""
     )
 
     if ($PSCmdlet.ShouldProcess("ALZ-Terraform module configuration", "modify")) {
+        $ProgressPreference = "SilentlyContinue"
+
         Write-InformationColored "Checking you have the latest version of Terraform installed..." -ForegroundColor Green -InformationAction Continue
-        $toolsPath = Join-Path -Path $targetFolder -ChildPath ".tools"
+        $toolsPath = Join-Path -Path $targetDirectory -ChildPath ".tools"
         Get-TerraformTool -version "latest" -toolsPath $toolsPath
 
         Write-InformationColored "Downloading modules to $targetDirectory" -ForegroundColor Green -InformationAction Continue
@@ -44,27 +54,32 @@ function New-FolderStructure {
             $starterVersion = "v$starterVersion"
         }
 
-        $bootstrapTargetFolder = "bootstrap"
-        $starterTargetFolder = "starter"
-
         $bootstrapReleaseTag = "overridden"
         $starterReleaseTag = "overridden"
 
+        $bootstrapPath = $bootstrapModuleOverrideFolderPath
+        $starterPath = $starterModuleOverrideFolderPath
+
         if($bootstrapModuleOverrideFolderPath -eq "") {
-            $bootstrapReleaseTag = Get-GithubRelease -githubRepoUrl $boostrapUrl -targetDirectory $targetDirectory -moduleSourceFolder $bootstrapModuleSourceFolder -moduleTargetFolder $bootstrapTargetFolder -version $bootstrapVersion
+            $bootstrapReleaseTag = Get-GithubRelease -githubRepoUrl $bootstrapUrl -targetDirectory $targetDirectory -moduleSourceFolder $bootstrapModuleSourceFolder -moduleTargetFolder $bootstrapTargetFolder -release $bootstrapVersion
+            $bootstrapPath = Join-Path $targetDirectory $bootstrapTargetFolder $bootstrapReleaseTag
         }
-        if(starterModuleOverrideFolderPath -eq "") {
-            $starterReleaseTag = Get-GithubRelease -githubRepoUrl $starterUrl -targetDirectory $targetDirectory -moduleSourceFolder $starterModuleSourceFolder -moduleTargetFolder $starterTargetFolder -version $starterVersion
+        if($starterModuleOverrideFolderPath -eq "") {
+            $starterReleaseTag = Get-GithubRelease -githubRepoUrl $starterUrl -targetDirectory $targetDirectory -moduleSourceFolder $starterModuleSourceFolder -moduleTargetFolder $starterTargetFolder -release $starterVersion
+            $starterPath = Join-Path $targetDirectory $starterTargetFolder $starterReleaseTag
         }
 
         # Run upgrade
         Invoke-Upgrade -alzEnvironmentDestination $alzEnvironmentDestination -bootstrapCacheFileName $bootstrapCacheFileName -starterCacheFileNamePattern $starterCacheFileNamePattern -stateFilePathAndFileName "bootstrap/$alzCicdPlatform/terraform.tfstate" -currentVersion $releaseTag -autoApprove:$autoApprove.IsPresent
 
-        Write-InformationColored "Got downloaded module version $releaseTag to $targetDirectory" -ForegroundColor Green -InformationAction Continue
+        Write-InformationColored "Downloaded bootstrap module version $bootstrapReleaseTag to $bootstrapPath" -ForegroundColor Green -InformationAction Continue
+        Write-InformationColored "Downloaded starter module version $starterReleaseTag to $starterPath" -ForegroundColor Green -InformationAction Continue
+
+        $ProgressPreference = "Continue"
 
         return @{
-            bootstrapPath       = Path-Join $targetDirectory $bootstrapTargetFolder $bootstrapReleaseTag
-            starterPath         = Path-Join $targetDirectory $starterTargetFolder $starterReleaseTag
+            bootstrapPath       = $bootstrapPath
+            starterPath         = $starterPath
             bootstrapReleaseTag = $bootstrapReleaseTag
             starterReleaseTag   = $starterReleaseTag
         }

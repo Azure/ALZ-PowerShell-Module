@@ -8,8 +8,14 @@ function Get-TerraformTool {
     )
 
     if($version -eq "latest") {
-        $version = (Invoke-WebRequest -Uri "https://checkpoint-api.hashicorp.com/v1/check/terraform").Content | ConvertFrom-Json | Select-Object -ExpandProperty current_version
+        $versionResponse = Invoke-WebRequest -Uri "https://checkpoint-api.hashicorp.com/v1/check/terraform"
+        if($versionResponse.StatusCode -ne "200") {
+            throw "Unable to query Terraform version, please check your internet connection and try again..."
+        }
+        $version = ($versionResponse).Content | ConvertFrom-Json | Select-Object -ExpandProperty current_version
     }
+
+    Write-InformationColored "Required version of Terraform is $version" -ForegroundColor Green -InformationAction Continue
 
     $commandDetails = Get-Command -Name terraform -ErrorAction SilentlyContinue
     if($commandDetails) {
