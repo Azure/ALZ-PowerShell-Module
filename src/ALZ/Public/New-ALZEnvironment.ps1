@@ -60,12 +60,63 @@ function New-ALZEnvironment {
         [switch] $autoApprove,
 
         [Parameter(Mandatory = $false)]
-        [switch] $destroy
+        [switch] $destroy,
+
+        [Parameter(Mandatory = $false, HelpMessage = "The bootstrap modules reposiotry url.")]
+        [string]
+        $bootstrapModuleUrl = "https://github.com/Azure/ALZ-PowerShell-Module",
+
+        [Parameter(Mandatory = $false, HelpMessage = "The terraform starter modules repository url.")]
+        [string]
+        $terraformModuleUrl = "https://github.com/Azure/alz-terraform-accelerator",
+
+        [Parameter(Mandatory = $false, HelpMessage = "The bicep starter modules reposiotry url.")]
+        [string]
+        $bicepModuleUrl = "https://github.com/Azure/ALZ-Bicep",
+
+        [Parameter(Mandatory = $false, HelpMessage = "The directory location of the bootstrap modules.")]
+        $bootstrapModuleSourceFolder = "bootstrap",
+
+        [Parameter(Mandatory = $false, HelpMessage = "The directory location of the starter modules.")]
+        $starterModuleSourceFolder = "",
+
+        [Parameter(Mandatory = $false, HelpMessage = "Used to override the bootstrap folder location.")]
+        $bootstrapModuleOverrideFolderPath = "",
+
+        [Parameter(Mandatory = $false, HelpMessage = "Used to override the starter folder location.")]
+        $starterModuleOverrideFolderPath = ""
     )
 
     Write-InformationColored "Getting ready to create a new ALZ environment with you..." -ForegroundColor Green -InformationAction Continue
 
     if ($PSCmdlet.ShouldProcess("Accelerator setup", "modify")) {
+        if($starterModuleSourceFolder -eq "") {
+            if($alzIacProvider -eq "bicep") {
+                $starterModuleSourceFolder = "."
+            }
+            if($alzIacProvider -eq "terraform") {
+                $starterModuleSourceFolder = "templates"
+            }
+        }
+
+        if($alzIacProvider -eq "bicep") {
+            $starterUrl = $bicepModuleUrl
+        }
+        if($alzIacProvider -eq "terraform") {
+            $starterUrl = $terraformModuleUrl
+        }
+
+        $versions = New-FolderStructure -targetDirectory $alzEnvironmentDestination `
+            -bootstrapModuleSourceFolder $bootstrapModuleSourceFolder `
+            -starterModuleSourceFolder $starterModuleSourceFolder `
+            -bootstrapUrl $bootstrapModuleUrl `
+            -starterUrl $starterUrl `
+            -bootstrapVersion "latest" `
+            -starterVersion $alzVersion `
+
+        Write-InformationColored $versions -ForegroundColor Green -InformationAction Continue
+
+        <#
         if ($alzIacProvider -eq "bicep") {
             New-ALZEnvironmentBicep -alzEnvironmentDestination $alzEnvironmentDestination -alzVersion $alzVersion -alzCicdPlatform $alzCicdPlatform
         }
@@ -73,6 +124,7 @@ function New-ALZEnvironment {
         if($alzIacProvider -eq "terraform") {
             New-ALZEnvironmentTerraform -alzEnvironmentDestination $alzEnvironmentDestination -alzVersion $alzVersion -alzCicdPlatform $alzCicdPlatform -userInputOverridePath $userInputOverridePath -autoApprove:$autoApprove.IsPresent -destroy:$destroy.IsPresent
         }
+        #>
     }
 
     return
