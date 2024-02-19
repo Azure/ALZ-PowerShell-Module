@@ -14,6 +14,12 @@ function New-Bootstrap {
         [string] $starterFolderPath,
 
         [Parameter(Mandatory = $false)]
+        [string] $bootstrapRelease,
+
+        [Parameter(Mandatory = $false)]
+        [string] $starterRelease,
+
+        [Parameter(Mandatory = $false)]
         [string] $starterPipelineFolder,
 
         [Parameter(Mandatory = $false)]
@@ -30,12 +36,23 @@ function New-Bootstrap {
             $userInputOverrides = Get-ALZConfig -configFilePath $userInputOverridePath
         }
 
-        # Setup Cache Paths
-        $bootstrapCacheFileName = "cache-bootstrap-$bootstrapName.json"
-        $starterCacheFileNamePattern = "cache-starter-*.json"
+        # Setup Cache File Name
+        $cacheFileName = "cached-inputs.json"
 
-        # Run upgrade
-        Invoke-Upgrade -alzEnvironmentDestination $alzEnvironmentDestination -bootstrapCacheFileName $bootstrapCacheFileName -starterCacheFileNamePattern $starterCacheFileNamePattern -stateFilePathAndFileName "bootstrap/$alzCicdPlatform/terraform.tfstate" -currentVersion $releaseTag -autoApprove:$autoApprove.IsPresent
+        # Run upgrade for bootstrap
+        Invoke-Upgrade `
+            -targetDirectory $bootstrapFolderPath `
+            -cacheFileName $cacheFileName `
+            -stateFilePathAndFileName "$alzCicdPlatform/terraform.tfstate" `
+            -release $bootstrapRelease `
+            -autoApprove:$autoApprove.IsPresent
+
+        # Run upgrade for starter
+        Invoke-Upgrade `
+            -targetDirectory $starterFolderPath `
+            -cacheFileName $cacheFileName `
+            -release $starterRelease `
+            -autoApprove:$autoApprove.IsPresent
 
         # Getting the configuration for the initial bootstrap user input and validators
         $bootstrapConfigFilePath = Join-Path -Path $bootstrapFolderPath -ChildPath ".config/ALZ-Powershell.config.json"
@@ -50,7 +67,7 @@ function New-Bootstrap {
         Write-InformationColored "Got configuration" -ForegroundColor Green -InformationAction Continue
 
         # Checking for cached bootstrap values for retry / upgrade scenarios
-        $bootstrapCachedValuesPath = Join-Path -Path $bootstrapPath -ChildPath $bootstrapCacheFileName
+        $bootstrapCachedValuesPath = Join-Path -Path $bootstrapPath -ChildPath $cacheFileName
         $cachedBootstrapConfig = Get-ALZConfig -configFilePath $bootstrapCachedValuesPath
 
         # Getting the user input for the bootstrap module
@@ -65,8 +82,7 @@ function New-Bootstrap {
         Write-InformationColored "The following inputs are specific to the '$starterTemplate' starter module that you selected..." -ForegroundColor Green -InformationAction Continue
 
         # Checking for cached starter module values for retry / upgrade scenarios
-        $starterCacheFileName = "cache-starter-$starterTemplate.json"
-        $starterModuleCachedValuesPath = Join-Path -Path $starterFolderPath -ChildPath $starterCacheFileName
+        $starterModuleCachedValuesPath = Join-Path -Path $starterFolderPath -ChildPath $cacheFileName
         $cachedStarterModuleConfig = Get-ALZConfig -configFilePath $starterModuleCachedValuesPath
 
         # Getting the user input for the starter module

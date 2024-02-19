@@ -64,7 +64,7 @@ function New-ALZEnvironment {
 
         [Parameter(Mandatory = $false, HelpMessage = "The bootstrap modules reposiotry url.")]
         [string]
-        $bootstrapModuleUrl = "https://github.com/Azure/ALZ-PowerShell-Module",
+        $bootstrapModuleUrl = "https://github.com/Azure/alz-accelerator-bootstrap-modules",
 
         [Parameter(Mandatory = $false, HelpMessage = "The terraform starter modules repository url.")]
         [string]
@@ -91,14 +91,19 @@ function New-ALZEnvironment {
         $starterModuleOverrideFolderPath = "",
 
         [Parameter(Mandatory = $false, HelpMessage = "Whether to use legacy local mode for Bicep.")]
-        [switch]
-        $local
-
+        [bool]
+        $bicepLegacyMode = $true # Note this is set to true to act as a feature flag while the Bicep bootstrap is developed. It will be switched to false once it is all working.
     )
 
     Write-InformationColored "Getting ready to create a new ALZ environment with you..." -ForegroundColor Green -InformationAction Continue
 
     if ($PSCmdlet.ShouldProcess("Accelerator setup", "modify")) {
+
+        $local = $false
+        if($alzIacProvider -eq "bicep") {
+            $local = $bicepLegacyMode -eq $true
+        }
+
         if($starterModuleSourceFolder -eq "") {
             if($alzIacProvider -eq "bicep") {
                 $starterModuleSourceFolder = "."
@@ -136,7 +141,7 @@ function New-ALZEnvironment {
             -starterTargetFolder $starterModuleTargetFolder `
             -bootstrapModuleOverrideFolderPath $bootstrapModuleOverrideFolderPath `
             -starterModuleOverrideFolderPath $starterModuleOverrideFolderPath `
-            -skipBootstrap:$local.IsPresent
+            -skipBootstrap:$local
 
         Write-InformationColored $versionsAndPaths -ForegroundColor Green -InformationAction Continue
 
@@ -149,7 +154,7 @@ function New-ALZEnvironment {
                 -upstreamReleaseVersion $versionsAndPaths.starterReleaseTag `
                 -upstreamReleaseFolderPath $versionsAndPaths.starterPath `
                 -vcs $alzCicdPlatform `
-                -local:$local.IsPresent
+                -local:$local
         }
 
         $starterPipelineFolder = "ci_cd"

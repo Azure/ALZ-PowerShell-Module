@@ -2,19 +2,16 @@ function Invoke-Upgrade {
     [CmdletBinding(SupportsShouldProcess = $true)]
     param (
         [Parameter(Mandatory = $false)]
-        [string] $alzEnvironmentDestination,
+        [string] $targetDirectory,
 
         [Parameter(Mandatory = $false)]
-        [string] $bootstrapCacheFileName,
+        [string] $cacheFileName,
 
         [Parameter(Mandatory = $false)]
-        [string] $starterCacheFileNamePattern,
+        [string] $stateFileName = "",
 
         [Parameter(Mandatory = $false)]
-        [string] $stateFilePathAndFileName,
-
-        [Parameter(Mandatory = $false)]
-        [string] $currentVersion,
+        [string] $release,
 
         [Parameter(Mandatory = $false)]
         [switch] $autoApprove
@@ -22,26 +19,22 @@ function Invoke-Upgrade {
 
     if ($PSCmdlet.ShouldProcess("Upgrade Release", "Operation")) {
 
-        $directories = Get-ChildItem -Path $alzEnvironmentDestination -Filter "v*" -Directory
-        $previousBootstrapCachedValuesPath = $null
-        $previousStarterCachedValuesPath = $null
+        $directories = Get-ChildItem -Path $targetDirectory -Filter "v*" -Directory
+        $previousCachedValuesPath = $null
         $previousStateFilePath = $null
         $previousVersion = $null
         $foundPreviousRelease = $false
 
         foreach ($directory in $directories | Sort-Object -Descending -Property Name) {
-            $releasePath = Join-Path -Path $alzEnvironmentDestination -ChildPath $directory.Name
-            $releaseBootstrapCachedValuesPath = Join-Path -Path $releasePath -ChildPath $bootstrapCacheFileName
-            $releaseStateFilePath = Join-Path -Path $releasePath -ChildPath $stateFilePathAndFileName
+            $releasePath = Join-Path -Path $targetDirectory -ChildPath $directory.Name
+            $releaseCachedValuesPath = Join-Path -Path $releasePath -ChildPath $cacheFileName
 
-            if(Test-Path $releaseBootstrapCachedValuesPath) {
-                $previousBootstrapCachedValuesPath = $releaseBootstrapCachedValuesPath
+            if($stateFileName -ne "") {
+                $releaseStateFilePath = Join-Path -Path $releasePath -ChildPath $stateFileName
             }
 
-            $starterCacheFiles = Get-ChildItem -Path $releasePath -Filter $starterCacheFileNamePattern -File
-
-            if($starterCacheFiles) {
-                $previousStarterCachedValuesPath = $starterCacheFiles[0].FullName
+            if(Test-Path $releaseCachedValuesPath) {
+                $previousCachedValuesPath = $releaseCachedValuesPath
             }
 
             if(Test-Path $releaseStateFilePath) {
@@ -49,7 +42,7 @@ function Invoke-Upgrade {
             }
 
             if($null -ne $previousStateFilePath) {
-                if($directory.Name -eq $currentVersion) {
+                if($directory.Name -eq $release) {
                     # If the current version has already been run, then skip the upgrade process
                     break
                 }
@@ -70,19 +63,14 @@ function Invoke-Upgrade {
             }
 
             if($upgrade.ToLower() -eq "upgrade") {
-                $currentPath = Join-Path -Path $alzEnvironmentDestination -ChildPath $currentVersion
-                $currentBootstrapCachedValuesPath = Join-Path -Path $currentPath -ChildPath $bootstrapCacheFileName
-                $currentStarterCachedValuesPath = $currentPath
-                $currentStateFilePath = Join-Path -Path $currentPath -ChildPath $stateFilePathAndFileName
+                $currentPath = Join-Path -Path $targetDirectory -ChildPath $release
+                $currentBootstrapCachedValuesPath = Join-Path -Path $currentPath -ChildPath $cacheFileName
+                $currentStateFilePath = Join-Path -Path $currentPath -ChildPath $stateFileName
 
                 # Copy the previous cached values to the current release
                 if($null -ne $previousBootstrapCachedValuesPath) {
                     Write-InformationColored "AUTOMATIC UPGRADE: Copying $previousBootstrapCachedValuesPath to $currentBootstrapCachedValuesPath" -ForegroundColor Green -InformationAction Continue
                     Copy-Item -Path $previousBootstrapCachedValuesPath -Destination $currentBootstrapCachedValuesPath -Force | Out-String | Write-Verbose
-                }
-                if($null -ne $previousStarterCachedValuesPath) {
-                    Write-InformationColored "AUTOMATIC UPGRADE: Copying $previousStarterCachedValuesPath to $currentStarterCachedValuesPath" -ForegroundColor Green -InformationAction Continue
-                    Copy-Item -Path $previousStarterCachedValuesPath -Destination $currentStarterCachedValuesPath -Force | Out-String | Write-Verbose
                 }
 
                 Write-InformationColored "AUTOMATIC UPGRADE: Copying $previousStateFilePath to $currentStateFilePath" -ForegroundColor Green -InformationAction Continue
