@@ -115,6 +115,8 @@ InModuleScope 'ALZ' {
                 Mock -CommandName Import-SubscriptionData -MockWith { }
 
                 Mock -CommandName Invoke-Upgrade -MockWith { }
+
+                Mock -CommandName Get-TerraformTool -MockWith {}
             }
 
             It 'should return the output directory on completion' {

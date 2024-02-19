@@ -103,9 +103,11 @@ function New-ALZEnvironment {
             }
         }
 
-        $starterModuleTargetFolder = "starter"
+        $starterFolder = "starter"
+
+        $starterModuleTargetFolder = $starterFolder
         if($alzIacProvider -eq "bicep") {
-            $starterModuleTargetFolder = "starter/upstream-releases"
+            $starterModuleTargetFolder = "$starterFolder/upstream-releases"
         }
 
         if($alzIacProvider -eq "bicep") {
@@ -115,13 +117,13 @@ function New-ALZEnvironment {
             $starterUrl = $terraformModuleUrl
         }
 
-        $versions = New-FolderStructure -targetDirectory $alzEnvironmentDestination -bootstrapModuleSourceFolder $bootstrapModuleSourceFolder -starterModuleSourceFolder $starterModuleSourceFolder -bootstrapUrl $bootstrapModuleUrl -starterUrl $starterUrl -bootstrapVersion "latest" -starterVersion $alzVersion -starterTargetFolder $starterModuleTargetFolder -bootstrapModuleOverrideFolderPath $bootstrapModuleOverrideFolderPath -starterModuleOverrideFolderPath $starterModuleOverrideFolderPath
+        $versionsAndPaths = New-FolderStructure -targetDirectory $alzEnvironmentDestination -bootstrapModuleSourceFolder $bootstrapModuleSourceFolder -starterModuleSourceFolder $starterModuleSourceFolder -bootstrapUrl $bootstrapModuleUrl -starterUrl $starterUrl -bootstrapVersion "latest" -starterVersion $alzVersion -starterTargetFolder $starterModuleTargetFolder -bootstrapModuleOverrideFolderPath $bootstrapModuleOverrideFolderPath -starterModuleOverrideFolderPath $starterModuleOverrideFolderPath
 
-        Write-InformationColored $versions -ForegroundColor Green -InformationAction Continue
+        Write-InformationColored $versionsAndPaths -ForegroundColor Green -InformationAction Continue
 
         if ($alzIacProvider -eq "bicep") {
-            return
-            New-ALZEnvironmentBicep -alzEnvironmentDestination $alzEnvironmentDestination -alzVersion $alzVersion -alzCicdPlatform $alzCicdPlatform
+            $starterPath = Join-Path $alzEnvironmentDestination $starterFolder
+            New-ALZEnvironmentBicep -targetDirectory $starterPath -upstreamReleaseVersion $versionsAndPaths.starterReleaseTag -upstreamReleaseFolderPath $versionsAndPaths.starterPath -vcs $alzCicdPlatform
         }
 
         if($alzIacProvider -eq "terraform") {
