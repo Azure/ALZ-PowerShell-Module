@@ -140,6 +140,8 @@ function New-ALZEnvironment {
 
         Write-InformationColored $versionsAndPaths -ForegroundColor Green -InformationAction Continue
 
+        $starterPath = $versionsAndPaths.starterPath
+
         if ($alzIacProvider -eq "bicep") {
             $starterPath = Join-Path $alzEnvironmentDestination $starterFolder
             New-ALZEnvironmentBicep `
@@ -164,7 +166,7 @@ function New-ALZEnvironment {
             New-Bootstrap `
                 -bootstrapName $alzCicdPlatform `
                 -bootstrapFolderPath $versionsAndPaths.bootstrapPath `
-                -starterFolderPath $versionsAndPaths.starterPath `
+                -starterFolderPath $starterPath `
                 -starterPipelineFolder $starterPipelineFolder `
                 -userInputOverridePath $userInputOverridePath `
                 -autoApprove:$autoApprove.IsPresent `

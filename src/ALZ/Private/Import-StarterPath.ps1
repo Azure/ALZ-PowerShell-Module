@@ -11,16 +11,23 @@ function Import-StarterPath {
         [PSCustomObject] $bootstrapConfiguration
     )
 
-    $bootstrapStarterPathObject = $bootstrapConfiguration.PsObject.Properties | Where-Object { $_.Value.Name -eq "module_folder_path" }
-    $bootstrapStarterPathObject.Value.Value = $starterPath
+    $bootstrapStarterPathObject = $bootstrapConfiguration.PsObject.Properties | Where-Object { $_.Name -eq "module_folder_path" }
+    if($null -ne $bootstrapStarterPathObject) {
+        $bootstrapStarterPathObject.Value.Value = $starterPath
+    }
 
-    $bootstrapPipelinePathObject = $bootstrapConfiguration.PsObject.Properties | Where-Object { $_.Value.Name -eq "pipeline_folder_path" }
-    $bootstrapPipelinePathObject.Value.Value = $starterPipelinePath
+    $bootstrapPipelinePathObject = $bootstrapConfiguration.PsObject.Properties | Where-Object { $_.Name -eq "pipeline_folder_path" }
+    if($null -ne $bootstrapPipelinePathObject) {
+        $bootstrapPipelinePathObject.Value.Value = $starterPipelinePath
+    }
 
+    $bootstrapStarterPathRelativeObject = $bootstrapConfiguration.PsObject.Properties | Where-Object { $_.Name -eq "module_folder_path_relative" }
+    if($null -ne $bootstrapStarterPathRelativeObject) {
+        $bootstrapStarterPathRelativeObject.Value.Value = "false"
+    }
 
-    $bootstrapStarterPathRelativeObject = $bootstrapConfiguration.PsObject.Properties | Where-Object { $_.Value.Name -eq "module_folder_path_relative" }
-    $bootstrapStarterPathRelativeObject.Value.Value = "false"
-
-    $bootstrapPipelinePathRelativeObject = $bootstrapConfiguration.PsObject.Properties | Where-Object { $_.Value.Name -eq "pipeline_folder_path_relative" }
-    $bootstrapPipelinePathRelativeObject.Value.Value = "false"
+    $bootstrapPipelinePathRelativeObject = $bootstrapConfiguration.PsObject.Properties | Where-Object { $_.Name -eq "pipeline_folder_path_relative" }
+    if($null -ne $bootstrapPipelinePathRelativeObject) {
+        $bootstrapPipelinePathRelativeObject.Value.Value = "false"
+    }
 }
