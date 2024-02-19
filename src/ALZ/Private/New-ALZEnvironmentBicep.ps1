@@ -12,7 +12,10 @@ function New-ALZEnvironmentBicep {
 
         [Parameter(Mandatory = $false)]
         [ValidateSet("github", "azuredevops")]
-        [string] $vcs
+        [string] $vcs,
+
+        [Parameter(Mandatory = $false)]
+        [switch] $local
     )
 
     if ($PSCmdlet.ShouldProcess("ALZ-Bicep module configuration", "modify")) {
@@ -34,9 +37,11 @@ function New-ALZEnvironmentBicep {
         Edit-ALZConfigurationFilesInPlace -alzEnvironmentDestination $targetDirectory -configuration $configuration | Out-String | Write-Verbose
         Build-ALZDeploymentEnvFile -configuration $configuration -Destination $targetDirectory -version $upstreamReleaseVersion | Out-String | Write-Verbose
 
-        $isGitRepo = Test-ALZGitRepository -alzEnvironmentDestination $targetDirectory
-        if (-not $isGitRepo) {
-            Write-InformationColored "The directory $targetDirectory is not a git repository.  Please make sure it is a git repo after initialization." -ForegroundColor Red -InformationAction Continue
+        if($local) {
+            $isGitRepo = Test-ALZGitRepository -alzEnvironmentDestination $targetDirectory
+            if (-not $isGitRepo) {
+                Write-InformationColored "The directory $targetDirectory is not a git repository.  Please make sure it is a git repo after initialization." -ForegroundColor Red -InformationAction Continue
+            }
         }
     }
 }

@@ -142,7 +142,12 @@ function New-ALZEnvironment {
 
         if ($alzIacProvider -eq "bicep") {
             $starterPath = Join-Path $alzEnvironmentDestination $starterFolder
-            New-ALZEnvironmentBicep -targetDirectory $starterPath -upstreamReleaseVersion $versionsAndPaths.starterReleaseTag -upstreamReleaseFolderPath $versionsAndPaths.starterPath -vcs $alzCicdPlatform
+            New-ALZEnvironmentBicep `
+                -targetDirectory $starterPath `
+                -upstreamReleaseVersion $versionsAndPaths.starterReleaseTag `
+                -upstreamReleaseFolderPath $versionsAndPaths.starterPath `
+                -vcs $alzCicdPlatform `
+                -local:$local.IsPresent
         }
 
         $starterPipelineFolder = "ci_cd"
@@ -156,7 +161,14 @@ function New-ALZEnvironment {
         }
 
         if(!$local) {
-            New-Bootstrap -bootstrapName $alzCicdPlatform -bootstrapFolderPath $versionsAndPaths.bootstrapPath -starterFolderPath $versionsAndPaths.starterPath -starterPipelineFolder $starterPipelineFolder -userInputOverridePath $userInputOverridePath -autoApprove:$autoApprove.IsPresent -destroy:$destroy.IsPresent
+            New-Bootstrap `
+                -bootstrapName $alzCicdPlatform `
+                -bootstrapFolderPath $versionsAndPaths.bootstrapPath `
+                -starterFolderPath $versionsAndPaths.starterPath `
+                -starterPipelineFolder $starterPipelineFolder `
+                -userInputOverridePath $userInputOverridePath `
+                -autoApprove:$autoApprove.IsPresent `
+                -destroy:$destroy.IsPresent
         }
     }
 
