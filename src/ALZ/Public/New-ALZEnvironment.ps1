@@ -64,23 +64,15 @@ function New-ALZEnvironment {
 
         [Parameter(Mandatory = $false, HelpMessage = "The bootstrap modules reposiotry url.")]
         [string]
-        $bootstrapModuleUrl = "https://github.com/Azure/alz-accelerator-bootstrap-modules",
+        $bootstrapModuleUrl = "https://github.com/Azure/accelerator-bootstrap-modules",
 
-        [Parameter(Mandatory = $false, HelpMessage = "The terraform starter modules repository url.")]
+        [Parameter(Mandatory = $false, HelpMessage = "The bootstrap config file path.")]
         [string]
-        $terraformModuleUrl = "https://github.com/Azure/alz-terraform-accelerator",
+        $bootstrapConfigPath = ".config/ALZ-Powershell.config.json",
 
-        [Parameter(Mandatory = $false, HelpMessage = "The bicep starter modules reposiotry url.")]
+        [Parameter(Mandatory = $false, HelpMessage = "Bootstrap folder in teh source repo.")]
         [string]
-        $bicepModuleUrl = "https://github.com/Azure/ALZ-Bicep",
-
-        [Parameter(Mandatory = $false, HelpMessage = "The directory location of the bootstrap modules.")]
-        [string]
-        $bootstrapModuleSourceFolder = "bootstrap",
-
-        [Parameter(Mandatory = $false, HelpMessage = "The directory location of the starter modules.")]
-        [string]
-        $starterModuleSourceFolder = "",
+        $bootstrapSourceFolder = ".",
 
         [Parameter(Mandatory = $false, HelpMessage = "Used to override the bootstrap folder location.")]
         [string]
@@ -89,6 +81,10 @@ function New-ALZEnvironment {
         [Parameter(Mandatory = $false, HelpMessage = "Used to override the starter folder location.")]
         [string]
         $starterModuleOverrideFolderPath = "",
+
+        [Parameter(Mandatory = $false, HelpMessage = "Whether to use local mode for Bicep.")]
+        [string]
+        $bicepLegacyUrl = "https://github.com/Azure/ALZ-Bicep",
 
         [Parameter(Mandatory = $false, HelpMessage = "Whether to use legacy local mode for Bicep.")]
         [bool]
@@ -99,51 +95,45 @@ function New-ALZEnvironment {
 
     if ($PSCmdlet.ShouldProcess("Accelerator setup", "modify")) {
 
-        $local = $false
+        $isLegacyBicep = $false
         if($alzIacProvider -eq "bicep") {
-            $local = $bicepLegacyMode -eq $true
-        }
-
-        if($starterModuleSourceFolder -eq "") {
-            if($alzIacProvider -eq "bicep") {
-                $starterModuleSourceFolder = "."
-            }
-            if($alzIacProvider -eq "terraform") {
-                $starterModuleSourceFolder = "templates"
-            }
+            $isLegacyBicep = $bicepLegacyMode -eq $true
         }
 
         $starterFolder = "starter"
 
         $starterModuleTargetFolder = $starterFolder
         if($alzIacProvider -eq "bicep") {
-            if($local) {
+            if($isLegacyBicep) {
                 $starterFolder = "."
             }
             $starterModuleTargetFolder = "$starterFolder/upstream-releases"
         }
 
-        if($alzIacProvider -eq "bicep") {
-            $starterUrl = $bicepModuleUrl
-        }
-        if($alzIacProvider -eq "terraform") {
-            $starterUrl = $terraformModuleUrl
+        if(!$local) {
+            Write-InformationColored "Checking you have the latest version of Terraform installed..." -ForegroundColor Green -InformationAction Continue
+            $toolsPath = Join-Path -Path $targetDirectory -ChildPath ".tools"
+            Get-TerraformTool -version "latest" -toolsPath $toolsPath
         }
 
-        $versionsAndPaths = New-FolderStructure `
-            -targetDirectory $alzEnvironmentDestination `
-            -bootstrapModuleSourceFolder $bootstrapModuleSourceFolder `
-            -starterModuleSourceFolder $starterModuleSourceFolder `
-            -bootstrapUrl $bootstrapModuleUrl `
-            -starterUrl $starterUrl `
-            -bootstrapVersion "latest" `
-            -starterVersion $alzVersion `
-            -starterTargetFolder $starterModuleTargetFolder `
-            -bootstrapModuleOverrideFolderPath $bootstrapModuleOverrideFolderPath `
-            -starterModuleOverrideFolderPath $starterModuleOverrideFolderPath `
-            -skipBootstrap:$local
+        $bootstrapReleaseTag = "local"
+        $bootstrapPath = $bootstrapModuleOverrideFolderPath
 
-        Write-InformationColored $versionsAndPaths -ForegroundColor Green -InformationAction Continue
+        if($bootstrapModuleOverrideFolderPath -eq "" && !$local) {
+            $versionAndPath = New-FolderStructure `
+                -targetDirectory $alzEnvironmentDestination `
+                -url $bootstrapModuleUrl `
+                -release "latest" `
+                -targetFolder "bootstrap" `
+                -sourceFolder $bootstrapSourceFolder
+
+            $bootstapReleaseTag = $versionAndPath.releaseTag
+            $bootstrapPath = $versionAndPath.path
+        }
+
+        # TODO Get config here
+
+
 
         $starterPath = $versionsAndPaths.starterPath
 
