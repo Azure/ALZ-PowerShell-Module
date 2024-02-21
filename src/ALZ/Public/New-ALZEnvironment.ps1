@@ -33,24 +33,28 @@ function New-ALZEnvironment {
         [Alias("Output")]
         [Alias("OutputDirectory")]
         [Alias("O")]
-        [string] $alzEnvironmentDestination = ".",
+        [Alias("alzEnvironmentDestination")]
+        [string] $targetDirectory = ".",
 
         [Parameter(Mandatory = $false)]
         [Alias("alzBicepVersion")]
         [Alias("version")]
         [Alias("v")]
-        [string] $alzVersion = "latest",
+        [Alias("alzVersion")]
+        [string] $release = "latest",
 
         [Parameter(Mandatory = $false)]
         [ValidateSet("bicep", "terraform")]
-        [Alias("Iac")]
         [Alias("i")]
-        [string] $alzIacProvider = "bicep",
+        [Alias("alzIacProvider")]
+        [string] $iac = "",
 
         [Parameter(Mandatory = $false)]
         [Alias("Cicd")]
         [Alias("c")]
-        [string] $alzCicdPlatform = "github",
+        [Alias("alzCicdPlatform")]
+        [Alias("b")]
+        [string] $bootstrap = "",
 
         [Parameter(Mandatory = $false)]
         [Alias("inputs")]
@@ -96,8 +100,29 @@ function New-ALZEnvironment {
     if ($PSCmdlet.ShouldProcess("Accelerator setup", "modify")) {
 
         $isLegacyBicep = $false
-        if($alzIacProvider -eq "bicep") {
+        if($iac -eq "bicep") {
             $isLegacyBicep = $bicepLegacyMode -eq $true
+        }
+
+        if(!$isLegacyBicep) {
+            Write-InformationColored "Checking you have the latest version of Terraform installed..." -ForegroundColor Green -InformationAction Continue
+            $toolsPath = Join-Path -Path $targetDirectory -ChildPath ".tools"
+            Get-TerraformTool -version "latest" -toolsPath $toolsPath
+        }
+
+        $bootstrapReleaseTag = "local"
+        $bootstrapPath = $bootstrapModuleOverrideFolderPath
+
+        if($bootstrapModuleOverrideFolderPath -eq "" && !$isLegacyBicep) {
+            $versionAndPath = New-FolderStructure `
+                -targetDirectory $targetDirectory `
+                -url $bootstrapModuleUrl `
+                -release "latest" `
+                -targetFolder "bootstrap" `
+                -sourceFolder $bootstrapSourceFolder
+
+            $bootstapReleaseTag = $versionAndPath.releaseTag
+            $bootstrapPath = $versionAndPath.path
         }
 
         $starterFolder = "starter"
@@ -110,51 +135,63 @@ function New-ALZEnvironment {
             $starterModuleTargetFolder = "$starterFolder/upstream-releases"
         }
 
-        if(!$local) {
-            Write-InformationColored "Checking you have the latest version of Terraform installed..." -ForegroundColor Green -InformationAction Continue
-            $toolsPath = Join-Path -Path $targetDirectory -ChildPath ".tools"
-            Get-TerraformTool -version "latest" -toolsPath $toolsPath
+        $starterModuleUrl = $bicepLegacyUrl
+        $starterModuleSourceFolder = "."
+        $starterReleaseTag = "local"
+        $starterPipelineFolder = "local"
+
+        if(!$isLegacyBicep) {
+            $bootstrapConfigPath = Join-Path $bootstrapPath $bootstrapConfigPath
+            $bootstrapConfig = Get-ALZConfig -configFilePath $bootstrapConfigPath
+
+            $bootstrapModules = $bootstrapConfig.bootstrap_modules.PsObject.Properties
+            if($bootstrap -eq "") {
+                Write-InformationColored "Please select the bootstrap module you would like to use, you can enter one of the following keys:" -ForegroundColor Yellow -InformationAction Continue
+                foreach ($bootstrapModule in $bootstrapModules) {
+                    Write-InformationColored "$($bootstrapModule.Name): $($bootstapModule.Value.description)" -ForegroundColor Yellow -InformationAction Continue
+                }
+                Write-InformationColored ": " -ForegroundColor Yellow -NoNewline -InformationAction Continue
+                $bootstrap = Read-Host
+            }
+
+            $bootstrapDetails = $bootstrapModules | Where-Object { $_.Name -eq $bootstrap }
+            if($null -eq $bootstrapDetails) {
+                Write-InformationColored "The bootstrap type '$bootstrap' that you have selected does not exist. Please try again with a valid bootstrap type..." -ForegroundColor Red -InformationAction Continue
+                return
+            }
+
+            $starterModules = $bootstrapDetails.Value.starter_modules.PsObject.Properties
+            $starterModuleDetails = $starterModules | Where-Object { $_.Name -eq $bootstrapDetails.Value.starter_modules }
+            if($null -eq $starterModuleDetails) {
+                Write-InformationColored "The starter modules '$($bootstrapDetails.Value.starter_modules)' for the bootstrap type '$bootstrap' that you have selected does not exist. This could be an issue with your custom configuration, please check and try again..." -ForegroundColor Red -InformationAction Continue
+                return
+            }
+
+            $starterModuleUrl = $starterModuleDetails.Value.$iac.url
+            $starterModuleSourceFolder = $starterModuleDetails.Value.$iac.module_path
+            $starterPipelineFolder = $starterModuleDetails.Value.$iac.pipeline_folder
         }
 
-        $bootstrapReleaseTag = "local"
-        $bootstrapPath = $bootstrapModuleOverrideFolderPath
-
-        if($bootstrapModuleOverrideFolderPath -eq "" && !$local) {
+        if($starterModuleOverrideFolderPath -eq "" && $isLegacyBicep) {
             $versionAndPath = New-FolderStructure `
                 -targetDirectory $alzEnvironmentDestination `
-                -url $bootstrapModuleUrl `
-                -release "latest" `
-                -targetFolder "bootstrap" `
-                -sourceFolder $bootstrapSourceFolder
+                -url $starterModuleUrl `
+                -release $alzVersion `
+                -targetFolder $starterModuleTargetFolder `
+                -sourceFolder $starterModuleSourceFolder
 
-            $bootstapReleaseTag = $versionAndPath.releaseTag
-            $bootstrapPath = $versionAndPath.path
+            $starterReleaseTag = $versionAndPath.releaseTag
+            $starterPath = $versionAndPath.path
         }
 
-        # TODO Get config here
-
-
-
-        $starterPath = $versionsAndPaths.starterPath
-
-        if ($alzIacProvider -eq "bicep") {
-            $starterPath = Join-Path $alzEnvironmentDestination $starterFolder
+        if ($iac -eq "bicep") {
+            $starterPath = Join-Path $targetDirectory $starterFolder
             New-ALZEnvironmentBicep `
                 -targetDirectory $starterPath `
-                -upstreamReleaseVersion $versionsAndPaths.starterReleaseTag `
-                -upstreamReleaseFolderPath $versionsAndPaths.starterPath `
+                -upstreamReleaseVersion $starterReleaseTag `
+                -upstreamReleaseFolderPath $starterPath `
                 -vcs $alzCicdPlatform `
-                -local:$local
-        }
-
-        $starterPipelineFolder = "ci_cd"
-        if($alzIacProvider -eq "bicep") {
-            if($alzCicdPlatform -eq "azuredevops") {
-                $starterPipelineFolder = ".azuredevops/pipelines"
-            }
-            if($alzCicdPlatform -eq "github") {
-                $starterPipelineFolder = ".github/workflows"
-            }
+                -local:$isLegacyBicep
         }
 
         if(!$local) {
