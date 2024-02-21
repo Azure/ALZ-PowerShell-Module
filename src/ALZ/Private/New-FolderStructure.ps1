@@ -26,7 +26,7 @@ function New-FolderStructure {
             $release = "v$release"
         }
 
-        $releaseTag = Get-GithubRelease -githubRepoUrl $yrl -targetDirectory $targetDirectory -moduleSourceFolder $sourceFolder -moduleTargetFolder $targetFolder -release $release
+        $releaseTag = Get-GithubRelease -githubRepoUrl $url -targetDirectory $targetDirectory -moduleSourceFolder $sourceFolder -moduleTargetFolder $targetFolder -release $release
         $path = Join-Path $targetDirectory $targetFolder $releaseTag
 
         Write-InformationColored "Downloaded module version $releaseTag to $path" -ForegroundColor Green -InformationAction Continue

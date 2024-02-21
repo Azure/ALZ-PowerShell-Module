@@ -121,7 +121,7 @@ function New-ALZEnvironment {
                 -targetFolder "bootstrap" `
                 -sourceFolder $bootstrapSourceFolder
 
-            $bootstapReleaseTag = $versionAndPath.releaseTag
+            $bootstrapReleaseTag = $versionAndPath.releaseTag
             $bootstrapPath = $versionAndPath.path
         }
 
@@ -176,7 +176,7 @@ function New-ALZEnvironment {
             $versionAndPath = New-FolderStructure `
                 -targetDirectory $alzEnvironmentDestination `
                 -url $starterModuleUrl `
-                -release $alzVersion `
+                -release $release `
                 -targetFolder $starterModuleTargetFolder `
                 -sourceFolder $starterModuleSourceFolder
 
@@ -197,9 +197,11 @@ function New-ALZEnvironment {
         if(!$local) {
             New-Bootstrap `
                 -bootstrapName $alzCicdPlatform `
-                -bootstrapFolderPath $versionsAndPaths.bootstrapPath `
+                -bootstrapFolderPath $bootstrapPath `
+                -bootstrapRelease $bootstrapReleaseTag `
                 -starterFolderPath $starterPath `
                 -starterPipelineFolder $starterPipelineFolder `
+                -starterRelease $starterReleaseTag `
                 -userInputOverridePath $userInputOverridePath `
                 -autoApprove:$autoApprove.IsPresent `
                 -destroy:$destroy.IsPresent

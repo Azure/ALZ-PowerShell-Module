@@ -64,13 +64,13 @@ function Invoke-Upgrade {
 
             if($upgrade.ToLower() -eq "upgrade") {
                 $currentPath = Join-Path -Path $targetDirectory -ChildPath $release
-                $currentBootstrapCachedValuesPath = Join-Path -Path $currentPath -ChildPath $cacheFileName
+                $currentCachedValuesPath = Join-Path -Path $currentPath -ChildPath $cacheFileName
                 $currentStateFilePath = Join-Path -Path $currentPath -ChildPath $stateFileName
 
                 # Copy the previous cached values to the current release
-                if($null -ne $previousBootstrapCachedValuesPath) {
-                    Write-InformationColored "AUTOMATIC UPGRADE: Copying $previousBootstrapCachedValuesPath to $currentBootstrapCachedValuesPath" -ForegroundColor Green -InformationAction Continue
-                    Copy-Item -Path $previousBootstrapCachedValuesPath -Destination $currentBootstrapCachedValuesPath -Force | Out-String | Write-Verbose
+                if($null -ne $previousCachedValuesPath) {
+                    Write-InformationColored "AUTOMATIC UPGRADE: Copying $previousCachedValuesPath to $currentCachedValuesPath" -ForegroundColor Green -InformationAction Continue
+                    Copy-Item -Path $previousCachedValuesPath -Destination $currentCachedValuesPath -Force | Out-String | Write-Verbose
                 }
 
                 Write-InformationColored "AUTOMATIC UPGRADE: Copying $previousStateFilePath to $currentStateFilePath" -ForegroundColor Green -InformationAction Continue
