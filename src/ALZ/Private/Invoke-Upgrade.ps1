@@ -8,9 +8,6 @@ function Invoke-Upgrade {
         [string] $cacheFileName,
 
         [Parameter(Mandatory = $false)]
-        [string] $stateFileName = "",
-
-        [Parameter(Mandatory = $false)]
         [string] $release,
 
         [Parameter(Mandatory = $false)]
@@ -21,7 +18,6 @@ function Invoke-Upgrade {
 
         $directories = Get-ChildItem -Path $targetDirectory -Filter "v*" -Directory
         $previousCachedValuesPath = $null
-        $previousStateFilePath = $null
         $previousVersion = $null
         $foundPreviousRelease = $false
 
@@ -29,19 +25,11 @@ function Invoke-Upgrade {
             $releasePath = Join-Path -Path $targetDirectory -ChildPath $directory.Name
             $releaseCachedValuesPath = Join-Path -Path $releasePath -ChildPath $cacheFileName
 
-            if($stateFileName -ne "") {
-                $releaseStateFilePath = Join-Path -Path $releasePath -ChildPath $stateFileName
-            }
-
             if(Test-Path $releaseCachedValuesPath) {
                 $previousCachedValuesPath = $releaseCachedValuesPath
             }
 
-            if(Test-Path $releaseStateFilePath) {
-                $previousStateFilePath = $releaseStateFilePath
-            }
-
-            if($null -ne $previousStateFilePath) {
+            if($null -ne $previousCachedValuesPath) {
                 if($directory.Name -eq $release) {
                     # If the current version has already been run, then skip the upgrade process
                     break
@@ -65,7 +53,6 @@ function Invoke-Upgrade {
             if($upgrade.ToLower() -eq "upgrade") {
                 $currentPath = Join-Path -Path $targetDirectory -ChildPath $release
                 $currentCachedValuesPath = Join-Path -Path $currentPath -ChildPath $cacheFileName
-                $currentStateFilePath = Join-Path -Path $currentPath -ChildPath $stateFileName
 
                 # Copy the previous cached values to the current release
                 if($null -ne $previousCachedValuesPath) {
@@ -77,7 +64,10 @@ function Invoke-Upgrade {
                 Copy-Item -Path $previousStateFilePath -Destination $currentStateFilePath -Force | Out-String | Write-Verbose
 
                 Write-InformationColored "AUTOMATIC UPGRADE: Upgrade complete. If any files in the starter have been updated, you will need to remove branch protection in order for the Terraform apply to succeed..." -ForegroundColor Yellow -InformationAction Continue
+                return $true
             }
         }
+
+        return $false
     }
 }

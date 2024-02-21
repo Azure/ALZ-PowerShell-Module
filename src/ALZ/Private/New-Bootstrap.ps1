@@ -2,16 +2,22 @@ function New-Bootstrap {
     [CmdletBinding(SupportsShouldProcess = $true)]
     param (
         [Parameter(Mandatory = $false)]
-        [string] $bootstrapName,
+        [PSCustomObject] $bootstrapDetails,
+
+        [Parameter(Mandatory = $false)]
+        [PSCustomObject] $validationConfig,
+
+        [Parameter(Mandatory = $false)]
+        [PSCustomObject] $inputConfig,
 
         [Parameter(Mandatory = $false)]
         [string] $userInputOverridePath = "",
 
         [Parameter(Mandatory = $false)]
-        [string] $bootstrapFolderPath,
+        [string] $bootstrapPath,
 
         [Parameter(Mandatory = $false)]
-        [string] $starterFolderPath,
+        [string] $starterPath,
 
         [Parameter(Mandatory = $false)]
         [string] $bootstrapRelease,
@@ -30,6 +36,7 @@ function New-Bootstrap {
     )
 
     if ($PSCmdlet.ShouldProcess("ALZ-Terraform module configuration", "modify")) {
+
         # Get User Input Overrides (used for automated testing purposes and advanced use cases)
         $userInputOverrides = $null
         if($userInputOverridePath -ne "") {
@@ -37,30 +44,54 @@ function New-Bootstrap {
         }
 
         # Setup Cache File Name
-        $cacheFileName = "cached-inputs.json"
+        $interfaceCacheFileName = "interface-cache.json"
+        $bootstrapCacheFileName = "bootstrap-cache.json"
+        $starterCacheFileName = "starter-cache.json"
+        $interfaceCachePath = Join-Path -Path $bootstrapPath -ChildPath $interfaceCacheFileName
+        $interfaceCachedConfig = Get-ALZConfig -configFilePath $interfaceCachePath
+        $bootstrapCachePath = Join-Path -Path $bootstrapPath -ChildPath $bootstrapCacheFileName
+        $bootstrapCachedConfig = Get-ALZConfig -configFilePath $bootstrapCachePath
+        $starterCachePath = Join-Path -Path $starterPath -ChildPath $starterCacheFileName
+        $starterCachedConfig = Get-ALZConfig -configFilePath $starterCachePath
 
-        # Run upgrade for bootstrap
-        Invoke-Upgrade `
-            -targetDirectory $bootstrapFolderPath `
-            -cacheFileName $cacheFileName `
-            -stateFilePathAndFileName "$alzCicdPlatform/terraform.tfstate" `
+        $bootstrapModulePath = Join-Path -Path $bootstrapPath -ChildPath $bootstrapDetails.Value.location
+
+        # Run upgrade for bootstrap state
+        $wasUpgraded = Invoke-Upgrade `
+            -targetDirectory $bootstrapModulePath `
+            -cacheFileName "terraform.tfstate" `
             -release $bootstrapRelease `
             -autoApprove:$autoApprove.IsPresent
 
-        # Run upgrade for starter
-        Invoke-Upgrade `
-            -targetDirectory $starterFolderPath `
-            -cacheFileName $cacheFileName `
-            -release $starterRelease `
-            -autoApprove:$autoApprove.IsPresent
+        if($wasUpgraded) {
+            # Run upgrade for interface inputs
+            Invoke-Upgrade `
+                -targetDirectory $bootstrapPath `
+                -cacheFileName $interfaceCacheFileName `
+                -release $bootstrapRelease `
+                -autoApprove:$wasUpgraded
 
-        # Getting the configuration for the initial bootstrap user input and validators
-        $bootstrapConfigFilePath = Join-Path -Path $bootstrapFolderPath -ChildPath ".config/ALZ-Powershell.config.json"
-        $bootstrapConfig = Get-ALZConfig -configFilePath $bootstrapConfigFilePath
+            # Run upgrade for bootstrap inputs
+            Invoke-Upgrade `
+                -targetDirectory $bootstrapPath `
+                -cacheFileName $bootstrapCacheFileName `
+                -release $bootstrapRelease `
+                -autoApprove:$wasUpgraded
+
+            # Run upgrade for starter
+            Invoke-Upgrade `
+                -targetDirectory $starterFolderPath `
+                -cacheFileName $starterCacheFileName `
+                -release $starterRelease `
+                -autoApprove:$wasUpgraded
+        }
+
+        # Getting the configuration for the interface user input and validators
+        $inputConfigMapped = Convert-InterfaceInputToUserInputConfig -inputConfig $inputConfig -validators $validationConfig
+        $interfaceConfiguration = Request-ALZEnvironmentConfig -configurationParameters $inputConfigMapped -respectOrdering -userInputOverrides $userInputOverrides -userInputDefaultOverrides $interfaceCachedConfig -treatEmptyDefaultAsValid $true -autoApprove:$autoApprove.IsPresent
 
         # Getting additional configuration for the bootstrap module user input
-        $bootstrapPath = Join-Path -Path $bootstrapFolderPath -ChildPath $bootstrapName
-        $bootstrapVariableFilesPath = Join-Path -Path $bootstrapPath -ChildPath "variables.tf"
+        $bootstrapVariableFilesPath = Join-Path -Path $bootstrapModulePath -ChildPath "variables.tf"
         $hclParserToolPath = Get-HCLParserTool -alzEnvironmentDestination $bootstrapPath -toolVersion "v0.6.0"
         $bootstrapParameters = Convert-HCLVariablesToUserInputConfig -targetVariableFile $bootstrapVariableFilesPath -hclParserToolPath $hclParserToolPath -validators $bootstrapConfig.validators
 

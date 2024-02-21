@@ -44,7 +44,6 @@ function New-ALZEnvironment {
         [string] $release = "latest",
 
         [Parameter(Mandatory = $false)]
-        [ValidateSet("bicep", "terraform")]
         [Alias("i")]
         [Alias("alzIacProvider")]
         [string] $iac = "",
@@ -95,9 +94,23 @@ function New-ALZEnvironment {
         $bicepLegacyMode = $true # Note this is set to true to act as a feature flag while the Bicep bootstrap is developed. It will be switched to false once it is all working.
     )
 
+
+
     Write-InformationColored "Getting ready to create a new ALZ environment with you..." -ForegroundColor Green -InformationAction Continue
 
     if ($PSCmdlet.ShouldProcess("Accelerator setup", "modify")) {
+
+        if($iac -eq "") {
+            Write-InformationColored "Please select the IAC you would like to use, you can enter one of 'bicep or 'terraform':" -ForegroundColor Yellow -InformationAction Continue
+            Write-InformationColored ": " -ForegroundColor Yellow -NoNewline -InformationAction Continue
+            $iac = Read-Host
+        }
+
+        $validIac = @("bicep", "terraform")
+        if($iac -notin $validIac) {
+            Write-InformationColored "The IAC '$iac' that you have selected does not exist. Please try again with a valid IAC..." -ForegroundColor Red -InformationAction Continue
+            return
+        }
 
         $isLegacyBicep = $false
         if($iac -eq "bicep") {
@@ -113,7 +126,7 @@ function New-ALZEnvironment {
         $bootstrapReleaseTag = "local"
         $bootstrapPath = $bootstrapModuleOverrideFolderPath
 
-        if($bootstrapModuleOverrideFolderPath -eq "" && !$isLegacyBicep) {
+        if($bootstrapModuleOverrideFolderPath -ne "" && !$isLegacyBicep) {
             $versionAndPath = New-FolderStructure `
                 -targetDirectory $targetDirectory `
                 -url $bootstrapModuleUrl `
@@ -140,9 +153,14 @@ function New-ALZEnvironment {
         $starterReleaseTag = "local"
         $starterPipelineFolder = "local"
 
+        $bootstrapDetails = $null
+        $validationConfig = $null
+        $inputConfig = $null
+
         if(!$isLegacyBicep) {
             $bootstrapConfigPath = Join-Path $bootstrapPath $bootstrapConfigPath
             $bootstrapConfig = Get-ALZConfig -configFilePath $bootstrapConfigPath
+            $validationConfig = $bootstrapConfig.validators
 
             $bootstrapModules = $bootstrapConfig.bootstrap_modules.PsObject.Properties
             if($bootstrap -eq "") {
@@ -170,9 +188,16 @@ function New-ALZEnvironment {
             $starterModuleUrl = $starterModuleDetails.Value.$iac.url
             $starterModuleSourceFolder = $starterModuleDetails.Value.$iac.module_path
             $starterPipelineFolder = $starterModuleDetails.Value.$iac.pipeline_folder
+
+            $inputConfigFilePath = Join-Path -Path $bootstrapPath -ChildPath $bootstrapDetails.Value.interface_config_file
+            $inputConfig = Get-ALZConfig -configFilePath $inputConfigFilePath
         }
 
-        if($starterModuleOverrideFolderPath -eq "" && $isLegacyBicep) {
+
+        $starterReleaseTag = "local"
+        $starterPath = $starterModuleOverrideFolderPath
+
+        if($starterModuleOverrideFolderPath -ne "") {
             $versionAndPath = New-FolderStructure `
                 -targetDirectory $alzEnvironmentDestination `
                 -url $starterModuleUrl `
@@ -190,16 +215,18 @@ function New-ALZEnvironment {
                 -targetDirectory $starterPath `
                 -upstreamReleaseVersion $starterReleaseTag `
                 -upstreamReleaseFolderPath $starterPath `
-                -vcs $alzCicdPlatform `
+                -vcs $bootstrap `
                 -local:$isLegacyBicep
         }
 
         if(!$local) {
             New-Bootstrap `
-                -bootstrapName $alzCicdPlatform `
-                -bootstrapFolderPath $bootstrapPath `
+                -bootstrapDetails $bootstrapDetails `
+                -validationConfig $validationConfig `
+                -inputConfig $inputConfig `
+                -bootstrapPath $bootstrapPath `
                 -bootstrapRelease $bootstrapReleaseTag `
-                -starterFolderPath $starterPath `
+                -starterPath $starterPath `
                 -starterPipelineFolder $starterPipelineFolder `
                 -starterRelease $starterReleaseTag `
                 -userInputOverridePath $userInputOverridePath `
