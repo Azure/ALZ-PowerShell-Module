@@ -172,7 +172,7 @@ function New-ALZEnvironment {
                 $bootstrap = Read-Host
             }
 
-            $bootstrapDetails = $bootstrapModules | Where-Object { $_.Name -eq $bootstrap }
+            $bootstrapDetails = $bootstrapModules | Where-Object { $_.Name -eq $bootstrap -or $bootstrap -in $_.Value.aliases }
             if($null -eq $bootstrapDetails) {
                 Write-InformationColored "The bootstrap type '$bootstrap' that you have selected does not exist. Please try again with a valid bootstrap type..." -ForegroundColor Red -InformationAction Continue
                 return
