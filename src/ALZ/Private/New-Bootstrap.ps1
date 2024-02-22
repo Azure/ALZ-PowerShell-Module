@@ -2,6 +2,9 @@ function New-Bootstrap {
     [CmdletBinding(SupportsShouldProcess = $true)]
     param (
         [Parameter(Mandatory = $false)]
+        [string] $iac,
+
+        [Parameter(Mandatory = $false)]
         [PSCustomObject] $bootstrapDetails,
 
         [Parameter(Mandatory = $false)]
@@ -90,6 +93,22 @@ function New-Bootstrap {
         $inputConfigMapped = Convert-InterfaceInputToUserInputConfig -inputConfig $inputConfig -validators $validationConfig
         $interfaceConfiguration = Request-ALZEnvironmentConfig -configurationParameters $inputConfigMapped -respectOrdering -userInputOverrides $userInputOverrides -userInputDefaultOverrides $interfaceCachedConfig -treatEmptyDefaultAsValid $true -autoApprove:$autoApprove.IsPresent
 
+        $computedInputMapping = @{
+            "iac_type" = $iac
+            "module_folder_path" = #TBC
+            "pipeline_folder_path" = #TBC
+        }
+
+        $inputConfig.PSCustomObject.Properties | ForEach-Object {
+            $property = $_
+            if($property.Value.source -eq "powershell") {
+                if($property.Name -eq "iac_type") {
+                    $input = $interfaceConfiguration | Where-Object { $_.Name -eq $property.Name }
+                    $input.Value.Value = $iac
+                }
+            }
+        }
+
         # Getting additional configuration for the bootstrap module user input
         $bootstrapVariableFilesPath = Join-Path -Path $bootstrapModulePath -ChildPath "variables.tf"
         $hclParserToolPath = Get-HCLParserTool -alzEnvironmentDestination $bootstrapPath -toolVersion "v0.6.0"
@@ -105,7 +124,7 @@ function New-Bootstrap {
         $bootstrapConfiguration = Request-ALZEnvironmentConfig -configurationParameters $bootstrapParameters -respectOrdering -userInputOverrides $userInputOverrides -userInputDefaultOverrides $cachedBootstrapConfig -treatEmptyDefaultAsValid $true -autoApprove:$autoApprove.IsPresent
 
         # Getting the configuration for the starter module user input
-        $starterTemplate = $bootstrapConfiguration.PsObject.Properties["starter_module"].Value.Value
+        $starterTemplate = $interfaceConfiguration.PsObject.Properties["starter_module"].Value.Value
         $starterTemplatePath = Join-Path -Path $starterFolderPath -ChildPath $starterTemplate
         $targetVariableFilePath = Join-Path -Path $starterTemplatePath -ChildPath "variables.tf"
         $starterModuleParameters = Convert-HCLVariablesToUserInputConfig -targetVariableFile $targetVariableFilePath -hclParserToolPath $hclParserToolPath -validators $bootstrapConfig.validators
