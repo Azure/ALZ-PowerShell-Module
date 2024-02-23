@@ -94,11 +94,10 @@ function New-Bootstrap {
         $interfaceConfiguration = Request-ALZEnvironmentConfig -configurationParameters $inputConfigMapped -respectOrdering -userInputOverrides $userInputOverrides -userInputDefaultOverrides $interfaceCachedConfig -treatEmptyDefaultAsValid $true -autoApprove:$autoApprove.IsPresent
         $starterModuleName = $interfaceConfiguration.PsObject.Properties["starter_module"].Value.Value
         $starterModulePath = Join-Path -Path $starterPath -ChildPath $starterModuleName
-        $pipelineModulePath = Join-Path -Path $starterPath -ChildPath $bootstrapDetails.Value.pipeline_folder
-
+        $pipelineModulePath = Join-Path -Path $starterPath -ChildPath $starterPipelineFolder
         $computedInputMapping = @{
-            "iac_type" = $iac
-            "module_folder_path" = $starterModulePath
+            "iac_type"             = $iac
+            "module_folder_path"   = $starterModulePath
             "pipeline_folder_path" = $pipelineModulePath
         }
 
@@ -119,6 +118,10 @@ function New-Bootstrap {
             $inputVariablesFilePath = Join-Path -Path $bootstrapModulePath -ChildPath $inputVariablesFile
             $bootstrapParameters = Convert-HCLVariablesToUserInputConfig -targetVariableFile $inputVariablesFilePath -hclParserToolPath $hclParserToolPath -validators $validationConfig.validators -appendToObject $bootstrapParameters
         }
+        foreach($interfaceVariablesFile in $bootstrapDetails.Value.interface_variable_files) {
+            $inputVariablesFilePath = Join-Path -Path $bootstrapModulePath -ChildPath $interfaceVariablesFile
+            $bootstrapParameters = Convert-HCLVariablesToUserInputConfig -targetVariableFile $inputVariablesFilePath -hclParserToolPath $hclParserToolPath -validators $validationConfig.validators -appendToObject $bootstrapParameters -allComputedInputs
+        }
 
         Write-InformationColored "Got configuration" -ForegroundColor Green -InformationAction Continue
 
@@ -138,10 +141,16 @@ function New-Bootstrap {
         foreach($inputConfigItem in $inputConfig.PSObject.Properties) {
             $inputVariable = $interfaceConfiguration | Where-Object { $_.Name -eq $inputConfigItem.Name }
             if("bootstrap" -in $inputConfigItem.Value.maps_to) {
-                $bootstrapConfiguration | Add-Member -MemberType NoteProperty -Name $inputVariable.Name -Value $inputVariable.Value
+                $bootstrapConfigurationItem = $bootstrapConfiguration | Where-Object { $_.Name -eq $inputVariable.Name }
+                if($null -ne $bootstrapConfigurationItem) {
+                    $bootstrapConfiguration.Value.Value = $inputVariable.Value
+                }
             }
             if("starter" -in $inputConfigItem.Value.maps_to) {
-                $starterConfiguration | Add-Member -MemberType NoteProperty -Name $inputVariable.Name -Value $inputVariable.Value
+                $starterConfigurationItem = $bootstrapInterfaceParameters | Where-Object { $_.Name -eq $inputVariable.Name }
+                if($null -ne $starterConfigurationItem) {
+                    $starterConfigurationItem.Value.Value = $inputVariable.Value.Value
+                }
             }
         }
 

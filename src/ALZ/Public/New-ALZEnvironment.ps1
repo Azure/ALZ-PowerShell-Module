@@ -94,8 +94,6 @@ function New-ALZEnvironment {
         $bicepLegacyMode = $true # Note this is set to true to act as a feature flag while the Bicep bootstrap is developed. It will be switched to false once it is all working.
     )
 
-
-
     Write-InformationColored "Getting ready to create a new ALZ environment with you..." -ForegroundColor Green -InformationAction Continue
 
     if ($PSCmdlet.ShouldProcess("Accelerator setup", "modify")) {
@@ -117,6 +115,14 @@ function New-ALZEnvironment {
             $isLegacyBicep = $bicepLegacyMode -eq $true
         }
 
+        if($isLegacyBicep) {
+            Write-InformationColored "We are running in legacy Bicep mode" -ForegroundColor Green -InformationAction Continue
+        }
+
+        if(!$isLegacyBicep){
+            Write-InformationColored "We are running in modern mode" -ForegroundColor Green -InformationAction Continue
+        }
+
         if(!$isLegacyBicep) {
             Write-InformationColored "Checking you have the latest version of Terraform installed..." -ForegroundColor Green -InformationAction Continue
             $toolsPath = Join-Path -Path $targetDirectory -ChildPath ".tools"
@@ -126,7 +132,7 @@ function New-ALZEnvironment {
         $bootstrapReleaseTag = "local"
         $bootstrapPath = $bootstrapModuleOverrideFolderPath
 
-        if($bootstrapModuleOverrideFolderPath -ne "" && !$isLegacyBicep) {
+        if($bootstrapModuleOverrideFolderPath -eq "" -and !$isLegacyBicep) {
             $versionAndPath = New-FolderStructure `
                 -targetDirectory $targetDirectory `
                 -url $bootstrapModuleUrl `
@@ -178,10 +184,11 @@ function New-ALZEnvironment {
                 return
             }
 
-            $starterModules = $bootstrapDetails.Value.starter_modules.PsObject.Properties
-            $starterModuleDetails = $starterModules | Where-Object { $_.Name -eq $bootstrapDetails.Value.starter_modules }
+            $starterModules = $bootstrapConfig.PSObject.Properties | Where-Object { $_.Name -eq "starter_modules" }
+            $starterModuleType = $bootstrapDetails.Value.starter_modules
+            $starterModuleDetails = $starterModules.Value.PSObject.Properties | Where-Object { $_.Name -eq $starterModuleType }
             if($null -eq $starterModuleDetails) {
-                Write-InformationColored "The starter modules '$($bootstrapDetails.Value.starter_modules)' for the bootstrap type '$bootstrap' that you have selected does not exist. This could be an issue with your custom configuration, please check and try again..." -ForegroundColor Red -InformationAction Continue
+                Write-InformationColored "The starter modules '$($starterModuleType)' for the bootstrap type '$bootstrap' that you have selected does not exist. This could be an issue with your custom configuration, please check and try again..." -ForegroundColor Red -InformationAction Continue
                 return
             }
 
@@ -193,13 +200,12 @@ function New-ALZEnvironment {
             $inputConfig = Get-ALZConfig -configFilePath $inputConfigFilePath
         }
 
-
         $starterReleaseTag = "local"
         $starterPath = $starterModuleOverrideFolderPath
 
-        if($starterModuleOverrideFolderPath -ne "") {
+        if($starterModuleOverrideFolderPath -eq "") {
             $versionAndPath = New-FolderStructure `
-                -targetDirectory $alzEnvironmentDestination `
+                -targetDirectory $targetDirectory `
                 -url $starterModuleUrl `
                 -release $release `
                 -targetFolder $starterModuleTargetFolder `
@@ -219,7 +225,7 @@ function New-ALZEnvironment {
                 -local:$isLegacyBicep
         }
 
-        if(!$local) {
+        if(!$isLegacyBicep) {
             New-Bootstrap `
                 -bootstrapDetails $bootstrapDetails `
                 -validationConfig $validationConfig `

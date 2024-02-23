@@ -28,7 +28,7 @@ function New-ALZEnvironmentBicep {
 
         Write-InformationColored "Copying ALZ-Bicep module to $targetDirectory" -ForegroundColor Green -InformationAction Continue
         Copy-ALZParametersFile -alzEnvironmentDestination $targetDirectory -upstreamReleaseDirectory $upstreamReleaseFolderPath -configFiles $bicepConfig.config_files | Out-String | Write-Verbose
-        Copy-ALZParametersFile -alzEnvironmentDestination $targetDirectory -upstreamReleaseDirectory $upstreamReleaseFolderPath -configFiles $bicepConfig.cicd.$alzCicdPlatform | Out-String | Write-Verbose
+        Copy-ALZParametersFile -alzEnvironmentDestination $targetDirectory -upstreamReleaseDirectory $upstreamReleaseFolderPath -configFiles $bicepConfig.cicd.$vcs | Out-String | Write-Verbose
         Write-InformationColored "ALZ-Bicep source directory: $alzBicepSourceDirectory" -ForegroundColor Green -InformationAction Continue
 
         $configuration = Request-ALZEnvironmentConfig -configurationParameters $bicepConfig.parameters
