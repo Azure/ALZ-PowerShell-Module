@@ -94,14 +94,14 @@ function New-ALZEnvironment {
         $bicepLegacyMode = $true # Note this is set to true to act as a feature flag while the Bicep bootstrap is developed. It will be switched to false once it is all working.
     )
 
+    $ProgressPreference = "SilentlyContinue"
+
     Write-InformationColored "Getting ready to create a new ALZ environment with you..." -ForegroundColor Green -InformationAction Continue
 
     if ($PSCmdlet.ShouldProcess("Accelerator setup", "modify")) {
 
         if($iac -eq "") {
-            Write-InformationColored "Please select the IAC you would like to use, you can enter one of 'bicep or 'terraform':" -ForegroundColor Yellow -InformationAction Continue
-            Write-InformationColored ": " -ForegroundColor Yellow -NoNewline -InformationAction Continue
-            $iac = Read-Host
+            $iac = Request-SpecialInput -type "iac"
         }
 
         $validIac = @("bicep", "terraform")
@@ -116,11 +116,11 @@ function New-ALZEnvironment {
         }
 
         if($isLegacyBicep) {
-            Write-InformationColored "We are running in legacy Bicep mode" -ForegroundColor Green -InformationAction Continue
+            Write-Verbose "We are running in legacy Bicep mode"
         }
 
         if(!$isLegacyBicep){
-            Write-InformationColored "We are running in modern mode" -ForegroundColor Green -InformationAction Continue
+            Write-Verbose "We are running in modern mode"
         }
 
         if(!$isLegacyBicep) {
@@ -154,6 +154,7 @@ function New-ALZEnvironment {
             $starterModuleTargetFolder = "$starterFolder/upstream-releases"
         }
 
+        $hasStarterModule = $false
         $starterModuleUrl = $bicepLegacyUrl
         $starterModuleSourceFolder = "."
         $starterReleaseTag = "local"
@@ -170,13 +171,10 @@ function New-ALZEnvironment {
 
             $bootstrapModules = $bootstrapConfig.bootstrap_modules.PsObject.Properties
             if($bootstrap -eq "") {
-                Write-InformationColored "Please select the bootstrap module you would like to use, you can enter one of the following keys:" -ForegroundColor Yellow -InformationAction Continue
-                foreach ($bootstrapModule in $bootstrapModules) {
-                    Write-InformationColored "$($bootstrapModule.Name): $($bootstapModule.Value.description)" -ForegroundColor Yellow -InformationAction Continue
-                }
-                Write-InformationColored ": " -ForegroundColor Yellow -NoNewline -InformationAction Continue
-                $bootstrap = Read-Host
+                $bootstrap = Request-SpecialInput -type "bootstrap" -bootstrapModules $bootstrapModules
             }
+
+            Write-Verbose $($bootstrapModules | ConvertTo-Json -Depth 10)
 
             $bootstrapDetails = $bootstrapModules | Where-Object { $_.Name -eq $bootstrap -or $bootstrap -in $_.Value.aliases }
             if($null -eq $bootstrapDetails) {
@@ -184,26 +182,34 @@ function New-ALZEnvironment {
                 return
             }
 
-            $starterModules = $bootstrapConfig.PSObject.Properties | Where-Object { $_.Name -eq "starter_modules" }
-            $starterModuleType = $bootstrapDetails.Value.starter_modules
-            $starterModuleDetails = $starterModules.Value.PSObject.Properties | Where-Object { $_.Name -eq $starterModuleType }
-            if($null -eq $starterModuleDetails) {
-                Write-InformationColored "The starter modules '$($starterModuleType)' for the bootstrap type '$bootstrap' that you have selected does not exist. This could be an issue with your custom configuration, please check and try again..." -ForegroundColor Red -InformationAction Continue
-                return
+            Write-Verbose $($bootstrapDetails.Value | ConvertTo-Json -Depth 10)
+            $bootstrapStarterModule = $bootstrapDetails.Value.PSObject.Properties | Where-Object { $_.Name -eq  "starter_modules" }
+
+            if($null -ne $bootstrapStarterModule) {
+                Write-Verbose $($bootstrapStarterModule | ConvertTo-Json -Depth 10)
+                $hasStarterModule = $true
+                $starterModules = $bootstrapConfig.PSObject.Properties | Where-Object { $_.Name -eq "starter_modules" }
+                $starterModuleType = $bootstrapStarterModule.Value
+                $starterModuleDetails = $starterModules.Value.PSObject.Properties | Where-Object { $_.Name -eq $starterModuleType }
+                if($null -eq $starterModuleDetails) {
+                    Write-InformationColored "The starter modules '$($starterModuleType)' for the bootstrap type '$bootstrap' that you have selected does not exist. This could be an issue with your custom configuration, please check and try again..." -ForegroundColor Red -InformationAction Continue
+                    return
+                }
+
+                $starterModuleUrl = $starterModuleDetails.Value.$iac.url
+                $starterModuleSourceFolder = $starterModuleDetails.Value.$iac.module_path
+                $starterPipelineFolder = $starterModuleDetails.Value.$iac.pipeline_folder
             }
 
-            $starterModuleUrl = $starterModuleDetails.Value.$iac.url
-            $starterModuleSourceFolder = $starterModuleDetails.Value.$iac.module_path
-            $starterPipelineFolder = $starterModuleDetails.Value.$iac.pipeline_folder
-
             $inputConfigFilePath = Join-Path -Path $bootstrapPath -ChildPath $bootstrapDetails.Value.interface_config_file
+            Write-Verbose "Interface config path $inputConfigFilePath"
             $inputConfig = Get-ALZConfig -configFilePath $inputConfigFilePath
         }
 
         $starterReleaseTag = "local"
         $starterPath = $starterModuleOverrideFolderPath
 
-        if($starterModuleOverrideFolderPath -eq "") {
+        if($starterModuleOverrideFolderPath -eq "" -and ($hasStarterModule -or $isLegacyBicep)) {
             $versionAndPath = New-FolderStructure `
                 -targetDirectory $targetDirectory `
                 -url $starterModuleUrl `
@@ -232,6 +238,7 @@ function New-ALZEnvironment {
                 -inputConfig $inputConfig `
                 -bootstrapPath $bootstrapPath `
                 -bootstrapRelease $bootstrapReleaseTag `
+                -hasStarter:$hasStarterModule `
                 -starterPath $starterPath `
                 -starterPipelineFolder $starterPipelineFolder `
                 -starterRelease $starterReleaseTag `
@@ -240,6 +247,8 @@ function New-ALZEnvironment {
                 -destroy:$destroy.IsPresent
         }
     }
+
+    $ProgressPreference = "Continue"
 
     return
 }

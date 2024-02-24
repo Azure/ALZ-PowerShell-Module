@@ -20,6 +20,9 @@ function New-Bootstrap {
         [string] $bootstrapPath,
 
         [Parameter(Mandatory = $false)]
+        [switch] $hasStarter,
+
+        [Parameter(Mandatory = $false)]
         [string] $starterPath,
 
         [Parameter(Mandatory = $false)]
@@ -40,6 +43,9 @@ function New-Bootstrap {
 
     if ($PSCmdlet.ShouldProcess("ALZ-Terraform module configuration", "modify")) {
 
+        # Setup tools
+        $hclParserToolPath = Get-HCLParserTool -alzEnvironmentDestination $bootstrapPath -toolVersion "v0.6.0"
+
         # Get User Input Overrides (used for automated testing purposes and advanced use cases)
         $userInputOverrides = $null
         if($userInputOverridePath -ne "") {
@@ -59,49 +65,108 @@ function New-Bootstrap {
 
         $bootstrapModulePath = Join-Path -Path $bootstrapPath -ChildPath $bootstrapDetails.Value.location
 
-        # Run upgrade for bootstrap state
-        $wasUpgraded = Invoke-Upgrade `
-            -targetDirectory $bootstrapModulePath `
-            -cacheFileName "terraform.tfstate" `
-            -release $bootstrapRelease `
+        # Run upgrade
+        Invoke-FullUpgrade `
+            -bootstrapModulePath $bootstrapModulePath `
+            -bootstrapRelease $bootstrapRelease `
+            -bootstrapPath $bootstrapPath `
+            -starterRelease $starterRelease `
+            -starterPath $starterPath `
+            -interfaceCacheFileName $interfaceCacheFileName `
+            -bootstrapCacheFileName $bootstrapCacheFileName `
+            -starterCacheFileName $starterCacheFileName `
             -autoApprove:$autoApprove.IsPresent
 
-        if($wasUpgraded) {
-            # Run upgrade for interface inputs
-            Invoke-Upgrade `
-                -targetDirectory $bootstrapPath `
-                -cacheFileName $interfaceCacheFileName `
-                -release $bootstrapRelease `
-                -autoApprove:$wasUpgraded
+        # Get starter module
+        $starter = ""
+        $starterModulePath = ""
+        $pipelineModulePath = ""
 
-            # Run upgrade for bootstrap inputs
-            Invoke-Upgrade `
-                -targetDirectory $bootstrapPath `
-                -cacheFileName $bootstrapCacheFileName `
-                -release $bootstrapRelease `
-                -autoApprove:$wasUpgraded
-
-            # Run upgrade for starter
-            Invoke-Upgrade `
-                -targetDirectory $starterFolderPath `
-                -cacheFileName $starterCacheFileName `
-                -release $starterRelease `
-                -autoApprove:$wasUpgraded
+        if($hasStarter) {
+            $starter = Request-SpecialInput -type "starter" -starterPath $starterPath
+            $starterModulePath = Join-Path -Path $starterPath -ChildPath $starter
+            $pipelineModulePath = Join-Path -Path $starterPath -ChildPath $starterPipelineFolder
         }
 
-        # Getting the configuration for the interface user input and validators
+        # Getting the configuration for the interface user input
+        Write-Verbose "Getting the interface configuration for user input..."
         $inputConfigMapped = Convert-InterfaceInputToUserInputConfig -inputConfig $inputConfig -validators $validationConfig
-        $interfaceConfiguration = Request-ALZEnvironmentConfig -configurationParameters $inputConfigMapped -respectOrdering -userInputOverrides $userInputOverrides -userInputDefaultOverrides $interfaceCachedConfig -treatEmptyDefaultAsValid $true -autoApprove:$autoApprove.IsPresent
-        $starterModuleName = $interfaceConfiguration.PsObject.Properties["starter_module"].Value.Value
-        $starterModulePath = Join-Path -Path $starterPath -ChildPath $starterModuleName
-        $pipelineModulePath = Join-Path -Path $starterPath -ChildPath $starterPipelineFolder
+
+        # Getting configuration for the bootstrap module user input
+        $bootstrapParameters = [PSCustomObject]@{}
+
+        Write-Verbose "Getting the bootstrap configuration for user input..."
+        foreach($inputVariablesFile in $bootstrapDetails.Value.input_variable_files) {
+            $inputVariablesFilePath = Join-Path -Path $bootstrapModulePath -ChildPath $inputVariablesFile
+            $bootstrapParameters = Convert-HCLVariablesToUserInputConfig -targetVariableFile $inputVariablesFilePath -hclParserToolPath $hclParserToolPath -validators $validationConfig -appendToObject $bootstrapParameters
+        }
+        Write-Verbose "Getting the bootstrap configuration computed interface input..."
+        foreach($interfaceVariablesFile in $bootstrapDetails.Value.interface_variable_files) {
+            $inputVariablesFilePath = Join-Path -Path $bootstrapModulePath -ChildPath $interfaceVariablesFile
+            $bootstrapParameters = Convert-HCLVariablesToUserInputConfig -targetVariableFile $inputVariablesFilePath -hclParserToolPath $hclParserToolPath -validators $validationConfig -appendToObject $bootstrapParameters -allComputedInputs
+        }
+
+        # Getting the configuration for the starter module user input
+        $starterParameters  = [PSCustomObject]@{}
+
+        if($hasStarter) {
+            $targetVariableFilePath = Join-Path -Path $starterModulePath -ChildPath "variables.tf"
+            $starterParameters = Convert-HCLVariablesToUserInputConfig -targetVariableFile $targetVariableFilePath -hclParserToolPath $hclParserToolPath -validators $bootstrapConfig.validators
+        }
+
+        # Filter interface inputs if not in bootstrap or starter
+        foreach($inputConfigItem in $inputConfig.inputs.PSObject.Properties) {
+            if($inputConfigItem.Value.source -ne "input" -or $inputConfigItem.Value.required -eq $true) {
+                continue
+            }
+            $inputVariable = $inputConfigMapped.PSObject.Properties | Where-Object { $_.Name -eq $inputConfigItem.Name }
+            $displayMapFilter = $inputConfigItem.Value | Where-Object { $_.Name -eq "display_map_filter" }
+            $hasDisplayMapFilter = $null -ne $displayMapFilter
+
+            $inBootstrapOrStarter = $false
+            if("bootstrap" -in $inputConfigItem.Value.maps_to) {
+                $checkFilter = !$hasDisplayMapFilter -or ($hasDisplayMapFilter -and "bootstrap" -in $displayMapFilter.Value)
+
+                if($checkFilter) {
+                    $boostrapParameter = $bootstrapParameters.PSObject.Properties | Where-Object { $_.Name -eq $inputVariable.Name }
+                    if($null -eq $boostrapParameter) {
+                        $inBootstrapOrStarter = $true
+                    }
+                }
+            }
+            if("starter" -in $inputConfigItem.Value.maps_to) {
+                $checkFilter = !$hasDisplayMapFilter -or ($hasDisplayMapFilter -and "starter" -in $displayMapFilter.Value)
+
+                if($checkFilter) {
+                    $starterParameter = $starterParameters.PSObject.Properties | Where-Object { $_.Name -eq $inputVariable.Name }
+                    if($null -eq $starterParameter) {
+                        $inBootstrapOrStarter = $true
+                    }
+                }
+            }
+
+            if(!$inBootstrapOrStarter) {
+                $inputVariable.Value.Type = "SkippedInput"
+            }
+        }
+
+        # Prompt user for interface inputs
+        $interfaceConfiguration = Request-ALZEnvironmentConfig `
+            -configurationParameters $inputConfigMapped `
+            -respectOrdering `
+            -userInputOverrides $userInputOverrides `
+            -userInputDefaultOverrides $interfaceCachedConfig `
+            -treatEmptyDefaultAsValid $true `
+            -autoApprove:$autoApprove.IsPresent
+
+        # Set computed interface inputs
         $computedInputMapping = @{
             "iac_type"             = $iac
             "module_folder_path"   = $starterModulePath
             "pipeline_folder_path" = $pipelineModulePath
         }
 
-        $inputConfig.PSCustomObject.Properties | ForEach-Object {
+        $inputConfig.inputs.PSCustomObject.Properties | ForEach-Object {
             $property = $_
             if($property.Value.source -eq "powershell") {
                 $inputVariable = $interfaceConfiguration | Where-Object { $_.Name -eq $property.Name }
@@ -109,50 +174,45 @@ function New-Bootstrap {
             }
         }
 
-        $hclParserToolPath = Get-HCLParserTool -alzEnvironmentDestination $bootstrapPath -toolVersion "v0.6.0"
+        # Split interface inputs
+        $bootstrapComputed = [PSCustomObject]@{}
+        $starterComputed = [PSCustomObject]@{}
 
-        $bootstrapParameters = [PSCustomObject]@{}
+        Write-Verbose $($inputConfig.inputs | ConvertTo-Json)
+        Write-Verbose $($interfaceConfiguration | ConvertTo-Json)
 
-        # Getting additional configuration for the bootstrap module user input
-        foreach($inputVariablesFile in $bootstrapDetails.Value.input_variable_files) {
-            $inputVariablesFilePath = Join-Path -Path $bootstrapModulePath -ChildPath $inputVariablesFile
-            $bootstrapParameters = Convert-HCLVariablesToUserInputConfig -targetVariableFile $inputVariablesFilePath -hclParserToolPath $hclParserToolPath -validators $validationConfig.validators -appendToObject $bootstrapParameters
+        foreach($inputConfigItem in $inputConfig.inputs.PSObject.Properties) {
+            $inputVariable = $interfaceConfiguration | Where-Object { $_.Name -eq $inputConfigItem.Name }
+            if("bootstrap" -in $inputConfigItem.Value.maps_to) {
+                $bootstrapComputed | Add-Member -NotePropertyName $inputVariable.Name -NotePropertyValue $inputVariable.Value
+            }
+            if("starter" -in $inputConfigItem.Value.maps_to) {
+                $starterComputed | Add-Member -NotePropertyName $inputVariable.Name -NotePropertyValue $inputVariable.Value
+            }
         }
-        foreach($interfaceVariablesFile in $bootstrapDetails.Value.interface_variable_files) {
-            $inputVariablesFilePath = Join-Path -Path $bootstrapModulePath -ChildPath $interfaceVariablesFile
-            $bootstrapParameters = Convert-HCLVariablesToUserInputConfig -targetVariableFile $inputVariablesFilePath -hclParserToolPath $hclParserToolPath -validators $validationConfig.validators -appendToObject $bootstrapParameters -allComputedInputs
-        }
-
-        Write-InformationColored "Got configuration" -ForegroundColor Green -InformationAction Continue
 
         # Getting the user input for the bootstrap module
-        $bootstrapConfiguration = Request-ALZEnvironmentConfig -configurationParameters $bootstrapParameters -respectOrdering -userInputOverrides $userInputOverrides -userInputDefaultOverrides $bootstrapCachedConfig -treatEmptyDefaultAsValid $true -autoApprove:$autoApprove.IsPresent
+        $bootstrapConfiguration = Request-ALZEnvironmentConfig `
+            -configurationParameters $bootstrapParameters `
+            -respectOrdering `
+            -userInputOverrides $userInputOverrides `
+            -userInputDefaultOverrides $bootstrapCachedConfig `
+            -treatEmptyDefaultAsValid $true `
+            -autoApprove:$autoApprove.IsPresent `
+            -computedInputs $bootstrapComputed
 
-        # Getting the configuration for the starter module user input
-        $targetVariableFilePath = Join-Path -Path $starterModulePath -ChildPath "variables.tf"
-        $starterModuleParameters = Convert-HCLVariablesToUserInputConfig -targetVariableFile $targetVariableFilePath -hclParserToolPath $hclParserToolPath -validators $bootstrapConfig.validators
 
         Write-InformationColored "The following inputs are specific to the '$starterTemplate' starter module that you selected..." -ForegroundColor Green -InformationAction Continue
 
         # Getting the user input for the starter module
-        $starterConfiguration = Request-ALZEnvironmentConfig -configurationParameters $starterModuleParameters -respectOrdering -userInputOverrides $userInputOverrides -userInputDefaultOverrides $starterCachedConfig -treatEmptyDefaultAsValid $true -autoApprove:$autoApprove.IsPresent
-
-        # Appending interface configuration to the boostrap and starter configuration
-        foreach($inputConfigItem in $inputConfig.PSObject.Properties) {
-            $inputVariable = $interfaceConfiguration | Where-Object { $_.Name -eq $inputConfigItem.Name }
-            if("bootstrap" -in $inputConfigItem.Value.maps_to) {
-                $bootstrapConfigurationItem = $bootstrapConfiguration | Where-Object { $_.Name -eq $inputVariable.Name }
-                if($null -ne $bootstrapConfigurationItem) {
-                    $bootstrapConfiguration.Value.Value = $inputVariable.Value
-                }
-            }
-            if("starter" -in $inputConfigItem.Value.maps_to) {
-                $starterConfigurationItem = $bootstrapInterfaceParameters | Where-Object { $_.Name -eq $inputVariable.Name }
-                if($null -ne $starterConfigurationItem) {
-                    $starterConfigurationItem.Value.Value = $inputVariable.Value.Value
-                }
-            }
-        }
+        $starterConfiguration = Request-ALZEnvironmentConfig `
+            -configurationParameters $starterModuleParameters `
+            -respectOrdering `
+            -userInputOverrides $userInputOverrides `
+            -userInputDefaultOverrides $starterCachedConfig `
+            -treatEmptyDefaultAsValid $true `
+            -autoApprove:$autoApprove.IsPresent `
+            -computedInputs $starterComputed
 
         # Creating the tfvars files for the bootstrap and starter module
         $bootstrapTfvarsPath = Join-Path -Path $bootstrapModulePath -ChildPath "override.tfvars"

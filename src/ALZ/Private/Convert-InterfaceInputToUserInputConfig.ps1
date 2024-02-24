@@ -2,7 +2,7 @@ function Convert-InterfaceInputToUserInputConfig {
     [CmdletBinding(SupportsShouldProcess = $true)]
     param (
         [Parameter(Mandatory = $false)]
-        [string] $inputConfig,
+        [PSCustomObject]$inputConfig,
 
         [Parameter(Mandatory = $false)]
         [PSCustomObject]$validators,
@@ -11,14 +11,17 @@ function Convert-InterfaceInputToUserInputConfig {
         [PSCustomObject]$appendToObject = $null
     )
 
-    if ($PSCmdlet.ShouldProcess("Parse HCL Variables into Config", "modify")) {
+    if ($PSCmdlet.ShouldProcess("Parse Interface Variables into Config", "modify")) {
 
         $starterModuleConfiguration = [PSCustomObject]@{}
         if($appendToObject -ne $null) {
             $starterModuleConfiguration = $appendToObject
         }
 
-        foreach($variable in $inputConfig.PSObject.Properties) {
+        Write-Verbose $validators
+
+        foreach($variable in $inputConfig.inputs.PSObject.Properties) {
+            Write-Verbose "Parsing variable $($variable.Name)"
             $description = $variable.Value.description
 
             $order = 0
@@ -41,14 +44,16 @@ function Convert-InterfaceInputToUserInputConfig {
             $starterModuleConfigurationInstance | Add-Member -NotePropertyName "DataType" -NotePropertyValue $dataType
             $starterModuleConfigurationInstance | Add-Member -NotePropertyName "Sensitive" -NotePropertyValue $sensitive
 
-            if($variable.Value[0].PSObject.Properties.Name -contains "default") {
+            if($variable.Value.PSObject.Properties.Name -contains "default") {
                 $defaultValue = $variable.Value.default
                 $starterModuleConfigurationInstance | Add-Member -NotePropertyName "DefaultValue" -NotePropertyValue $defaultValue
             }
 
-            if($variable.PSObject.Properties.Name -contains "validation") {
+            if($variable.Value.PSObject.Properties.Name -contains "validation") {
                 $validationType = $variable.Value.validation
                 $validator = $validators.PSObject.Properties[$validationType].Value
+                $description = "$description ($($validator.Description))"
+                Write-Verbose "Adding $($variable.Value.validation) validation for $($variable.Name). Validation type: $($validator.Type)"
                 if($validator.Type -eq "AllowedValues"){
                     $starterModuleConfigurationInstance | Add-Member -NotePropertyName "AllowedValues" -NotePropertyValue $validator.AllowedValues
                 }

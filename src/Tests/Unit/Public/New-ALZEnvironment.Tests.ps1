@@ -112,11 +112,9 @@ InModuleScope 'ALZ' {
 
                 Mock -CommandName Invoke-Terraform -MockWith { }
 
-                Mock -CommandName Import-SubscriptionData -MockWith { }
-
-                Mock -CommandName Import-StarterPath -MockWith {}
-
                 Mock -CommandName Invoke-Upgrade -MockWith { }
+
+                Mock -CommandName Invoke-FullUpgrade -MockWith { }
 
                 Mock -CommandName Get-TerraformTool -MockWith {}
             }

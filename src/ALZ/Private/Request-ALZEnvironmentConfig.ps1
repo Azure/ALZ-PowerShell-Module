@@ -12,7 +12,10 @@ function Request-ALZEnvironmentConfig {
         [Parameter(Mandatory = $false)]
         [System.Boolean] $treatEmptyDefaultAsValid = $false,
         [Parameter(Mandatory = $false)]
-        [switch] $autoApprove
+        [switch] $autoApprove,
+        [Parameter(Mandatory = $false)]
+        [PSCustomObject] $computedInputs = $null
+
     )
     <#
     .SYNOPSIS
@@ -63,7 +66,20 @@ function Request-ALZEnvironmentConfig {
         $configurations = $configurationParameters.PSObject.Properties | Sort-Object { $_.Value.Order }
     }
 
+    if($null -ne $computedInputs) {
+        Write-Verbose $computedInputs
+    }
     foreach ($configurationValue in $configurations) {
+        $computedInput = $null
+        if($null -ne $computedInputs) {
+            $computedInput = $computedInputs.PsObject.Properties | Where-Object { $_.Name -eq $configurationValue.Name }
+        }
+
+        if($null -ne $computedInput) {
+            $configurationValue.Value.Value = $computedInput.Value.Value
+            continue
+        }
+
         if ($configurationValue.Value.Type -eq "UserInput") {
 
             # Check for and add cached as default

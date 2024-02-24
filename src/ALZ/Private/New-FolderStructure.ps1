@@ -18,8 +18,6 @@ function New-FolderStructure {
     )
 
     if ($PSCmdlet.ShouldProcess("ALZ-Terraform module configuration", "modify")) {
-        $ProgressPreference = "SilentlyContinue"
-
         Write-InformationColored "Downloading modules to $targetDirectory" -ForegroundColor Green -InformationAction Continue
 
         if(!($release.StartsWith("v")) -and ($release -ne "latest")) {
@@ -30,8 +28,6 @@ function New-FolderStructure {
         $path = Join-Path $targetDirectory $targetFolder $releaseTag
 
         Write-InformationColored "Downloaded module version $releaseTag to $path" -ForegroundColor Green -InformationAction Continue
-
-        $ProgressPreference = "Continue"
 
         return @{
             path       = $path

@@ -103,16 +103,24 @@ function Get-GithubRelease {
     if ($null -eq $contentTargetVersionPath) {
         Write-Verbose "===> Pulling and extracting release $releaseTag into $targetVersionPath"
         New-Item -ItemType Directory -Path "$targetVersionPath/tmp" | Out-String | Write-Verbose
-        Invoke-WebRequest -Uri "https://github.com/$repoOrgPlusRepo/archive/refs/tags/$releaseTag.zip" -OutFile "$targetVersionPath/tmp/$releaseTag.zip" -RetryIntervalSec 3 -MaximumRetryCount 100 | Out-String | Write-Verbose
-        Expand-Archive -Path "$targetVersionPath/tmp/$releaseTag.zip" -DestinationPath "$targetVersionPath/tmp/extracted" | Out-String | Write-Verbose
-        $extractedSubFolder = Get-ChildItem -Path "$targetVersionPath/tmp/extracted" -Directory
+        $targetPathForZip = "$targetVersionPath/tmp/$releaseTag.zip"
+        Invoke-WebRequest -Uri "https://github.com/$repoOrgPlusRepo/archive/refs/tags/$releaseTag.zip" -OutFile $targetPathForZip -RetryIntervalSec 3 -MaximumRetryCount 100 | Out-String | Write-Verbose
 
-        Write-Verbose "===> Moving all extracted contents into $targetVersionPath."
+        if(!(Test-Path $targetPathForZip)) {
+            Write-InformationColored "Failed to download the release $releaseTag from the GitHub repository $repoOrgPlusRepo" -ForegroundColor Red -InformationAction Continue
+            throw
+        }
 
-        Move-Item -Path "$($extractedSubFolder.FullName)/$moduleSourceFolder/*" -Destination "$targetVersionPath" -ErrorAction SilentlyContinue | Out-String | Write-Verbose
+        $targetPathForExtractedZip = "$targetVersionPath/tmp/extracted"
+
+        Expand-Archive -Path $targetPathForZip -DestinationPath $targetPathForExtractedZip | Out-String | Write-Verbose
+        $extractedSubFolder = Get-ChildItem -Path $targetPathForExtractedZip -Directory
+
+        Write-Verbose "===> Copying all extracted contents into $targetVersionPath."
+
+        Copy-Item -Path "$($extractedSubFolder.FullName)/$moduleSourceFolder/*" -Destination "$targetVersionPath" -Recurse | Out-String | Write-Verbose
 
         Remove-Item -Path "$targetVersionPath/tmp" -Force -Recurse
-
     } else {
         Write-InformationColored "The release directory for this version already exists and has content in it, so we are not over-writing it." -ForegroundColor Yellow -InformationAction Continue
         Write-Verbose "===> Content already exists in $releaseDirectory. Skipping"
