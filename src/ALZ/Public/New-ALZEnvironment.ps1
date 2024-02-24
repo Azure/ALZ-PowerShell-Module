@@ -253,6 +253,7 @@ function New-ALZEnvironment {
 
         if(!$isLegacyBicep) {
             New-Bootstrap `
+                -iac $iac `
                 -bootstrapDetails $bootstrapDetails `
                 -validationConfig $validationConfig `
                 -inputConfig $inputConfig `
@@ -272,3 +273,5 @@ function New-ALZEnvironment {
 
     return
 }
+
+New-Alias -Name "New-Accelerator" -Value "New-ALZEnvironment"
