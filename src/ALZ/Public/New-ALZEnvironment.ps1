@@ -231,15 +231,27 @@ function New-ALZEnvironment {
         $starterPath = $starterModuleOverrideFolderPath
 
         if($starterModuleOverrideFolderPath -eq "" -and ($hasStarterModule -or $isLegacyBicep)) {
-            $versionAndPath = New-FolderStructure `
-                -targetDirectory $targetDirectory `
-                -url $starterModuleUrl `
-                -release $release `
-                -targetFolder $starterModuleTargetFolder `
-                -sourceFolder $starterModuleSourceFolder
+            if($skipInternetChecks) {
+                $starterCheckPath = Join-Path $targetDirectory $starterModuleTargetFolder
+                $starterCheckFolders = Get-ChildItem -Path $starterCheckPath -Directory
+                if($null -ne $starterCheckFolders) {
+                    $starterCheckFolders = $starterCheckFolders | Sort-Object { $_.Name } -Descending
+                    $mostRecentStarterCheckFolder = $starterCheckFolders[0]
 
-            $starterReleaseTag = $versionAndPath.releaseTag
-            $starterPath = $versionAndPath.path
+                    $starterReleaseTag = $mostRecentStarterCheckFolder.Name
+                    $starterPath = $mostRecentStarterCheckFolder.FullName
+                }
+            } else {
+                $versionAndPath = New-FolderStructure `
+                    -targetDirectory $targetDirectory `
+                    -url $starterModuleUrl `
+                    -release $release `
+                    -targetFolder $starterModuleTargetFolder `
+                    -sourceFolder $starterModuleSourceFolder
+
+                $starterReleaseTag = $versionAndPath.releaseTag
+                $starterPath = $versionAndPath.path
+            }
         }
 
         if ($iac -eq "bicep") {

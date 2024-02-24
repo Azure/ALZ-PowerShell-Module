@@ -120,16 +120,19 @@ function New-Bootstrap {
                 continue
             }
             $inputVariable = $inputConfigMapped.PSObject.Properties | Where-Object { $_.Name -eq $inputConfigItem.Name }
-            $displayMapFilter = $inputConfigItem.Value | Where-Object { $_.Name -eq "display_map_filter" }
+            $displayMapFilter = $inputConfigItem.Value.PSObject.Properties | Where-Object { $_.Name -eq "display_map_filter" }
+            Write-Verbose $($inputConfigItem | ConvertTo-Json)
             $hasDisplayMapFilter = $null -ne $displayMapFilter
+            Write-Verbose "$($inputConfigItem.Name) has display map filter $hasDisplayMapFilter"
 
             $inBootstrapOrStarter = $false
             if("bootstrap" -in $inputConfigItem.Value.maps_to) {
                 $checkFilter = !$hasDisplayMapFilter -or ($hasDisplayMapFilter -and "bootstrap" -in $displayMapFilter.Value)
 
                 if($checkFilter) {
+                    Write-Verbose "Checking bootstrap for $($inputConfigItem.Name)"
                     $boostrapParameter = $bootstrapParameters.PSObject.Properties | Where-Object { $_.Name -eq $inputVariable.Name }
-                    if($null -eq $boostrapParameter) {
+                    if($null -ne $boostrapParameter) {
                         $inBootstrapOrStarter = $true
                     }
                 }
@@ -138,8 +141,9 @@ function New-Bootstrap {
                 $checkFilter = !$hasDisplayMapFilter -or ($hasDisplayMapFilter -and "starter" -in $displayMapFilter.Value)
 
                 if($checkFilter) {
+                    Write-Verbose "Checking starter for $($inputConfigItem.Name)"
                     $starterParameter = $starterParameters.PSObject.Properties | Where-Object { $_.Name -eq $inputVariable.Name }
-                    if($null -eq $starterParameter) {
+                    if($null -ne $starterParameter) {
                         $inBootstrapOrStarter = $true
                     }
                 }
