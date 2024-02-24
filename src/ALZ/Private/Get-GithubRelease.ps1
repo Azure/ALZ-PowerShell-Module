@@ -61,6 +61,8 @@ function Get-GithubRelease {
 
     $releaseData = Invoke-RestMethod $repoReleaseUrl -SkipHttpErrorCheck -StatusCodeVariable "statusCode"
 
+    Write-Verbose "Status code: $statusCode"
+
     if($statusCode -eq 404) {
         Write-Error "The release $release does not exist in the GitHub repository $githubRepoUrl - $repoReleaseUrl"
         throw "The release $release does not exist in the GitHub repository $githubRepoUrl - $repoReleaseUrl"
@@ -70,6 +72,10 @@ function Get-GithubRelease {
     if($statusCode -ge 400 -and $statusCode -le 599) {
         Write-InformationColored "Retrying as got the Status Code $statusCode, which may be a tranisent error." -ForegroundColor Yellow -InformationAction Continue
         $releaseData = Invoke-RestMethod $repoReleaseUrl -RetryIntervalSec 3 -MaximumRetryCount 100
+    }
+
+    if($statusCode -ne 200) {
+        throw "Unable to query repository version, please check your internet connection and try again..."
     }
 
     $releaseTag = $releaseData.tag_name

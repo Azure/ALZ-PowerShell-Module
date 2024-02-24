@@ -89,6 +89,10 @@ function New-ALZEnvironment {
         [string]
         $bicepLegacyUrl = "https://github.com/Azure/ALZ-Bicep",
 
+        [Parameter(Mandatory = $false, HelpMessage = "Whether to skip checks that involve internet connection")]
+        [switch]
+        $skipInternetChecks,
+
         [Parameter(Mandatory = $false, HelpMessage = "Whether to use legacy local mode for Bicep.")]
         [bool]
         $bicepLegacyMode = $true # Note this is set to true to act as a feature flag while the Bicep bootstrap is developed. It will be switched to false once it is all working.
@@ -124,24 +128,41 @@ function New-ALZEnvironment {
         }
 
         if(!$isLegacyBicep) {
-            Write-InformationColored "Checking you have the latest version of Terraform installed..." -ForegroundColor Green -InformationAction Continue
-            $toolsPath = Join-Path -Path $targetDirectory -ChildPath ".tools"
-            Get-TerraformTool -version "latest" -toolsPath $toolsPath
+            if($skipInternetChecks) {
+                Write-InformationColored "Skipping Terraform tool check as you used the skipInternetCheck parameter. Please ensure you have the most recent version of Terraform installed" -ForegroundColor Yellow -InformationAction Continue
+            } else {
+                Write-InformationColored "Checking you have the latest version of Terraform installed..." -ForegroundColor Green -InformationAction Continue
+                $toolsPath = Join-Path -Path $targetDirectory -ChildPath ".tools"
+                Get-TerraformTool -version "latest" -toolsPath $toolsPath
+            }
         }
 
         $bootstrapReleaseTag = "local"
         $bootstrapPath = $bootstrapModuleOverrideFolderPath
+        $bootstrapTargetFolder = "bootstrap"
 
         if($bootstrapModuleOverrideFolderPath -eq "" -and !$isLegacyBicep) {
-            $versionAndPath = New-FolderStructure `
-                -targetDirectory $targetDirectory `
-                -url $bootstrapModuleUrl `
-                -release "latest" `
-                -targetFolder "bootstrap" `
-                -sourceFolder $bootstrapSourceFolder
+            if($skipInternetChecks) {
+                $bootstrapCheckPath = Join-Path $targetDirectory $bootstrapTargetFolder
+                $bootstrapCheckFolders = Get-ChildItem -Path $bootstrapCheckPath -Directory
+                if($null -ne $bootstrapCheckFolders) {
+                    $bootstrapCheckFolders = $bootstrapCheckFolders | Sort-Object { $_.Name } -Descending
+                    $mostRecentBootstapCheckFolder = $bootstrapCheckFolders[0]
 
-            $bootstrapReleaseTag = $versionAndPath.releaseTag
-            $bootstrapPath = $versionAndPath.path
+                    $bootstrapReleaseTag = $mostRecentBootstapCheckFolder.Name
+                    $bootstrapPath = $mostRecentBootstapCheckFolder.FullName
+                }
+            } else {
+                $versionAndPath = New-FolderStructure `
+                    -targetDirectory $targetDirectory `
+                    -url $bootstrapModuleUrl `
+                    -release "latest" `
+                    -targetFolder $bootstrapTargetFolder `
+                    -sourceFolder $bootstrapSourceFolder
+
+                $bootstrapReleaseTag = $versionAndPath.releaseTag
+                $bootstrapPath = $versionAndPath.path
+            }
         }
 
         $starterFolder = "starter"
@@ -169,14 +190,14 @@ function New-ALZEnvironment {
             $bootstrapConfig = Get-ALZConfig -configFilePath $bootstrapConfigPath
             $validationConfig = $bootstrapConfig.validators
 
-            $bootstrapModules = $bootstrapConfig.bootstrap_modules.PsObject.Properties
+            $bootstrapModules = $bootstrapConfig.bootstrap_modules
             if($bootstrap -eq "") {
                 $bootstrap = Request-SpecialInput -type "bootstrap" -bootstrapModules $bootstrapModules
             }
 
             Write-Verbose $($bootstrapModules | ConvertTo-Json -Depth 10)
 
-            $bootstrapDetails = $bootstrapModules | Where-Object { $_.Name -eq $bootstrap -or $bootstrap -in $_.Value.aliases }
+            $bootstrapDetails = $bootstrapModules.PsObject.Properties | Where-Object { $_.Name -eq $bootstrap -or $bootstrap -in $_.Value.aliases }
             if($null -eq $bootstrapDetails) {
                 Write-InformationColored "The bootstrap type '$bootstrap' that you have selected does not exist. Please try again with a valid bootstrap type..." -ForegroundColor Red -InformationAction Continue
                 return

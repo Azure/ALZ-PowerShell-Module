@@ -38,7 +38,7 @@ function Request-SpecialInput {
 
         if($type -eq "bootstrap") {
             Write-InformationColored "Please select the bootstrap module you would like to use, you can enter one of the following keys:" -ForegroundColor Yellow -InformationAction Continue
-            foreach ($bootstrapModule in $bootstrapModules) {
+            foreach ($bootstrapModule in $bootstrapModules.PsObject.Properties) {
                 Write-InformationColored "- $($bootstrapModule.Name) ($($bootstrapModule.Value.description))" -ForegroundColor Yellow -InformationAction Continue
             }
             Write-InformationColored ": " -ForegroundColor Yellow -NoNewline -InformationAction Continue
