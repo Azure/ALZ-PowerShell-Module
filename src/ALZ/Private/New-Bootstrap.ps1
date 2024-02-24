@@ -186,7 +186,7 @@ function New-Bootstrap {
         Write-Verbose $($interfaceConfiguration | ConvertTo-Json)
 
         foreach($inputConfigItem in $inputConfig.inputs.PSObject.Properties) {
-            $inputVariable = $interfaceConfiguration | Where-Object { $_.Name -eq $inputConfigItem.Name }
+            $inputVariable = $interfaceConfiguration.PSObject.Properties | Where-Object { $_.Name -eq $inputConfigItem.Name }
             if("bootstrap" -in $inputConfigItem.Value.maps_to) {
                 $bootstrapComputed | Add-Member -NotePropertyName $inputVariable.Name -NotePropertyValue $inputVariable.Value
             }
@@ -210,7 +210,7 @@ function New-Bootstrap {
 
         # Getting the user input for the starter module
         $starterConfiguration = Request-ALZEnvironmentConfig `
-            -configurationParameters $starterModuleParameters `
+            -configurationParameters $starterParameters `
             -respectOrdering `
             -userInputOverrides $userInputOverrides `
             -userInputDefaultOverrides $starterCachedConfig `
@@ -226,7 +226,7 @@ function New-Bootstrap {
 
         # Caching the bootstrap and starter module values paths for retry / upgrade scenarios
         Write-ConfigurationCache -filePath $bootstrapCachePath -configuration $bootstrapConfiguration
-        Write-ConfigurationCache -filePath $starterCachedPath -configuration $starterConfiguration
+        Write-ConfigurationCache -filePath $starterCachePath -configuration $starterConfiguration
 
         # Running terraform init and apply
         Write-InformationColored "Thank you for providing those inputs, we are now initializing and applying Terraform to bootstrap your environment..." -ForegroundColor Green -InformationAction Continue

@@ -142,16 +142,10 @@ function New-ALZEnvironment {
         $bootstrapTargetFolder = "bootstrap"
 
         if($bootstrapModuleOverrideFolderPath -eq "" -and !$isLegacyBicep) {
-            if($skipInternetChecks) {
-                $bootstrapCheckPath = Join-Path $targetDirectory $bootstrapTargetFolder
-                $bootstrapCheckFolders = Get-ChildItem -Path $bootstrapCheckPath -Directory
-                if($null -ne $bootstrapCheckFolders) {
-                    $bootstrapCheckFolders = $bootstrapCheckFolders | Sort-Object { $_.Name } -Descending
-                    $mostRecentBootstapCheckFolder = $bootstrapCheckFolders[0]
+            $versionAndPath = $null
 
-                    $bootstrapReleaseTag = $mostRecentBootstapCheckFolder.Name
-                    $bootstrapPath = $mostRecentBootstapCheckFolder.FullName
-                }
+            if($skipInternetChecks) {
+                $versionAndPath = Get-ExistingLocalRelease -targetDirectory $targetDirectory -targetFolder $bootstrapTargetFolder
             } else {
                 $versionAndPath = New-FolderStructure `
                     -targetDirectory $targetDirectory `
@@ -159,10 +153,9 @@ function New-ALZEnvironment {
                     -release "latest" `
                     -targetFolder $bootstrapTargetFolder `
                     -sourceFolder $bootstrapSourceFolder
-
-                $bootstrapReleaseTag = $versionAndPath.releaseTag
-                $bootstrapPath = $versionAndPath.path
             }
+            $bootstrapReleaseTag = $versionAndPath.releaseTag
+            $bootstrapPath = $versionAndPath.path
         }
 
         $starterFolder = "starter"
@@ -231,16 +224,10 @@ function New-ALZEnvironment {
         $starterPath = $starterModuleOverrideFolderPath
 
         if($starterModuleOverrideFolderPath -eq "" -and ($hasStarterModule -or $isLegacyBicep)) {
-            if($skipInternetChecks) {
-                $starterCheckPath = Join-Path $targetDirectory $starterModuleTargetFolder
-                $starterCheckFolders = Get-ChildItem -Path $starterCheckPath -Directory
-                if($null -ne $starterCheckFolders) {
-                    $starterCheckFolders = $starterCheckFolders | Sort-Object { $_.Name } -Descending
-                    $mostRecentStarterCheckFolder = $starterCheckFolders[0]
+            $versionAndPath = $null
 
-                    $starterReleaseTag = $mostRecentStarterCheckFolder.Name
-                    $starterPath = $mostRecentStarterCheckFolder.FullName
-                }
+            if($skipInternetChecks) {
+                $versionAndPath = Get-ExistingLocalRelease -targetDirectory $targetDirectory -targetFolder $starterModuleTargetFolder
             } else {
                 $versionAndPath = New-FolderStructure `
                     -targetDirectory $targetDirectory `
@@ -248,10 +235,10 @@ function New-ALZEnvironment {
                     -release $release `
                     -targetFolder $starterModuleTargetFolder `
                     -sourceFolder $starterModuleSourceFolder
-
-                $starterReleaseTag = $versionAndPath.releaseTag
-                $starterPath = $versionAndPath.path
             }
+
+            $starterReleaseTag = $versionAndPath.releaseTag
+            $starterPath = $versionAndPath.path
         }
 
         if ($iac -eq "bicep") {
