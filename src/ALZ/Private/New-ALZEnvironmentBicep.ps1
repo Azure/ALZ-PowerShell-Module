@@ -24,6 +24,7 @@ function New-ALZEnvironmentBicep {
 
         # Getting the configuration
         $configFilePath = Join-Path -Path $upstreamReleaseFolderPath -ChildPath "accelerator/.config/ALZ-Powershell.config.json"
+        Write-Verbose "Config path: $configFilePath"
         $bicepConfig = Get-ALZConfig -configFilePath $configFilePath
 
         Write-InformationColored "Copying ALZ-Bicep module to $targetDirectory" -ForegroundColor Green -InformationAction Continue

@@ -108,12 +108,6 @@ function New-ALZEnvironment {
             $iac = Request-SpecialInput -type "iac"
         }
 
-        $validIac = @("bicep", "terraform")
-        if($iac -notin $validIac) {
-            Write-InformationColored "The IAC '$iac' that you have selected does not exist. Please try again with a valid IAC..." -ForegroundColor Red -InformationAction Continue
-            return
-        }
-
         $isLegacyBicep = $false
         if($iac -eq "bicep") {
             $isLegacyBicep = $bicepLegacyMode -eq $true
@@ -161,7 +155,7 @@ function New-ALZEnvironment {
         $starterFolder = "starter"
 
         $starterModuleTargetFolder = $starterFolder
-        if($alzIacProvider -eq "bicep") {
+        if($iac -eq "bicep") {
             if($isLegacyBicep) {
                 $starterFolder = "."
             }
@@ -242,9 +236,9 @@ function New-ALZEnvironment {
         }
 
         if ($iac -eq "bicep") {
-            $starterPath = Join-Path $targetDirectory $starterFolder
+            $targetPath = Join-Path $targetDirectory $starterFolder
             New-ALZEnvironmentBicep `
-                -targetDirectory $starterPath `
+                -targetDirectory $targetPath `
                 -upstreamReleaseVersion $starterReleaseTag `
                 -upstreamReleaseFolderPath $starterPath `
                 -vcs $bootstrap `

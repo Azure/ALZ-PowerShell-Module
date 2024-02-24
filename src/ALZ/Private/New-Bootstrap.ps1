@@ -170,11 +170,13 @@ function New-Bootstrap {
             "pipeline_folder_path" = $pipelineModulePath
         }
 
-        $inputConfig.inputs.PSCustomObject.Properties | ForEach-Object {
-            $property = $_
-            if($property.Value.source -eq "powershell") {
-                $inputVariable = $interfaceConfiguration | Where-Object { $_.Name -eq $property.Name }
-                $inputVariable.Value.Value = $computedInputMapping[$property.Name]
+        foreach($inputConfigItem in $inputConfig.inputs.PSObject.Properties) {
+            if($inputConfigItem.Value.source -eq "powershell") {
+
+                $inputVariable = $interfaceConfiguration.PSObject.Properties | Where-Object { $_.Name -eq $inputConfigItem.Name }
+                $inputValue = $computedInputMapping[$inputConfigItem.Name]
+                Write-Verbose "Setting $($inputConfigItem.Name) to $inputValue"
+                $inputVariable.Value.Value = $inputValue
             }
         }
 
@@ -206,7 +208,7 @@ function New-Bootstrap {
             -computedInputs $bootstrapComputed
 
 
-        Write-InformationColored "The following inputs are specific to the '$starterTemplate' starter module that you selected..." -ForegroundColor Green -InformationAction Continue
+        Write-InformationColored "The following inputs are specific to the '$starter' starter module that you selected..." -ForegroundColor Green -InformationAction Continue
 
         # Getting the user input for the starter module
         $starterConfiguration = Request-ALZEnvironmentConfig `
