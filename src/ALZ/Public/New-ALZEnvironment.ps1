@@ -104,8 +104,15 @@ function New-ALZEnvironment {
 
     if ($PSCmdlet.ShouldProcess("Accelerator setup", "modify")) {
 
+
+        # Get User Inputs from the -inputs file
+        $userInputOverrides = $null
+        if($userInputOverridePath -ne "") {
+            $userInputOverrides = Get-ALZConfig -configFilePath $userInputOverridePath
+        }
+
         if($iac -eq "") {
-            $iac = Request-SpecialInput -type "iac"
+            $iac = Request-SpecialInput -type "iac" -userInputOverrides $userInputOverrides
         }
 
         $isLegacyBicep = $false
@@ -179,7 +186,7 @@ function New-ALZEnvironment {
 
             $bootstrapModules = $bootstrapConfig.bootstrap_modules
             if($bootstrap -eq "") {
-                $bootstrap = Request-SpecialInput -type "bootstrap" -bootstrapModules $bootstrapModules
+                $bootstrap = Request-SpecialInput -type "bootstrap" -bootstrapModules $bootstrapModules -userInputOverrides $userInputOverrides
             }
 
             Write-Verbose $($bootstrapModules | ConvertTo-Json -Depth 10)
@@ -257,7 +264,7 @@ function New-ALZEnvironment {
                 -starterPath $starterPath `
                 -starterPipelineFolder $starterPipelineFolder `
                 -starterRelease $starterReleaseTag `
-                -userInputOverridePath $userInputOverridePath `
+                -userInputOverrides $userInputOverrides `
                 -autoApprove:$autoApprove.IsPresent `
                 -destroy:$destroy.IsPresent
         }

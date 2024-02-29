@@ -14,7 +14,7 @@ function New-Bootstrap {
         [PSCustomObject] $inputConfig,
 
         [Parameter(Mandatory = $false)]
-        [string] $userInputOverridePath = "",
+        [PSCustomObject] $userInputOverrides = $null,
 
         [Parameter(Mandatory = $false)]
         [string] $bootstrapPath,
@@ -45,12 +45,6 @@ function New-Bootstrap {
 
         # Setup tools
         $hclParserToolPath = Get-HCLParserTool -alzEnvironmentDestination $bootstrapPath -toolVersion "v0.6.0"
-
-        # Get User Input Overrides (used for automated testing purposes and advanced use cases)
-        $userInputOverrides = $null
-        if($userInputOverridePath -ne "") {
-            $userInputOverrides = Get-ALZConfig -configFilePath $userInputOverridePath
-        }
 
         # Setup Cache File Name
         $interfaceCacheFileName = "interface-cache.json"
@@ -83,7 +77,7 @@ function New-Bootstrap {
         $pipelineModulePath = ""
 
         if($hasStarter) {
-            $starter = Request-SpecialInput -type "starter" -starterPath $starterPath
+            $starter = Request-SpecialInput -type "starter" -starterPath $starterPath -userInputOverrides $userInputOverrides
             $starterModulePath = Join-Path -Path $starterPath -ChildPath $starter
             $pipelineModulePath = Join-Path -Path $starterPath -ChildPath $starterPipelineFolder
         }

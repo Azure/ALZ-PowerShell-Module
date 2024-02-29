@@ -8,14 +8,26 @@ function Request-SpecialInput {
         [string] $starterPath,
 
         [Parameter(Mandatory = $false)]
-        [PSCustomObject] $bootstrapModules
+        [PSCustomObject] $bootstrapModules,
+
+        [Parameter(Mandatory = $false)]
+        [PSCustomObject] $userInputOverrides = $null
     )
 
     if ($PSCmdlet.ShouldProcess("ALZ-Terraform module configuration", "modify")) {
 
         $result = ""
 
+        if($null -ne $userInputOverrides) {
+            $userInputOverride = $userInputOverrides.PSObject.Properties | Where-Object { $_.Name -eq $type }
+            if($null -ne $userInputOverride) {
+                $result = $userInputOverride.Value
+                return $result
+            }
+        }
+
         if($type -eq "starter") {
+
             $starterFolders = Get-ChildItem -Path $starterPath -Directory
             Write-InformationColored "Please select the starter module you would like to use, you can enter one of the following keys:" -ForegroundColor Yellow -InformationAction Continue
 
