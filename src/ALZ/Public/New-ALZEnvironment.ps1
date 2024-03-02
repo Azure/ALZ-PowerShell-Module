@@ -103,18 +103,18 @@ function New-ALZEnvironment {
     Write-InformationColored "Getting ready to create a new ALZ environment with you..." -ForegroundColor Green -InformationAction Continue
 
     if ($PSCmdlet.ShouldProcess("Accelerator setup", "modify")) {
-
-
         # Get User Inputs from the -inputs file
         $userInputOverrides = $null
         if($userInputOverridePath -ne "") {
             $userInputOverrides = Get-ALZConfig -configFilePath $userInputOverridePath
         }
 
+        # Get the IAC type if not specified
         if($iac -eq "") {
             $iac = Request-SpecialInput -type "iac" -userInputOverrides $userInputOverrides
         }
 
+        # Setup the Bicep flag
         $isLegacyBicep = $false
         if($iac -eq "bicep") {
             $isLegacyBicep = $bicepLegacyMode -eq $true
@@ -128,6 +128,7 @@ function New-ALZEnvironment {
             Write-Verbose "We are running in modern mode"
         }
 
+        # Check and install Terraform CLI if needed
         if(!$isLegacyBicep) {
             if($skipInternetChecks) {
                 Write-InformationColored "Skipping Terraform tool check as you used the skipInternetCheck parameter. Please ensure you have the most recent version of Terraform installed" -ForegroundColor Yellow -InformationAction Continue
@@ -138,6 +139,7 @@ function New-ALZEnvironment {
             }
         }
 
+        # Download the bootstrap modules
         $bootstrapReleaseTag = "local"
         $bootstrapPath = $bootstrapModuleOverrideFolderPath
         $bootstrapTargetFolder = "bootstrap"
@@ -159,6 +161,7 @@ function New-ALZEnvironment {
             $bootstrapPath = $versionAndPath.path
         }
 
+        # Configure the starter module path
         $starterFolder = "starter"
 
         $starterModuleTargetFolder = $starterFolder
@@ -169,6 +172,7 @@ function New-ALZEnvironment {
             $starterModuleTargetFolder = "$starterFolder/upstream-releases"
         }
 
+        # Setup the variables for bootstrap and starter modules
         $hasStarterModule = $false
         $starterModuleUrl = $bicepLegacyUrl
         $starterModuleSourceFolder = "."
@@ -180,27 +184,34 @@ function New-ALZEnvironment {
         $inputConfig = $null
 
         if(!$isLegacyBicep) {
+            # Get the bootstap configuration
             $bootstrapConfigPath = Join-Path $bootstrapPath $bootstrapConfigPath
             $bootstrapConfig = Get-ALZConfig -configFilePath $bootstrapConfigPath
             $validationConfig = $bootstrapConfig.validators
 
+            # Get the available bootstrap modules
             $bootstrapModules = $bootstrapConfig.bootstrap_modules
+
+            # Request the bootstrap type if not already specified
             if($bootstrap -eq "") {
                 $bootstrap = Request-SpecialInput -type "bootstrap" -bootstrapModules $bootstrapModules -userInputOverrides $userInputOverrides
             }
 
             Write-Verbose $($bootstrapModules | ConvertTo-Json -Depth 10)
 
+            # Get the bootstrap details and validate it exists (use alias for legacy values)
             $bootstrapDetails = $bootstrapModules.PsObject.Properties | Where-Object { $_.Name -eq $bootstrap -or $bootstrap -in $_.Value.aliases }
             if($null -eq $bootstrapDetails) {
                 Write-InformationColored "The bootstrap type '$bootstrap' that you have selected does not exist. Please try again with a valid bootstrap type..." -ForegroundColor Red -InformationAction Continue
                 return
             }
-
             Write-Verbose $($bootstrapDetails.Value | ConvertTo-Json -Depth 10)
+
+            # Get the starter modules for the selected bootstrap if it has any
             $bootstrapStarterModule = $bootstrapDetails.Value.PSObject.Properties | Where-Object { $_.Name -eq  "starter_modules" }
 
             if($null -ne $bootstrapStarterModule) {
+                # If the bootstrap has starter modules, get the details and url
                 Write-Verbose $($bootstrapStarterModule | ConvertTo-Json -Depth 10)
                 $hasStarterModule = $true
                 $starterModules = $bootstrapConfig.PSObject.Properties | Where-Object { $_.Name -eq "starter_modules" }
@@ -216,11 +227,13 @@ function New-ALZEnvironment {
                 $starterPipelineFolder = $starterModuleDetails.Value.$iac.pipeline_folder
             }
 
+            # Get the bootstrap interface user input config
             $inputConfigFilePath = Join-Path -Path $bootstrapPath -ChildPath $bootstrapDetails.Value.interface_config_file
             Write-Verbose "Interface config path $inputConfigFilePath"
             $inputConfig = Get-ALZConfig -configFilePath $inputConfigFilePath
         }
 
+        # Download the starter modules
         $starterReleaseTag = "local"
         $starterPath = $starterModuleOverrideFolderPath
 
@@ -242,6 +255,7 @@ function New-ALZEnvironment {
             $starterPath = $versionAndPath.path
         }
 
+        # Run the bicep parameter setup if the iac is Bicep
         if ($iac -eq "bicep") {
             $targetPath = Join-Path $targetDirectory $starterFolder
             New-ALZEnvironmentBicep `
@@ -252,6 +266,7 @@ function New-ALZEnvironment {
                 -local:$isLegacyBicep
         }
 
+        # Run the bootstrap
         if(!$isLegacyBicep) {
             New-Bootstrap `
                 -iac $iac `
@@ -275,4 +290,4 @@ function New-ALZEnvironment {
     return
 }
 
-New-Alias -Name "New-Accelerator" -Value "New-ALZEnvironment"
+New-Alias -Name "Deploy-Accelerator" -Value "New-ALZEnvironment"

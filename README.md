@@ -6,15 +6,15 @@
 
 ## Synopsis
 
-This is a PowerShell module that provides a set of cmdlets to create and manage Azure Landing Zones.
+This is a PowerShell module that provides a set of cmdlets to create and manage Accelerators for Azure Landing Zones and other workloads.
 
 ## Description
 
-This module provides a set of cmdlets to create and manage Azure Landing Zones.
+This module provides a set of cmdlets to create and manage Accelerators for Azure Landing Zones and other workloads.
 
 ## Why
 
-The goal of this project it is to make easy to get started with Azure Landing Zones and to speed up some basic tasks that you would need to perform whilst managing your Azure Landing Zones.
+The goal of this project it is to make easy to get started with Azure Landing Zones and other workloads. It is designed to speed up some basic tasks that you would need to perform whilst managing your Azure Landing Zones.
 
 ## Getting Started
 
@@ -88,38 +88,25 @@ This currently tests for:
 #### Azure Landing Zone Environment with Bicep and GitHub Actions Workflows
 
 ```powershell
-New-ALZEnvironment -o <output_directory> -i "bicep" -c "github"
+Deploy-Accelerator -o <output_directory> -i "bicep" -b "alz_github"
 ```
 
 #### Azure Landing Zone Environment with Bicep and Azure DevOps Pipelines
 
 ```powershell
-New-ALZEnvironment -o <output_directory> -i "bicep" -c "azuredevops"
+Deploy-Accelerator -o <output_directory> -i "bicep" -b "alz_azuredevops"
 ```
-
-> **Note**
-> Azure Devops Pipelines are only supported in v0.2.6 or later.
 
 #### Azure Landing Zone Environment with Terraform and GitHub Pipelines
 
 ```powershell
-New-ALZEnvironment -o <output_directory> -i "terraform" -c "github"
+Deploy-Accelerator -o <output_directory> -i "terraform" -b "alz_github"
 ```
 
 #### Azure Landing Zone Environment with Terraform and Azure DevOps Pipelines
 
 ```powershell
-New-ALZEnvironment -o <output_directory> -i "terraform" -c "azuredevops"
-```
-
-## Additional Cmdlets
-
-### Update an existing Azure Landing Zone Environment
-
-#### Downloads and pulls down the specified release version from the remote GitHub repository to a local directory
-
-```powershell
-Get-ALZGithubRelease -i "bicep" -v "v0.14.0" -o "C:\Repos\ALZ\accelerator"
+Deploy-Accelerator -o <output_directory> -i "terraform" -b "alz_azuredevops"
 ```
 
 ## Development
