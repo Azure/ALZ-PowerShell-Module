@@ -2,13 +2,13 @@ function Invoke-FullUpgrade {
     [CmdletBinding(SupportsShouldProcess = $true)]
     param (
         [Parameter(Mandatory = $false)]
-        [string] $bootstrapModulePath,
-
-        [Parameter(Mandatory = $false)]
         [string] $bootstrapRelease,
 
         [Parameter(Mandatory = $false)]
         [string] $bootstrapPath,
+
+        [Parameter(Mandatory = $false)]
+        [string] $bootstrapModuleFolder,
 
         [Parameter(Mandatory = $false)]
         [string] $starterRelease,
@@ -33,7 +33,8 @@ function Invoke-FullUpgrade {
 
         # Run upgrade for bootstrap state
         $wasUpgraded = Invoke-Upgrade `
-            -targetDirectory $bootstrapModulePath `
+            -targetDirectory $bootstrapPath `
+            -targetFolder $bootstrapModuleFolder `
             -cacheFileName "terraform.tfstate" `
             -release $bootstrapRelease `
             -autoApprove:$autoApprove.IsPresent

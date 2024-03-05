@@ -5,6 +5,9 @@ function Invoke-Upgrade {
         [string] $targetDirectory,
 
         [Parameter(Mandatory = $false)]
+        [string] $targetFolder = "",
+
+        [Parameter(Mandatory = $false)]
         [string] $cacheFileName,
 
         [Parameter(Mandatory = $false)]
@@ -21,9 +24,13 @@ function Invoke-Upgrade {
         $previousVersion = $null
         $foundPreviousRelease = $false
 
+        Write-Verbose "UPGRADE: Checking for existing directories in $targetDirectory"
+
         foreach ($directory in $directories | Sort-Object -Descending -Property Name) {
-            $releasePath = Join-Path -Path $targetDirectory -ChildPath $directory.Name
-            $releaseCachedValuesPath = Join-Path -Path $releasePath -ChildPath $cacheFileName
+            $releasePath = Join-Path $targetDirectory $directory.Name
+            $releaseCachedValuesPath = Join-Path $releasePath $targetFolder $cacheFileName
+
+            Write-Verbose "UPGRADE: Checking for existing file in $releasePath, specifically $releaseCachedValuesPath"
 
             if(Test-Path $releaseCachedValuesPath) {
                 $previousCachedValuesPath = $releaseCachedValuesPath
@@ -31,6 +38,7 @@ function Invoke-Upgrade {
 
             if($null -ne $previousCachedValuesPath) {
                 if($directory.Name -eq $release) {
+                    Write-Verbose "Latest version $release has already been run. Skipping upgrade..."
                     # If the current version has already been run, then skip the upgrade process
                     break
                 }
@@ -51,17 +59,14 @@ function Invoke-Upgrade {
             }
 
             if($upgrade.ToLower() -eq "upgrade") {
-                $currentPath = Join-Path -Path $targetDirectory -ChildPath $release
-                $currentCachedValuesPath = Join-Path -Path $currentPath -ChildPath $cacheFileName
+                $currentPath = Join-Path $targetDirectory $release
+                $currentCachedValuesPath = Join-Path $currentPath $targetFolder $cacheFileName
 
                 # Copy the previous cached values to the current release
                 if($null -ne $previousCachedValuesPath) {
                     Write-InformationColored "AUTOMATIC UPGRADE: Copying $previousCachedValuesPath to $currentCachedValuesPath" -ForegroundColor Green -InformationAction Continue
                     Copy-Item -Path $previousCachedValuesPath -Destination $currentCachedValuesPath -Force | Out-String | Write-Verbose
                 }
-
-                Write-InformationColored "AUTOMATIC UPGRADE: Copying $previousStateFilePath to $currentStateFilePath" -ForegroundColor Green -InformationAction Continue
-                Copy-Item -Path $previousStateFilePath -Destination $currentStateFilePath -Force | Out-String | Write-Verbose
 
                 Write-InformationColored "AUTOMATIC UPGRADE: Upgrade complete. If any files in the starter have been updated, you will need to remove branch protection in order for the Terraform apply to succeed..." -ForegroundColor Yellow -InformationAction Continue
                 return $true

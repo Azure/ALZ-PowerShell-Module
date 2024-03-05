@@ -197,22 +197,18 @@ function New-ALZEnvironment {
                 $bootstrap = Request-SpecialInput -type "bootstrap" -bootstrapModules $bootstrapModules -userInputOverrides $userInputOverrides
             }
 
-            Write-Verbose $($bootstrapModules | ConvertTo-Json -Depth 10)
-
             # Get the bootstrap details and validate it exists (use alias for legacy values)
             $bootstrapDetails = $bootstrapModules.PsObject.Properties | Where-Object { $_.Name -eq $bootstrap -or $bootstrap -in $_.Value.aliases }
             if($null -eq $bootstrapDetails) {
                 Write-InformationColored "The bootstrap type '$bootstrap' that you have selected does not exist. Please try again with a valid bootstrap type..." -ForegroundColor Red -InformationAction Continue
                 return
             }
-            Write-Verbose $($bootstrapDetails.Value | ConvertTo-Json -Depth 10)
 
             # Get the starter modules for the selected bootstrap if it has any
             $bootstrapStarterModule = $bootstrapDetails.Value.PSObject.Properties | Where-Object { $_.Name -eq  "starter_modules" }
 
             if($null -ne $bootstrapStarterModule) {
                 # If the bootstrap has starter modules, get the details and url
-                Write-Verbose $($bootstrapStarterModule | ConvertTo-Json -Depth 10)
                 $hasStarterModule = $true
                 $starterModules = $bootstrapConfig.PSObject.Properties | Where-Object { $_.Name -eq "starter_modules" }
                 $starterModuleType = $bootstrapStarterModule.Value
@@ -268,14 +264,19 @@ function New-ALZEnvironment {
 
         # Run the bootstrap
         if(!$isLegacyBicep) {
+            $bootstrapTargetPath = Join-Path $targetDirectory $bootstrapTargetFolder
+            $starterTargetPath = Join-Path $targetDirectory $starterFolder
+
             New-Bootstrap `
                 -iac $iac `
                 -bootstrapDetails $bootstrapDetails `
                 -validationConfig $validationConfig `
                 -inputConfig $inputConfig `
+                -bootstrapTargetPath $bootstrapTargetPath `
                 -bootstrapPath $bootstrapPath `
                 -bootstrapRelease $bootstrapReleaseTag `
                 -hasStarter:$hasStarterModule `
+                -starterTargetPath $starterTargetPath `
                 -starterPath $starterPath `
                 -starterPipelineFolder $starterPipelineFolder `
                 -starterRelease $starterReleaseTag `

@@ -17,10 +17,16 @@ function New-Bootstrap {
         [PSCustomObject] $userInputOverrides = $null,
 
         [Parameter(Mandatory = $false)]
+        [string] $bootstrapTargetPath,
+
+        [Parameter(Mandatory = $false)]
         [string] $bootstrapPath,
 
         [Parameter(Mandatory = $false)]
         [switch] $hasStarter,
+
+        [Parameter(Mandatory = $false)]
+        [string] $starterTargetPath,
 
         [Parameter(Mandatory = $false)]
         [string] $starterPath,
@@ -46,7 +52,7 @@ function New-Bootstrap {
         # Setup tools
         $hclParserToolPath = Get-HCLParserTool -alzEnvironmentDestination $bootstrapPath -toolVersion "v0.6.0"
 
-        # Setup Cache File Name
+        # Setup Cache File Names
         $interfaceCacheFileName = "interface-cache.json"
         $bootstrapCacheFileName = "bootstrap-cache.json"
         $starterCacheFileName = "starter-cache.json"
@@ -59,13 +65,15 @@ function New-Bootstrap {
 
         $bootstrapModulePath = Join-Path -Path $bootstrapPath -ChildPath $bootstrapDetails.Value.location
 
+        Write-Verbose "Bootstrap Module Path: $bootstrapModulePath"
+
         # Run upgrade
         Invoke-FullUpgrade `
-            -bootstrapModulePath $bootstrapModulePath `
+            -bootstrapModuleFolder $bootstrapDetails.Value.location `
             -bootstrapRelease $bootstrapRelease `
-            -bootstrapPath $bootstrapPath `
+            -bootstrapPath $bootstrapTargetPath `
             -starterRelease $starterRelease `
-            -starterPath $starterPath `
+            -starterPath $starterTargetPath `
             -interfaceCacheFileName $interfaceCacheFileName `
             -bootstrapCacheFileName $bootstrapCacheFileName `
             -starterCacheFileName $starterCacheFileName `
@@ -115,7 +123,6 @@ function New-Bootstrap {
             }
             $inputVariable = $inputConfigMapped.PSObject.Properties | Where-Object { $_.Name -eq $inputConfigItem.Name }
             $displayMapFilter = $inputConfigItem.Value.PSObject.Properties | Where-Object { $_.Name -eq "display_map_filter" }
-            Write-Verbose $($inputConfigItem | ConvertTo-Json)
             $hasDisplayMapFilter = $null -ne $displayMapFilter
             Write-Verbose "$($inputConfigItem.Name) has display map filter $hasDisplayMapFilter"
 
@@ -177,9 +184,6 @@ function New-Bootstrap {
         # Split interface inputs
         $bootstrapComputed = [PSCustomObject]@{}
         $starterComputed = [PSCustomObject]@{}
-
-        Write-Verbose $($inputConfig.inputs | ConvertTo-Json)
-        Write-Verbose $($interfaceConfiguration | ConvertTo-Json)
 
         foreach($inputConfigItem in $inputConfig.inputs.PSObject.Properties) {
             $inputVariable = $interfaceConfiguration.PSObject.Properties | Where-Object { $_.Name -eq $inputConfigItem.Name }
