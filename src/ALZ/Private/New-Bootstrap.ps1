@@ -20,16 +20,10 @@ function New-Bootstrap {
         [string] $bootstrapTargetPath,
 
         [Parameter(Mandatory = $false)]
-        [string] $bootstrapPath,
-
-        [Parameter(Mandatory = $false)]
         [switch] $hasStarter,
 
         [Parameter(Mandatory = $false)]
         [string] $starterTargetPath,
-
-        [Parameter(Mandatory = $false)]
-        [string] $starterPath,
 
         [Parameter(Mandatory = $false)]
         [string] $bootstrapRelease,
@@ -63,6 +57,8 @@ function New-Bootstrap {
         $starterCachePath = Join-Path -Path $starterPath -ChildPath $starterCacheFileName
         $starterCachedConfig = Get-ALZConfig -configFilePath $starterCachePath
 
+        $bootstrapPath = Join-Path $bootstrapTargetPath $bootstrapRelease
+        $starterPath = Join-Path $starterTargetPath $starterRelease
         $bootstrapModulePath = Join-Path -Path $bootstrapPath -ChildPath $bootstrapDetails.Value.location
 
         Write-Verbose "Bootstrap Module Path: $bootstrapModulePath"
@@ -225,6 +221,7 @@ function New-Bootstrap {
         Write-TfvarsFile -tfvarsFilePath $starterTfvarsPath -configuration $starterConfiguration
 
         # Caching the bootstrap and starter module values paths for retry / upgrade scenarios
+        Write-ConfigurationCache -filePath $interfaceCachePath -configuration $interfaceConfiguration
         Write-ConfigurationCache -filePath $bootstrapCachePath -configuration $bootstrapConfiguration
         Write-ConfigurationCache -filePath $starterCachePath -configuration $starterConfiguration
 

@@ -18,8 +18,7 @@ function New-FolderStructure {
     )
 
     if ($PSCmdlet.ShouldProcess("ALZ-Terraform module configuration", "modify")) {
-        Write-InformationColored "Downloading modules to $targetDirectory" -ForegroundColor Green -InformationAction Continue
-
+        Write-Verbose "Downloading modules to $targetDirectory"
         if(!($release.StartsWith("v")) -and ($release -ne "latest")) {
             $release = "v$release"
         }
@@ -27,7 +26,7 @@ function New-FolderStructure {
         $releaseTag = Get-GithubRelease -githubRepoUrl $url -targetDirectory $targetDirectory -moduleSourceFolder $sourceFolder -moduleTargetFolder $targetFolder -release $release
         $path = Join-Path $targetDirectory $targetFolder $releaseTag
 
-        Write-InformationColored "Downloaded module version $releaseTag to $path" -ForegroundColor Green -InformationAction Continue
+        Write-Verbose "Version $releaseTag is located in $path"
 
         return @{
             path       = $path

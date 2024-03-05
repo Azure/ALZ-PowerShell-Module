@@ -45,21 +45,23 @@ function Invoke-FullUpgrade {
                 -targetDirectory $bootstrapPath `
                 -cacheFileName $interfaceCacheFileName `
                 -release $bootstrapRelease `
-                -autoApprove:$wasUpgraded
+                -autoApprove:$wasUpgraded | Out-String | Write-Verbose
 
             # Run upgrade for bootstrap inputs
             Invoke-Upgrade `
                 -targetDirectory $bootstrapPath `
                 -cacheFileName $bootstrapCacheFileName `
                 -release $bootstrapRelease `
-                -autoApprove:$wasUpgraded
+                -autoApprove:$wasUpgraded | Out-String | Write-Verbose
 
             # Run upgrade for starter
             Invoke-Upgrade `
                 -targetDirectory $starterPath `
                 -cacheFileName $starterCacheFileName `
                 -release $starterRelease `
-                -autoApprove:$wasUpgraded
+                -autoApprove:$wasUpgraded | Out-String | Write-Verbose
+
+            Write-InformationColored "AUTOMATIC UPGRADE: Upgrade complete. If any starter files have been updated, you will need to remove branch protection in order for the Terraform apply to succeed." -ForegroundColor Yellow -InformationAction Continue
         }
     }
 }

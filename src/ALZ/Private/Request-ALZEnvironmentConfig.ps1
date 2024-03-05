@@ -44,7 +44,7 @@ function Request-ALZEnvironmentConfig {
             if($autoApprove) {
                 $useDefaults = "skip"
             } else {
-                $useDefaults = Read-Host "Would you like to the cached values or use the inputs you have supplied intead? Enter 'use' to use the cached value or just hit 'enter' to use your inputs. (use/skip)"
+                $useDefaults = Read-Host "Would you like to use the cached values or use the inputs you have supplied intead? Enter 'use' to use the cached value or just hit 'enter' to use your inputs. (use/skip)"
             }
             if($useDefaults.ToLower() -eq "use") {
                 $userInputOverrides = $userInputDefaultOverrides

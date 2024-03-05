@@ -127,8 +127,9 @@ function Get-GithubRelease {
         Copy-Item -Path "$($extractedSubFolder.FullName)/$moduleSourceFolder/*" -Destination "$targetVersionPath" -Recurse | Out-String | Write-Verbose
 
         Remove-Item -Path "$targetVersionPath/tmp" -Force -Recurse
+        Write-InformationColored "The directory for $targetVersionPath has been created and populated." -ForegroundColor Green -InformationAction Continue
     } else {
-        Write-InformationColored "The release directory for this version already exists and has content in it, so we are not over-writing it." -ForegroundColor Yellow -InformationAction Continue
+        Write-InformationColored "The directory for $targetVersionPath already exists and has content in it, so we are not over-writing it." -ForegroundColor Green -InformationAction Continue
         Write-Verbose "===> Content already exists in $releaseDirectory. Skipping"
     }
 

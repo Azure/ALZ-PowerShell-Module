@@ -37,11 +37,15 @@ function New-ALZEnvironment {
         [string] $targetDirectory = ".",
 
         [Parameter(Mandatory = $false)]
+        [string] $bootstrapRelease = "latest",
+
+        [Parameter(Mandatory = $false)]
         [Alias("alzBicepVersion")]
         [Alias("version")]
         [Alias("v")]
         [Alias("alzVersion")]
-        [string] $release = "latest",
+        [Alias("release")]
+        [string] $starterRelease = "latest",
 
         [Parameter(Mandatory = $false)]
         [Alias("i")]
@@ -147,13 +151,15 @@ function New-ALZEnvironment {
         if($bootstrapModuleOverrideFolderPath -eq "" -and !$isLegacyBicep) {
             $versionAndPath = $null
 
+            Write-InformationColored "Checking and Downloading the bootstrap module..." -ForegroundColor Green -InformationAction Continue
+
             if($skipInternetChecks) {
                 $versionAndPath = Get-ExistingLocalRelease -targetDirectory $targetDirectory -targetFolder $bootstrapTargetFolder
             } else {
                 $versionAndPath = New-FolderStructure `
                     -targetDirectory $targetDirectory `
                     -url $bootstrapModuleUrl `
-                    -release "latest" `
+                    -release $bootstrapRelease `
                     -targetFolder $bootstrapTargetFolder `
                     -sourceFolder $bootstrapSourceFolder
             }
@@ -236,13 +242,15 @@ function New-ALZEnvironment {
         if($starterModuleOverrideFolderPath -eq "" -and ($hasStarterModule -or $isLegacyBicep)) {
             $versionAndPath = $null
 
+            Write-InformationColored "Checking and Downloading the starter module..." -ForegroundColor Green -InformationAction Continue
+
             if($skipInternetChecks) {
                 $versionAndPath = Get-ExistingLocalRelease -targetDirectory $targetDirectory -targetFolder $starterModuleTargetFolder
             } else {
                 $versionAndPath = New-FolderStructure `
                     -targetDirectory $targetDirectory `
                     -url $starterModuleUrl `
-                    -release $release `
+                    -release $starterRelease `
                     -targetFolder $starterModuleTargetFolder `
                     -sourceFolder $starterModuleSourceFolder
             }
@@ -273,11 +281,9 @@ function New-ALZEnvironment {
                 -validationConfig $validationConfig `
                 -inputConfig $inputConfig `
                 -bootstrapTargetPath $bootstrapTargetPath `
-                -bootstrapPath $bootstrapPath `
                 -bootstrapRelease $bootstrapReleaseTag `
                 -hasStarter:$hasStarterModule `
                 -starterTargetPath $starterTargetPath `
-                -starterPath $starterPath `
                 -starterPipelineFolder $starterPipelineFolder `
                 -starterRelease $starterReleaseTag `
                 -userInputOverrides $userInputOverrides `
