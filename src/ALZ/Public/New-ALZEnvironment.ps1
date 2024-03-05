@@ -104,7 +104,7 @@ function New-ALZEnvironment {
 
     $ProgressPreference = "SilentlyContinue"
 
-    Write-InformationColored "Getting ready to create a new ALZ environment with you..." -ForegroundColor Green -InformationAction Continue
+    Write-InformationColored "Getting ready to deploy the accelerator with you..." -ForegroundColor Green -InformationAction Continue
 
     if ($PSCmdlet.ShouldProcess("Accelerator setup", "modify")) {
         # Get User Inputs from the -inputs file
@@ -137,7 +137,7 @@ function New-ALZEnvironment {
             if($skipInternetChecks) {
                 Write-InformationColored "Skipping Terraform tool check as you used the skipInternetCheck parameter. Please ensure you have the most recent version of Terraform installed" -ForegroundColor Yellow -InformationAction Continue
             } else {
-                Write-InformationColored "Checking you have the latest version of Terraform installed..." -ForegroundColor Green -InformationAction Continue
+                Write-InformationColored "Checking you have the latest version of Terraform installed..." -ForegroundColor Green -NewLineBefore -InformationAction Continue
                 $toolsPath = Join-Path -Path $targetDirectory -ChildPath ".tools"
                 Get-TerraformTool -version "latest" -toolsPath $toolsPath
             }
@@ -151,7 +151,7 @@ function New-ALZEnvironment {
         if($bootstrapModuleOverrideFolderPath -eq "" -and !$isLegacyBicep) {
             $versionAndPath = $null
 
-            Write-InformationColored "Checking and Downloading the bootstrap module..." -ForegroundColor Green -InformationAction Continue
+            Write-InformationColored "Checking and Downloading the bootstrap module..." -ForegroundColor Green -NewLineBefore -InformationAction Continue
 
             if($skipInternetChecks) {
                 $versionAndPath = Get-ExistingLocalRelease -targetDirectory $targetDirectory -targetFolder $bootstrapTargetFolder
@@ -242,7 +242,7 @@ function New-ALZEnvironment {
         if($starterModuleOverrideFolderPath -eq "" -and ($hasStarterModule -or $isLegacyBicep)) {
             $versionAndPath = $null
 
-            Write-InformationColored "Checking and Downloading the starter module..." -ForegroundColor Green -InformationAction Continue
+            Write-InformationColored "Checking and Downloading the starter module..." -ForegroundColor Green -NewLineBefore -InformationAction Continue
 
             if($skipInternetChecks) {
                 $versionAndPath = Get-ExistingLocalRelease -targetDirectory $targetDirectory -targetFolder $starterModuleTargetFolder

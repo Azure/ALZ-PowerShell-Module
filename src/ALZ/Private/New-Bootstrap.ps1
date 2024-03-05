@@ -152,6 +152,7 @@ function New-Bootstrap {
         }
 
         # Prompt user for interface inputs
+        Write-InformationColored "The following shared inputs are for the '$($bootstrapDetails.Name)' bootstrap and '$starter' starter module that you selected:" -ForegroundColor Green -NewLineBefore -InformationAction Continue
         $interfaceConfiguration = Request-ALZEnvironmentConfig `
             -configurationParameters $inputConfigMapped `
             -respectOrdering `
@@ -192,6 +193,7 @@ function New-Bootstrap {
         }
 
         # Getting the user input for the bootstrap module
+        Write-InformationColored "The following inputs are specific to the '$($bootstrapDetails.Name)' bootstrap module that you selected:" -ForegroundColor Green -NewLineBefore -InformationAction Continue
         $bootstrapConfiguration = Request-ALZEnvironmentConfig `
             -configurationParameters $bootstrapParameters `
             -respectOrdering `
@@ -202,9 +204,9 @@ function New-Bootstrap {
             -computedInputs $bootstrapComputed
 
 
-        Write-InformationColored "The following inputs are specific to the '$starter' starter module that you selected..." -ForegroundColor Green -InformationAction Continue
 
         # Getting the user input for the starter module
+        Write-InformationColored "The following inputs are specific to the '$starter' starter module that you selected:" -ForegroundColor Green -NewLineBefore -InformationAction Continue
         $starterConfiguration = Request-ALZEnvironmentConfig `
             -configurationParameters $starterParameters `
             -respectOrdering `
@@ -226,12 +228,12 @@ function New-Bootstrap {
         Write-ConfigurationCache -filePath $starterCachePath -configuration $starterConfiguration
 
         # Running terraform init and apply
-        Write-InformationColored "Thank you for providing those inputs, we are now initializing and applying Terraform to bootstrap your environment..." -ForegroundColor Green -InformationAction Continue
+        Write-InformationColored "Thank you for providing those inputs, we are now initializing and applying Terraform to bootstrap your environment..." -ForegroundColor Green -NewLineBefore -InformationAction Continue
 
         if($autoApprove) {
             Invoke-Terraform -moduleFolderPath $bootstrapModulePath -tfvarsFileName "override.tfvars" -autoApprove -destroy:$destroy.IsPresent
         } else {
-            Write-InformationColored "Once the plan is complete you will be prompted to confirm the apply. You must enter 'yes' to apply." -ForegroundColor Green -InformationAction Continue
+            Write-InformationColored "Once the plan is complete you will be prompted to confirm the apply. You must enter 'yes' to apply." -ForegroundColor Green -NewLineBefore -InformationAction Continue
             Invoke-Terraform -moduleFolderPath $bootstrapModulePath -tfvarsFileName "override.tfvars" -destroy:$destroy.IsPresent
         }
     }

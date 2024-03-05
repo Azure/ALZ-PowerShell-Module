@@ -15,22 +15,22 @@ function Get-TerraformTool {
         $version = ($versionResponse).Content | ConvertFrom-Json | Select-Object -ExpandProperty current_version
     }
 
-    Write-InformationColored "Required version of Terraform is $version" -ForegroundColor Green -InformationAction Continue
+    Write-Verbose "Required version of Terraform is $version"
 
     $commandDetails = Get-Command -Name terraform -ErrorAction SilentlyContinue
     if($commandDetails) {
-        Write-InformationColored "Terraform already installed in $($commandDetails.Path), checking version" -ForegroundColor Green -InformationAction Continue
+        Write-Verbose "Terraform already installed in $($commandDetails.Path), checking version"
         $installedVersion = terraform version -json | ConvertFrom-Json
-        Write-InformationColored "Installed version of Terraform: $($installedVersion.terraform_version) on $($installedVersion.platform)" -ForegroundColor Green -InformationAction Continue
+        Write-Verbose "Installed version of Terraform: $($installedVersion.terraform_version) on $($installedVersion.platform)"
         if($installedVersion.terraform_version -eq $version) {
-            Write-InformationColored "Installed version of Terraform matches required version $version, skipping install" -ForegroundColor Green -InformationAction Continue
+            Write-Verbose "Installed version of Terraform matches required version $version, skipping install"
             return
         }
     }
 
     $unzipdir = Join-Path -Path $toolsPath -ChildPath "terraform_$version"
     if (Test-Path $unzipdir) {
-        Write-InformationColored "Terraform $version already installed, adding to Path." -ForegroundColor Green -InformationAction Continue
+        Write-Verbose "Terraform $version already installed, adding to Path."
         if($os -eq "windows") {
             $env:PATH = "$($unzipdir);$env:PATH"
         } else {
@@ -75,5 +75,5 @@ function Get-TerraformTool {
     }
 
     Remove-Item $zipfilePath
-    Write-InformationColored "Installed Terraform version $version" -ForegroundColor Green -InformationAction Continue
+    Write-Verbose "Installed Terraform version $version"
 }
