@@ -32,7 +32,7 @@ To make PowerShell 7 your default instead of version 5, consider setting an alia
 
 Open a PowerShell session and run the following command:
 
-   ```powershell
+  ```powershell
    $PSVersionTable.PSVersion
    Set-Alias powershell pwsh
   ```
