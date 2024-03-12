@@ -1,29 +1,29 @@
 function New-ALZEnvironment {
     <#
     .SYNOPSIS
-    This function prompts a user for configuration values and modifies the ALZ Bicep configuration files accordingly.
+    Deploys an accelerator according to the supplied inputs.
     .DESCRIPTION
-    This function will prompt the user for commonly used deployment configuration settings and modify the configuration in place.
-    .PARAMETER alzBicepSource
-    The directory containing the ALZ-Bicep source repo.
-    .PARAMETER alzEnvironmentDestination
-    The directory where the ALZ environment will be created.
-    .PARAMETER alzBicepVersion
-    The version of the ALZ-Bicep module to use.
+    This function is used to deploy accelerators consisting or bootstrap and optionally starter modules. The accelerators are designed to simplify and speed up configuration of common Microsoft patterns, such as CI / CD for Azure Landing Zones.
+    .PARAMETER output
+    The target directory for the accelerator artefacts. Depending on the choice and type of accelerlerator, this may be an intermediate stage or the final result of the accelerator.
+    .PARAMETER iac
+    The type of infrastructure as code that the accelerator implements. For example bicep or terraform.
+    .PARAMETER bootstrap
+    The accelerator bootstrap type to deploy.
     .PARAMETER alzIacProvider
     The IaC provider to use for the ALZ environment.
-    .PARAMETER userInputOverridePath
-    A json file containing user input overrides for the user input prompts. This will cause the tool to by pass requesting user input for that field and use the value(s) provided. E.g { "starter_module": "basic", "azure_location": "uksouth" }
+    .PARAMETER inputs
+    A json or yaml file containing user input. This will cause the tool to by-pass requesting user input for the inputs supplied in the file. This is useful for automation or defining the inputs up front.
     .PARAMETER autoApprove
-    Automatically approve the terraform apply.
+    Automatically approve the bootstrap deployment. This is useful for automation scenarios.
     .PARAMETER destroy
-    Destroy the terraform environment.
+    Setting this will case the bootstrap to be destroyed. This is useful for cleaning up test environments.
     .EXAMPLE
-    New-ALZEnvironment
+    Deploy-Accelerator
     .EXAMPLE
-    New-ALZEnvironment -alzEnvironmentDestination "."
+    Deploy-Accelerator -o "."
     .EXAMPLE
-    New-ALZEnvironment -alzEnvironmentDestination "." -alzBicepVersion "v0.16.4"
+    Deploy-Accelerator -o "." -i "bicep" -b "alz_github"
     #>
     [CmdletBinding(SupportsShouldProcess = $true)]
     param (
