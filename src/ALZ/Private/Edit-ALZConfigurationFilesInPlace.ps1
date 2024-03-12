@@ -71,7 +71,7 @@ function Edit-ALZConfigurationFilesInPlace {
         }
 
         if ($true -eq $modified) {
-            Write-InformationColored $file.FullName -ForegroundColor Yellow -InformationAction Continue
+            Write-Verbose $file.FullName
             $bicepConfiguration | ConvertTo-Json -Depth 10  | Out-File $file.FullName
         }
     }
