@@ -21,25 +21,23 @@ function New-ALZEnvironment {
     .EXAMPLE
     New-ALZEnvironment
     .EXAMPLE
-    New-ALZEnvironment
-    .EXAMPLE
     New-ALZEnvironment -alzEnvironmentDestination "."
     .EXAMPLE
     New-ALZEnvironment -alzEnvironmentDestination "." -alzBicepVersion "v0.16.4"
     #>
     [CmdletBinding(SupportsShouldProcess = $true)]
     param (
-        [Parameter(Mandatory = $false)]
+        [Parameter(Mandatory = $false, HelpMessage = "The target directory for the accelerator output. Defaults to current folder.")]
         [Alias("Output")]
         [Alias("OutputDirectory")]
         [Alias("O")]
         [Alias("alzEnvironmentDestination")]
         [string] $targetDirectory = ".",
 
-        [Parameter(Mandatory = $false)]
+        [Parameter(Mandatory = $false, HelpMessage = "The specific bootstrap module release version to download. Defaults to latest.")]
         [string] $bootstrapRelease = "latest",
 
-        [Parameter(Mandatory = $false)]
+        [Parameter(Mandatory = $false, HelpMessage = "The specific starter module release version tom download. Defaults to latest.")]
         [Alias("alzBicepVersion")]
         [Alias("version")]
         [Alias("v")]
@@ -47,53 +45,53 @@ function New-ALZEnvironment {
         [Alias("release")]
         [string] $starterRelease = "latest",
 
-        [Parameter(Mandatory = $false)]
+        [Parameter(Mandatory = $false, HelpMessage = "The infrastructure as code type to target. Supported options are 'bicep', 'terrform' or 'local'. You will be prompted to enter this if not supplied.")]
         [Alias("i")]
         [Alias("alzIacProvider")]
         [string] $iac = "",
 
-        [Parameter(Mandatory = $false)]
+        [Parameter(Mandatory = $false, HelpMessage = "The bootstrap module to deploy. You will be prompted to enter this if not supplied.")]
         [Alias("Cicd")]
         [Alias("c")]
         [Alias("alzCicdPlatform")]
         [Alias("b")]
         [string] $bootstrap = "",
 
-        [Parameter(Mandatory = $false)]
+        [Parameter(Mandatory = $false, HelpMessage = "The inputs in json or yaml format. This is optional and used to automate or pre-prepare the accelerator inputs.")]
         [Alias("inputs")]
         [string] $userInputOverridePath = "",
 
-        [Parameter(Mandatory = $false)]
+        [Parameter(Mandatory = $false, HelpMessage = "Determines whether to deploy the bootstrap without prompting for approval. This is used for automation.")]
         [switch] $autoApprove,
 
-        [Parameter(Mandatory = $false)]
+        [Parameter(Mandatory = $false, HelpMessage = "Determines that this run is to destroup the bootstrap. This is used to cleanup experiments.")]
         [switch] $destroy,
 
-        [Parameter(Mandatory = $false, HelpMessage = "The bootstrap modules reposiotry url.")]
+        [Parameter(Mandatory = $false, HelpMessage = "The bootstrap modules reposiotry url. This can be overridden for custom modules.")]
         [string]
         $bootstrapModuleUrl = "https://github.com/Azure/accelerator-bootstrap-modules",
 
-        [Parameter(Mandatory = $false, HelpMessage = "The bootstrap config file path.")]
+        [Parameter(Mandatory = $false, HelpMessage = "The bootstrap config file path within the bootstrap module. This can be overridden for custom modules.")]
         [string]
         $bootstrapConfigPath = ".config/ALZ-Powershell.config.json",
 
-        [Parameter(Mandatory = $false, HelpMessage = "Bootstrap folder in teh source repo.")]
+        [Parameter(Mandatory = $false, HelpMessage = "The folder that containes the bootstrap modules in the bootstrap repo. This can be overridden for custom modules.")]
         [string]
         $bootstrapSourceFolder = ".",
 
-        [Parameter(Mandatory = $false, HelpMessage = "Used to override the bootstrap folder location.")]
+        [Parameter(Mandatory = $false, HelpMessage = "Used to override the bootstrap folder location. This can be used to provide a folder locally in restricted environments.")]
         [string]
         $bootstrapModuleOverrideFolderPath = "",
 
-        [Parameter(Mandatory = $false, HelpMessage = "Used to override the starter folder location.")]
+        [Parameter(Mandatory = $false, HelpMessage = "Used to override the starter folder location. This can be used to provide a folder locally in restricted environments.")]
         [string]
         $starterModuleOverrideFolderPath = "",
 
-        [Parameter(Mandatory = $false, HelpMessage = "Whether to use local mode for Bicep.")]
+        [Parameter(Mandatory = $false, HelpMessage = "The starter module repository url for bicep when running in legacy mode.")]
         [string]
         $bicepLegacyUrl = "https://github.com/Azure/ALZ-Bicep",
 
-        [Parameter(Mandatory = $false, HelpMessage = "Whether to skip checks that involve internet connection")]
+        [Parameter(Mandatory = $false, HelpMessage = "Whether to skip checks that involve internet connection. The can allow running in restricted environments.")]
         [switch]
         $skipInternetChecks,
 
