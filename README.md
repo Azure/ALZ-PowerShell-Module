@@ -16,6 +16,11 @@ This module provides a set of cmdlets to create and manage Accelerators for Azur
 
 The goal of this project it is to make easy to get started with Azure Landing Zones and other workloads. It is designed to speed up some basic tasks that you would need to perform whilst managing your Azure Landing Zones.
 
+For usage of the Azure Landing Zoners Accelerators, please refer to the detailed documentation:
+
+- [Bicep](https://github.com/Azure/ALZ-Bicep/wiki/Accelerator)
+- [Terraform](https://github.com/Azure/alz-terraform-accelerator/wiki)
+
 ## Getting Started
 
 ### Prerequisites
