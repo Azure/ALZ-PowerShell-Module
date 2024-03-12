@@ -261,12 +261,14 @@ function New-ALZEnvironment {
 
         # Run the bicep parameter setup if the iac is Bicep
         if ($iac -eq "bicep") {
+            $bootstrapLegacy = $bootstrap.ToLower().Replace("alz_", "")
+
             $targetPath = Join-Path $targetDirectory $starterFolder
             New-ALZEnvironmentBicep `
                 -targetDirectory $targetPath `
                 -upstreamReleaseVersion $starterReleaseTag `
                 -upstreamReleaseFolderPath $starterPath `
-                -vcs $bootstrap `
+                -vcs $bootstrapLegacy `
                 -local:$isLegacyBicep
         }
 

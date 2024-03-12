@@ -1,4 +1,4 @@
-# ALZ
+# ALZ / Accelerator PowerShell Module
 
 [![license](https://img.shields.io/badge/License-MIT-purple.svg)](LICENSE)
 
@@ -24,11 +24,14 @@ In order to use this module you will need PowerShell 7.1 or higher.
 Download and install the latest version from the official PowerShell GitHub releases page: [PowerShell Releases](https://github.com/PowerShell/PowerShell/releases)
 
 To make PowerShell 7 your default instead of version 5, consider setting an alias.
-   Open a PowerShell session and run the following command:
+
+Open a PowerShell session and run the following command:
+
    ```powershell
    $PSVersionTable.PSVersion
    Set-Alias powershell pwsh
   ```
+
 ### Installation
 
 You can install this module using PowerShellGet.
@@ -60,7 +63,7 @@ Before you start you can utilize the functionality of the module to verify if yo
 #### Bicep
 
 ```powershell
-Test-ALZRequirement -IaC "bicep"
+Test-ALZRequirement -i "bicep"
 ```
 
 Currently this tests for:
@@ -75,7 +78,7 @@ Currently this tests for:
 #### Terraform
 
 ```powershell
-Test-ALZRequirement -IaC "terraform"
+Test-ALZRequirement -i "terraform"
 ```
 
 This currently tests for:
