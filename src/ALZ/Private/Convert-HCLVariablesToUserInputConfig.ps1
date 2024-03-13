@@ -11,7 +11,10 @@ function Convert-HCLVariablesToUserInputConfig {
         [PSCustomObject]$validators,
 
         [Parameter(Mandatory = $false)]
-        [PSCustomObject]$appendToObject = $null
+        [PSCustomObject]$appendToObject = $null,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$allComputedInputs
     )
 
     if ($PSCmdlet.ShouldProcess("Parse HCL Variables into Config", "modify")) {
@@ -49,12 +52,8 @@ function Convert-HCLVariablesToUserInputConfig {
                 $hasValidation = $true
             }
 
-            if($hasValidation -and $validationType -eq "hidden") {
-                continue
-            }
-
             $inputType = "UserInput"
-            if($hasValidation -and $validationType -like "hidden_*") {
+            if($allComputedInputs) {
                 $inputType = "ComputedInput"
             }
 

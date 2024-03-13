@@ -2,19 +2,16 @@ function Invoke-Upgrade {
     [CmdletBinding(SupportsShouldProcess = $true)]
     param (
         [Parameter(Mandatory = $false)]
-        [string] $alzEnvironmentDestination,
+        [string] $targetDirectory,
 
         [Parameter(Mandatory = $false)]
-        [string] $bootstrapCacheFileName,
+        [string] $targetFolder = "",
 
         [Parameter(Mandatory = $false)]
-        [string] $starterCacheFileNamePattern,
+        [string] $cacheFileName,
 
         [Parameter(Mandatory = $false)]
-        [string] $stateFilePathAndFileName,
-
-        [Parameter(Mandatory = $false)]
-        [string] $currentVersion,
+        [string] $release,
 
         [Parameter(Mandatory = $false)]
         [switch] $autoApprove
@@ -22,34 +19,26 @@ function Invoke-Upgrade {
 
     if ($PSCmdlet.ShouldProcess("Upgrade Release", "Operation")) {
 
-        $directories = Get-ChildItem -Path $alzEnvironmentDestination -Filter "v*" -Directory
-        $previousBootstrapCachedValuesPath = $null
-        $previousStarterCachedValuesPath = $null
-        $previousStateFilePath = $null
+        $directories = Get-ChildItem -Path $targetDirectory -Filter "v*" -Directory
+        $previousCachedValuesPath = $null
         $previousVersion = $null
         $foundPreviousRelease = $false
 
+        Write-Verbose "UPGRADE: Checking for existing directories in $targetDirectory"
+
         foreach ($directory in $directories | Sort-Object -Descending -Property Name) {
-            $releasePath = Join-Path -Path $alzEnvironmentDestination -ChildPath $directory.Name
-            $releaseBootstrapCachedValuesPath = Join-Path -Path $releasePath -ChildPath $bootstrapCacheFileName
-            $releaseStateFilePath = Join-Path -Path $releasePath -ChildPath $stateFilePathAndFileName
+            $releasePath = Join-Path $targetDirectory $directory.Name
+            $releaseCachedValuesPath = Join-Path $releasePath $targetFolder $cacheFileName
 
-            if(Test-Path $releaseBootstrapCachedValuesPath) {
-                $previousBootstrapCachedValuesPath = $releaseBootstrapCachedValuesPath
+            Write-Verbose "UPGRADE: Checking for existing file in $releasePath, specifically $releaseCachedValuesPath"
+
+            if(Test-Path $releaseCachedValuesPath) {
+                $previousCachedValuesPath = $releaseCachedValuesPath
             }
 
-            $starterCacheFiles = Get-ChildItem -Path $releasePath -Filter $starterCacheFileNamePattern -File
-
-            if($starterCacheFiles) {
-                $previousStarterCachedValuesPath = $starterCacheFiles[0].FullName
-            }
-
-            if(Test-Path $releaseStateFilePath) {
-                $previousStateFilePath = $releaseStateFilePath
-            }
-
-            if($null -ne $previousStateFilePath) {
-                if($directory.Name -eq $currentVersion) {
+            if($null -ne $previousCachedValuesPath) {
+                if($directory.Name -eq $release) {
+                    Write-Verbose "Latest version $release has already been run. Skipping upgrade..."
                     # If the current version has already been run, then skip the upgrade process
                     break
                 }
@@ -61,35 +50,28 @@ function Invoke-Upgrade {
         }
 
         if($foundPreviousRelease) {
-            Write-InformationColored "AUTOMATIC UPGRADE: We found version $previousVersion that has been previously run. You can upgrade from this version to the new version $currentVersion" -ForegroundColor Yellow -InformationAction Continue
             $upgrade = ""
             if($autoApprove) {
                 $upgrade = "upgrade"
             } else {
+                Write-InformationColored "AUTOMATIC UPGRADE: We found version $previousVersion that has been previously run. You can upgrade from this version to the new version $currentVersion" -ForegroundColor Yellow -InformationAction Continue
                 $upgrade = Read-Host "If you would like to upgrade, enter 'upgrade' or just hit 'enter' to continue with a new environment. (upgrade/exit)"
             }
 
             if($upgrade.ToLower() -eq "upgrade") {
-                $currentPath = Join-Path -Path $alzEnvironmentDestination -ChildPath $currentVersion
-                $currentBootstrapCachedValuesPath = Join-Path -Path $currentPath -ChildPath $bootstrapCacheFileName
-                $currentStarterCachedValuesPath = $currentPath
-                $currentStateFilePath = Join-Path -Path $currentPath -ChildPath $stateFilePathAndFileName
+                $currentPath = Join-Path $targetDirectory $release
+                $currentCachedValuesPath = Join-Path $currentPath $targetFolder $cacheFileName
 
                 # Copy the previous cached values to the current release
-                if($null -ne $previousBootstrapCachedValuesPath) {
-                    Write-InformationColored "AUTOMATIC UPGRADE: Copying $previousBootstrapCachedValuesPath to $currentBootstrapCachedValuesPath" -ForegroundColor Green -InformationAction Continue
-                    Copy-Item -Path $previousBootstrapCachedValuesPath -Destination $currentBootstrapCachedValuesPath -Force | Out-String | Write-Verbose
-                }
-                if($null -ne $previousStarterCachedValuesPath) {
-                    Write-InformationColored "AUTOMATIC UPGRADE: Copying $previousStarterCachedValuesPath to $currentStarterCachedValuesPath" -ForegroundColor Green -InformationAction Continue
-                    Copy-Item -Path $previousStarterCachedValuesPath -Destination $currentStarterCachedValuesPath -Force | Out-String | Write-Verbose
+                if($null -ne $previousCachedValuesPath) {
+                    Write-InformationColored "AUTOMATIC UPGRADE: Copying $previousCachedValuesPath to $currentCachedValuesPath" -ForegroundColor Green -InformationAction Continue
+                    Copy-Item -Path $previousCachedValuesPath -Destination $currentCachedValuesPath -Force | Out-String | Write-Verbose
                 }
 
-                Write-InformationColored "AUTOMATIC UPGRADE: Copying $previousStateFilePath to $currentStateFilePath" -ForegroundColor Green -InformationAction Continue
-                Copy-Item -Path $previousStateFilePath -Destination $currentStateFilePath -Force | Out-String | Write-Verbose
-
-                Write-InformationColored "AUTOMATIC UPGRADE: Upgrade complete. If any files in the starter have been updated, you will need to remove branch protection in order for the Terraform apply to succeed..." -ForegroundColor Yellow -InformationAction Continue
+                return $true
             }
         }
+
+        return $false
     }
 }

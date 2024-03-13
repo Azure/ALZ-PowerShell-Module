@@ -59,7 +59,7 @@
     #________________________________________
     'Rules' = @{
         'PSAvoidUsingCmdletAliases' = @{
-            'allowlist' = @('Edit-LineEndings')
+            'allowlist' = @('Edit-LineEndings','Deploy-Accelerator')
         }
     }
 }

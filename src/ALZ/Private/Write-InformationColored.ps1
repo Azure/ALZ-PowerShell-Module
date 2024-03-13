@@ -5,8 +5,13 @@ function Write-InformationColored {
         [Object]$MessageData,
         [ConsoleColor]$ForegroundColor = $Host.UI.RawUI.ForegroundColor ?? "White", # Make sure we use the current colours by default
         [ConsoleColor]$BackgroundColor = $Host.UI.RawUI.BackgroundColor ?? "Black",
-        [Switch]$NoNewline
+        [Switch]$NoNewline,
+        [switch]$NewLineBefore
     )
+
+    if($NewLineBefore) {
+        $MessageData = "$([Environment]::NewLine)$MessageData"
+    }
 
     $msg = [System.Management.Automation.HostInformationMessage]@{
         Message         = $MessageData
