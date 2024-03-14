@@ -43,6 +43,9 @@ function New-Bootstrap {
 
     if ($PSCmdlet.ShouldProcess("ALZ-Terraform module configuration", "modify")) {
 
+        $bootstrapPath = Join-Path $bootstrapTargetPath $bootstrapRelease
+        $starterPath = Join-Path $starterTargetPath $starterRelease
+
         # Setup tools
         $hclParserToolPath = Get-HCLParserTool -alzEnvironmentDestination $bootstrapPath -toolVersion "v0.6.0"
 
@@ -57,8 +60,6 @@ function New-Bootstrap {
         $starterCachePath = Join-Path -Path $starterPath -ChildPath $starterCacheFileName
         $starterCachedConfig = Get-ALZConfig -configFilePath $starterCachePath
 
-        $bootstrapPath = Join-Path $bootstrapTargetPath $bootstrapRelease
-        $starterPath = Join-Path $starterTargetPath $starterRelease
         $bootstrapModulePath = Join-Path -Path $bootstrapPath -ChildPath $bootstrapDetails.Value.location
 
         Write-Verbose "Bootstrap Module Path: $bootstrapModulePath"

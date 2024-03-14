@@ -147,21 +147,17 @@ function New-ALZEnvironment {
         $bootstrapTargetFolder = "bootstrap"
 
         if(!$isLegacyBicep) {
-            $versionAndPath = $null
-
             Write-InformationColored "Checking and Downloading the bootstrap module..." -ForegroundColor Green -NewLineBefore -InformationAction Continue
 
-            if($skipInternetChecks) {
-                $versionAndPath = Get-ExistingLocalRelease -targetDirectory $targetDirectory -targetFolder $bootstrapTargetFolder
-            } else {
-                $versionAndPath = New-FolderStructure `
-                    -targetDirectory $targetDirectory `
-                    -url $bootstrapModuleUrl `
-                    -release $bootstrapRelease `
-                    -targetFolder $bootstrapTargetFolder `
-                    -sourceFolder $bootstrapSourceFolder `
-                    -overrideSourceDirectoryPath $bootstrapModuleOverrideFolderPath
-            }
+            $versionAndPath = New-ModuleSetup `
+                -targetDirectory $targetDirectory `
+                -targetFolder $bootstrapTargetFolder `
+                -sourceFolder $bootstrapSourceFolder `
+                -url $bootstrapModuleUrl `
+                -release $bootstrapRelease `
+                -moduleOverrideFolderPath $bootstrapModuleOverrideFolderPath `
+                -skipInternetChecks $skipInternetChecks
+
             $bootstrapReleaseTag = $versionAndPath.releaseTag
             $bootstrapPath = $versionAndPath.path
         }
@@ -189,49 +185,21 @@ function New-ALZEnvironment {
         $inputConfig = $null
 
         if(!$isLegacyBicep) {
-            # Get the bootstap configuration
-            $bootstrapConfigPath = Join-Path $bootstrapPath $bootstrapConfigPath
-            $bootstrapConfig = Get-ALZConfig -configFilePath $bootstrapConfigPath
-            $validationConfig = $bootstrapConfig.validators
+            $bootstrapAndStarterConfig = Get-BootstrapAndStarterConfig `
+                -iac $iac `
+                -bootstrap $bootstrap `
+                -bootstrapPath $bootstrapPath `
+                -bootstrapConfigPath $bootstrapConfigPath `
+                -userInputOverrides $userInputOverrides
 
-            # Get the available bootstrap modules
-            $bootstrapModules = $bootstrapConfig.bootstrap_modules
-
-            # Request the bootstrap type if not already specified
-            if($bootstrap -eq "") {
-                $bootstrap = Request-SpecialInput -type "bootstrap" -bootstrapModules $bootstrapModules -userInputOverrides $userInputOverrides
-            }
-
-            # Get the bootstrap details and validate it exists (use alias for legacy values)
-            $bootstrapDetails = $bootstrapModules.PsObject.Properties | Where-Object { $_.Name -eq $bootstrap -or $bootstrap -in $_.Value.aliases }
-            if($null -eq $bootstrapDetails) {
-                Write-InformationColored "The bootstrap type '$bootstrap' that you have selected does not exist. Please try again with a valid bootstrap type..." -ForegroundColor Red -InformationAction Continue
-                throw
-            }
-
-            # Get the starter modules for the selected bootstrap if it has any
-            $bootstrapStarterModule = $bootstrapDetails.Value.PSObject.Properties | Where-Object { $_.Name -eq  "starter_modules" }
-
-            if($null -ne $bootstrapStarterModule) {
-                # If the bootstrap has starter modules, get the details and url
-                $hasStarterModule = $true
-                $starterModules = $bootstrapConfig.PSObject.Properties | Where-Object { $_.Name -eq "starter_modules" }
-                $starterModuleType = $bootstrapStarterModule.Value
-                $starterModuleDetails = $starterModules.Value.PSObject.Properties | Where-Object { $_.Name -eq $starterModuleType }
-                if($null -eq $starterModuleDetails) {
-                    Write-InformationColored "The starter modules '$($starterModuleType)' for the bootstrap type '$bootstrap' that you have selected does not exist. This could be an issue with your custom configuration, please check and try again..." -ForegroundColor Red -InformationAction Continue
-                    throw
-                }
-
-                $starterModuleUrl = $starterModuleDetails.Value.$iac.url
-                $starterModuleSourceFolder = $starterModuleDetails.Value.$iac.module_path
-                $starterPipelineFolder = $starterModuleDetails.Value.$iac.pipeline_folder
-            }
-
-            # Get the bootstrap interface user input config
-            $inputConfigFilePath = Join-Path -Path $bootstrapPath -ChildPath $bootstrapDetails.Value.interface_config_file
-            Write-Verbose "Interface config path $inputConfigFilePath"
-            $inputConfig = Get-ALZConfig -configFilePath $inputConfigFilePath
+            $bootstrapDetails = $bootstrapAndStarterConfig.bootstrapDetails
+            $hasStarterModule = $bootstrapAndStarterConfig.hasStarterModule
+            $starterModuleUrl = $bootstrapAndStarterConfig.starterModuleUrl
+            $starterModuleSourceFolder = $bootstrapAndStarterConfig.starterModuleSourceFolder
+            $starterReleaseTag = $bootstrapAndStarterConfig.starterReleaseTag
+            $starterPipelineFolder = $bootstrapAndStarterConfig.starterPipelineFolder
+            $validationConfig = $bootstrapAndStarterConfig.validationConfig
+            $inputConfig = $bootstrapAndStarterConfig.inputConfig
         }
 
         # Download the starter modules
@@ -239,21 +207,16 @@ function New-ALZEnvironment {
         $starterPath = ""
 
         if(($hasStarterModule -or $isLegacyBicep)) {
-            $versionAndPath = $null
-
             Write-InformationColored "Checking and Downloading the starter module..." -ForegroundColor Green -NewLineBefore -InformationAction Continue
 
-            if($skipInternetChecks) {
-                $versionAndPath = Get-ExistingLocalRelease -targetDirectory $targetDirectory -targetFolder $starterModuleTargetFolder
-            } else {
-                $versionAndPath = New-FolderStructure `
-                    -targetDirectory $targetDirectory `
-                    -url $starterModuleUrl `
-                    -release $starterRelease `
-                    -targetFolder $starterModuleTargetFolder `
-                    -sourceFolder $starterModuleSourceFolder `
-                    -overrideSourceDirectoryPath $starterModuleOverrideFolderPath
-            }
+            $versionAndPath = New-ModuleSetup `
+                -targetDirectory $targetDirectory `
+                -targetFolder $starterModuleTargetFolder `
+                -sourceFolder $starterModuleSourceFolder `
+                -url $starterModuleUrl `
+                -release $starterRelease `
+                -moduleOverrideFolderPath $starterModuleOverrideFolderPath `
+                -skipInternetChecks $skipInternetChecks
 
             $starterReleaseTag = $versionAndPath.releaseTag
             $starterPath = $versionAndPath.path
