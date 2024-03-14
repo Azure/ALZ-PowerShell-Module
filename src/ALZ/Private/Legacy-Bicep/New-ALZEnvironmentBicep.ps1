@@ -11,11 +11,17 @@ function New-ALZEnvironmentBicep {
         [string] $upstreamReleaseFolderPath,
 
         [Parameter(Mandatory = $false)]
+        [PSCustomObject] $userInputOverrides = $null,
+
+        [Parameter(Mandatory = $false)]
         [ValidateSet("github", "azuredevops")]
         [string] $vcs,
 
         [Parameter(Mandatory = $false)]
-        [switch] $local
+        [switch] $local,
+
+        [Parameter(Mandatory = $false)]
+        [switch] $autoApprove
     )
 
     if ($PSCmdlet.ShouldProcess("ALZ-Bicep module configuration", "modify")) {
@@ -31,7 +37,7 @@ function New-ALZEnvironmentBicep {
         Copy-ALZParametersFile -alzEnvironmentDestination $targetDirectory -upstreamReleaseDirectory $upstreamReleaseFolderPath -configFiles $bicepConfig.config_files | Out-String | Write-Verbose
         Copy-ALZParametersFile -alzEnvironmentDestination $targetDirectory -upstreamReleaseDirectory $upstreamReleaseFolderPath -configFiles $bicepConfig.cicd.$vcs | Out-String | Write-Verbose
 
-        $configuration = Request-ALZEnvironmentConfig -configurationParameters $bicepConfig.parameters
+        $configuration = Request-ALZEnvironmentConfig -configurationParameters $bicepConfig.parameters -userInputOverrides $userInputOverrides -autoApprove:$autoApprove.IsPresent
 
         Set-ComputedConfiguration -configuration $configuration | Out-String | Write-Verbose
         Edit-ALZConfigurationFilesInPlace -alzEnvironmentDestination $targetDirectory -configuration $configuration | Out-String | Write-Verbose

@@ -232,7 +232,9 @@ function New-ALZEnvironment {
                 -upstreamReleaseVersion $starterReleaseTag `
                 -upstreamReleaseFolderPath $starterPath `
                 -vcs $bootstrapLegacy `
-                -local:$isLegacyBicep
+                -local:$isLegacyBicep `
+                -autoApprove:$autoApprove.IsPresent `
+                -userInputOverrides $userInputOverrides
         }
 
         # Run the bootstrap
