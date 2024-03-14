@@ -71,10 +71,18 @@ function Request-SpecialInput {
                 Write-InformationColored "Please select the bootstrap module you would like to use, you can enter one of the following keys:" -ForegroundColor Yellow -InformationAction Continue
 
                 $bootstrapOptions = @()
-                foreach ($bootstrapModule in $bootstrapModules.PsObject.Properties) {
-                    Write-InformationColored "- $($bootstrapModule.Name) ($($bootstrapModule.Value.description))" -ForegroundColor Yellow -InformationAction Continue
-                    $bootstrapOptions += $bootstrapModule.Name
+                if($bootstrapModules.PsObject.Properties.Name.Count -eq 0) {
+                    $bootstrapOptions += "azuredevops"
+                    Write-InformationColored "- azuredevops" -ForegroundColor Yellow -InformationAction Continue
+                    $bootstrapOptions += "github"
+                    Write-InformationColored "- github" -ForegroundColor Yellow -InformationAction Continue
+                } else {
+                    foreach ($bootstrapModule in $bootstrapModules.PsObject.Properties) {
+                        Write-InformationColored "- $($bootstrapModule.Name) ($($bootstrapModule.Value.description))" -ForegroundColor Yellow -InformationAction Continue
+                        $bootstrapOptions += $bootstrapModule.Name
+                    }
                 }
+
                 Write-InformationColored ": " -ForegroundColor Yellow -NoNewline -InformationAction Continue
                 $result = Read-Host
 

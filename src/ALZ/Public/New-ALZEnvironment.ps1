@@ -189,8 +189,7 @@ function New-ALZEnvironment {
                 -iac $iac `
                 -bootstrap $bootstrap `
                 -bootstrapPath $bootstrapPath `
-                -bootstrapConfigPath $bootstrapConfigPath `
-                -userInputOverrides $userInputOverrides
+                -bootstrapConfigPath $bootstrapConfigPath
 
             $bootstrapDetails = $bootstrapAndStarterConfig.bootstrapDetails
             $hasStarterModule = $bootstrapAndStarterConfig.hasStarterModule
@@ -200,6 +199,10 @@ function New-ALZEnvironment {
             $starterPipelineFolder = $bootstrapAndStarterConfig.starterPipelineFolder
             $validationConfig = $bootstrapAndStarterConfig.validationConfig
             $inputConfig = $bootstrapAndStarterConfig.inputConfig
+        } else {
+            if($bootstrap -eq "") {
+                $bootstrap = Request-SpecialInput -type "bootstrap" -bootstrapModules $bootstrapModules -userInputOverrides $userInputOverrides
+            }
         }
 
         # Download the starter modules
