@@ -44,7 +44,7 @@ function New-ALZEnvironmentBicep {
         Build-ALZDeploymentEnvFile -configuration $configuration -Destination $targetDirectory -version $upstreamReleaseVersion | Out-String | Write-Verbose
 
         if($local) {
-            $isGitRepo = Test-ALZGitRepository -alzEnvironmentDestination $targetDirectory
+            $isGitRepo = Test-ALZGitRepository -alzEnvironmentDestination $targetDirectory -autoApprove:$autoApprove.IsPresent
             if (-not $isGitRepo) {
                 Write-InformationColored "The directory $targetDirectory is not a git repository.  Please make sure it is a git repo after initialization." -ForegroundColor Red -InformationAction Continue
             }
