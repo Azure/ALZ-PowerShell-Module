@@ -83,8 +83,11 @@ function New-Bootstrap {
 
         if($hasStarter) {
             $starter = Request-SpecialInput -type "starter" -starterPath $starterPath -userInputOverrides $userInputOverrides
-            $starterModulePath = Join-Path -Path $starterPath -ChildPath $starter
-            $pipelineModulePath = Join-Path -Path $starterPath -ChildPath $starterPipelineFolder
+            $starterModulePath = Resolve-Path (Join-Path -Path $starterPath -ChildPath $starter)
+            $pipelineModulePath = Resolve-Path (Join-Path -Path $starterPath -ChildPath $starterPipelineFolder)
+
+            Write-Verbose "Starter Module Path: $starterModulePath"
+            Write-Verbose "Pipeline Module Path: $pipelineModulePath"
         }
 
         # Getting the configuration for the interface user input
