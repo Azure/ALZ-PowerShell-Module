@@ -142,11 +142,11 @@ function New-ALZEnvironment {
         }
 
         # Download the bootstrap modules
-        $bootstrapReleaseTag = "local"
-        $bootstrapPath = $bootstrapModuleOverrideFolderPath
+        $bootstrapReleaseTag = ""
+        $bootstrapPath = ""
         $bootstrapTargetFolder = "bootstrap"
 
-        if($bootstrapModuleOverrideFolderPath -eq "" -and !$isLegacyBicep) {
+        if(!$isLegacyBicep) {
             $versionAndPath = $null
 
             Write-InformationColored "Checking and Downloading the bootstrap module..." -ForegroundColor Green -NewLineBefore -InformationAction Continue
@@ -159,7 +159,8 @@ function New-ALZEnvironment {
                     -url $bootstrapModuleUrl `
                     -release $bootstrapRelease `
                     -targetFolder $bootstrapTargetFolder `
-                    -sourceFolder $bootstrapSourceFolder
+                    -sourceFolder $bootstrapSourceFolder `
+                    -overrideSourceDirectoryPath $bootstrapModuleOverrideFolderPath
             }
             $bootstrapReleaseTag = $versionAndPath.releaseTag
             $bootstrapPath = $versionAndPath.path
@@ -234,10 +235,10 @@ function New-ALZEnvironment {
         }
 
         # Download the starter modules
-        $starterReleaseTag = "local"
-        $starterPath = $starterModuleOverrideFolderPath
+        $starterReleaseTag = ""
+        $starterPath = ""
 
-        if($starterModuleOverrideFolderPath -eq "" -and ($hasStarterModule -or $isLegacyBicep)) {
+        if(($hasStarterModule -or $isLegacyBicep)) {
             $versionAndPath = $null
 
             Write-InformationColored "Checking and Downloading the starter module..." -ForegroundColor Green -NewLineBefore -InformationAction Continue
@@ -250,7 +251,8 @@ function New-ALZEnvironment {
                     -url $starterModuleUrl `
                     -release $starterRelease `
                     -targetFolder $starterModuleTargetFolder `
-                    -sourceFolder $starterModuleSourceFolder
+                    -sourceFolder $starterModuleSourceFolder `
+                    -overrideSourceDirectoryPath $starterModuleOverrideFolderPath
             }
 
             $starterReleaseTag = $versionAndPath.releaseTag
