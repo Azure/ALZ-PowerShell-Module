@@ -206,7 +206,7 @@ function New-ALZEnvironment {
             $bootstrapDetails = $bootstrapModules.PsObject.Properties | Where-Object { $_.Name -eq $bootstrap -or $bootstrap -in $_.Value.aliases }
             if($null -eq $bootstrapDetails) {
                 Write-InformationColored "The bootstrap type '$bootstrap' that you have selected does not exist. Please try again with a valid bootstrap type..." -ForegroundColor Red -InformationAction Continue
-                return
+                throw
             }
 
             # Get the starter modules for the selected bootstrap if it has any
@@ -220,7 +220,7 @@ function New-ALZEnvironment {
                 $starterModuleDetails = $starterModules.Value.PSObject.Properties | Where-Object { $_.Name -eq $starterModuleType }
                 if($null -eq $starterModuleDetails) {
                     Write-InformationColored "The starter modules '$($starterModuleType)' for the bootstrap type '$bootstrap' that you have selected does not exist. This could be an issue with your custom configuration, please check and try again..." -ForegroundColor Red -InformationAction Continue
-                    return
+                    throw
                 }
 
                 $starterModuleUrl = $starterModuleDetails.Value.$iac.url
