@@ -189,7 +189,8 @@ function New-ALZEnvironment {
                 -iac $iac `
                 -bootstrap $bootstrap `
                 -bootstrapPath $bootstrapPath `
-                -bootstrapConfigPath $bootstrapConfigPath
+                -bootstrapConfigPath $bootstrapConfigPath `
+                -userInputOverrides $userInputOverrides
 
             $bootstrapDetails = $bootstrapAndStarterConfig.bootstrapDetails
             $hasStarterModule = $bootstrapAndStarterConfig.hasStarterModule
