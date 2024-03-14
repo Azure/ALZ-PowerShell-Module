@@ -13,7 +13,7 @@ Import-Module $PathToManifest -Force
 
 InModuleScope 'ALZ' {
     Describe "Add-AvailabilityZonesBicepParameter" {
-        Context "When adding availability zones" {
+        Context "Adding availability zones to parameters file" {
             BeforeAll {
                 $alzEnvironmentDestination = "TestDrive:\"
                 $hubParametersPath = "https://raw.githubusercontent.com/Azure/ALZ-Bicep/main/infra-as-code/bicep/modules/hubNetworking/parameters/hubNetworking.parameters.all.json"
