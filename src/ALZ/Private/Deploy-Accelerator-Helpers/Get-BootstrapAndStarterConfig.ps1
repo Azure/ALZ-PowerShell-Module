@@ -27,6 +27,7 @@ function Get-BootstrapAndStarterConfig {
 
         # Get the bootstap configuration
         $bootstrapConfigFullPath = Join-Path $bootstrapPath $bootstrapConfigPath
+        Write-Verbose "Bootstrap config path $bootstrapConfigFullPath"
         $bootstrapConfig = Get-ALZConfig -configFilePath $bootstrapConfigFullPath
         $validationConfig = $bootstrapConfig.validators
 
