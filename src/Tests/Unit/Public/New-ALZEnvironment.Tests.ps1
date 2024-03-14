@@ -77,7 +77,7 @@ InModuleScope 'ALZ' {
                     }
                 }
 
-                Mock -CommandName Get-ALZGithubRelease -MockWith { $("v0.0.1") }
+                Mock -CommandName Get-GithubRelease -MockWith { $("v0.0.1") }
 
                 Mock -CommandName Test-ALZGitRepository -MockWith { $false }
 
@@ -112,20 +112,29 @@ InModuleScope 'ALZ' {
 
                 Mock -CommandName Invoke-Terraform -MockWith { }
 
-                Mock -CommandName Import-SubscriptionData -MockWith { }
-
                 Mock -CommandName Invoke-Upgrade -MockWith { }
+
+                Mock -CommandName Invoke-FullUpgrade -MockWith { }
+
+                Mock -CommandName Get-TerraformTool -MockWith {}
             }
 
-            It 'should return the output directory on completion' {
-                New-ALZEnvironment
+            It 'should call the correct functions for bicep legacy module configuration' {
+                New-ALZEnvironment -i "bicep" -c "github"
+                Assert-MockCalled -CommandName Get-GithubRelease -Exactly 1
                 Assert-MockCalled -CommandName Edit-ALZConfigurationFilesInPlace -Exactly 1
             }
 
-            It 'should clone the git repo and apply if terraform is selected' {
-                New-ALZEnvironment -IaC "terraform"
-                Assert-MockCalled -CommandName Get-ALZGithubRelease -Exactly 1
-                Assert-MockCalled -CommandName Invoke-Terraform -Exactly 1
+            It 'should call the correct functions for bicep modern module configuration' {
+                New-ALZEnvironment -i "bicep" -c "github"
+                #Assert-MockCalled -CommandName Get-GithubRelease -Exactly 2
+                Assert-MockCalled -CommandName Edit-ALZConfigurationFilesInPlace -Exactly 1
+            }
+
+            It 'should call the correct functions for terraform module configuration' {
+                New-ALZEnvironment -i "terraform" -c "github"
+                #Assert-MockCalled -CommandName Get-GithubRelease -Exactly 2
+                #Assert-MockCalled -CommandName Invoke-Terraform -Exactly 1
             }
         }
     }

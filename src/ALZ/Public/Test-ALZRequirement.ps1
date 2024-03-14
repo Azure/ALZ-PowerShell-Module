@@ -24,6 +24,7 @@ function Test-ALZRequirement {
         [Parameter(Mandatory = $false)]
         [ValidateSet("bicep", "terraform")]
         [Alias("Iac")]
+        [Alias("i")]
         [string] $alzIacProvider = "bicep"
     )
 

@@ -27,7 +27,7 @@ function Build-ALZDeploymentEnvFile {
     foreach ($configurationValue in $configuration.PsObject.Properties) {
         foreach ($target in $configurationValue.Value.Targets) {
             if ($target.Destination -eq "Environment") {
-                Write-InformationColored $configurationValue.Name -ForegroundColor Green -InformationAction Continue
+                Write-Verbose "Creating environment files for: $($configurationValue.Name)"
 
                 if($configurationValue.Name -eq "UpstreamReleaseVersion") {
                     Add-Content -Path $envFile -Value "$($($target.Name))=`"$version`"" | Out-String | Write-Verbose
