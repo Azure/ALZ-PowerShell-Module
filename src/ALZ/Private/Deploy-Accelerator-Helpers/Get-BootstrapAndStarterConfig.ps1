@@ -70,15 +70,15 @@ function Get-BootstrapAndStarterConfig {
         Write-Verbose "Interface config path $inputConfigFilePath"
         $inputConfig = Get-ALZConfig -configFilePath $inputConfigFilePath
 
-        return {
-            bootstrapDetails = $bootstrapDetails
-            hasStarterModule = $hasStarterModule
-            starterModuleUrl = $starterModuleUrl
+        return @{
+            bootstrapDetails          = $bootstrapDetails
+            hasStarterModule          = $hasStarterModule
+            starterModuleUrl          = $starterModuleUrl
             starterModuleSourceFolder = $starterModuleSourceFolder
-            starterReleaseTag = $starterReleaseTag
-            starterPipelineFolder = $starterPipelineFolder
-            validationConfig = $validationConfig
-            inputConfig = $inputConfig
+            starterReleaseTag         = $starterReleaseTag
+            starterPipelineFolder     = $starterPipelineFolder
+            validationConfig          = $validationConfig
+            inputConfig               = $inputConfig
         }
     }
 }

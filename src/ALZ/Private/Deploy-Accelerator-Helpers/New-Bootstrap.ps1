@@ -110,7 +110,7 @@ function New-Bootstrap {
 
         if($hasStarter) {
             $targetVariableFilePath = Join-Path -Path $starterModulePath -ChildPath "variables.tf"
-            $starterParameters = Convert-HCLVariablesToUserInputConfig -targetVariableFile $targetVariableFilePath -hclParserToolPath $hclParserToolPath -validators $bootstrapConfig.validators
+            $starterParameters = Convert-HCLVariablesToUserInputConfig -targetVariableFile $targetVariableFilePath -hclParserToolPath $hclParserToolPath -validators $validationConfig
         }
 
         # Filter interface inputs if not in bootstrap or starter
