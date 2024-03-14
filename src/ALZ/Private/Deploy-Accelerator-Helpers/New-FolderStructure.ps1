@@ -39,7 +39,7 @@ function New-FolderStructure {
             } else {
                 Write-InformationColored "Copying files from $overrideSourceDirectoryPath to $path" -ForegroundColor Green -InformationAction Continue
                 New-Item -Path $path -ItemType "Directory"
-                Copy-Item -Path "$overrideSourceDirectoryPath/$sourceFolder/*" -Destination "$path" -Recurse | Out-String | Write-Verbose
+                Copy-Item -Path "$overrideSourceDirectoryPath/$sourceFolder/*" -Destination "$path" -Recurse -Force | Out-String | Write-Verbose
             }
 
         } else {
