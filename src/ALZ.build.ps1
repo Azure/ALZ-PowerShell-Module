@@ -64,6 +64,9 @@ Add-BuildTask HelpLocal Clean, ImportModuleManifest, CreateHelpStart
 #Full build sans integration tests
 Add-BuildTask BuildNoIntegration -Jobs $str2
 
+#Build and Install Only
+Add-BuildTask BuildAndInstallOnly Clean, ImportModuleManifest, Build, Archive, Install
+
 # Pre-build variables to be used by other portions of the script
 Enter-Build {
     $script:ModuleName = (Split-Path -Path $BuildFile -Leaf).Split('.')[0]
