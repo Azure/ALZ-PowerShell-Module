@@ -43,6 +43,9 @@ function New-Bootstrap {
 
     if ($PSCmdlet.ShouldProcess("ALZ-Terraform module configuration", "modify")) {
 
+        $bootstrapPath = Join-Path $bootstrapTargetPath $bootstrapRelease
+        $starterPath = Join-Path $starterTargetPath $starterRelease
+
         # Setup tools
         $hclParserToolPath = Get-HCLParserTool -alzEnvironmentDestination $bootstrapPath -toolVersion "v0.6.0"
 
@@ -57,8 +60,6 @@ function New-Bootstrap {
         $starterCachePath = Join-Path -Path $starterPath -ChildPath $starterCacheFileName
         $starterCachedConfig = Get-ALZConfig -configFilePath $starterCachePath
 
-        $bootstrapPath = Join-Path $bootstrapTargetPath $bootstrapRelease
-        $starterPath = Join-Path $starterTargetPath $starterRelease
         $bootstrapModulePath = Join-Path -Path $bootstrapPath -ChildPath $bootstrapDetails.Value.location
 
         Write-Verbose "Bootstrap Module Path: $bootstrapModulePath"
@@ -82,8 +83,11 @@ function New-Bootstrap {
 
         if($hasStarter) {
             $starter = Request-SpecialInput -type "starter" -starterPath $starterPath -userInputOverrides $userInputOverrides
-            $starterModulePath = Join-Path -Path $starterPath -ChildPath $starter
-            $pipelineModulePath = Join-Path -Path $starterPath -ChildPath $starterPipelineFolder
+            $starterModulePath = Resolve-Path (Join-Path -Path $starterPath -ChildPath $starter)
+            $pipelineModulePath = Resolve-Path (Join-Path -Path $starterPath -ChildPath $starterPipelineFolder)
+
+            Write-Verbose "Starter Module Path: $starterModulePath"
+            Write-Verbose "Pipeline Module Path: $pipelineModulePath"
         }
 
         # Getting the configuration for the interface user input
@@ -109,7 +113,7 @@ function New-Bootstrap {
 
         if($hasStarter) {
             $targetVariableFilePath = Join-Path -Path $starterModulePath -ChildPath "variables.tf"
-            $starterParameters = Convert-HCLVariablesToUserInputConfig -targetVariableFile $targetVariableFilePath -hclParserToolPath $hclParserToolPath -validators $bootstrapConfig.validators
+            $starterParameters = Convert-HCLVariablesToUserInputConfig -targetVariableFile $targetVariableFilePath -hclParserToolPath $hclParserToolPath -validators $validationConfig
         }
 
         # Filter interface inputs if not in bootstrap or starter

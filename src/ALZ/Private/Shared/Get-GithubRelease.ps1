@@ -124,7 +124,7 @@ function Get-GithubRelease {
 
         Write-Verbose "===> Copying all extracted contents into $targetVersionPath."
 
-        Copy-Item -Path "$($extractedSubFolder.FullName)/$moduleSourceFolder/*" -Destination "$targetVersionPath" -Recurse | Out-String | Write-Verbose
+        Copy-Item -Path "$($extractedSubFolder.FullName)/$moduleSourceFolder/*" -Destination "$targetVersionPath" -Recurse -Force | Out-String | Write-Verbose
 
         Remove-Item -Path "$targetVersionPath/tmp" -Force -Recurse
         Write-InformationColored "The directory for $targetVersionPath has been created and populated." -ForegroundColor Green -InformationAction Continue

@@ -55,6 +55,7 @@ function Convert-HCLVariablesToUserInputConfig {
             $inputType = "UserInput"
             if($allComputedInputs) {
                 $inputType = "ComputedInput"
+                Write-Verbose "Name: $($variable.Name), Has Validation: $hasValidation, Order: $order, ValidationType: $validationType, Description: $description, InputType: $inputType"
             }
 
             $sensitive = $false
@@ -90,6 +91,7 @@ function Convert-HCLVariablesToUserInputConfig {
             }
 
             if($hasValidation) {
+                Write-Verbose "Validation: $hasValidation - $validationType"
                 $validator = $validators.PSObject.Properties[$validationType].Value
                 $description = "$description ($($validator.Description))"
                 if($validator.Type -eq "AllowedValues"){

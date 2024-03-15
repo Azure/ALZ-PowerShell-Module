@@ -117,24 +117,44 @@ InModuleScope 'ALZ' {
                 Mock -CommandName Invoke-FullUpgrade -MockWith { }
 
                 Mock -CommandName Get-TerraformTool -MockWith {}
+
+                Mock -CommandName New-FolderStructure -MockWith {}
+
+                Mock -CommandName New-ModuleSetup -MockWith {
+                    @{
+                        "version" = "v0.0.1"
+                        "path"    = "./example/example"
+                    }
+                }
+
+                Mock -CommandName Get-BootstrapAndStarterConfig -MockWith {
+                    @{
+                        "hasStarterModule" = $true
+                    }
+                }
+
+                Mock -CommandName New-Bootstrap -MockWith {}
+
+                Mock -CommandName New-ALZEnvironmentBicep -MockWith {}
             }
 
             It 'should call the correct functions for bicep legacy module configuration' {
                 New-ALZEnvironment -i "bicep" -c "github"
-                Assert-MockCalled -CommandName Get-GithubRelease -Exactly 1
-                Assert-MockCalled -CommandName Edit-ALZConfigurationFilesInPlace -Exactly 1
+                Assert-MockCalled -CommandName New-ALZEnvironmentBicep -Exactly 1
+                Assert-MockCalled -CommandName New-ModuleSetup -Exactly 1
             }
 
             It 'should call the correct functions for bicep modern module configuration' {
-                New-ALZEnvironment -i "bicep" -c "github"
-                #Assert-MockCalled -CommandName Get-GithubRelease -Exactly 2
-                Assert-MockCalled -CommandName Edit-ALZConfigurationFilesInPlace -Exactly 1
+                Deploy-Accelerator -i "bicep" -c "github" -bicepLegacyMode $false
+                Assert-MockCalled -CommandName Get-BootstrapAndStarterConfig -Exactly 1
+                Assert-MockCalled -CommandName New-ModuleSetup -Exactly 2
             }
 
             It 'should call the correct functions for terraform module configuration' {
-                New-ALZEnvironment -i "terraform" -c "github"
-                #Assert-MockCalled -CommandName Get-GithubRelease -Exactly 2
-                #Assert-MockCalled -CommandName Invoke-Terraform -Exactly 1
+                Deploy-Accelerator -i "terraform" -c "github"
+                Assert-MockCalled -CommandName Get-BootstrapAndStarterConfig -Exactly 1
+                Assert-MockCalled -CommandName New-Bootstrap -Exactly 1
+                Assert-MockCalled -CommandName New-ModuleSetup -Exactly 2
             }
         }
     }

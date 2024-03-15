@@ -39,6 +39,6 @@ function Get-ALZConfig {
         throw "The config file must be a json or yaml/yml file"
     }
 
-    Write-Verbose "Config file loaded from $configFilePath with $($config.PSObject.Properties.Count) properties."
+    Write-Verbose "Config file loaded from $configFilePath with $($config.PSObject.Properties.Name.Count) properties."
     return $config
 }
