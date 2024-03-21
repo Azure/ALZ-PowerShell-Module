@@ -42,7 +42,7 @@ function New-ALZEnvironmentBicep {
         Set-ComputedConfiguration -configuration $configuration | Out-String | Write-Verbose
         Edit-ALZConfigurationFilesInPlace -alzEnvironmentDestination $targetDirectory -configuration $configuration | Out-String | Write-Verbose
         Build-ALZDeploymentEnvFile -configuration $configuration -Destination $targetDirectory -version $upstreamReleaseVersion | Out-String | Write-Verbose
-        Add-AvailabilityZonesBicepParameter -alzEnvironmentDestination $alzEnvironmentDestination -configFile $bicepConfig| Out-String | Write-Verbose
+        Add-AvailabilityZonesBicepParameter -alzEnvironmentDestination $targetDirectory -configFile $bicepConfig | Out-String | Write-Verbose
 
         if($local) {
             $isGitRepo = Test-ALZGitRepository -alzEnvironmentDestination $targetDirectory -autoApprove:$autoApprove.IsPresent
