@@ -2,6 +2,9 @@ function Invoke-Upgrade {
     [CmdletBinding(SupportsShouldProcess = $true)]
     param (
         [Parameter(Mandatory = $false)]
+        [string] $moduleType,
+
+        [Parameter(Mandatory = $false)]
         [string] $targetDirectory,
 
         [Parameter(Mandatory = $false)]
@@ -54,7 +57,7 @@ function Invoke-Upgrade {
             if($autoApprove) {
                 $upgrade = "upgrade"
             } else {
-                Write-InformationColored "AUTOMATIC UPGRADE: We found version $previousVersion that has been previously run. You can upgrade from this version to the new version $currentVersion" -ForegroundColor Yellow -InformationAction Continue
+                Write-InformationColored "AUTOMATIC UPGRADE: We found version $previousVersion of the $moduleType module that has been previously run. You can upgrade from this version to the new version $currentVersion" -NewLineBefore -ForegroundColor Yellow -InformationAction Continue
                 $upgrade = Read-Host "If you would like to upgrade, enter 'upgrade' or just hit 'enter' to continue with a new environment. (upgrade/exit)"
             }
 
