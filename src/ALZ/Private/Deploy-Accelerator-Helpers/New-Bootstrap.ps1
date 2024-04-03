@@ -54,12 +54,8 @@ function New-Bootstrap {
         $bootstrapCacheFileName = "bootstrap-cache.json"
         $starterCacheFileName = "starter-cache.json"
         $interfaceCachePath = Join-Path -Path $bootstrapPath -ChildPath $interfaceCacheFileName
-        $interfaceCachedConfig = Get-ALZConfig -configFilePath $interfaceCachePath
         $bootstrapCachePath = Join-Path -Path $bootstrapPath -ChildPath $bootstrapCacheFileName
-        $bootstrapCachedConfig = Get-ALZConfig -configFilePath $bootstrapCachePath
         $starterCachePath = Join-Path -Path $starterPath -ChildPath $starterCacheFileName
-        $starterCachedConfig = Get-ALZConfig -configFilePath $starterCachePath
-
         $bootstrapModulePath = Join-Path -Path $bootstrapPath -ChildPath $bootstrapDetails.Value.location
 
         Write-Verbose "Bootstrap Module Path: $bootstrapModulePath"
@@ -75,6 +71,11 @@ function New-Bootstrap {
             -bootstrapCacheFileName $bootstrapCacheFileName `
             -starterCacheFileName $starterCacheFileName `
             -autoApprove:$autoApprove.IsPresent
+
+        # Get cached inputs
+        $interfaceCachedConfig = Get-ALZConfig -configFilePath $interfaceCachePath
+        $bootstrapCachedConfig = Get-ALZConfig -configFilePath $bootstrapCachePath
+        $starterCachedConfig = Get-ALZConfig -configFilePath $starterCachePath
 
         # Get starter module
         $starter = ""
