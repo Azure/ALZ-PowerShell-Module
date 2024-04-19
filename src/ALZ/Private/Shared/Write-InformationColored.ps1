@@ -1,12 +1,12 @@
 function Write-InformationColored {
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory)]
+        [Parameter(Mandatory=$true)]
         [Object]$MessageData,
-        [ConsoleColor]$ForegroundColor = $Host.UI.RawUI.ForegroundColor ?? "White", # Make sure we use the current colours by default
-        [ConsoleColor]$BackgroundColor = $Host.UI.RawUI.BackgroundColor ?? "Black",
+        [ConsoleColor]$ForegroundColor = $Host.UI.RawUI.ForegroundColor,
+        [ConsoleColor]$BackgroundColor = $Host.UI.RawUI.BackgroundColor,
         [Switch]$NoNewline,
-        [switch]$NewLineBefore
+        [Switch]$NewLineBefore
     )
 
     if($NewLineBefore) {

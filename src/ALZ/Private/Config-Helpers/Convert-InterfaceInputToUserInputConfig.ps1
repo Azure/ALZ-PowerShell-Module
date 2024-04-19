@@ -29,7 +29,11 @@ function Convert-InterfaceInputToUserInputConfig {
                 $order = $variable.Value.display_order
             }
 
-            $inputType = $variable.Value.source -eq "input" ? "UserInput" : "ComputedInput"
+            if ($variable.Value.source -eq "input") {
+                $inputType = "UserInput"
+            } else {
+                $inputType = "ComputedInput"
+            }
             $dataType = $variable.Value.type
 
             $sensitive = $false
