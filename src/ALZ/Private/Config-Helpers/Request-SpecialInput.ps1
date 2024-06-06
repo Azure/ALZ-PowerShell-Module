@@ -31,6 +31,8 @@ function Request-SpecialInput {
             if($bootstrapModules.PsObject.Properties.Name.Count -eq 0) {
                 $options += @{ key = "azuredevops"; name = "Azure DevOps"; description = "Azure DevOps" }
                 $options += @{ key = "github"; name = "GitHub"; description = "GitHub" }
+                $aliasOptions += @{ key = "alz_azuredevops"; name = "Azure DevOps"; description = "Azure DevOps" }
+                $aliasOptions += @{ key = "alz_github"; name = "GitHub"; description = "GitHub" }
             } else {
                 foreach ($bootstrapModule in $bootstrapModules.PsObject.Properties) {
                     $options += @{ key = $bootstrapModule.Name; name = $bootstrapModule.Value.short_name; description = $bootstrapModule.Value.description }
