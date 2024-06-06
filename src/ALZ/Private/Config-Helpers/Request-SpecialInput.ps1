@@ -18,6 +18,7 @@ function Request-SpecialInput {
 
         $result = ""
         $options = @()
+        $aliasOptions = @()
         $typeDescription = ""
 
         if($type -eq "iac") {
@@ -33,6 +34,9 @@ function Request-SpecialInput {
             } else {
                 foreach ($bootstrapModule in $bootstrapModules.PsObject.Properties) {
                     $options += @{ key = $bootstrapModule.Name; name = $bootstrapModule.Value.short_name; description = $bootstrapModule.Value.description }
+                    foreach($alias in $bootstrapModule.Value.aliases) {
+                        $aliasOptions += @{ key = $alias; name = $bootstrapModule.Value.short_name; description = $bootstrapModule.Value.description }
+                    }
                 }
             }
             $typeDescription = "bootstrap module"
@@ -53,7 +57,7 @@ function Request-SpecialInput {
             $userInputOverride = $userInputOverrides.PSObject.Properties | Where-Object { $_.Name -eq $type }
             if($null -ne $userInputOverride) {
                 $result = $userInputOverride.Value
-                if($options.key -notcontains $result) {
+                if($options.key -notcontains $result -and $aliasOptions.key -notcontains $result) {
                     Write-InformationColored "The $typeDescription '$result' that you have selected does not exist. Please try again with a valid $typeDescription..." -ForegroundColor Red -InformationAction Continue
                     throw "The $typeDescription '$result' that you have selected does not exist. Please try again with a valid $typeDescription..."
                 }
