@@ -71,6 +71,10 @@ function New-ALZEnvironment {
         [string]
         $bootstrapModuleUrl = "https://github.com/Azure/accelerator-bootstrap-modules",
 
+        [Parameter(Mandatory = $false, HelpMessage = "The bootstrap modules release artefact name.")]
+        [string]
+        $bootstrapModuleReleaseArtefactName = "bootstrap_modules.zip",
+
         [Parameter(Mandatory = $false, HelpMessage = "The bootstrap config file path within the bootstrap module. This can be overridden for custom modules.")]
         [string]
         $bootstrapConfigPath = ".config/ALZ-Powershell.config.json",
@@ -155,6 +159,7 @@ function New-ALZEnvironment {
                 -sourceFolder $bootstrapSourceFolder `
                 -url $bootstrapModuleUrl `
                 -release $bootstrapRelease `
+                -releaseArtefactName $bootstrapModuleReleaseArtefactName `
                 -moduleOverrideFolderPath $bootstrapModuleOverrideFolderPath `
                 -skipInternetChecks $skipInternetChecks
 
@@ -179,6 +184,8 @@ function New-ALZEnvironment {
         $starterModuleSourceFolder = "."
         $starterReleaseTag = "local"
         $starterPipelineFolder = "local"
+        $starterReleaseArtefactName = ""
+        $starterConfigFilePath = ""
 
         $bootstrapDetails = $null
         $validationConfig = $null
@@ -198,6 +205,8 @@ function New-ALZEnvironment {
             $starterModuleSourceFolder = $bootstrapAndStarterConfig.starterModuleSourceFolder
             $starterReleaseTag = $bootstrapAndStarterConfig.starterReleaseTag
             $starterPipelineFolder = $bootstrapAndStarterConfig.starterPipelineFolder
+            $starterReleaseArtefactName = $bootstrapAndStarterConfig.starterReleaseArtefactName
+            $starterConfigFilePath = $bootstrapAndStarterConfig.starterConfigFilePath
             $validationConfig = $bootstrapAndStarterConfig.validationConfig
             $inputConfig = $bootstrapAndStarterConfig.inputConfig
         } else {
@@ -209,6 +218,7 @@ function New-ALZEnvironment {
         # Download the starter modules
         $starterReleaseTag = ""
         $starterPath = ""
+        $starterConfig = $null
 
         if(($hasStarterModule -or $isLegacyBicep)) {
             Write-InformationColored "Checking and Downloading the starter module..." -ForegroundColor Green -NewLineBefore -InformationAction Continue
@@ -219,11 +229,15 @@ function New-ALZEnvironment {
                 -sourceFolder $starterModuleSourceFolder `
                 -url $starterModuleUrl `
                 -release $starterRelease `
+                -releaseArtefactName $starterReleaseArtefactName `
                 -moduleOverrideFolderPath $starterModuleOverrideFolderPath `
                 -skipInternetChecks $skipInternetChecks
 
             $starterReleaseTag = $versionAndPath.releaseTag
             $starterPath = $versionAndPath.path
+            if($starterConfigFilePath -ne "") {
+                $starterConfig = Get-StarterConfig -starterPath $starterPath -starterConfigPath $starterConfigFilePath
+            }
         }
 
         # Run the bicep parameter setup if the iac is Bicep
@@ -262,6 +276,7 @@ function New-ALZEnvironment {
                 -starterTargetPath $starterTargetPath `
                 -starterPipelineFolder $starterPipelineFolder `
                 -starterRelease $starterReleaseTag `
+                -starterConfig $starterConfig `
                 -userInputOverrides $userInputOverrides `
                 -autoApprove:$autoApprove.IsPresent `
                 -destroy:$destroy.IsPresent

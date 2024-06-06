@@ -20,6 +20,8 @@ function Get-BootstrapAndStarterConfig {
         $starterModuleSourceFolder = ""
         $starterReleaseTag = ""
         $starterPipelineFolder = ""
+        $starterReleaseArtefactName = ""
+        $starterConfigFilePath = ""
 
         $bootstrapDetails = $null
         $validationConfig = $null
@@ -61,8 +63,10 @@ function Get-BootstrapAndStarterConfig {
             }
 
             $starterModuleUrl = $starterModuleDetails.Value.$iac.url
-            $starterModuleSourceFolder = $starterModuleDetails.Value.$iac.module_path
-            $starterPipelineFolder = $starterModuleDetails.Value.$iac.pipeline_folder
+            $starterModuleSourceFolder = $starterModuleDetails.Value.$iac.release_artefact_root_path
+            $starterPipelineFolder = $starterModuleDetails.Value.$iac.release_artefact_ci_cd_path
+            $starterReleaseArtefactName = $starterModuleDetails.Value.$iac.release_artefact_name
+            $starterConfigFilePath = $starterModuleDetails.Value.$iac.release_artefact_config_file
         }
 
         # Get the bootstrap interface user input config
@@ -71,14 +75,16 @@ function Get-BootstrapAndStarterConfig {
         $inputConfig = Get-ALZConfig -configFilePath $inputConfigFilePath
 
         return @{
-            bootstrapDetails          = $bootstrapDetails
-            hasStarterModule          = $hasStarterModule
-            starterModuleUrl          = $starterModuleUrl
-            starterModuleSourceFolder = $starterModuleSourceFolder
-            starterReleaseTag         = $starterReleaseTag
-            starterPipelineFolder     = $starterPipelineFolder
-            validationConfig          = $validationConfig
-            inputConfig               = $inputConfig
+            bootstrapDetails           = $bootstrapDetails
+            hasStarterModule           = $hasStarterModule
+            starterModuleUrl           = $starterModuleUrl
+            starterModuleSourceFolder  = $starterModuleSourceFolder
+            starterReleaseTag          = $starterReleaseTag
+            starterPipelineFolder      = $starterPipelineFolder
+            starterReleaseArtefactName = $starterReleaseArtefactName
+            starterConfigFilePath      = $starterConfigFilePath
+            validationConfig           = $validationConfig
+            inputConfig                = $inputConfig
         }
     }
 }

@@ -13,6 +13,8 @@ function New-ModuleSetup {
         [Parameter(Mandatory = $false)]
         [string]$release,
         [Parameter(Mandatory = $false)]
+        [string]$releaseArtefactName = "",
+        [Parameter(Mandatory = $false)]
         [string]$moduleOverrideFolderPath,
         [Parameter(Mandatory = $false)]
         [bool]$skipInternetChecks
@@ -28,6 +30,7 @@ function New-ModuleSetup {
                 -targetDirectory $targetDirectory `
                 -url $url `
                 -release $release `
+                -releaseArtefactName $releaseArtefactName `
                 -targetFolder $targetFolder `
                 -sourceFolder $sourceFolder `
                 -overrideSourceDirectoryPath $moduleOverrideFolderPath
