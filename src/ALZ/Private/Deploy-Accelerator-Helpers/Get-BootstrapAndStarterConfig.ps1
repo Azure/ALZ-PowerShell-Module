@@ -20,7 +20,7 @@ function Get-BootstrapAndStarterConfig {
         $starterModuleSourceFolder = ""
         $starterReleaseTag = ""
         $starterPipelineFolder = ""
-        $starterReleaseArtefactName = ""
+        $starterReleaseArtifactName = ""
         $starterConfigFilePath = ""
 
         $bootstrapDetails = $null
@@ -63,10 +63,10 @@ function Get-BootstrapAndStarterConfig {
             }
 
             $starterModuleUrl = $starterModuleDetails.Value.$iac.url
-            $starterModuleSourceFolder = $starterModuleDetails.Value.$iac.release_artefact_root_path
-            $starterPipelineFolder = $starterModuleDetails.Value.$iac.release_artefact_ci_cd_path
-            $starterReleaseArtefactName = $starterModuleDetails.Value.$iac.release_artefact_name
-            $starterConfigFilePath = $starterModuleDetails.Value.$iac.release_artefact_config_file
+            $starterModuleSourceFolder = $starterModuleDetails.Value.$iac.release_artifact_root_path
+            $starterPipelineFolder = $starterModuleDetails.Value.$iac.release_artifact_ci_cd_path
+            $starterReleaseArtifactName = $starterModuleDetails.Value.$iac.release_artifact_name
+            $starterConfigFilePath = $starterModuleDetails.Value.$iac.release_artifact_config_file
         }
 
         # Get the bootstrap interface user input config
@@ -81,7 +81,7 @@ function Get-BootstrapAndStarterConfig {
             starterModuleSourceFolder  = $starterModuleSourceFolder
             starterReleaseTag          = $starterReleaseTag
             starterPipelineFolder      = $starterPipelineFolder
-            starterReleaseArtefactName = $starterReleaseArtefactName
+            starterReleaseArtifactName = $starterReleaseArtifactName
             starterConfigFilePath      = $starterConfigFilePath
             validationConfig           = $validationConfig
             inputConfig                = $inputConfig

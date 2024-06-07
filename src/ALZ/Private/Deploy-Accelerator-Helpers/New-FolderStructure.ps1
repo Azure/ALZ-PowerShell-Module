@@ -11,7 +11,7 @@ function New-FolderStructure {
         [string] $release = "latest",
 
         [Parameter(Mandatory = $false)]
-        [string] $releaseArtefactName = "",
+        [string] $releaseArtifactName = "",
 
         [Parameter(Mandatory = $true)]
         [string] $targetFolder,
@@ -46,7 +46,7 @@ function New-FolderStructure {
             }
 
         } else {
-            $releaseTag = Get-GithubRelease -githubRepoUrl $url -targetDirectory $targetDirectory -moduleSourceFolder $sourceFolder -moduleTargetFolder $targetFolder -release $release -releaseArtefactName $releaseArtefactName
+            $releaseTag = Get-GithubRelease -githubRepoUrl $url -targetDirectory $targetDirectory -moduleSourceFolder $sourceFolder -moduleTargetFolder $targetFolder -release $release -releaseArtifactName $releaseArtifactName
             $path = Join-Path $targetDirectory $targetFolder $releaseTag
         }
 

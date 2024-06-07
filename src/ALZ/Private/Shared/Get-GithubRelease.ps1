@@ -44,8 +44,8 @@ function Get-GithubRelease {
         [Parameter(Mandatory = $true, HelpMessage = "The target directory location of the modules.")]
         $moduleTargetFolder,
 
-        [Parameter(Mandatory = $false, HelpMessage = "The name of the release artefact in the target release. Defaults to standard release zip.")]
-        $releaseArtefactName = ""
+        [Parameter(Mandatory = $false, HelpMessage = "The name of the release artifact in the target release. Defaults to standard release zip.")]
+        $releaseArtifactName = ""
     )
 
     $parentDirectory = $targetDirectory
@@ -114,16 +114,16 @@ function Get-GithubRelease {
         New-Item -ItemType Directory -Path "$targetVersionPath/tmp" | Out-String | Write-Verbose
         $targetPathForZip = "$targetVersionPath/tmp/$releaseTag.zip"
 
-        # Get the artefact url
-        if($releaseArtefactName -ne "") {
-            $releaseArtefactUrl = $releaseData.assets | Where-Object { $_.name -eq $releaseArtefactName } | Select-Object -ExpandProperty browser_download_url
+        # Get the artifact url
+        if($releaseArtifactName -ne "") {
+            $releaseArtifactUrl = $releaseData.assets | Where-Object { $_.name -eq $releaseArtifactName } | Select-Object -ExpandProperty browser_download_url
         } else {
-            $releaseArtefactUrl = $releaseData.zipball_url
+            $releaseArtifactUrl = $releaseData.zipball_url
         }
 
-        Write-Verbose "===> Downloading the release artefact $releaseArtefactUrl from the GitHub repository $repoOrgPlusRepo"
+        Write-Verbose "===> Downloading the release artifact $releaseArtifactUrl from the GitHub repository $repoOrgPlusRepo"
 
-        Invoke-WebRequest -Uri $releaseArtefactUrl -OutFile $targetPathForZip -RetryIntervalSec 3 -MaximumRetryCount 100 | Out-String | Write-Verbose
+        Invoke-WebRequest -Uri $releaseArtifactUrl -OutFile $targetPathForZip -RetryIntervalSec 3 -MaximumRetryCount 100 | Out-String | Write-Verbose
 
         if(!(Test-Path $targetPathForZip)) {
             Write-InformationColored "Failed to download the release $releaseTag from the GitHub repository $repoOrgPlusRepo" -ForegroundColor Red -InformationAction Continue
@@ -135,7 +135,7 @@ function Get-GithubRelease {
         Expand-Archive -Path $targetPathForZip -DestinationPath $targetPathForExtractedZip | Out-String | Write-Verbose
 
         $extractedSubFolder = $targetPathForExtractedZip
-        if($releaseArtefactName -eq "") {
+        if($releaseArtifactName -eq "") {
             $extractedSubFolder = (Get-ChildItem -Path $targetPathForExtractedZip -Directory).FullName
         }
 

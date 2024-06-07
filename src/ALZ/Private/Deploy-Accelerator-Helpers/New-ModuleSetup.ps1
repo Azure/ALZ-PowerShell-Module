@@ -13,7 +13,7 @@ function New-ModuleSetup {
         [Parameter(Mandatory = $false)]
         [string]$release,
         [Parameter(Mandatory = $false)]
-        [string]$releaseArtefactName = "",
+        [string]$releaseArtifactName = "",
         [Parameter(Mandatory = $false)]
         [string]$moduleOverrideFolderPath,
         [Parameter(Mandatory = $false)]
@@ -30,7 +30,7 @@ function New-ModuleSetup {
                 -targetDirectory $targetDirectory `
                 -url $url `
                 -release $release `
-                -releaseArtefactName $releaseArtefactName `
+                -releaseArtifactName $releaseArtifactName `
                 -targetFolder $targetFolder `
                 -sourceFolder $sourceFolder `
                 -overrideSourceDirectoryPath $moduleOverrideFolderPath
