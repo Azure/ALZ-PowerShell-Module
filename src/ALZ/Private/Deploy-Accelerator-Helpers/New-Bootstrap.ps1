@@ -26,6 +26,9 @@ function New-Bootstrap {
         [string] $starterTargetPath,
 
         [Parameter(Mandatory = $false)]
+        [PSCustomObject] $starterConfig = $null,
+
+        [Parameter(Mandatory = $false)]
         [string] $bootstrapRelease,
 
         [Parameter(Mandatory = $false)]
@@ -83,8 +86,11 @@ function New-Bootstrap {
         $pipelineModulePath = ""
 
         if($hasStarter) {
-            $starter = Request-SpecialInput -type "starter" -starterPath $starterPath -userInputOverrides $userInputOverrides
-            $starterModulePath = Resolve-Path (Join-Path -Path $starterPath -ChildPath $starter)
+            $starter = Request-SpecialInput -type "starter" -starterConfig $starterConfig -userInputOverrides $userInputOverrides
+
+            Write-Verbose "Selected Starter: $starter"
+
+            $starterModulePath = Resolve-Path (Join-Path -Path $starterPath -ChildPath $starterConfig.starter_modules.$starter.location)
             $pipelineModulePath = Resolve-Path (Join-Path -Path $starterPath -ChildPath $starterPipelineFolder)
 
             Write-Verbose "Starter Module Path: $starterModulePath"

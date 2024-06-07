@@ -5,7 +5,7 @@ function New-ALZEnvironment {
     .DESCRIPTION
     This function is used to deploy accelerators consisting or bootstrap and optionally starter modules. The accelerators are designed to simplify and speed up configuration of common Microsoft patterns, such as CI / CD for Azure Landing Zones.
     .PARAMETER output
-    The target directory for the accelerator artefacts. Depending on the choice and type of accelerlerator, this may be an intermediate stage or the final result of the accelerator.
+    The target directory for the accelerator artifacts. Depending on the choice and type of accelerlerator, this may be an intermediate stage or the final result of the accelerator.
     .PARAMETER iac
     The type of infrastructure as code that the accelerator implements. For example bicep or terraform.
     .PARAMETER bootstrap
@@ -70,6 +70,10 @@ function New-ALZEnvironment {
         [Parameter(Mandatory = $false, HelpMessage = "The bootstrap modules reposiotry url. This can be overridden for custom modules.")]
         [string]
         $bootstrapModuleUrl = "https://github.com/Azure/accelerator-bootstrap-modules",
+
+        [Parameter(Mandatory = $false, HelpMessage = "The bootstrap modules release artifact name.")]
+        [string]
+        $bootstrapModuleReleaseArtifactName = "bootstrap_modules.zip",
 
         [Parameter(Mandatory = $false, HelpMessage = "The bootstrap config file path within the bootstrap module. This can be overridden for custom modules.")]
         [string]
@@ -155,6 +159,7 @@ function New-ALZEnvironment {
                 -sourceFolder $bootstrapSourceFolder `
                 -url $bootstrapModuleUrl `
                 -release $bootstrapRelease `
+                -releaseArtifactName $bootstrapModuleReleaseArtifactName `
                 -moduleOverrideFolderPath $bootstrapModuleOverrideFolderPath `
                 -skipInternetChecks $skipInternetChecks
 
@@ -179,6 +184,8 @@ function New-ALZEnvironment {
         $starterModuleSourceFolder = "."
         $starterReleaseTag = "local"
         $starterPipelineFolder = "local"
+        $starterReleaseArtifactName = ""
+        $starterConfigFilePath = ""
 
         $bootstrapDetails = $null
         $validationConfig = $null
@@ -198,6 +205,8 @@ function New-ALZEnvironment {
             $starterModuleSourceFolder = $bootstrapAndStarterConfig.starterModuleSourceFolder
             $starterReleaseTag = $bootstrapAndStarterConfig.starterReleaseTag
             $starterPipelineFolder = $bootstrapAndStarterConfig.starterPipelineFolder
+            $starterReleaseArtifactName = $bootstrapAndStarterConfig.starterReleaseArtifactName
+            $starterConfigFilePath = $bootstrapAndStarterConfig.starterConfigFilePath
             $validationConfig = $bootstrapAndStarterConfig.validationConfig
             $inputConfig = $bootstrapAndStarterConfig.inputConfig
         } else {
@@ -209,6 +218,7 @@ function New-ALZEnvironment {
         # Download the starter modules
         $starterReleaseTag = ""
         $starterPath = ""
+        $starterConfig = $null
 
         if(($hasStarterModule -or $isLegacyBicep)) {
             Write-InformationColored "Checking and Downloading the starter module..." -ForegroundColor Green -NewLineBefore -InformationAction Continue
@@ -219,11 +229,15 @@ function New-ALZEnvironment {
                 -sourceFolder $starterModuleSourceFolder `
                 -url $starterModuleUrl `
                 -release $starterRelease `
+                -releaseArtifactName $starterReleaseArtifactName `
                 -moduleOverrideFolderPath $starterModuleOverrideFolderPath `
                 -skipInternetChecks $skipInternetChecks
 
             $starterReleaseTag = $versionAndPath.releaseTag
             $starterPath = $versionAndPath.path
+            if($starterConfigFilePath -ne "") {
+                $starterConfig = Get-StarterConfig -starterPath $starterPath -starterConfigPath $starterConfigFilePath
+            }
         }
 
         # Run the bicep parameter setup if the iac is Bicep
@@ -262,6 +276,7 @@ function New-ALZEnvironment {
                 -starterTargetPath $starterTargetPath `
                 -starterPipelineFolder $starterPipelineFolder `
                 -starterRelease $starterReleaseTag `
+                -starterConfig $starterConfig `
                 -userInputOverrides $userInputOverrides `
                 -autoApprove:$autoApprove.IsPresent `
                 -destroy:$destroy.IsPresent

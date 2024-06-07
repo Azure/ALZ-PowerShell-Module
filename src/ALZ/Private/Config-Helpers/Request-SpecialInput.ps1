@@ -5,7 +5,7 @@ function Request-SpecialInput {
         [string] $type,
 
         [Parameter(Mandatory = $false)]
-        [string] $starterPath,
+        [PSCustomObject] $starterConfig,
 
         [Parameter(Mandatory = $false)]
         [PSCustomObject] $bootstrapModules,
@@ -17,82 +17,78 @@ function Request-SpecialInput {
     if ($PSCmdlet.ShouldProcess("ALZ-Terraform module configuration", "modify")) {
 
         $result = ""
+        $options = @()
+        $aliasOptions = @()
+        $typeDescription = ""
+
+        if($type -eq "iac") {
+            $options += @{ key = "bicep"; name = "Bicep"; description = "Bicep" }
+            $options += @{ key = "terraform"; name = "Terraform"; description = "Terraform" }
+            $typeDescription = "Infrastructure as Code (IaC) language"
+        }
+
+        if($type -eq "bootstrap") {
+            if($bootstrapModules.PsObject.Properties.Name.Count -eq 0) {
+                $options += @{ key = "azuredevops"; name = "Azure DevOps"; description = "Azure DevOps" }
+                $options += @{ key = "github"; name = "GitHub"; description = "GitHub" }
+                $aliasOptions += @{ key = "alz_azuredevops"; name = "Azure DevOps"; description = "Azure DevOps" }
+                $aliasOptions += @{ key = "alz_github"; name = "GitHub"; description = "GitHub" }
+            } else {
+                foreach ($bootstrapModule in $bootstrapModules.PsObject.Properties) {
+                    $options += @{ key = $bootstrapModule.Name; name = $bootstrapModule.Value.short_name; description = $bootstrapModule.Value.description }
+                    foreach($alias in $bootstrapModule.Value.aliases) {
+                        $aliasOptions += @{ key = $alias; name = $bootstrapModule.Value.short_name; description = $bootstrapModule.Value.description }
+                    }
+                }
+            }
+            $typeDescription = "bootstrap module"
+        }
+
+        if($type -eq "starter") {
+            foreach($starter in $starterConfig.starter_modules.PsObject.Properties) {
+                if($starter.Name -eq $starterPipelineFolder) {
+                    continue
+                }
+
+                $options += @{ key = $starter.Name; name = $starter.Value.short_name; description = $starter.Value.description }
+            }
+            $typeDescription = "starter module"
+        }
 
         if($null -ne $userInputOverrides) {
             $userInputOverride = $userInputOverrides.PSObject.Properties | Where-Object { $_.Name -eq $type }
             if($null -ne $userInputOverride) {
                 $result = $userInputOverride.Value
+                if($options.key -notcontains $result -and $aliasOptions.key -notcontains $result) {
+                    Write-InformationColored "The $typeDescription '$result' that you have selected does not exist. Please try again with a valid $typeDescription..." -ForegroundColor Red -InformationAction Continue
+                    throw "The $typeDescription '$result' that you have selected does not exist. Please try again with a valid $typeDescription..."
+                }
                 return $result
             }
         }
 
-        $gotValidInput = $false
+        # Add the options to the choices array
+        $choices = @()
+        $usedLetters = @()
+        foreach($option in $options) {
+            $letterIndex = 0
 
-        while(!$gotValidInput) {
-            if($type -eq "starter") {
-
-                $starterFolders = Get-ChildItem -Path $starterPath -Directory
-                Write-InformationColored "Please select the starter module you would like to use, you can enter one of the following keys:" -ForegroundColor Yellow -InformationAction Continue
-
-                $starterOptions = @()
-                foreach($starterFolder in $starterFolders) {
-                    if($starterFolder.Name -eq $starterPipelineFolder) {
-                        continue
-                    }
-
-                    Write-InformationColored "- $($starterFolder.Name)" -ForegroundColor Yellow -InformationAction Continue
-                    $starterOptions += $starterFolder.Name
-                }
-
-                Write-InformationColored ": " -ForegroundColor Yellow -NoNewline -InformationAction Continue
-                $result = Read-Host
-
-                if($result -notin $starterOptions) {
-                    Write-InformationColored "The starter '$result' that you have selected does not exist. Please try again with a valid starter..." -ForegroundColor Red -InformationAction Continue
-                } else {
-                    $gotValidInput = $true
-                }
+            Write-Verbose "Checking for used letters in '$($option.name)'. Used letters: $usedLetters"
+            while($usedLetters -contains $option.name[$letterIndex].ToString().ToLower()) {
+                $letterIndex++
             }
 
-            if($type -eq "iac") {
-                Write-InformationColored "Please select the IAC you would like to use, you can enter one of 'bicep or 'terraform': " -ForegroundColor Yellow -NoNewline -InformationAction Continue
-                $result = Read-Host
-
-                $validIac = @("bicep", "terraform")
-                if($result -notin $validIac) {
-                    Write-InformationColored "The IAC '$result' that you have selected does not exist. Please try again with a valid IAC..." -ForegroundColor Red -InformationAction Continue
-
-                } else {
-                    $gotValidInput = $true
-                }
-            }
-
-            if($type -eq "bootstrap") {
-                Write-InformationColored "Please select the bootstrap module you would like to use, you can enter one of the following keys:" -ForegroundColor Yellow -InformationAction Continue
-
-                $bootstrapOptions = @()
-                if($bootstrapModules.PsObject.Properties.Name.Count -eq 0) {
-                    $bootstrapOptions += "azuredevops"
-                    Write-InformationColored "- azuredevops" -ForegroundColor Yellow -InformationAction Continue
-                    $bootstrapOptions += "github"
-                    Write-InformationColored "- github" -ForegroundColor Yellow -InformationAction Continue
-                } else {
-                    foreach ($bootstrapModule in $bootstrapModules.PsObject.Properties) {
-                        Write-InformationColored "- $($bootstrapModule.Name) ($($bootstrapModule.Value.description))" -ForegroundColor Yellow -InformationAction Continue
-                        $bootstrapOptions += $bootstrapModule.Name
-                    }
-                }
-
-                Write-InformationColored ": " -ForegroundColor Yellow -NoNewline -InformationAction Continue
-                $result = Read-Host
-
-                if($result -notin $bootstrapOptions) {
-                    Write-InformationColored "The starter '$result' that you have selected does not exist. Please try again with a valid starter..." -ForegroundColor Red -InformationAction Continue
-                } else {
-                    $gotValidInput = $true
-                }
-            }
+            $usedLetters += $option.name[$letterIndex].ToString().ToLower()
+            $option.name = $option.name.Insert($letterIndex, "&")
+            $choices += New-Object System.Management.Automation.Host.ChoiceDescription $option.name, $option.description
         }
+
+        $message = "Please select the $typeDescription you would like to use."
+        $title = "Choose $typeDescription"
+        $resultIndex = $host.ui.PromptForChoice($title, $message, $choices, 0)
+        $result = $options[$resultIndex].key
+
+        Write-InformationColored "You selected '$result'. Continuing with deployment..." -ForegroundColor Green -InformationAction Continue
 
         return $result
     }

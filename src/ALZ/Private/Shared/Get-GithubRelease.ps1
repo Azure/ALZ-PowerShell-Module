@@ -42,7 +42,10 @@ function Get-GithubRelease {
         $moduleSourceFolder = ".",
 
         [Parameter(Mandatory = $true, HelpMessage = "The target directory location of the modules.")]
-        $moduleTargetFolder
+        $moduleTargetFolder,
+
+        [Parameter(Mandatory = $false, HelpMessage = "The name of the release artifact in the target release. Defaults to standard release zip.")]
+        $releaseArtifactName = ""
     )
 
     $parentDirectory = $targetDirectory
@@ -110,7 +113,17 @@ function Get-GithubRelease {
         Write-Verbose "===> Pulling and extracting release $releaseTag into $targetVersionPath"
         New-Item -ItemType Directory -Path "$targetVersionPath/tmp" | Out-String | Write-Verbose
         $targetPathForZip = "$targetVersionPath/tmp/$releaseTag.zip"
-        Invoke-WebRequest -Uri "https://github.com/$repoOrgPlusRepo/archive/refs/tags/$releaseTag.zip" -OutFile $targetPathForZip -RetryIntervalSec 3 -MaximumRetryCount 100 | Out-String | Write-Verbose
+
+        # Get the artifact url
+        if($releaseArtifactName -ne "") {
+            $releaseArtifactUrl = $releaseData.assets | Where-Object { $_.name -eq $releaseArtifactName } | Select-Object -ExpandProperty browser_download_url
+        } else {
+            $releaseArtifactUrl = $releaseData.zipball_url
+        }
+
+        Write-Verbose "===> Downloading the release artifact $releaseArtifactUrl from the GitHub repository $repoOrgPlusRepo"
+
+        Invoke-WebRequest -Uri $releaseArtifactUrl -OutFile $targetPathForZip -RetryIntervalSec 3 -MaximumRetryCount 100 | Out-String | Write-Verbose
 
         if(!(Test-Path $targetPathForZip)) {
             Write-InformationColored "Failed to download the release $releaseTag from the GitHub repository $repoOrgPlusRepo" -ForegroundColor Red -InformationAction Continue
@@ -120,11 +133,15 @@ function Get-GithubRelease {
         $targetPathForExtractedZip = "$targetVersionPath/tmp/extracted"
 
         Expand-Archive -Path $targetPathForZip -DestinationPath $targetPathForExtractedZip | Out-String | Write-Verbose
-        $extractedSubFolder = Get-ChildItem -Path $targetPathForExtractedZip -Directory
 
-        Write-Verbose "===> Copying all extracted contents into $targetVersionPath."
+        $extractedSubFolder = $targetPathForExtractedZip
+        if($releaseArtifactName -eq "") {
+            $extractedSubFolder = (Get-ChildItem -Path $targetPathForExtractedZip -Directory).FullName
+        }
 
-        Copy-Item -Path "$($extractedSubFolder.FullName)/$moduleSourceFolder/*" -Destination "$targetVersionPath" -Recurse -Force | Out-String | Write-Verbose
+        Write-Verbose "===> Copying all extracted contents into $targetVersionPath from $($extractedSubFolder)/$moduleSourceFolder/*."
+
+        Copy-Item -Path "$($extractedSubFolder)/$moduleSourceFolder/*" -Destination "$targetVersionPath" -Recurse -Force | Out-String | Write-Verbose
 
         Remove-Item -Path "$targetVersionPath/tmp" -Force -Recurse
         Write-InformationColored "The directory for $targetVersionPath has been created and populated." -ForegroundColor Green -InformationAction Continue
