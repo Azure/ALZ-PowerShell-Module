@@ -168,8 +168,8 @@ function New-Bootstrap {
 
         # Set computed interface inputs
         $computedInputMapping = @{
-            "iac_type"             = $iac
-            "module_folder_path"   = $starterModulePath
+            "iac_type"           = $iac
+            "module_folder_path" = $starterModulePath
         }
 
         foreach($inputConfigItem in $inputConfig.inputs.PSObject.Properties) {
