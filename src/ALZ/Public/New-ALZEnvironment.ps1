@@ -183,7 +183,6 @@ function New-ALZEnvironment {
         $starterModuleUrl = $bicepLegacyUrl
         $starterModuleSourceFolder = "."
         $starterReleaseTag = "local"
-        $starterPipelineFolder = "local"
         $starterReleaseArtifactName = ""
         $starterConfigFilePath = ""
 
@@ -204,7 +203,6 @@ function New-ALZEnvironment {
             $starterModuleUrl = $bootstrapAndStarterConfig.starterModuleUrl
             $starterModuleSourceFolder = $bootstrapAndStarterConfig.starterModuleSourceFolder
             $starterReleaseTag = $bootstrapAndStarterConfig.starterReleaseTag
-            $starterPipelineFolder = $bootstrapAndStarterConfig.starterPipelineFolder
             $starterReleaseArtifactName = $bootstrapAndStarterConfig.starterReleaseArtifactName
             $starterConfigFilePath = $bootstrapAndStarterConfig.starterConfigFilePath
             $validationConfig = $bootstrapAndStarterConfig.validationConfig
@@ -274,7 +272,6 @@ function New-ALZEnvironment {
                 -bootstrapRelease $bootstrapReleaseTag `
                 -hasStarter:$hasStarterModule `
                 -starterTargetPath $starterTargetPath `
-                -starterPipelineFolder $starterPipelineFolder `
                 -starterRelease $starterReleaseTag `
                 -starterConfig $starterConfig `
                 -userInputOverrides $userInputOverrides `

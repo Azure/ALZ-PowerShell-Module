@@ -35,9 +35,6 @@ function New-Bootstrap {
         [string] $starterRelease,
 
         [Parameter(Mandatory = $false)]
-        [string] $starterPipelineFolder,
-
-        [Parameter(Mandatory = $false)]
         [switch] $autoApprove,
 
         [Parameter(Mandatory = $false)]
@@ -83,7 +80,6 @@ function New-Bootstrap {
         # Get starter module
         $starter = ""
         $starterModulePath = ""
-        $pipelineModulePath = ""
 
         if($hasStarter) {
             $starter = Request-SpecialInput -type "starter" -starterConfig $starterConfig -userInputOverrides $userInputOverrides
@@ -91,10 +87,8 @@ function New-Bootstrap {
             Write-Verbose "Selected Starter: $starter"
 
             $starterModulePath = Resolve-Path (Join-Path -Path $starterPath -ChildPath $starterConfig.starter_modules.$starter.location)
-            $pipelineModulePath = Resolve-Path (Join-Path -Path $starterPath -ChildPath $starterPipelineFolder)
 
             Write-Verbose "Starter Module Path: $starterModulePath"
-            Write-Verbose "Pipeline Module Path: $pipelineModulePath"
         }
 
         # Getting the configuration for the interface user input
@@ -176,7 +170,6 @@ function New-Bootstrap {
         $computedInputMapping = @{
             "iac_type"             = $iac
             "module_folder_path"   = $starterModulePath
-            "pipeline_folder_path" = $pipelineModulePath
         }
 
         foreach($inputConfigItem in $inputConfig.inputs.PSObject.Properties) {
@@ -213,8 +206,6 @@ function New-Bootstrap {
             -treatEmptyDefaultAsValid $true `
             -autoApprove:$autoApprove.IsPresent `
             -computedInputs $bootstrapComputed
-
-
 
         # Getting the user input for the starter module
         Write-InformationColored "The following inputs are specific to the '$starter' starter module that you selected:" -ForegroundColor Green -NewLineBefore -InformationAction Continue
