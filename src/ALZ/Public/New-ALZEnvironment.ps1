@@ -57,6 +57,10 @@ function New-ALZEnvironment {
         [Alias("b")]
         [string] $bootstrap = "",
 
+
+        [Parameter(Mandatory = $false, HelpMessage = "The starter module to deploy. You will be prompted to enter this if not supplied.")]
+        [string] $starter = "",
+
         [Parameter(Mandatory = $false, HelpMessage = "The inputs in json or yaml format. This is optional and used to automate or pre-prepare the accelerator inputs.")]
         [Alias("inputs")]
         [string] $userInputOverridePath = "",
@@ -101,7 +105,7 @@ function New-ALZEnvironment {
 
         [Parameter(Mandatory = $false, HelpMessage = "Whether to use legacy local mode for Bicep.")]
         [bool]
-        $bicepLegacyMode = $true # Note this is set to true to act as a feature flag while the Bicep bootstrap is developed. It will be switched to false once it is all working.
+        $bicepLegacyMode = $false
     )
 
     $ProgressPreference = "SilentlyContinue"
@@ -171,11 +175,8 @@ function New-ALZEnvironment {
         $starterFolder = "starter"
 
         $starterModuleTargetFolder = $starterFolder
-        if($iac -eq "bicep") {
-            if($isLegacyBicep) {
-                $starterFolder = "."
-            }
-            $starterModuleTargetFolder = "$starterFolder/upstream-releases"
+        if($isLegacyBicep) {
+            $starterModuleTargetFolder = "./upstream-releases"
         }
 
         # Setup the variables for bootstrap and starter modules
@@ -239,7 +240,7 @@ function New-ALZEnvironment {
         }
 
         # Run the bicep parameter setup if the iac is Bicep
-        if ($iac -eq "bicep") {
+        if ($isLegacyBicep) {
             Write-Verbose "Starting the Bicep specific environment setup..."
 
             $bootstrapLegacy = $bootstrap.ToLower().Replace("alz_", "")
@@ -263,6 +264,12 @@ function New-ALZEnvironment {
             $bootstrapTargetPath = Join-Path $targetDirectory $bootstrapTargetFolder
             $starterTargetPath = Join-Path $targetDirectory $starterFolder
 
+            if ($iac -eq "bicep" ) {
+                Write-Verbose "Starting the Bicep specific environment setup..."
+
+                Copy-ParametersFileCollection -starterPath $starterPath -configFiles $starterConfig.deployment_files | Out-String | Write-Verbose
+            }
+
             New-Bootstrap `
                 -iac $iac `
                 -bootstrapDetails $bootstrapDetails `
@@ -276,7 +283,8 @@ function New-ALZEnvironment {
                 -starterConfig $starterConfig `
                 -userInputOverrides $userInputOverrides `
                 -autoApprove:$autoApprove.IsPresent `
-                -destroy:$destroy.IsPresent
+                -destroy:$destroy.IsPresent `
+                -starter $starter
         }
     }
 

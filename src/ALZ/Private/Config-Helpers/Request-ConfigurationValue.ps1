@@ -71,6 +71,7 @@ function Request-ConfigurationValue {
         if($skipValidationForEmptyDefault) {
             $isNotValid = $false
         } else {
+            Write-Verbose "Checking $($configValue.Value) against $($configValue.Valid)"
             $isNotValid = $hasValidator -and $configValue.Value -match $configValue.Valid -eq $false
         }
 
@@ -82,9 +83,7 @@ function Request-ConfigurationValue {
 
         $shouldRetry = $validationError -and $withRetries
     }
-    while (
-
-    ($hasNotSpecifiedValue -or $isDisallowedValue -or $isNotValid) -and $shouldRetry)
+    while (($hasNotSpecifiedValue -or $isDisallowedValue -or $isNotValid) -and $shouldRetry)
 
     Write-InformationColored "" -InformationAction Continue
 }

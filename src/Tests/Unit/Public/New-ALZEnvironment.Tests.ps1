@@ -49,6 +49,15 @@ InModuleScope 'ALZ' {
                     @{
                         "module_url"   = "test"
                         "version"      = "v1.0.0"
+                        "deployment_files" = @(
+                            @{
+                                "displayName"                      = "Management Groups Deployment"
+                                "templateFilePath"                 = "./infra-as-code/bicep/modules/managementGroups/managementGroupsScopeEscape.bicep"
+                                "templateParametersFilePath"       = "./config/custom-parameters/managementGroups.parameters.all.json"
+                                "templateParametersSourceFilePath" = "./infra-as-code/bicep/modules/managementGroups/parameters/managementGroups.parameters.all.json"
+                                "deploymentType"                   = "managementGroup"
+                            }
+                        )
                         "config_files" = @(
                             @{
                                 "source"      = "a"
@@ -139,7 +148,7 @@ InModuleScope 'ALZ' {
             }
 
             It 'should call the correct functions for bicep legacy module configuration' {
-                New-ALZEnvironment -i "bicep" -c "github"
+                New-ALZEnvironment -i "bicep" -c "github" -bicepLegacyMode $true
                 Assert-MockCalled -CommandName New-ALZEnvironmentBicep -Exactly 1
                 Assert-MockCalled -CommandName New-ModuleSetup -Exactly 1
             }
