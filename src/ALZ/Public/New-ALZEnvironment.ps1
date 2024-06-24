@@ -266,7 +266,7 @@ function New-ALZEnvironment {
 
             if ($iac -eq "bicep" ) {
                 Write-Verbose "Starting the Bicep specific environment setup..."
-
+                Remove-FilesNotRequired -path $starterPath
                 Copy-ParametersFileCollection -starterPath $starterPath -configFiles $starterConfig.deployment_files | Out-String | Write-Verbose
             }
 
