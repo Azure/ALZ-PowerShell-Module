@@ -18,7 +18,7 @@ function Write-JsonFile {
 
         foreach ($configKey in $configuration.PsObject.Properties) {
             foreach ($target in $configKey.Value.Targets) {
-                if($target.Destination -eq "Environment" -and $target.Required) {
+                if($target.Destination -eq "Environment") {
                     $environmentVariables.$($target.Name) = $configKey.Value.Value
                 }
             }

@@ -123,7 +123,7 @@ function New-Bootstrap {
             }
 
             if($iac -eq "bicep") {
-                $starterParameters = $starterConfig.parameters
+                $starterParameters = Convert-InterfaceInputToUserInputConfig -inputConfig $starterConfig.starter_modules.$starter -validators $validationConfig
             }
         }
 
@@ -251,6 +251,8 @@ function New-Bootstrap {
         }
 
         if($iac -eq "bicep") {
+            Copy-ParametersFileCollection -starterPath $starterModulePath -configFiles $starterConfig.starter_modules.$starter.deployment_files
+            $starterConfiguration | Out-Host
             Set-ComputedConfiguration -configuration $starterConfiguration
             Edit-ALZConfigurationFilesInPlace -alzEnvironmentDestination $starterModulePath -configuration $starterConfiguration
             Write-JsonFile -jsonFilePath $starterBicepVarsPath -configuration $starterConfiguration
