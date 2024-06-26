@@ -8,7 +8,7 @@ function Remove-FilesNotRequired {
         [array]$foldersToKeep = @("accelerator", "infra-as-code", "config"),
 
         [Parameter(Mandatory = $false)]
-        [array]$filesToKeep = @("version.json"),
+        [array]$filesToKeep = @("version.json", "parameters.json", "starter-cache.json"),
 
         [Parameter(Mandatory = $false)]
         [array]$foldersToRemove = @("media", "samples", "generateddocs")

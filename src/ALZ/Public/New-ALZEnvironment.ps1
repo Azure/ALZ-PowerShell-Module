@@ -190,6 +190,7 @@ function New-ALZEnvironment {
         $bootstrapDetails = $null
         $validationConfig = $null
         $inputConfig = $null
+        $zonesSupport = $null
 
         if(!$isLegacyBicep) {
             $bootstrapAndStarterConfig = Get-BootstrapAndStarterConfig `
@@ -208,6 +209,7 @@ function New-ALZEnvironment {
             $starterConfigFilePath = $bootstrapAndStarterConfig.starterConfigFilePath
             $validationConfig = $bootstrapAndStarterConfig.validationConfig
             $inputConfig = $bootstrapAndStarterConfig.inputConfig
+            $zonesSupport = $bootstrapAndStarterConfig.zonesSupport
         } else {
             if($bootstrap -eq "") {
                 $bootstrap = Request-SpecialInput -type "bootstrap" -bootstrapModules $bootstrapModules -userInputOverrides $userInputOverrides
@@ -283,7 +285,8 @@ function New-ALZEnvironment {
                 -userInputOverrides $userInputOverrides `
                 -autoApprove:$autoApprove.IsPresent `
                 -destroy:$destroy.IsPresent `
-                -starter $starter
+                -starter $starter `
+                -zonesSupport $zonesSupport
         }
     }
 

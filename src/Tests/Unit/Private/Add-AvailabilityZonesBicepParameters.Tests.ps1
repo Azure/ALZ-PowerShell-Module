@@ -28,14 +28,13 @@ InModuleScope 'ALZ' {
                 }
             }
             It "Should add 3 availability zones for hub networking parameters" {
-                Add-AvailabilityZonesBicepParameter -alzEnvironmentDestination $alzEnvironmentDestination -configFile ([PSCustomObject]@{
-                        zonesSupport = @(
+                Add-AvailabilityZonesBicepParameter -alzEnvironmentDestination $alzEnvironmentDestination -zonesSupport (@(
                             [PSCustomObject]@{
                                 region = "eastus"
                                 zones  = @("1", "2", "3")
                             }
                         )
-                    })
+                    )
                 $parametersFileJsonContent = Get-Content -Path "TestDrive:\hubNetworking.parameters.all.json" -Raw
                 $jsonObject = $parametersFileJsonContent | ConvertFrom-Json
                 $jsonObject.parameters.parAzErGatewayAvailabilityZones.value | Should -Be @("1", "2", "3")
@@ -43,14 +42,13 @@ InModuleScope 'ALZ' {
                 $jsonObject.parameters.parAzFirewallAvailabilityZones.value | Should -Be @("1", "2", "3")
             }
             It "Should add 2 availability zones for hub networking parameters" {
-                Add-AvailabilityZonesBicepParameter -alzEnvironmentDestination $alzEnvironmentDestination -configFile ([PSCustomObject]@{
-                        zonesSupport = @(
+                Add-AvailabilityZonesBicepParameter -alzEnvironmentDestination $alzEnvironmentDestination -zonesSupport (@(
                             [PSCustomObject]@{
                                 region = "eastus"
                                 zones  = @("1", "2")
                             }
                         )
-                    })
+                    )
                 $parametersFileJsonContent = Get-Content -Path "TestDrive:\hubNetworking.parameters.all.json" -Raw
                 $jsonObject = $parametersFileJsonContent | ConvertFrom-Json
                 $jsonObject.parameters.parAzErGatewayAvailabilityZones.value | Should -Be @("1", "2")
@@ -58,14 +56,13 @@ InModuleScope 'ALZ' {
                 $jsonObject.parameters.parAzFirewallAvailabilityZones.value | Should -Be @("1", "2")
             }
             It "Should add 0 availability zones for hub networking parameters" {
-                Add-AvailabilityZonesBicepParameter -alzEnvironmentDestination $alzEnvironmentDestination -configFile ([PSCustomObject]@{
-                        zonesSupport = @(
+                Add-AvailabilityZonesBicepParameter -alzEnvironmentDestination $alzEnvironmentDestination -zonesSupport (@(
                             [PSCustomObject]@{
                                 region = "eastus"
                                 zones  = @()
                             }
                         )
-                    })
+                    )
                 $parametersFileJsonContent = Get-Content -Path "TestDrive:\hubNetworking.parameters.all.json" -Raw
                 $jsonObject = $parametersFileJsonContent | ConvertFrom-Json
                 $jsonObject.parameters.parAzErGatewayAvailabilityZones.value | Should -Be @()

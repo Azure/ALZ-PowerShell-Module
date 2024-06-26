@@ -41,7 +41,10 @@ function New-Bootstrap {
         [switch] $destroy,
 
         [Parameter(Mandatory = $false)]
-        [string] $starter = ""
+        [string] $starter = "",
+
+        [Parameter(Mandatory = $false)]
+        [PSCustomObject] $zonesSupport = $null
     )
 
     if ($PSCmdlet.ShouldProcess("ALZ-Terraform module configuration", "modify")) {
@@ -252,9 +255,9 @@ function New-Bootstrap {
 
         if($iac -eq "bicep") {
             Copy-ParametersFileCollection -starterPath $starterModulePath -configFiles $starterConfig.starter_modules.$starter.deployment_files
-            $starterConfiguration | Out-Host
             Set-ComputedConfiguration -configuration $starterConfiguration
             Edit-ALZConfigurationFilesInPlace -alzEnvironmentDestination $starterModulePath -configuration $starterConfiguration
+            Add-AvailabilityZonesBicepParameter -alzEnvironmentDestination $starterModulePath -zonesSupport $zonesSupport
             Write-JsonFile -jsonFilePath $starterBicepVarsPath -configuration $starterConfiguration
         }
 

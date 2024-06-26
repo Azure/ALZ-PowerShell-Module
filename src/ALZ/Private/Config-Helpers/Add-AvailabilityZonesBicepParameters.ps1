@@ -8,7 +8,7 @@ function Add-AvailabilityZonesBicepParameter {
         [string] $alzEnvironmentDestination,
 
         [Parameter(Mandatory = $true)]
-        [PSCustomObject]$configFile
+        [PSCustomObject]$zonesSupport
     )
 
     $parametersConfig = @(
@@ -25,7 +25,7 @@ function Add-AvailabilityZonesBicepParameter {
     foreach ($parametersFile in $parametersConfig) {
         $parametersFilePath = Join-Path -Path $alzEnvironmentDestination "config\custom-parameters\$($parametersFile.source)"
         $region = (Get-Content $parametersFilePath | ConvertFrom-Json).parameters.parLocation.Value
-        $zones = ($configFile.PsObject.Properties["zonesSupport"].Value | Where-Object { $_.region -eq $region }).zones
+        $zones = ($zonesSupport | Where-Object { $_.region -eq $region }).zones
         $parametersFileJsonContent = Get-Content -Path $parametersFilePath -Raw
         $jsonObject = $parametersFileJsonContent | ConvertFrom-Json
         $parametersFile.parameters.Split(",") | ForEach-Object {
