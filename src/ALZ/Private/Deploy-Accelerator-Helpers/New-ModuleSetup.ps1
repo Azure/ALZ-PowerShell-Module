@@ -17,7 +17,9 @@ function New-ModuleSetup {
         [Parameter(Mandatory = $false)]
         [string]$moduleOverrideFolderPath,
         [Parameter(Mandatory = $false)]
-        [bool]$skipInternetChecks
+        [bool]$skipInternetChecks,
+        [Parameter(Mandatory = $false)]
+        [switch]$replaceFiles
     )
 
     if ($PSCmdlet.ShouldProcess("Check and get module", "modify")) {
@@ -33,7 +35,8 @@ function New-ModuleSetup {
                 -releaseArtifactName $releaseArtifactName `
                 -targetFolder $targetFolder `
                 -sourceFolder $sourceFolder `
-                -overrideSourceDirectoryPath $moduleOverrideFolderPath
+                -overrideSourceDirectoryPath $moduleOverrideFolderPath `
+                -replaceFiles:$replaceFiles.IsPresent
         }
         return $versionAndPath
     }

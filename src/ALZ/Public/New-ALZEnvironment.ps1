@@ -105,7 +105,11 @@ function New-ALZEnvironment {
 
         [Parameter(Mandatory = $false, HelpMessage = "Whether to use legacy local mode for Bicep.")]
         [bool]
-        $bicepLegacyMode = $false
+        $bicepLegacyMode = $false,
+
+        [Parameter(Mandatory = $false, HelpMessage = "Whether to overwrite bootstrap and starter modules if they already exist. Warning, this may result in unexpected behaviour and should only be used for local development purposes.")]
+        [switch]
+        $replaceFiles
     )
 
     $ProgressPreference = "SilentlyContinue"
@@ -144,6 +148,9 @@ function New-ALZEnvironment {
                 Write-InformationColored "Skipping Terraform tool check as you used the skipInternetCheck parameter. Please ensure you have the most recent version of Terraform installed" -ForegroundColor Yellow -InformationAction Continue
             } else {
                 Write-InformationColored "Checking you have the latest version of Terraform installed..." -ForegroundColor Green -NewLineBefore -InformationAction Continue
+                if($iac -eq "bicep") {
+                    Write-InformationColored "Although you have selected Bicep, the Accelerator leverages the Terraform tool to bootstrap your Version Control System and Azure. This is will not impact your choice of Bicep post this initial bootstrap. Please refer to our documentation for further details..." -ForegroundColor Yellow -InformationAction Continue
+                }
                 $toolsPath = Join-Path -Path $targetDirectory -ChildPath ".tools"
                 Get-TerraformTool -version "latest" -toolsPath $toolsPath
             }
@@ -165,7 +172,8 @@ function New-ALZEnvironment {
                 -release $bootstrapRelease `
                 -releaseArtifactName $bootstrapModuleReleaseArtifactName `
                 -moduleOverrideFolderPath $bootstrapModuleOverrideFolderPath `
-                -skipInternetChecks $skipInternetChecks
+                -skipInternetChecks $skipInternetChecks `
+                -replaceFile:$replaceFiles.IsPresent
 
             $bootstrapReleaseTag = $versionAndPath.releaseTag
             $bootstrapPath = $versionAndPath.path
@@ -232,7 +240,8 @@ function New-ALZEnvironment {
                 -release $starterRelease `
                 -releaseArtifactName $starterReleaseArtifactName `
                 -moduleOverrideFolderPath $starterModuleOverrideFolderPath `
-                -skipInternetChecks $skipInternetChecks
+                -skipInternetChecks $skipInternetChecks `
+                -replaceFile:$replaceFiles.IsPresent
 
             $starterReleaseTag = $versionAndPath.releaseTag
             $starterPath = $versionAndPath.path
