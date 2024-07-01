@@ -11,7 +11,7 @@ function Remove-FilesNotRequired {
         [array]$filesToKeep = @("version.json", "parameters.json", "starter-cache.json"),
 
         [Parameter(Mandatory = $false)]
-        [array]$foldersToRemove = @("media", "samples", "generateddocs", ".azuredevops", ".github", "pipeline-scripts")
+        [array]$foldersToRemove = @("media", "samples", "generateddocs", ".azuredevops", ".github", "pipeline-scripts", "china", "parameters")
     )
 
     if ($PSCmdlet.ShouldProcess("Remove files", "modify")) {

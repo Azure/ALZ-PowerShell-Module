@@ -275,11 +275,6 @@ function New-ALZEnvironment {
             $bootstrapTargetPath = Join-Path $targetDirectory $bootstrapTargetFolder
             $starterTargetPath = Join-Path $targetDirectory $starterFolder
 
-            if ($iac -eq "bicep" ) {
-                Write-Verbose "Starting the Bicep specific environment setup..."
-                Remove-FilesNotRequired -path $starterPath
-            }
-
             New-Bootstrap `
                 -iac $iac `
                 -bootstrapDetails $bootstrapDetails `

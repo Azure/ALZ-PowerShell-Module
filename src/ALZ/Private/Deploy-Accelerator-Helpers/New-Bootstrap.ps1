@@ -260,6 +260,7 @@ function New-Bootstrap {
             Edit-ALZConfigurationFilesInPlace -alzEnvironmentDestination $starterModulePath -configuration $starterConfiguration
             Add-AvailabilityZonesBicepParameter -alzEnvironmentDestination $starterModulePath -zonesSupport $zonesSupport
             Write-JsonFile -jsonFilePath $starterBicepVarsPath -configuration $starterConfiguration
+            Remove-FilesNotRequired -path $starterModulePath
         }
 
         # Caching the bootstrap and starter module values paths for retry / upgrade scenarios
