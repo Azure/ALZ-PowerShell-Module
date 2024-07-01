@@ -38,7 +38,13 @@ function New-Bootstrap {
         [switch] $autoApprove,
 
         [Parameter(Mandatory = $false)]
-        [switch] $destroy
+        [switch] $destroy,
+
+        [Parameter(Mandatory = $false)]
+        [string] $starter = "",
+
+        [Parameter(Mandatory = $false)]
+        [PSCustomObject] $zonesSupport = $null
     )
 
     if ($PSCmdlet.ShouldProcess("ALZ-Terraform module configuration", "modify")) {
@@ -78,11 +84,12 @@ function New-Bootstrap {
         $starterCachedConfig = Get-ALZConfig -configFilePath $starterCachePath
 
         # Get starter module
-        $starter = ""
         $starterModulePath = ""
 
         if($hasStarter) {
-            $starter = Request-SpecialInput -type "starter" -starterConfig $starterConfig -userInputOverrides $userInputOverrides
+            if($starter -eq "") {
+                $starter = Request-SpecialInput -type "starter" -starterConfig $starterConfig -userInputOverrides $userInputOverrides
+            }
 
             Write-Verbose "Selected Starter: $starter"
 
@@ -113,8 +120,14 @@ function New-Bootstrap {
         $starterParameters  = [PSCustomObject]@{}
 
         if($hasStarter) {
-            $targetVariableFilePath = Join-Path -Path $starterModulePath -ChildPath "variables.tf"
-            $starterParameters = Convert-HCLVariablesToUserInputConfig -targetVariableFile $targetVariableFilePath -hclParserToolPath $hclParserToolPath -validators $validationConfig
+            if($iac -eq "terraform") {
+                $targetVariableFilePath = Join-Path -Path $starterModulePath -ChildPath "variables.tf"
+                $starterParameters = Convert-HCLVariablesToUserInputConfig -targetVariableFile $targetVariableFilePath -hclParserToolPath $hclParserToolPath -validators $validationConfig
+            }
+
+            if($iac -eq "bicep") {
+                $starterParameters = Convert-InterfaceInputToUserInputConfig -inputConfig $starterConfig.starter_modules.$starter -validators $validationConfig
+            }
         }
 
         # Filter interface inputs if not in bootstrap or starter
@@ -168,8 +181,9 @@ function New-Bootstrap {
 
         # Set computed interface inputs
         $computedInputMapping = @{
-            "iac_type"           = $iac
-            "module_folder_path" = $starterModulePath
+            "iac_type"            = $iac
+            "module_folder_path"  = $starterModulePath
+            "starter_module_name" = $starter
         }
 
         foreach($inputConfigItem in $inputConfig.inputs.PSObject.Properties) {
@@ -191,8 +205,20 @@ function New-Bootstrap {
             if("bootstrap" -in $inputConfigItem.Value.maps_to) {
                 $bootstrapComputed | Add-Member -NotePropertyName $inputVariable.Name -NotePropertyValue $inputVariable.Value
             }
+
             if("starter" -in $inputConfigItem.Value.maps_to) {
-                $starterComputed | Add-Member -NotePropertyName $inputVariable.Name -NotePropertyValue $inputVariable.Value
+                if($iac -eq "terraform") {
+                    $starterComputed | Add-Member -NotePropertyName $inputVariable.Name -NotePropertyValue $inputVariable.Value
+                }
+
+                if($iac -eq "bicep") {
+                    if($inputConfigItem.Value.PSObject.Properties.Name -contains "bicep_alias") {
+                        Write-Verbose "Setting computed bicep alias $($inputConfigItem.Value.bicep_alias)"
+                        $starterComputed | Add-Member -NotePropertyName $inputConfigItem.Value.bicep_alias -NotePropertyValue $inputVariable.Value
+                    } else {
+                        $starterComputed | Add-Member -NotePropertyName $inputVariable.Name -NotePropertyValue $inputVariable.Value
+                    }
+                }
             }
         }
 
@@ -221,8 +247,21 @@ function New-Bootstrap {
         # Creating the tfvars files for the bootstrap and starter module
         $bootstrapTfvarsPath = Join-Path -Path $bootstrapModulePath -ChildPath "override.tfvars"
         $starterTfvarsPath = Join-Path -Path $starterModulePath -ChildPath "terraform.tfvars"
+        $starterBicepVarsPath = Join-Path -Path $starterModulePath -ChildPath "parameters.json"
         Write-TfvarsFile -tfvarsFilePath $bootstrapTfvarsPath -configuration $bootstrapConfiguration
-        Write-TfvarsFile -tfvarsFilePath $starterTfvarsPath -configuration $starterConfiguration
+
+        if($iac -eq "terraform") {
+            Write-TfvarsFile -tfvarsFilePath $starterTfvarsPath -configuration $starterConfiguration
+        }
+
+        if($iac -eq "bicep") {
+            Copy-ParametersFileCollection -starterPath $starterModulePath -configFiles $starterConfig.starter_modules.$starter.deployment_files
+            Set-ComputedConfiguration -configuration $starterConfiguration
+            Edit-ALZConfigurationFilesInPlace -alzEnvironmentDestination $starterModulePath -configuration $starterConfiguration
+            Add-AvailabilityZonesBicepParameter -alzEnvironmentDestination $starterModulePath -zonesSupport $zonesSupport
+            Write-JsonFile -jsonFilePath $starterBicepVarsPath -configuration $starterConfiguration
+            Remove-FilesNotRequired -path $starterModulePath
+        }
 
         # Caching the bootstrap and starter module values paths for retry / upgrade scenarios
         Write-ConfigurationCache -filePath $interfaceCachePath -configuration $interfaceConfiguration

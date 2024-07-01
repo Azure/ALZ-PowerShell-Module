@@ -24,6 +24,7 @@ function Get-BootstrapAndStarterConfig {
 
         $bootstrapDetails = $null
         $validationConfig = $null
+        $zonesSupport = $null
         $inputConfig = $null
 
         # Get the bootstap configuration
@@ -31,6 +32,7 @@ function Get-BootstrapAndStarterConfig {
         Write-Verbose "Bootstrap config path $bootstrapConfigFullPath"
         $bootstrapConfig = Get-ALZConfig -configFilePath $bootstrapConfigFullPath
         $validationConfig = $bootstrapConfig.validators
+        $zonesSupport = $bootstrapConfig.zonesSupport
 
         # Get the available bootstrap modules
         $bootstrapModules = $bootstrapConfig.bootstrap_modules
@@ -81,6 +83,7 @@ function Get-BootstrapAndStarterConfig {
             starterReleaseArtifactName = $starterReleaseArtifactName
             starterConfigFilePath      = $starterConfigFilePath
             validationConfig           = $validationConfig
+            zonesSupport               = $zonesSupport
             inputConfig                = $inputConfig
         }
     }

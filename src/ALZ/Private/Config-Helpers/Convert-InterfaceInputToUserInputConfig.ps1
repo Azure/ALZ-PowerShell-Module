@@ -40,9 +40,14 @@ function Convert-InterfaceInputToUserInputConfig {
             $starterModuleConfigurationInstance = [PSCustomObject]@{}
             $starterModuleConfigurationInstance | Add-Member -NotePropertyName "Order" -NotePropertyValue $order
             $starterModuleConfigurationInstance | Add-Member -NotePropertyName "Type" -NotePropertyValue $inputType
-            $starterModuleConfigurationInstance | Add-Member -NotePropertyName "Value" -NotePropertyValue ""
             $starterModuleConfigurationInstance | Add-Member -NotePropertyName "DataType" -NotePropertyValue $dataType
             $starterModuleConfigurationInstance | Add-Member -NotePropertyName "Sensitive" -NotePropertyValue $sensitive
+
+            if($variable.Value.PSObject.Properties.Name -contains "Value") {
+                $starterModuleConfigurationInstance | Add-Member -NotePropertyName "Value" -NotePropertyValue $variable.Value.Value
+            } else {
+                $starterModuleConfigurationInstance | Add-Member -NotePropertyName "Value" -NotePropertyValue ""
+            }
 
             if($variable.Value.PSObject.Properties.Name -contains "default") {
                 $defaultValue = $variable.Value.default
@@ -61,6 +66,10 @@ function Convert-InterfaceInputToUserInputConfig {
                     $starterModuleConfigurationInstance | Add-Member -NotePropertyName "Valid" -NotePropertyValue $validator.Valid
                 }
                 $starterModuleConfigurationInstance | Add-Member -NotePropertyName "Validator" -NotePropertyValue $validationType
+            }
+
+            if($variable.Value.PSObject.Properties.Name -contains "Targets") {
+                $starterModuleConfigurationInstance | Add-Member -NotePropertyName "Targets" -NotePropertyValue $variable.Value.Targets
             }
 
             $starterModuleConfigurationInstance | Add-Member -NotePropertyName "Description" -NotePropertyValue $description
