@@ -260,7 +260,16 @@ function New-Bootstrap {
             Edit-ALZConfigurationFilesInPlace -alzEnvironmentDestination $starterModulePath -configuration $starterConfiguration
             Add-AvailabilityZonesBicepParameter -alzEnvironmentDestination $starterModulePath -zonesSupport $zonesSupport
             Write-JsonFile -jsonFilePath $starterBicepVarsPath -configuration $starterConfiguration
-            Remove-FilesNotRequired -path $starterModulePath
+
+            # Remove unrequired files
+            $foldersOrFilesToRetain = $starterConfig.starter_modules.$starter.folders_or_files_to_retain
+            $foldersOrFilesToRetain += "parameters.json"
+            $foldersOrFilesToRetain += "config"
+            $foldersOrFilesToRetain += "starter-cache.json"
+
+            $subFoldersOrFilesToRemove = $starterConfig.starter_modules.$starter.subfolders_or_files_to_remove
+
+            Remove-UnrequiredFileSet -path $starterModulePath -foldersOrFilesToRetain $foldersOrFilesToRetain -subFoldersOrFilesToRemove $subFoldersOrFilesToRemove
         }
 
         # Caching the bootstrap and starter module values paths for retry / upgrade scenarios

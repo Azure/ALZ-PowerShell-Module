@@ -24,6 +24,10 @@ function Add-AvailabilityZonesBicepParameter {
 
     foreach ($parametersFile in $parametersConfig) {
         $parametersFilePath = Join-Path -Path $alzEnvironmentDestination "config\custom-parameters\$($parametersFile.source)"
+        if(!(Test-Path -Path $parametersFilePath)) {
+            Write-Verbose -Message "The file $parametersFilePath does not exist, so skipping it..."
+            continue
+        }
         $region = (Get-Content $parametersFilePath | ConvertFrom-Json).parameters.parLocation.Value
         $zones = ($zonesSupport | Where-Object { $_.region -eq $region }).zones
         $parametersFileJsonContent = Get-Content -Path $parametersFilePath -Raw
@@ -38,7 +42,6 @@ function Add-AvailabilityZonesBicepParameter {
                 else {
                     $jsonObject.parameters.$parameter.value = $zones
                 }
-
             }
 
             catch {
