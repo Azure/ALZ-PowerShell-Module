@@ -22,6 +22,14 @@ function Remove-UnrequiredFileSet {
             $fileRelativePath = $file.FullName.Replace($path, "").Replace("\", "/").TrimStart("/")
             $folderRelativePath = $file.Directory.FullName.Replace($path, "").Replace("\", "/").TrimStart("/")
             foreach ($folderOrFileToRetain in $foldersOrFilesToRetain) {
+                # If we have an exact match of the file name and path, always retain it.
+                if($folderOrFileToRetain.TrimStart("./") -eq $fileRelativePath) {
+                    Write-Verbose "Exact Match - Retaining: $fileRelativePath at $($file.FullName)"
+                    $filesToRetain += $file.FullName
+                    continue
+                }
+
+                # If we match on a pattern, take into account the subfolders or files to remove.
                 if ($fileRelativePath -like "$folderOrFileToRetain*") {
                     $skipFile = $false
                     foreach($subfolderOrFileToRemove in $subFoldersOrFilesToRemove) {
@@ -31,7 +39,7 @@ function Remove-UnrequiredFileSet {
                     }
 
                     if(!$skipFile) {
-                        Write-Verbose "Retaining: $fileRelativePath at $($file.FullName)"
+                        Write-Verbose "Pattern Match - Retaining: $fileRelativePath at $($file.FullName)"
                         $filesToRetain += $file.FullName
                     }
                 }

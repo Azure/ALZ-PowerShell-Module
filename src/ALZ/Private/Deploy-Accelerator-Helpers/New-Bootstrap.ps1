@@ -267,6 +267,10 @@ function New-Bootstrap {
             $foldersOrFilesToRetain += "config"
             $foldersOrFilesToRetain += "starter-cache.json"
 
+            foreach($deployment_file in $starterConfig.starter_modules.$starter.deployment_files) {
+                $foldersOrFilesToRetain += $deployment_file.templateParametersSourceFilePath
+            }
+
             $subFoldersOrFilesToRemove = $starterConfig.starter_modules.$starter.subfolders_or_files_to_remove
 
             Remove-UnrequiredFileSet -path $starterModulePath -foldersOrFilesToRetain $foldersOrFilesToRetain -subFoldersOrFilesToRemove $subFoldersOrFilesToRemove
