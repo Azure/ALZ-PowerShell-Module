@@ -8,13 +8,13 @@ Example input files can be found here:
 
 The following table describes the inputs required for the `complete` starter module.
 
-    | Category | Input | Placeholder | Description |
-    | --- | --- | --- | --- |
-    | Starter | `Prefix` | `landing-zone` | This is the defaut prefix for names of resources and management groups. |
-    | Starter | `Location` | `<region>` | The Azure region where the landing zone resources will be deployed. |
-    | Starter | `Environment` | `live` | The environment name for the landing zone. This can be any lower case string. (e.g. `live` or `canary`)  |
-    | Starter | `networkType` | `hubNetworking` | The type of network configuration to deploy. Currently only `hubNetworking`, `vwanConnectivity` or `none` are supported. |
-    | Starter | `SecurityContact` | `<email-address>` | The email address of the security contact for the landing zone. |
+| Category | Input | Placeholder | Description |
+| --- | --- | --- | --- |
+| Starter | `Prefix` | `landing-zone` | This is the defaut prefix for names of resources and management groups. |
+| Starter | `Location` | `<region>` | The Azure region where the landing zone resources will be deployed. |
+| Starter | `Environment` | `live` | The environment name for the landing zone. This can be any lower case string. (e.g. `live` or `canary`)  |
+| Starter | `networkType` | `hubNetworking` | The type of network configuration to deploy. Currently only `hubNetworking`, `vwanConnectivity` or `none` are supported. |
+| Starter | `SecurityContact` | `<email-address>` | The email address of the security contact for the landing zone. |
 
  [//]: # (************************)
  [//]: # (INSERT LINK LABELS BELOW)
