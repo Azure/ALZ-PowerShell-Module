@@ -1,11 +1,11 @@
 <!-- markdownlint-disable first-line-h1 -->
-## 2.2.2 GitHub
+## 2.2.3 Local File System
 
 You can choose to bootstrap with `bicep` or `terraform` skip to the relevant section below to do that.
 
 Although you can just run `Deploy-Accelerator` and fill out the prompted inputs, we recommend creating an inputs file.  This will make it easier to run the accelerator more than once in order to refine your preferred configuration. In the following docs, we'll show that approach, but if you want to be prompted for inputs, just go ahead and run `Deploy-Accelerator` now.
 
-### 2.2.2.1 GitHub with Bicep
+### 2.2.3.1 Local File System with Bicep
 
 1. Create a new folder on you local drive called `accelerator`.
 1. Inside the accelerator create two folders called `config` and `output`. You'll store you input file inside config and the output folder will be the place that the accelerator stores files while it works.
@@ -65,7 +65,7 @@ Although you can just run `Deploy-Accelerator` and fill out the prompted inputs,
 1. If you are happy with the plan, then type `yes` and hit enter.
 1. The Terraform will `apply` and your environment will be bootstrapped.
 
-### 2.2.2.2 GitHub with Terraform
+### 2.2.3.2 Local File System with Terraform
 
 1. Create a new folder on you local drive called `accelerator`.
 1. Inside the accelerator create two folders called `config` and `output`. You'll store you input file inside config and the output folder will be the place that the accelerator stores files while it works.
