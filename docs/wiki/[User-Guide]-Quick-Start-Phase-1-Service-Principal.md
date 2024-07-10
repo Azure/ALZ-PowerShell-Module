@@ -39,7 +39,7 @@
     1. Click `Review + assign`, then click `Review + assign` again when the warning appears.
     1. Wait for the role to be assigned and move onto the next subscription.
 1. Search for `Management Groups` and click to navigate to the management groups view.
-1. Click the `Tenant Root Group` management group (Note, it is possible someone changed the name of your root management group, select the one at the very top of the hierarchy if that is the case)
+1. Click the parent management group you plan to deploy the Landing Zone into (this could be `Tenant Root Group` or a new management group you created).
 1. Click `Access control (IAM)` in the left navigation.
 1. Click `+ Add` and choose `Add role assignment`.
 1. Choose the `Privileged administrator roles` tab.

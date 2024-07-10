@@ -1,9 +1,9 @@
 <!-- markdownlint-disable first-line-heading first-line-h1 -->
-Welcome to the Azure landing zones Terraform accelerator!
+Welcome to the Azure Landing Zones Accelerators for Bicep and Terraform!
 
-The Azure landing zones [Terraform][alz_tf_module] and [Bicep][alz_bc_module] provide an opinionated approach for deploying and managing the core platform capabilities of [Azure landing zones architecture][alz_architecture] using Terraform or Bicep.
+The Azure landing zones [Terraform][alz_tf_module] and [Bicep][alz_bc_module] modules provide an opinionated approach for deploying and managing the core platform capabilities of [Azure landing zones architecture][alz_architecture] using Bicep or Terraform.
 
-This accelerator provides an opinionated approach for configuring and securing that module in a continuous delivery environment. It has end to end automation for bootstrapping the modules.
+This accelerator provides an opinionated approach for configuring and securing those modules in a continuous delivery environment. It has end to end automation for bootstrapping the modules.
 
 ## Supported Version Control Systems (VCS)
 
