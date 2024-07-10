@@ -20,10 +20,13 @@
     - [Terraform - Hub Networking][wiki_starter_module_terraform_hubnetworking]
     - [Terraform - Complete][wiki_starter_module_terraform_complete]
       - [Configuration YAML Schema][wiki_yaml_schema_reference]
-      - [Example GitHub inputs][example_powershell_inputs_github]
-      - [Example Azure DevOps inputs][example_powershell_inputs_azure_devops]
       - [Example Hub and Spoke config][example_starter_module_complete_config_hub_spoke]
       - [Example Virtual WAN config][example_starter_module_complete_config_vwan]
+  - Input Files
+    - [Azure DevOps Bicep Inputs][example_powershell_inputs_azure_devops_bicep]
+    - [Azure DevOps Terraform Inputs][example_powershell_inputs_azure_devops_terraform]
+    - [GitHub Bicep Inputs][example_powershell_inputs_github_bicep]
+    - [GitHub Terraform Inputs][example_powershell_inputs_github_terraform]
 - [Frequently Asked Questions][wiki_frequently_asked_questions]
 - [Upgrade Guide][wiki_upgrade_guide]
 - [Advanced Scenarios][wiki_advanced_scenarios]
@@ -64,7 +67,9 @@
 [wiki_contributing_to_documentation]:                                Contributing-to-Documentation "Wiki - Contributing to documentation"
 [wiki_upgrade_guide]:                                              Upgrade-Guide "Wiki - Upgrade Guide"
 [wiki_advanced_scenarios]:                                           %5BUser-Guide%5D-Advanced-Scenarios "Wiki - Advanced Scenarios"
-[example_powershell_inputs_azure_devops]: examples/powershell-inputs/inputs-azure-devops.yaml "Example - PowerShell Inputs - Azure DevOps"
-[example_powershell_inputs_github]: examples/powershell-inputs/inputs-github.yaml "Example - PowerShell Inputs - GitHub"
+[example_powershell_inputs_azure_devops_bicep]:     examples/powershell-inputs/inputs-azure-devops-bicep.yaml "Example - PowerShell Inputs - Azure DevOps - Bicep"
+[example_powershell_inputs_azure_devops_terraform]: examples/powershell-inputs/inputs-azure-devops-terraform.yaml "Example - PowerShell Inputs - Azure DevOps - Terraform"
+[example_powershell_inputs_github_bicep]:     examples/powershell-inputs/inputs-github-bicep.yaml "Example - PowerShell Inputs - GitHub - Bicep"
+[example_powershell_inputs_github_terraform]: examples/powershell-inputs/inputs-github-terraform.yaml "Example - PowerShell Inputs - GitHub - Terraform"
 [example_starter_module_complete_config_hub_spoke]: examples/starter-module-config/complete/config-hub-spoke.yaml "Example - Starter Module Config - Complete - Hub and Spoke"
 [example_starter_module_complete_config_vwan]: examples/starter-module-config/complete/config-vwan.yaml "Example - Starter Module Config - Complete - Virtual WAN"
