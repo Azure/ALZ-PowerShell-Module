@@ -1,5 +1,5 @@
 <!-- markdownlint-disable first-line-h1 -->
-![Azure logo](media/Logo.png)
+![Azure logo](media/Logo-Small.png)
 
 ## Azure landing zones accelerators
 
