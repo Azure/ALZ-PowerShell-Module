@@ -1,5 +1,6 @@
 ---
-# For detailed instructions on using this file, visit TBC
+# For detailed instructions on using this file, visit:
+# https://github.com/Azure/ALZ-PowerShell-Module/wiki/%5BUser-Guide%5D-Quick-Start-Phase-2-Azure-DevOps#2212-azure-devops-with-terraform
 
 # Basic Inputs
 iac: "terraform"

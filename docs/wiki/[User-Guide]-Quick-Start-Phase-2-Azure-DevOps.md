@@ -1,11 +1,11 @@
 <!-- markdownlint-disable first-line-h1 -->
-### 2.2.1 Azure DevOps
+## 2.2.1 Azure DevOps
 
 You can choose to bootstrap with `bicep` or `terraform` skip to the relevant section below to do that.
 
 Although you can just run `Deploy-Accelerator` and fill out the prompted inputs, we recommend creating an inputs file.  This will make it easier to run the accelerator more than once in order to refine your preferred configuration. In the following docs, we'll show that approach, but if you want to be prompted for inputs, just go ahead and run `Deploy-Accelerator` now.
 
-#### 2.2.1.1 Azure DevOps with Bicep
+### 2.2.1.1 Azure DevOps with Bicep
 
 1. Create a new folder on you local drive called `accelerator`.
 1. Inside the accelerator create two folders called `config` and `output`. You'll store you input file inside config and the output folder will be the place that the accelerator stores files while it works.
@@ -49,7 +49,7 @@ Although you can just run `Deploy-Accelerator` and fill out the prompted inputs,
     | Bootstrap | `create_branch_policies` | `true` | This controls whether to create branch policies for the repository. This defaults to `true`. |
 
 1. Now head over to your chosen starter module documentation to get the specific inputs for that module. Come back here when you are done.
-    1. [Bicep Complete Starter Module][wiki_starter_module_bicep_complete]
+    - [Bicep Complete Starter Module][wiki_starter_module_bicep_complete]
 1. In your PowerShell Core (pwsh) terminal run the module:
 
     ```pwsh
@@ -65,7 +65,7 @@ Although you can just run `Deploy-Accelerator` and fill out the prompted inputs,
 1. If you are happy with the plan, then type `yes` and hit enter.
 1. The Terraform will `apply` and your environment will be bootstrapped.
 
-#### 2.2.1.2 Azure DevOps with Terraform
+### 2.2.1.2 Azure DevOps with Terraform
 
 1. Create a new folder on you local drive called `accelerator`.
 1. Inside the accelerator create two folders called `config` and `output`. You'll store you input file inside config and the output folder will be the place that the accelerator stores files while it works.
@@ -109,9 +109,9 @@ Although you can just run `Deploy-Accelerator` and fill out the prompted inputs,
     | Bootstrap | `create_branch_policies` | `true` | This controls whether to create branch policies for the repository. This defaults to `true`. |
 
 1. Now head over to your chosen starter module documentation to get the specific inputs for that module. Come back here when you are done.
-    1. [Terraform Basic Starter Module][wiki_starter_module_terraform_basic]: Management groups and policies.
-    1. [Terraform Hub Networking Starter Module][wiki_starter_module_terraform_hubnetworking]: Management groups, policies and hub networking.
-    1. [Terraform Complete Starter Module][wiki_starter_module_terraform_complete]: Management groups, policies, hub networking with fully custom configuration.
+    - [Terraform Basic Starter Module][wiki_starter_module_terraform_basic]: Management groups and policies.
+    - [Terraform Hub Networking Starter Module][wiki_starter_module_terraform_hubnetworking]: Management groups, policies and hub networking.
+    - [Terraform Complete Starter Module][wiki_starter_module_terraform_complete]: Management groups, policies, hub networking with fully custom configuration.
 1. In your PowerShell Core (pwsh) terminal run the module:
 
     ```pwsh
