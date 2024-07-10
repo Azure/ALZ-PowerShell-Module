@@ -1,0 +1,39 @@
+---
+# For detailed instructions on using this file, visit TBC
+
+# Basic Inputs
+iac: "terraform"
+bootstrap: "alz_azuredevops"
+starter: "complete"
+
+# Shared Interface Inputs
+root_parent_management_group_id: ""
+subscription_id_management: "<management-subscription-id>"
+subscription_id_identity: "<identity-subscription-id>"
+subscription_id_connectivity: "<connectivity-subscription-id>"
+
+# Bootstrap Inputs
+azure_devops_personal_access_token: "<token-1>"
+azure_devops_agents_personal_access_token: "<token-2>"
+azure_devops_organization_name: "<azure-devops-organization>"
+bootstrap_location: "<region>"
+use_separate_repository_for_pipeline_templates: "true"
+bootstrap_subscription_id: "<bootstrap-subscription-id>"
+service_name: "alz"
+environment_name: "mgmt"
+postfix_number: "1"
+azure_devops_use_organisation_legacy_url: "false"
+azure_devops_create_project: "true"
+azure_devops_project_name: "<azure-devops-project-name>"
+use_self_hosted_agents: "true"
+use_private_networking: "true"
+allow_storage_access_from_my_ip: "false"
+apply_approvers: "<email-address-list>"
+create_branch_policies: "true"
+
+# Starter Module Specific Variables
+Prefix: "alz"
+Location: "<region>"
+Environment: "live"
+networkType: "hubNetworking"
+SecurityContact: "<email-address>"
