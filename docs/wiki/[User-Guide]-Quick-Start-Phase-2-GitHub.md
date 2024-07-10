@@ -11,6 +11,16 @@ Although you can just run `Deploy-Accelerator` and fill out the prompted inputs,
 1. Inside the accelerator create two folders called `config` and `output`. You'll store you input file inside config and the output folder will be the place that the accelerator stores files while it works.
 1. Inside the `config` folder create a new file called `inputs.yaml`. You can use `json` if you prefer, but our examples here are `yaml`.
 
+    ```pwsh
+    # Windows
+    New-Item c:\accelerator\config\inputs.yaml -Force
+    New-Item c:\accelerator\output
+
+    # Linux/Mac
+    New-Item ~/accelerator/config/inputs.yaml -Force
+    New-Item ~/accelerator/output
+    ```
+
     ```plaintext
     📂accelerator
     ┣ 📂config
@@ -67,6 +77,16 @@ Although you can just run `Deploy-Accelerator` and fill out the prompted inputs,
 1. Create a new folder on you local drive called `accelerator`.
 1. Inside the accelerator create two folders called `config` and `output`. You'll store you input file inside config and the output folder will be the place that the accelerator stores files while it works.
 1. Inside the `config` folder create a new file called `inputs.yaml`. You can use `json` if you prefer, but our examples here are `yaml`.
+
+    ```pwsh
+    # Windows
+    New-Item c:\accelerator\config\inputs.yaml -Force
+    New-Item c:\accelerator\output
+
+    # Linux/Mac
+    New-Item ~/accelerator/config/inputs.yaml -Force
+    New-Item ~/accelerator/output
+    ```
 
     ```plaintext
     📂accelerator

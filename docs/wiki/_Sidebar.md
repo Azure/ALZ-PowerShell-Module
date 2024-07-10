@@ -27,6 +27,8 @@
     - [Azure DevOps Terraform Inputs][example_powershell_inputs_azure_devops_terraform]
     - [GitHub Bicep Inputs][example_powershell_inputs_github_bicep]
     - [GitHub Terraform Inputs][example_powershell_inputs_github_terraform]
+    - [Local Bicep Inputs][example_powershell_inputs_local_bicep]
+    - [Local Terraform Inputs][example_powershell_inputs_local_terraform]
 - [Frequently Asked Questions][wiki_frequently_asked_questions]
 - [Upgrade Guide][wiki_upgrade_guide]
 - [Advanced Scenarios][wiki_advanced_scenarios]
@@ -71,5 +73,7 @@
 [example_powershell_inputs_azure_devops_terraform]: examples/powershell-inputs/inputs-azure-devops-terraform.yaml "Example - PowerShell Inputs - Azure DevOps - Terraform"
 [example_powershell_inputs_github_bicep]:     examples/powershell-inputs/inputs-github-bicep.yaml "Example - PowerShell Inputs - GitHub - Bicep"
 [example_powershell_inputs_github_terraform]: examples/powershell-inputs/inputs-github-terraform.yaml "Example - PowerShell Inputs - GitHub - Terraform"
+[example_powershell_inputs_local_bicep]:     examples/powershell-inputs/inputs-local-bicep.yaml "Example - PowerShell Inputs - Local - Bicep"
+[example_powershell_inputs_local_terraform]: examples/powershell-inputs/inputs-local-terraform.yaml "Example - PowerShell Inputs - Local - Terraform"
 [example_starter_module_complete_config_hub_spoke]: examples/starter-module-config/complete/config-hub-spoke.yaml "Example - Starter Module Config - Complete - Hub and Spoke"
 [example_starter_module_complete_config_vwan]: examples/starter-module-config/complete/config-vwan.yaml "Example - Starter Module Config - Complete - Virtual WAN"

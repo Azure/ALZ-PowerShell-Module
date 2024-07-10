@@ -35,4 +35,4 @@ create_branch_policies: "true"
 # Starter Module Specific Variables
 default_location: "<region>"
 default_postfix: "landing-zone"
-configuration_file_path: "<configuration-file-path>"
+configuration_file_path: "<configuration-file-path>"  # Only required for the `complete` starter module

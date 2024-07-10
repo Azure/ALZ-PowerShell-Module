@@ -1,10 +1,10 @@
 ---
 # For detailed instructions on using this file, visit:
-# https://github.com/Azure/ALZ-PowerShell-Module/wiki/%5BUser-Guide%5D-Quick-Start-Phase-2-GitHub#2222-github-with-terraform
+# https://github.com/Azure/ALZ-PowerShell-Module/wiki/%5BUser-Guide%5D-Quick-Start-Phase-2-Azure-DevOps#2211-azure-devops-with-bicep
 
 # Basic Inputs
-iac: "terraform"
-bootstrap: "alz_github"
+iac: "bicep"
+bootstrap: "alz_local"
 starter: "complete"
 
 # Shared Interface Inputs
@@ -14,20 +14,13 @@ subscription_id_identity: "<identity-subscription-id>"
 subscription_id_connectivity: "<connectivity-subscription-id>"
 
 # Bootstrap Inputs
-github_personal_access_token: "<token-1>"
-github_runners_personal_access_token: "<token-2>"
-github_organization_name: "<github-organization>"
+target_directory: "<target-directory>"
+create_bootstrap_resources_in_azure: "true"
 bootstrap_location: "<region>"
-use_separate_repository_for_templates: "true"
 bootstrap_subscription_id: "<bootstrap-subscription-id>"
 service_name: "alz"
 environment_name: "mgmt"
 postfix_number: "1"
-use_self_hosted_agents: "true"
-use_private_networking: "true"
-allow_storage_access_from_my_ip: "false"
-apply_approvers: "<email-address-list>"
-create_branch_policies: "true"
 
 # Starter Module Specific Variables
 default_location: "<region>"
