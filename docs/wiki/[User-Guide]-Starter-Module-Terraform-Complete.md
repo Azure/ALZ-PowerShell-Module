@@ -2,7 +2,7 @@
 The `complete` starter module provides full customization of the Azure Landing Zone using the `config.yaml` file. The `config.yaml` file provides the ability to enable and disable modules, configure module inputs and outputs, and configure module resources.
 A custom `config.yaml` file can be passed to the `additional_files` argument of the ALZ PowerShell Module. This allows you to firstly design your Azure Landing Zone, and then deploy it.
 If not specified, the default `config.yaml` file will be used, which is as follows:
-  
+
 ```yaml
 # This file contains templated variables to avoid repeating the same hard-coded values.
 # Templated variables are denoted by the dollar curly braces token. The following details each templated variable that you can use:
@@ -152,7 +152,7 @@ connectivity:
         mesh_peering_enabled: true
         address_space:
           - 10.2.0.0/16
-    
+
 ```
 
 ### Use the ALZ PowerShell Module to prepare your Azure Landing Zone for deployment
@@ -163,68 +163,11 @@ Set your inputs.yaml file (See [Frequently Asked Questions][wiki_frequently_aske
 
 GitHub Example:
 
-- Example input file: [inputs-github.yaml][example_powershell_inputs_github]
-
-```yaml
-# Path of file: C:\users\johndoe\inputs.yaml
-
-iac: "terraform"
-bootstrap: "alz_github"
-starter: "complete"
-azure_location: "uksouth"
-github_personal_system_access_token: "xxxxxxxxxx"
-github_organization_name: "contoso"
-azure_location": "uksouth"
-azure_subscription_id: "00000000-0000-0000-0000-000000000000"
-service_name: "alz"
-environment_name: "mgmt"
-postfix_number: "1"
-version_control_system_use_separate_repository_for_templates: "true"
-use_self_hosted_agents: "true"
-use_private_networking: "true"
-allow_storage_access_from_my_ip: "false"
-
-# Starter Module Specific Variables
-root_parent_management_group_id: ""
-subscription_id_connectivity: "00000000-0000-0000-0000-000000000000"
-subscription_id_identity: "00000000-0000-0000-0000-000000000000"
-subscription_id_management: "00000000-0000-0000-0000-000000000000"
-configuration_file_path: "C:\users\johndoe\config.yaml"
-```
+- Example input file: [inputs-github-terraform.yaml][example_powershell_inputs_github_terraform]
 
 Azure DevOps Example:
 
-- Example input file: [inputs-azure-devops.yaml][example_powershell_inputs_azure_devops]
-
-```yaml
-# Path of file: C:\users\johndoe\inputs.yaml
-
-iac: "terraform"
-bootstrap: "alz_azuredevops"
-starter: "complete"
-azure_location: "uksouth"
-azure_devops_personal_system_access_token: "xxxxxxxxxx"
-azure_devops_organization_name: "contoso"
-azure_location": "uksouth"
-azure_subscription_id: "00000000-0000-0000-0000-000000000000"
-service_name: "alz"
-environment_name: "mgmt"
-postfix_number: "1"
-azure_devops_use_organisation_legacy_url: "false"
-azure_devops_create_project: "true"
-azure_devops_project_name: "alz-demo"
-version_control_system_use_separate_repository_for_templates: "true"
-use_self_hosted_agents: "true"
-use_private_networking: "true"
-allow_storage_access_from_my_ip: "false"
-
-# Bootstrap and Starter Module Specific Variables
-root_parent_management_group_id: ""
-subscription_id_connectivity: "00000000-0000-0000-0000-000000000000"
-subscription_id_identity: "00000000-0000-0000-0000-000000000000"
-subscription_id_management: "00000000-0000-0000-0000-000000000000"
-configuration_file_path: "C:\users\johndoe\config.yaml"
-```
+- Example input file: [inputs-azure-devops-terraform.yaml][example_powershell_inputs_azure_devops_terraform]
 
 Run the accelerator:
 
@@ -239,7 +182,7 @@ Deploy-Accelerator -Inputs "inputs.yaml" -autoApprove
 
 [wiki_yaml_schema_reference]: %5BUser-Guide%5D-YAML-Schema-Reference "Wiki - YAML Schema Reference"
 [wiki_frequently_asked_questions]: Frequently-Asked-Questions "Wiki - Frequently Asked Questions"
-[example_powershell_inputs_azure_devops]: examples/powershell-inputs/inputs-azure-devops.yaml "Example - PowerShell Inputs - Azure DevOps"
-[example_powershell_inputs_github]: examples/powershell-inputs/inputs-github.yaml "Example - PowerShell Inputs - GitHub"
+[example_powershell_inputs_azure_devops_terraform]: examples/powershell-inputs/inputs-azure-devops-terraform.yaml "Example - PowerShell Inputs - Azure DevOps - Terraform"
+[example_powershell_inputs_github_terraform]: examples/powershell-inputs/inputs-github-terraform.yaml "Example - PowerShell Inputs - GitHub - Terraform"
 [example_starter_module_complete_config_hub_spoke]: examples/starter-module-config/complete/config-hub-spoke.yaml "Example - Starter Module Config - Complete - Hub and Spoke"
 [example_starter_module_complete_config_vwan]: examples/starter-module-config/complete/config-vwan.yaml "Example - Starter Module Config - Complete - Virtual WAN"

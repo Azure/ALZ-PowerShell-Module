@@ -70,6 +70,8 @@ You can then deploy as many times as you like without interferring with a previo
 
 ### I want to automate the PowerShell module, but it keeps prompting me for input, can I supply the answers?
 
+>NOTE: We now recommend this as the preferred approach and our documentation has been updated to reflect this.
+
 Yes, you can supply the variables to the PowerShell module by using the `-inputs` parameter. You just need to supply a single file that includes the variables for the bootstrap and the starter module. The ordering of the variables in the file is not important.
 
 The module will accept inputs as in json or yaml format. `.json,`, `.yaml` or `.yml` file extensions are supported. Examples of both are shown below.
@@ -98,10 +100,7 @@ json example:
 
 > NOTE: These examples show a partial set of variables. In this scenario, the module will prompt for the remaining variables. You can find the full list of variables in the quick start phase 2 and starter module documentation.
 
-Full yaml examples:
-
-- GitHub Example input file: [inputs-github.yaml][example_powershell_inputs_github]
-- Azure DevOps Example input file: [inputs-azure-devops.yaml][example_powershell_inputs_azure_devops]
+Full yaml examples can be found under the `Input Files` section of the right-hand menu.
 
 ### I get prompted to approve the Terraform plan, can I skip that?
 
