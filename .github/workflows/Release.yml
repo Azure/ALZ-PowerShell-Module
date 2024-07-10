@@ -58,7 +58,7 @@ jobs:
           ./package_ALZ.ps1 -version ${{ steps.create_release.outputs.tag_name }}
       - uses: montudor/action-zip@v1
         with:
-            args: zip -qq -r ALZ.zip ALZ
+          args: zip -qq -r ALZ.zip ALZ
       - uses: actions/upload-release-asset@v1.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
