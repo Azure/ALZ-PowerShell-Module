@@ -1,24 +1,3 @@
-// Portions of this file were generated using New-VSCodeTask.ps1
-// Modify the build script or tasks-merge.json and recreate.
-// https://code.visualstudio.com/docs/editor/tasks
-// Available variables which can be used inside of strings.
-// https://code.visualstudio.com/docs/editor/variables-reference#_predefined-variables
-// ${workspaceFolder}: path of the folder opened in VS Code
-// ${workspaceFolderBasename} - name of the folder opened in VS Code without any slashes (/)
-// ${file}: current opened file
-// ${fileWorkspaceFolder} - current opened file's workspace folder
-// ${relativeFile}: the current opened file relative to workspaceFolder
-// ${relativeFileDirname}: current opened file's dirname relative to workspaceFolder
-// ${fileBasename}: current opened file's basename
-// ${fileBasenameNoExtension} - current opened file's basename with no file extension
-// ${fileDirname}: current opened file's dirname
-// ${fileExtname}: current opened file's extension
-// ${cwd}: the current working directory of the spawned process
-// ${lineNumber} - current selected line number in the active file
-// ${selectedText} - current selected text in the active file
-// ${execPath} - path to the running VS Code executable
-// ${defaultBuildTask} - name of the default build task
-// ${pathSeparator} - character used by the operating system to separate components in file paths
 {
     "version": "2.0.0",
     "windows": {
@@ -264,4 +243,3 @@
         }
     ]
 }
-

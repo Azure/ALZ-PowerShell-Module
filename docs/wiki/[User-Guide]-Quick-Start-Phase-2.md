@@ -21,7 +21,7 @@ Version    Name                                Repository           Description
 
 You are now ready to run the bootstrap and setup your environment. If you want to use custom names for your resources or automate the bootstrap, please refer to our [FAQs](https://github.com/Azure/alz-terraform-accelerator/wiki/Frequently-Asked-Questions) section.
 
-The inputs differ depending on the VCS you have chosen. Click through to the relevant page for detailed instructions:
+The inputs differ depending on the version control system and infrastructure as code tooling you have chosen. Click through to the relevant page for detailed instructions:
 
 - [Azure DevOps][wiki_quick_start_phase_2_azure_devops]
 - [GitHub][wiki_quick_start_phase_2_github]

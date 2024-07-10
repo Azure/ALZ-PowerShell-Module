@@ -10,7 +10,7 @@ Now you have created your bootstrapped environment you can deploy you Azure land
 1. Navigate to [dev.azure.com](https://dev.azure.com) and sign in to your organization.
 1. Navigate to your project.
 1. Click `Pipelines` in the left navigation.
-1. Click the `Azure Landing Zone Continuous Delivery` pipeline.
+1. Click the `02 Azure Landing Zones Continuous Delivery` pipeline.
 1. Click `Run pipeline` in the top right.
 1. Take the defaults and click `Run`.
 1. Your pipeline will run a `plan`.
@@ -22,7 +22,7 @@ Now you have created your bootstrapped environment you can deploy you Azure land
 1. Navigate to [github.com](https://github.com).
 1. Navigate to your repository.
 1. Click `Actions` in the top navigation.
-1. Click the `Azure Landing Zone Continuous Delivery` pipeline in the left navigation.
+1. Click the `02 Azure Landing Zones Continuous Delivery` pipeline in the left navigation.
 1. Click `Run workflow` in the top right, then keep the default branch and click `Run workflow`.
 1. Your pipeline will run a `plan`.
 1. If you provided `apply_approvers` to the bootstrap, it will prompt you to approve the `apply` job.

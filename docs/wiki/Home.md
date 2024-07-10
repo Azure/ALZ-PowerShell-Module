@@ -9,7 +9,7 @@ This accelerator provides an opinionated approach for configuring and securing t
 
 The accelerator supports both Azure DevOps and GitHub. We are only able to support the hosted versions of these services.
 
-If you are using self-hosted versions of these services or another VCS, you can still use the accelerator to produce the landing zone code by using the `-c "local"` flag option, but you will need to configure the VCS manually or with your own automation.
+If you are using self-hosted versions of these services or another VCS, you can still use the accelerator to produce the landing zone code by using the `alz_local` bootstrap module, but you will need to configure the VCS manually or with your own automation.
 
 ## Accelerator features
 
