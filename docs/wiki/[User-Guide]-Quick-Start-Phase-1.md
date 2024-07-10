@@ -108,7 +108,9 @@ The accelerator does not support GitHub personal accounts, since they don't supp
 
 #### 1.4.2.2 GitHub Personal Access Token (PAT)
 
-> NOTE: The following instructions refer to `classic` personal access tokens. You can also use `fine-grained` access tokens which are still in beta to provide more granular permissions. These docs will be updated to reflect this in the future. This first PAT is referred to as `token-1`.
+> NOTE: The following instructions refer to `classic` personal access tokens. You can also use `fine-grained` access tokens which are still in beta to provide more granular permissions. These docs will be updated to reflect this in the future.
+
+This first PAT is referred to as `token-1`.
 
 1. Navigate to [github.com](https://github.com).
 1. Click on your user icon in the top right and select `Settings`.
