@@ -155,5 +155,3 @@ Alternatively, if you are also supplying a custom bootstrap module, you can spec
 [//]: # "************************"
 
 [wiki_upgrade_process]:                                              Upgrade-Process "Wiki - Upgrade Process"
-[example_powershell_inputs_azure_devops]: examples/powershell-inputs/inputs-azure-devops.yaml "Example - PowerShell Inputs - Azure DevOps"
-[example_powershell_inputs_github]: examples/powershell-inputs/inputs-github.yaml "Example - PowerShell Inputs - GitHub"
