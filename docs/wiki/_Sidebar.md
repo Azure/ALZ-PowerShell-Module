@@ -1,7 +1,7 @@
 <!-- markdownlint-disable first-line-h1 -->
-![Azure logo](media/azure.svg)
+![Azure logo](media/Logo.png)
 
-## Azure landing zones Terraform accelerator
+## Azure landing zones accelerators
 
 - [Home][wiki_home]
 - [User guide][wiki_user_guide]
