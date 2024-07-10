@@ -22,7 +22,7 @@ Although you can just run `Deploy-Accelerator` and fill out the prompted inputs,
 1. Check through the file and update each input as required. It is mandatory to update items with placeholders surrounded by angle brackets `<>`:
 
     | Input | Placeholder | Description |
-    | --- | --- | --- |
+    | - | -- | --- |
     | `iac` | `bicep` | This is the choice of `bicep` or `terraform`. Keep this as `bicep` for this example. |
     | `bootstrap` | `alz_azuredevops` | This is the choice of Version Control System. Keep this as `alz_azuredevops` for this example. |
     | `starter` | `complete` | This is the choice of [Starter Modules][wiki_starter_modules], which is the baseline configuration you want for your Azure landing zone. Keep this as `complete` for this example. This also determines the second set of inputs you'll be prompted for. |
@@ -82,7 +82,7 @@ Although you can just run `Deploy-Accelerator` and fill out the prompted inputs,
 1. Check through the file and update each input as required. It is mandatory to update items with placeholders surrounded by angle brackets `<>`:
 
     | Input | Placeholder | Description |
-    | --- | --- | --- |
+    | - | -- | --- |
     | `iac` | `terraform` | This is the choice of `bicep` or `terraform`. Keep this as `terraform` for this example. |
     | `bootstrap` | `alz_azuredevops` | This is the choice of Version Control System. Keep this as `alz_azuredevops` for this example. |
     | `starter` | `complete` | This is the choice of [Starter Modules][wiki_starter_modules], which is the baseline configuration you want for your Azure landing zone. Choose `complete`, `hubnetworking` or `basic` for this example. This also determines the second set of inputs you'll be prompted for. |
