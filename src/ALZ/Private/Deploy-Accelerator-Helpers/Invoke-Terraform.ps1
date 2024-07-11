@@ -23,18 +23,70 @@ function Invoke-Terraform {
 
         Write-InformationColored "Terraform init has completed, now running the $action..." -ForegroundColor Green -InformationAction Continue
 
-        if($destroy) {
-            if($autoApprove) {
-                terraform -chdir="$moduleFolderPath" destroy -var-file="$tfvarsFileName" -auto-approve
-            } else {
-                terraform -chdir="$moduleFolderPath" destroy -var-file="$tfvarsFileName"
+        $planFileName = "tfplan"
+
+        $command = "terraform"
+        $arguments = @()
+        $arguments += "-chdir=$moduleFolderPath"
+        $arguments += "plan"
+        $arguments += "-out=$planFileName"
+        $arguments += "-input=false"
+        $arguments += "-var-file=$tfvarsFileName"
+
+        if ($destroy) {
+            $arguments += "-destroy"
+        }
+
+        Write-InformationColored "Running Plan Command for $action : $command $arguments" -ForegroundColor Green -InformationAction Continue
+        & $command $arguments
+
+        if(!$autoApprove) {
+            Write-InformationColored "Terraform plan has completed, please review the plan and confirm you wish to continue." -ForegroundColor Yellow -InformationAction Continue
+            $choices = [System.Management.Automation.Host.ChoiceDescription[]] @("&Yes", "&No")
+            $message = "Please confirm you wish to apply the plan."
+            $title = "Confirm Terraform plan"
+            $resultIndex = $host.ui.PromptForChoice($title, $message, $choices, 0)
+            if($resultIndex -eq 1) {
+                Write-InformationColored "You have chosen not to apply the plan. Exiting..." -ForegroundColor Red -InformationAction Continue
+                exit 0
             }
-        } else {
-            if($autoApprove) {
-                terraform -chdir="$moduleFolderPath" apply -var-file="$tfvarsFileName" -auto-approve
-            } else {
-                terraform -chdir="$moduleFolderPath" apply -var-file="$tfvarsFileName"
-            }
+        }
+
+        $command = "terraform"
+        $arguments = @()
+        $arguments += "-chdir=$moduleFolderPath"
+        $arguments += "apply"
+        $arguments += "-auto-approve"
+        $arguments += "-input=false"
+        $arguments += "$planFileName"
+
+        Write-InformationColored "Running Apply Command for $action : $command $arguments" -ForegroundColor Green -InformationAction Continue
+        & $command $arguments
+
+        $exitCode = $LASTEXITCODE
+
+        $currentAttempt = 0
+        $maxAttempts = 5
+
+        while($exitCode -ne 0 -and $currentAttempt -lt $maxAttempts) {
+            Write-InformationColored "Terraform $action failed with exit code $exitCode. This is likely a transient issue, so we are retrying..." -ForegroundColor Yellow -InformationAction Continue
+            $currentAttempt++
+            $command = "terraform"
+            $arguments = @()
+            $arguments += "-chdir=$moduleFolderPath"
+            $arguments += "apply"
+            $arguments += "-auto-approve"
+            $arguments += "-input=false"
+            $arguments += "-var-file=$tfvarsFileName"
+
+            Write-InformationColored "Running Apply Command for $action : $command $arguments" -ForegroundColor Green -InformationAction Continue
+            & $command $arguments
+            $exitCode = $LASTEXITCODE
+        }
+
+        if($exitCode -ne 0) {
+            Write-InformationColored "Terraform $action failed with exit code $exitCode after $maxAttempts attempts. Please review the error and try again or raise an issue." -ForegroundColor Red -InformationAction Continue
+            exit $exitCode
         }
     }
 }
