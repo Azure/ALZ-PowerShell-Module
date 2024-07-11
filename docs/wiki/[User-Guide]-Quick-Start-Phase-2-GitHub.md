@@ -51,7 +51,7 @@ Although you can just run `Deploy-Accelerator` and fill out the prompted inputs,
     | `postfix_number` | `1` | This is used to build up the names of your Azure and Azure DevOps resources, for example `rg-alz-mgmt-uksouth-<postfix_number>`. We recommend using `1` for this. |
     | `use_self_hosted_agents` | `true` | This controls if you want to deploy self-hosted agents. This will default to `true`. |
     | `use_private_networking` | `true` | This controls whether private networking is deployed for your self-hosted agents and storage account. This only applies if you have `use_self_hosted_agents` set to `true`. This defaults to `true`. |
-    | `allow_storage_access_from_my_ip` | `false` | This is not relecant to Bicep and we'll remove the need to specify it later, leave it set to `false`. |
+    | `allow_storage_access_from_my_ip` | `false` | This is not relevant to Bicep and we'll remove the need to specify it later, leave it set to `false`. |
     | `apply_approvers` | `<email-address-list>` | This is a list of service principal names (SPN) of people you wish to be in the group that approves apply of the Azure landing zone module. This is a comma-separated list like `abc@xyz.com,def@xyz.com,ghi@xyz.com`. You may need to check what the SPN is prior to filling this out as it can vary based on identity provider. Use empty string `""` to disable approvals. |
     | `create_branch_policies` | `true` | This controls whether to create branch policies for the repository. This defaults to `true`. |
 
@@ -61,10 +61,10 @@ Although you can just run `Deploy-Accelerator` and fill out the prompted inputs,
 
     ```pwsh
     # Windows (adjust the paths to match your setup)
-    Deploy-Accelerator -inputs "c:\accelerator\inputs\input.yaml" -output "c:\accelerator\output"
+    Deploy-Accelerator -inputs "c:\accelerator\config\inputs.yaml" -output "c:\accelerator\output"
 
     # Linux/Mac (adjust the paths to match your setup)
-    Deploy-Accelerator -inputs "~/accelerator/inputs/input.yaml" -output "~/accelerator/output"
+    Deploy-Accelerator -inputs "~/accelerator/config/inputs.yaml" -output "~/accelerator/output"
     ```
 
 1. You will see a Terraform `init` and `apply` happen.
@@ -130,10 +130,10 @@ Although you can just run `Deploy-Accelerator` and fill out the prompted inputs,
 
     ```pwsh
     # Windows (adjust the paths to match your setup)
-    Deploy-Accelerator -inputs "c:\accelerator\inputs\input.yaml" -output "c:\accelerator\output"
+    Deploy-Accelerator -inputs "c:\accelerator\config\inputs.yaml" -output "c:\accelerator\output"
 
     # Linux/Mac (adjust the paths to match your setup)
-    Deploy-Accelerator -inputs "~/accelerator/inputs/input.yaml" -output "~/accelerator/output"
+    Deploy-Accelerator -inputs "~/accelerator/config/inputs.yaml" -output "~/accelerator/output"
     ```
 
 1. You will see a Terraform `init` and `apply` happen.

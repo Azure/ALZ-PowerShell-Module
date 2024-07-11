@@ -15,7 +15,9 @@ Although you can just run `Deploy-Accelerator` and fill out the prompted inputs,
     # Windows
     New-Item c:\accelerator\config\inputs.yaml -Force
     New-Item c:\accelerator\output
+    ```
 
+    ```pwsh
     # Linux/Mac
     New-Item ~/accelerator/config/inputs.yaml -Force
     New-Item ~/accelerator/output
@@ -64,10 +66,12 @@ Although you can just run `Deploy-Accelerator` and fill out the prompted inputs,
 
     ```pwsh
     # Windows (adjust the paths to match your setup)
-    Deploy-Accelerator -inputs "c:\accelerator\inputs\input.yaml" -output "c:\accelerator\output"
+    Deploy-Accelerator -inputs "c:\accelerator\config\inputs.yaml" -output "c:\accelerator\output"
+    ```
 
+    ```pwsh
     # Linux/Mac (adjust the paths to match your setup)
-    Deploy-Accelerator -inputs "~/accelerator/inputs/input.yaml" -output "~/accelerator/output"
+    Deploy-Accelerator -inputs "~/accelerator/config/inputs.yaml" -output "~/accelerator/output"
     ```
 
 1. You will see a Terraform `init` and `apply` happen.
@@ -85,7 +89,9 @@ Although you can just run `Deploy-Accelerator` and fill out the prompted inputs,
     # Windows
     New-Item c:\accelerator\config\inputs.yaml -Force
     New-Item c:\accelerator\output
+    ```
 
+    ```pwsh
     # Linux/Mac
     New-Item ~/accelerator/config/inputs.yaml -Force
     New-Item ~/accelerator/output
@@ -136,10 +142,12 @@ Although you can just run `Deploy-Accelerator` and fill out the prompted inputs,
 
     ```pwsh
     # Windows (adjust the paths to match your setup)
-    Deploy-Accelerator -inputs "c:\accelerator\inputs\input.yaml" -output "c:\accelerator\output"
+    Deploy-Accelerator -inputs "c:\accelerator\config\inputs.yaml" -output "c:\accelerator\output"
+    ```
 
+    ```pwsh
     # Linux/Mac (adjust the paths to match your setup)
-    Deploy-Accelerator -inputs "~/accelerator/inputs/input.yaml" -output "~/accelerator/output"
+    Deploy-Accelerator -inputs "~/accelerator/config/inputs.yaml" -output "~/accelerator/output"
     ```
 
 1. You will see a Terraform `init` and `apply` happen.
