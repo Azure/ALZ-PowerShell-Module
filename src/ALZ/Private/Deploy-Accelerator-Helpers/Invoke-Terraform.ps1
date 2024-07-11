@@ -21,7 +21,7 @@ function Invoke-Terraform {
             $action = "destroy"
         }
 
-        Write-InformationColored "Terraform init has completed, now running the $action..." -ForegroundColor Green -InformationAction Continue
+        Write-InformationColored "Terraform init has completed, now running the $action..." -ForegroundColor Green -NewLineBefore -InformationAction Continue
 
         $planFileName = "tfplan"
 
@@ -37,17 +37,17 @@ function Invoke-Terraform {
             $arguments += "-destroy"
         }
 
-        Write-InformationColored "Running Plan Command for $action : $command $arguments" -ForegroundColor Green -InformationAction Continue
+        Write-InformationColored "Running Plan Command for $action : $command $arguments" -ForegroundColor Green -NewLineBefore -InformationAction Continue
         & $command $arguments
 
         if(!$autoApprove) {
-            Write-InformationColored "Terraform plan has completed, please review the plan and confirm you wish to continue." -ForegroundColor Yellow -InformationAction Continue
+            Write-InformationColored "Terraform plan has completed, please review the plan and confirm you wish to continue." -ForegroundColor Yellow -NewLineBefore -InformationAction Continue
             $choices = [System.Management.Automation.Host.ChoiceDescription[]] @("&Yes", "&No")
             $message = "Please confirm you wish to apply the plan."
             $title = "Confirm Terraform plan"
             $resultIndex = $host.ui.PromptForChoice($title, $message, $choices, 0)
             if($resultIndex -eq 1) {
-                Write-InformationColored "You have chosen not to apply the plan. Exiting..." -ForegroundColor Red -InformationAction Continue
+                Write-InformationColored "You have chosen not to apply the plan. Exiting..." -ForegroundColor Red -NewLineBefore -InformationAction Continue
                 exit 0
             }
         }
@@ -60,7 +60,7 @@ function Invoke-Terraform {
         $arguments += "-input=false"
         $arguments += "$planFileName"
 
-        Write-InformationColored "Running Apply Command for $action : $command $arguments" -ForegroundColor Green -InformationAction Continue
+        Write-InformationColored "Running Apply Command for $action : $command $arguments" -ForegroundColor Green -NewLineBefore -InformationAction Continue
         & $command $arguments
 
         $exitCode = $LASTEXITCODE
@@ -69,7 +69,7 @@ function Invoke-Terraform {
         $maxAttempts = 5
 
         while($exitCode -ne 0 -and $currentAttempt -lt $maxAttempts) {
-            Write-InformationColored "Terraform $action failed with exit code $exitCode. This is likely a transient issue, so we are retrying..." -ForegroundColor Yellow -InformationAction Continue
+            Write-InformationColored "Terraform $action failed with exit code $exitCode. This is likely a transient issue, so we are retrying..." -ForegroundColor Yellow -NewLineBefore -InformationAction Continue
             $currentAttempt++
             $command = "terraform"
             $arguments = @()
@@ -79,13 +79,13 @@ function Invoke-Terraform {
             $arguments += "-input=false"
             $arguments += "-var-file=$tfvarsFileName"
 
-            Write-InformationColored "Running Apply Command for $action : $command $arguments" -ForegroundColor Green -InformationAction Continue
+            Write-InformationColored "Running Apply Command for $action : $command $arguments" -ForegroundColor Green -NewLineBefore -InformationAction Continue
             & $command $arguments
             $exitCode = $LASTEXITCODE
         }
 
         if($exitCode -ne 0) {
-            Write-InformationColored "Terraform $action failed with exit code $exitCode after $maxAttempts attempts. Please review the error and try again or raise an issue." -ForegroundColor Red -InformationAction Continue
+            Write-InformationColored "Terraform $action failed with exit code $exitCode after $maxAttempts attempts. Please review the error and try again or raise an issue." -ForegroundColor Red -NewLineBefore -InformationAction Continue
             exit $exitCode
         }
     }

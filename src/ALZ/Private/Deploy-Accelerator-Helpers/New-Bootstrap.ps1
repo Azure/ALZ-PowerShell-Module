@@ -290,5 +290,7 @@ function New-Bootstrap {
             Write-InformationColored "Once the plan is complete you will be prompted to confirm the apply." -ForegroundColor Green -NewLineBefore -InformationAction Continue
             Invoke-Terraform -moduleFolderPath $bootstrapModulePath -tfvarsFileName "override.tfvars" -destroy:$destroy.IsPresent
         }
+
+        Write-InformationColored "Bootstrap has completed successfully! Thanks for using our tool. Head over to Phase 3 in the documentation to continue..." -ForegroundColor Green -NewLineBefore -InformationAction Continue
     }
 }
