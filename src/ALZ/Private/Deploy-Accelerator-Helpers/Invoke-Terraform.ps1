@@ -25,6 +25,10 @@ function Invoke-Terraform {
 
         $planFileName = "tfplan"
 
+        # Start timer
+        $StopWatch = New-Object -TypeName System.Diagnostics.Stopwatch
+        $StopWatch.Start()
+
         $command = "terraform"
         $arguments = @()
         $arguments += "-chdir=$moduleFolderPath"
@@ -40,6 +44,11 @@ function Invoke-Terraform {
         Write-InformationColored "Running Plan Command for $action : $command $arguments" -ForegroundColor Green -NewLineBefore -InformationAction Continue
         & $command $arguments
 
+        # Stop and display timer
+        $StopWatch.Stop()
+        Write-InformationColored "Time taken to complete Terraform plan:" -ForegroundColor Green -NewLineBefore -InformationAction Continue
+        $StopWatch.Elapsed | Format-Table
+
         if(!$autoApprove) {
             Write-InformationColored "Terraform plan has completed, please review the plan and confirm you wish to continue." -ForegroundColor Yellow -NewLineBefore -InformationAction Continue
             $choices = [System.Management.Automation.Host.ChoiceDescription[]] @("&Yes", "&No")
@@ -51,6 +60,10 @@ function Invoke-Terraform {
                 exit 0
             }
         }
+
+        # Start timer
+        $StopWatch = New-Object -TypeName System.Diagnostics.Stopwatch
+        $StopWatch.Start()
 
         $command = "terraform"
         $arguments = @()
@@ -83,6 +96,11 @@ function Invoke-Terraform {
             & $command $arguments
             $exitCode = $LASTEXITCODE
         }
+
+        # Stop and display timer
+        $StopWatch.Stop()
+        Write-InformationColored "Time taken to complete Terraform apply:" -ForegroundColor Green -NewLineBefore -InformationAction Continue
+        $StopWatch.Elapsed | Format-Table
 
         if($exitCode -ne 0) {
             Write-InformationColored "Terraform $action failed with exit code $exitCode after $maxAttempts attempts. Please review the error and try again or raise an issue." -ForegroundColor Red -NewLineBefore -InformationAction Continue
