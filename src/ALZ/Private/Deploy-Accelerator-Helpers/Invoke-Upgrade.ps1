@@ -53,15 +53,23 @@ function Invoke-Upgrade {
         }
 
         if($foundPreviousRelease) {
-            $upgrade = ""
+            $upgrade = $true
             if($autoApprove) {
-                $upgrade = "upgrade"
+                $upgrade = $true
             } else {
-                Write-InformationColored "AUTOMATIC UPGRADE: We found version $previousVersion of the $moduleType module that has been previously run. You can upgrade from this version to the new version $currentVersion" -NewLineBefore -ForegroundColor Yellow -InformationAction Continue
-                $upgrade = Read-Host "If you would like to upgrade, enter 'upgrade' or just hit 'enter' to continue with a new environment. (upgrade/exit)"
+                Write-InformationColored "AUTOMATIC UPGRADE: We found version $previousVersion of the $moduleType module that has been previously run. You can migrate your settings and state from this version to the new version $currentVersion" -NewLineBefore -ForegroundColor Yellow -InformationAction Continue
+                $choices = [System.Management.Automation.Host.ChoiceDescription[]] @("&Yes", "&No")
+                $message = "Please confirm you wish to migrate your previous settings and state to the new version."
+                $title = "Confirm migrate settings and state"
+                $resultIndex = $host.ui.PromptForChoice($title, $message, $choices, 0)
+
+                if($resultIndex -eq 1) {
+                    Write-InformationColored "You have chosen not to migrate your settings and state. Please note that your state file is still in the folder for the previous version if this was a mistake." -ForegroundColor Yellow -NewLineBefore -InformationAction Continue
+                    $upgrade = $false
+                }
             }
 
-            if($upgrade.ToLower() -eq "upgrade") {
+            if($upgrade) {
                 $currentPath = Join-Path $targetDirectory $release
                 $currentCachedValuesPath = Join-Path $currentPath $targetFolder $cacheFileName
 
