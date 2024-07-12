@@ -44,7 +44,10 @@ function New-Bootstrap {
         [string] $starter = "",
 
         [Parameter(Mandatory = $false)]
-        [PSCustomObject] $zonesSupport = $null
+        [PSCustomObject] $zonesSupport = $null,
+
+        [Parameter(Mandatory = $false)]
+        [hashtable] $computedInputs
     )
 
     if ($PSCmdlet.ShouldProcess("ALZ-Terraform module configuration", "modify")) {
@@ -180,17 +183,13 @@ function New-Bootstrap {
             -autoApprove:$autoApprove.IsPresent
 
         # Set computed interface inputs
-        $computedInputMapping = @{
-            "iac_type"            = $iac
-            "module_folder_path"  = $starterModulePath
-            "starter_module_name" = $starter
-        }
+        $computedInputs["starter_module_name"] = $starter
+        $computedInputs["module_folder_path"] = $starterModulePath
 
         foreach($inputConfigItem in $inputConfig.inputs.PSObject.Properties) {
             if($inputConfigItem.Value.source -eq "powershell") {
-
                 $inputVariable = $interfaceConfiguration.PSObject.Properties | Where-Object { $_.Name -eq $inputConfigItem.Name }
-                $inputValue = $computedInputMapping[$inputConfigItem.Name]
+                $inputValue = $computedInputs[$inputConfigItem.Name]
                 Write-Verbose "Setting $($inputConfigItem.Name) to $inputValue"
                 $inputVariable.Value.Value = $inputValue
             }

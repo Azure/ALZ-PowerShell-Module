@@ -18,7 +18,6 @@ function Get-BootstrapAndStarterConfig {
         $hasStarterModule = $false
         $starterModuleUrl = ""
         $starterModuleSourceFolder = ""
-        $starterReleaseTag = ""
         $starterReleaseArtifactName = ""
         $starterConfigFilePath = ""
 
@@ -79,7 +78,6 @@ function Get-BootstrapAndStarterConfig {
             hasStarterModule           = $hasStarterModule
             starterModuleUrl           = $starterModuleUrl
             starterModuleSourceFolder  = $starterModuleSourceFolder
-            starterReleaseTag          = $starterReleaseTag
             starterReleaseArtifactName = $starterReleaseArtifactName
             starterConfigFilePath      = $starterConfigFilePath
             validationConfig           = $validationConfig

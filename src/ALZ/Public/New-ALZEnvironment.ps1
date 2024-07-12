@@ -191,7 +191,6 @@ function New-ALZEnvironment {
         $hasStarterModule = $false
         $starterModuleUrl = $bicepLegacyUrl
         $starterModuleSourceFolder = "."
-        $starterReleaseTag = "local"
         $starterReleaseArtifactName = ""
         $starterConfigFilePath = ""
 
@@ -212,7 +211,6 @@ function New-ALZEnvironment {
             $hasStarterModule = $bootstrapAndStarterConfig.hasStarterModule
             $starterModuleUrl = $bootstrapAndStarterConfig.starterModuleUrl
             $starterModuleSourceFolder = $bootstrapAndStarterConfig.starterModuleSourceFolder
-            $starterReleaseTag = $bootstrapAndStarterConfig.starterReleaseTag
             $starterReleaseArtifactName = $bootstrapAndStarterConfig.starterReleaseArtifactName
             $starterConfigFilePath = $bootstrapAndStarterConfig.starterConfigFilePath
             $validationConfig = $bootstrapAndStarterConfig.validationConfig
@@ -272,6 +270,15 @@ function New-ALZEnvironment {
 
         # Run the bootstrap
         if(!$isLegacyBicep) {
+
+            # Set computed interface inputs
+            $computedInputs = @{
+                "iac_type"                       = $iac
+                "on_demand_folder_repository"    = $starterModuleUrl
+                "on_demand_folder_artifact_name" = $starterReleaseArtifactName
+                "release_version"                = $starterReleaseTag -eq "local" ? $starterRelease : $starterReleaseTag
+            }
+
             $bootstrapTargetPath = Join-Path $targetDirectory $bootstrapTargetFolder
             $starterTargetPath = Join-Path $targetDirectory $starterFolder
 
@@ -290,7 +297,8 @@ function New-ALZEnvironment {
                 -autoApprove:$autoApprove.IsPresent `
                 -destroy:$destroy.IsPresent `
                 -starter $starter `
-                -zonesSupport $zonesSupport
+                -zonesSupport $zonesSupport `
+                -computedInputs $computedInputs
         }
     }
 

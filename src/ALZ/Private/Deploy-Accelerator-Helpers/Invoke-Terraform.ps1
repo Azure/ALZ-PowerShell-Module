@@ -44,10 +44,17 @@ function Invoke-Terraform {
         Write-InformationColored "Running Plan Command for $action : $command $arguments" -ForegroundColor Green -NewLineBefore -InformationAction Continue
         & $command $arguments
 
+        $exitCode = $LASTEXITCODE
+
         # Stop and display timer
         $StopWatch.Stop()
         Write-InformationColored "Time taken to complete Terraform plan:" -ForegroundColor Green -NewLineBefore -InformationAction Continue
         $StopWatch.Elapsed | Format-Table
+
+        if($exitCode -ne 0) {
+            Write-InformationColored "Terraform plan for $action failed with exit code $exitCode. Please review the error and try again or raise an issue." -ForegroundColor Red -NewLineBefore -InformationAction Continue
+            throw "Terraform plan failed with exit code $exitCode. Please review the error and try again or raise an issue."
+        }
 
         if(!$autoApprove) {
             Write-InformationColored "Terraform plan has completed, please review the plan and confirm you wish to continue." -ForegroundColor Yellow -NewLineBefore -InformationAction Continue
@@ -104,7 +111,7 @@ function Invoke-Terraform {
 
         if($exitCode -ne 0) {
             Write-InformationColored "Terraform $action failed with exit code $exitCode after $maxAttempts attempts. Please review the error and try again or raise an issue." -ForegroundColor Red -NewLineBefore -InformationAction Continue
-            exit $exitCode
+            throw "Terraform $action failed with exit code $exitCode after $maxAttempts attempts. Please review the error and try again or raise an issue."
         }
     }
 }
