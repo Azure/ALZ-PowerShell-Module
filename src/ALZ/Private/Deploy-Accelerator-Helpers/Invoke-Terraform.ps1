@@ -98,6 +98,9 @@ function Invoke-Terraform {
             $arguments += "-auto-approve"
             $arguments += "-input=false"
             $arguments += "-var-file=$tfvarsFileName"
+            if ($destroy) {
+                $arguments += "-destroy"
+            }
 
             Write-InformationColored "Running Apply Command for $action : $command $arguments" -ForegroundColor Green -NewLineBefore -InformationAction Continue
             & $command $arguments
