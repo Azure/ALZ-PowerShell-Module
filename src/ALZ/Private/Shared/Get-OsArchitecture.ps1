@@ -29,7 +29,8 @@ function Get-OSArchitecture {
         "linux_amd64",
         "linux_arm64",
         "windows_386",
-        "windows_amd64"
+        "windows_amd64",
+        "windows_arm64"
     )
 
     if($supportedOsAndArchitectures -notcontains $osAndArchitecture) {
