@@ -29,12 +29,19 @@ function Get-OSArchitecture {
         "linux_amd64",
         "linux_arm64",
         "windows_386",
-        "windows_amd64"
+        "windows_amd64",
+        "windows_arm64"
     )
 
     if($supportedOsAndArchitectures -notcontains $osAndArchitecture) {
         Write-Error "Unsupported OS and architecture combination: $osAndArchitecture"
         exit 1
+    }
+
+    if($osAndArchitecture -eq "windows_arm64") {
+        Write-InformationColoured "Windows arm64 is not currently supported by Terraform, so we will pull the Windows amd64 verison instead and run in emulation mode: https://learn.microsoft.com/en-us/windows/arm/apps-on-arm-x86-emulation" -ForegroundColor Yellow -NewLineBefore -InformationAction Continue
+        $architecture = "amd64"
+        $osAndArchitecture = "windows_amd64"
     }
 
     return @{
