@@ -33,6 +33,9 @@ function Request-ConfigurationValue {
         Write-InformationColored "[allowed: $allowedValues] " -ForegroundColor Yellow -InformationAction Continue
     }
 
+    $attempt = 0
+    $maxAttempts = 10
+
     do {
         Write-InformationColored "$($configName) " -ForegroundColor Yellow -NoNewline -InformationAction Continue
         if ($hasDefaultValue) {
@@ -71,6 +74,7 @@ function Request-ConfigurationValue {
         if($skipValidationForEmptyDefault) {
             $isNotValid = $false
         } else {
+            Write-Verbose "Checking '$($configValue.Value)' against '$($configValue.Valid)'"
             $isNotValid = $hasValidator -and $configValue.Value -match $configValue.Valid -eq $false
         }
 
@@ -81,10 +85,13 @@ function Request-ConfigurationValue {
         }
 
         $shouldRetry = $validationError -and $withRetries
+
+        $attempt += 1
     }
-    while (
+    while (($hasNotSpecifiedValue -or $isDisallowedValue -or $isNotValid) -and $shouldRetry -and $attempt -lt $maxAttempts)
 
-    ($hasNotSpecifiedValue -or $isDisallowedValue -or $isNotValid) -and $shouldRetry)
-
-    Write-InformationColored "" -InformationAction Continue
+    if($attempt -eq $maxAttempts) {
+        Write-InformationColored "Max attempts reached for getting input value. Exiting..." -ForegroundColor Red -InformationAction Continue
+        throw "Max attempts reached for getting input value. Exiting..."
+    }
 }

@@ -21,20 +21,100 @@ function Invoke-Terraform {
             $action = "destroy"
         }
 
-        Write-InformationColored "Terraform init has completed, now running the $action..." -ForegroundColor Green -InformationAction Continue
+        Write-InformationColored "Terraform init has completed, now running the $action..." -ForegroundColor Green -NewLineBefore -InformationAction Continue
 
-        if($destroy) {
-            if($autoApprove) {
-                terraform -chdir="$moduleFolderPath" destroy -var-file="$tfvarsFileName" -auto-approve
-            } else {
-                terraform -chdir="$moduleFolderPath" destroy -var-file="$tfvarsFileName"
+        $planFileName = "tfplan"
+
+        # Start timer
+        $StopWatch = New-Object -TypeName System.Diagnostics.Stopwatch
+        $StopWatch.Start()
+
+        $command = "terraform"
+        $arguments = @()
+        $arguments += "-chdir=$moduleFolderPath"
+        $arguments += "plan"
+        $arguments += "-out=$planFileName"
+        $arguments += "-input=false"
+        $arguments += "-var-file=$tfvarsFileName"
+
+        if ($destroy) {
+            $arguments += "-destroy"
+        }
+
+        Write-InformationColored "Running Plan Command for $action : $command $arguments" -ForegroundColor Green -NewLineBefore -InformationAction Continue
+        & $command $arguments
+
+        $exitCode = $LASTEXITCODE
+
+        # Stop and display timer
+        $StopWatch.Stop()
+        Write-InformationColored "Time taken to complete Terraform plan:" -ForegroundColor Green -NewLineBefore -InformationAction Continue
+        $StopWatch.Elapsed | Format-Table
+
+        if($exitCode -ne 0) {
+            Write-InformationColored "Terraform plan for $action failed with exit code $exitCode. Please review the error and try again or raise an issue." -ForegroundColor Red -NewLineBefore -InformationAction Continue
+            throw "Terraform plan failed with exit code $exitCode. Please review the error and try again or raise an issue."
+        }
+
+        if(!$autoApprove) {
+            Write-InformationColored "Terraform plan has completed, please review the plan and confirm you wish to continue." -ForegroundColor Yellow -NewLineBefore -InformationAction Continue
+            $choices = [System.Management.Automation.Host.ChoiceDescription[]] @("&Yes", "&No")
+            $message = "Please confirm you wish to apply the plan."
+            $title = "Confirm Terraform plan"
+            $resultIndex = $host.ui.PromptForChoice($title, $message, $choices, 0)
+            if($resultIndex -eq 1) {
+                Write-InformationColored "You have chosen not to apply the plan. Exiting..." -ForegroundColor Red -NewLineBefore -InformationAction Continue
+                return
             }
-        } else {
-            if($autoApprove) {
-                terraform -chdir="$moduleFolderPath" apply -var-file="$tfvarsFileName" -auto-approve
-            } else {
-                terraform -chdir="$moduleFolderPath" apply -var-file="$tfvarsFileName"
+        }
+
+        # Start timer
+        $StopWatch = New-Object -TypeName System.Diagnostics.Stopwatch
+        $StopWatch.Start()
+
+        $command = "terraform"
+        $arguments = @()
+        $arguments += "-chdir=$moduleFolderPath"
+        $arguments += "apply"
+        $arguments += "-auto-approve"
+        $arguments += "-input=false"
+        $arguments += "$planFileName"
+
+        Write-InformationColored "Running Apply Command for $action : $command $arguments" -ForegroundColor Green -NewLineBefore -InformationAction Continue
+        & $command $arguments
+
+        $exitCode = $LASTEXITCODE
+
+        $currentAttempt = 0
+        $maxAttempts = 5
+
+        while($exitCode -ne 0 -and $currentAttempt -lt $maxAttempts) {
+            Write-InformationColored "Terraform $action failed with exit code $exitCode. This is likely a transient issue, so we are retrying..." -ForegroundColor Yellow -NewLineBefore -InformationAction Continue
+            $currentAttempt++
+            $command = "terraform"
+            $arguments = @()
+            $arguments += "-chdir=$moduleFolderPath"
+            $arguments += "apply"
+            $arguments += "-auto-approve"
+            $arguments += "-input=false"
+            $arguments += "-var-file=$tfvarsFileName"
+            if ($destroy) {
+                $arguments += "-destroy"
             }
+
+            Write-InformationColored "Running Apply Command for $action : $command $arguments" -ForegroundColor Green -NewLineBefore -InformationAction Continue
+            & $command $arguments
+            $exitCode = $LASTEXITCODE
+        }
+
+        # Stop and display timer
+        $StopWatch.Stop()
+        Write-InformationColored "Time taken to complete Terraform apply:" -ForegroundColor Green -NewLineBefore -InformationAction Continue
+        $StopWatch.Elapsed | Format-Table
+
+        if($exitCode -ne 0) {
+            Write-InformationColored "Terraform $action failed with exit code $exitCode after $maxAttempts attempts. Please review the error and try again or raise an issue." -ForegroundColor Red -NewLineBefore -InformationAction Continue
+            throw "Terraform $action failed with exit code $exitCode after $maxAttempts attempts. Please review the error and try again or raise an issue."
         }
     }
 }

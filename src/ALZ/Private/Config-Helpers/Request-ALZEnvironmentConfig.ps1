@@ -39,17 +39,7 @@ function Request-ALZEnvironmentConfig {
     if($userInputDefaultOverrides -ne $null) {
         $hasDefaultOverrides = $true
         $useDefaults = ""
-        if($hasInputOverrides) {
-            Write-InformationColored "We found you have cached values from a previous run, but have also supplied inputs." -ForegroundColor Yellow -InformationAction Continue
-            if($autoApprove) {
-                $useDefaults = "skip"
-            } else {
-                $useDefaults = Read-Host "Would you like to use the cached values or use the inputs you have supplied intead? Enter 'use' to use the cached value or just hit 'enter' to use your inputs. (use/skip)"
-            }
-            if($useDefaults.ToLower() -eq "use") {
-                $userInputOverrides = $userInputDefaultOverrides
-            }
-        } else {
+        if(!$hasInputOverrides) {
             Write-InformationColored "We found you have cached values from a previous run." -ForegroundColor Yellow -InformationAction Continue
             if($autoApprove) {
                 $useDefaults = "use"
@@ -83,7 +73,7 @@ function Request-ALZEnvironmentConfig {
         if ($configurationValue.Value.Type -eq "UserInput") {
 
             # Check for and add cached as default
-            if($hasDefaultOverrides) {
+            if(!$hasInputOverrides -and $hasDefaultOverrides) {
                 $defaultOverride = $userInputDefaultOverrides.PsObject.Properties | Where-Object { $_.Name -eq $configurationValue.Name }
                 if($null -ne $defaultOverride) {
                     if(!($configurationValue.Value.PSObject.Properties.Name -match "DefaultValue")) {
@@ -100,7 +90,13 @@ function Request-ALZEnvironmentConfig {
                 if($null -ne $userInputOverride) {
                     $configurationValue.Value.Value = $userInputOverride.Value
                 } else {
-                    Request-ConfigurationValue -configName $configurationValue.Name -configValue $configurationValue.Value -treatEmptyDefaultAsValid $treatEmptyDefaultAsValid
+                    if($configurationValue.Value.PSObject.Properties.Name -match "DefaultValue") {
+                        Write-Verbose "Input not supplied, so using default value of $($configurationValue.Value.DefaultValue) for $($configurationValue.Name)"
+                        $configurationValue.Value.Value = $configurationValue.Value.DefaultValue
+                    } else {
+                        Write-Verbose "Input not supplied, and no default for $($configurationValue.Name), so prompting for input..."
+                        Request-ConfigurationValue -configName $configurationValue.Name -configValue $configurationValue.Value -treatEmptyDefaultAsValid $treatEmptyDefaultAsValid
+                    }
                 }
             } else {
                 Request-ConfigurationValue -configName $configurationValue.Name -configValue $configurationValue.Value -treatEmptyDefaultAsValid $treatEmptyDefaultAsValid

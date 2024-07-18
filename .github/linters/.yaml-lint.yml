@@ -1,0 +1,11 @@
+---
+extends: default
+
+rules:
+  # 500 chars should be enough, but don't fail if a line is longer
+  line-length:
+    max: 500
+    level: warning
+  truthy:
+    check-keys: false
+    level: warning

@@ -38,7 +38,20 @@ function New-Bootstrap {
         [switch] $autoApprove,
 
         [Parameter(Mandatory = $false)]
-        [switch] $destroy
+        [switch] $destroy,
+
+        [Parameter(Mandatory = $false)]
+        [string] $starter = "",
+
+        [Parameter(Mandatory = $false)]
+        [PSCustomObject] $zonesSupport = $null,
+
+        [Parameter(Mandatory = $false)]
+        [hashtable] $computedInputs,
+
+        [Parameter(Mandatory = $false, HelpMessage = "An extra level of logging that is turned off by default for easier debugging.")]
+        [switch]
+        $writeVerboseLogs
     )
 
     if ($PSCmdlet.ShouldProcess("ALZ-Terraform module configuration", "modify")) {
@@ -78,11 +91,12 @@ function New-Bootstrap {
         $starterCachedConfig = Get-ALZConfig -configFilePath $starterCachePath
 
         # Get starter module
-        $starter = ""
         $starterModulePath = ""
 
         if($hasStarter) {
-            $starter = Request-SpecialInput -type "starter" -starterConfig $starterConfig -userInputOverrides $userInputOverrides
+            if($starter -eq "") {
+                $starter = Request-SpecialInput -type "starter" -starterConfig $starterConfig -userInputOverrides $userInputOverrides
+            }
 
             Write-Verbose "Selected Starter: $starter"
 
@@ -113,8 +127,14 @@ function New-Bootstrap {
         $starterParameters  = [PSCustomObject]@{}
 
         if($hasStarter) {
-            $targetVariableFilePath = Join-Path -Path $starterModulePath -ChildPath "variables.tf"
-            $starterParameters = Convert-HCLVariablesToUserInputConfig -targetVariableFile $targetVariableFilePath -hclParserToolPath $hclParserToolPath -validators $validationConfig
+            if($iac -eq "terraform") {
+                $targetVariableFilePath = Join-Path -Path $starterModulePath -ChildPath "variables.tf"
+                $starterParameters = Convert-HCLVariablesToUserInputConfig -targetVariableFile $targetVariableFilePath -hclParserToolPath $hclParserToolPath -validators $validationConfig
+            }
+
+            if($iac -eq "bicep") {
+                $starterParameters = Convert-InterfaceInputToUserInputConfig -inputConfig $starterConfig.starter_modules.$starter -validators $validationConfig
+            }
         }
 
         # Filter interface inputs if not in bootstrap or starter
@@ -167,17 +187,21 @@ function New-Bootstrap {
             -autoApprove:$autoApprove.IsPresent
 
         # Set computed interface inputs
-        $computedInputMapping = @{
-            "iac_type"           = $iac
-            "module_folder_path" = $starterModulePath
-        }
+        $computedInputs["starter_module_name"] = $starter
+        $computedInputs["module_folder_path"] = $starterModulePath
+        $computedInputs["availability_zones_bootstrap"] = @(Get-AvailabilityZonesSupport -region $interfaceConfiguration.bootstrap_location.Value -zonesSupport $zonesSupport)
+        $computedInputs["availability_zones_starter"] = @(Get-AvailabilityZonesSupport -region $interfaceConfiguration.starter_location.Value -zonesSupport $zonesSupport)
 
         foreach($inputConfigItem in $inputConfig.inputs.PSObject.Properties) {
             if($inputConfigItem.Value.source -eq "powershell") {
-
                 $inputVariable = $interfaceConfiguration.PSObject.Properties | Where-Object { $_.Name -eq $inputConfigItem.Name }
-                $inputValue = $computedInputMapping[$inputConfigItem.Name]
-                Write-Verbose "Setting $($inputConfigItem.Name) to $inputValue"
+                $inputValue = $computedInputs[$inputConfigItem.Name]
+                if($inputValue -is [array]) {
+                    $jsonInputValue = ConvertTo-Json $inputValue -Depth 10
+                    Write-Verbose "Setting computed interface input array $($inputConfigItem.Name) to $jsonInputValue"
+                } else {
+                    Write-Verbose "Setting computed interface input string $($inputConfigItem.Name) to $inputValue"
+                }
                 $inputVariable.Value.Value = $inputValue
             }
         }
@@ -191,8 +215,20 @@ function New-Bootstrap {
             if("bootstrap" -in $inputConfigItem.Value.maps_to) {
                 $bootstrapComputed | Add-Member -NotePropertyName $inputVariable.Name -NotePropertyValue $inputVariable.Value
             }
+
             if("starter" -in $inputConfigItem.Value.maps_to) {
-                $starterComputed | Add-Member -NotePropertyName $inputVariable.Name -NotePropertyValue $inputVariable.Value
+                if($iac -eq "terraform") {
+                    $starterComputed | Add-Member -NotePropertyName $inputVariable.Name -NotePropertyValue $inputVariable.Value
+                }
+
+                if($iac -eq "bicep") {
+                    if($inputConfigItem.Value.PSObject.Properties.Name -contains "bicep_alias") {
+                        Write-Verbose "Setting computed bicep alias $($inputConfigItem.Value.bicep_alias)"
+                        $starterComputed | Add-Member -NotePropertyName $inputConfigItem.Value.bicep_alias -NotePropertyValue $inputVariable.Value
+                    } else {
+                        $starterComputed | Add-Member -NotePropertyName $inputVariable.Name -NotePropertyValue $inputVariable.Value
+                    }
+                }
             }
         }
 
@@ -221,8 +257,33 @@ function New-Bootstrap {
         # Creating the tfvars files for the bootstrap and starter module
         $bootstrapTfvarsPath = Join-Path -Path $bootstrapModulePath -ChildPath "override.tfvars"
         $starterTfvarsPath = Join-Path -Path $starterModulePath -ChildPath "terraform.tfvars"
+        $starterBicepVarsPath = Join-Path -Path $starterModulePath -ChildPath "parameters.json"
         Write-TfvarsFile -tfvarsFilePath $bootstrapTfvarsPath -configuration $bootstrapConfiguration
-        Write-TfvarsFile -tfvarsFilePath $starterTfvarsPath -configuration $starterConfiguration
+
+        if($iac -eq "terraform") {
+            Write-TfvarsFile -tfvarsFilePath $starterTfvarsPath -configuration $starterConfiguration
+        }
+
+        if($iac -eq "bicep") {
+            Copy-ParametersFileCollection -starterPath $starterModulePath -configFiles $starterConfig.starter_modules.$starter.deployment_files
+            Set-ComputedConfiguration -configuration $starterConfiguration
+            Edit-ALZConfigurationFilesInPlace -alzEnvironmentDestination $starterModulePath -configuration $starterConfiguration
+            Write-JsonFile -jsonFilePath $starterBicepVarsPath -configuration $starterConfiguration
+
+            # Remove unrequired files
+            $foldersOrFilesToRetain = $starterConfig.starter_modules.$starter.folders_or_files_to_retain
+            $foldersOrFilesToRetain += "parameters.json"
+            $foldersOrFilesToRetain += "config"
+            $foldersOrFilesToRetain += "starter-cache.json"
+
+            foreach($deployment_file in $starterConfig.starter_modules.$starter.deployment_files) {
+                $foldersOrFilesToRetain += $deployment_file.templateParametersSourceFilePath
+            }
+
+            $subFoldersOrFilesToRemove = $starterConfig.starter_modules.$starter.subfolders_or_files_to_remove
+
+            Remove-UnrequiredFileSet -path $starterModulePath -foldersOrFilesToRetain $foldersOrFilesToRetain -subFoldersOrFilesToRemove $subFoldersOrFilesToRemove -writeVerboseLogs:$writeVerboseLogs.IsPresent
+        }
 
         # Caching the bootstrap and starter module values paths for retry / upgrade scenarios
         Write-ConfigurationCache -filePath $interfaceCachePath -configuration $interfaceConfiguration
@@ -235,8 +296,10 @@ function New-Bootstrap {
         if($autoApprove) {
             Invoke-Terraform -moduleFolderPath $bootstrapModulePath -tfvarsFileName "override.tfvars" -autoApprove -destroy:$destroy.IsPresent
         } else {
-            Write-InformationColored "Once the plan is complete you will be prompted to confirm the apply. You must enter 'yes' to apply." -ForegroundColor Green -NewLineBefore -InformationAction Continue
+            Write-InformationColored "Once the plan is complete you will be prompted to confirm the apply." -ForegroundColor Green -NewLineBefore -InformationAction Continue
             Invoke-Terraform -moduleFolderPath $bootstrapModulePath -tfvarsFileName "override.tfvars" -destroy:$destroy.IsPresent
         }
+
+        Write-InformationColored "Bootstrap has completed successfully! Thanks for using our tool. Head over to Phase 3 in the documentation to continue..." -ForegroundColor Green -NewLineBefore -InformationAction Continue
     }
 }

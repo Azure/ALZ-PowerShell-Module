@@ -1,6 +1,5 @@
 function Edit-ALZConfigurationFilesInPlace {
     param(
-
         [Parameter(Mandatory = $false)]
         [Alias("Output")]
         [Alias("OutputDirectory")]
@@ -20,20 +19,23 @@ function Edit-ALZConfigurationFilesInPlace {
     }
 
     foreach ($file in $files) {
+        Write-Verbose "Checking Bicep parameter file: $($file.Name)"
         $bicepConfiguration = Get-Content $file.FullName | ConvertFrom-Json -AsHashtable
         $modified = $false
 
         foreach ($configKey in $configuration.PsObject.Properties) {
             foreach ($target in $configKey.Value.Targets) {
                 # Is this configuration value for this file?
-                $targetedAtThisFile = $null -eq $target.File -or $target.File -eq $file.Name
+                $targetedAtThisFile = $target.Destination -eq "Parameters" -and ($null -eq $target.File -or $target.File -eq $file.Name)
                 if ($targetedAtThisFile -eq $false) {
                     continue
                 }
 
+                Write-Verbose "Attempting to update $($target.Name) in $($file.Name) with '$($configKey.Value.Value)' from $($configKey.Name)"
+
                 # Find the appropriate item which will be changed in the Bicep file.
                 # Remove array '[' ']' characters so we can use the index value direct.
-                $propertyNames = $target.Name -replace "\[|\]","" -split "\."
+                $propertyNames = $target.Name.Replace("[", ".").Replace("]", "").Replace("..", ".") -split "\."
                 $bicepConfigNode = $bicepConfiguration.parameters
                 $index = 0
 
@@ -64,6 +66,7 @@ function Edit-ALZConfigurationFilesInPlace {
                 # If we're here, we can modify this file and we've got an actual object specified by the Name path value - and we can modify values on it.
                 if ($target.Destination -eq "Parameters" -and $null -ne $bicepConfigNode) {
                     $leafPropertyName = $propertyNames[-1]
+                    Write-Verbose "Updating $($target.Name) in $($file.Name) with '$($configKey.Value.Value)' from $($configKey.Name)"
                     $bicepConfigNode[$leafPropertyName] = $configKey.Value.Value
                     $modified = $true
                 }
@@ -71,8 +74,8 @@ function Edit-ALZConfigurationFilesInPlace {
         }
 
         if ($true -eq $modified) {
-            Write-Verbose $file.FullName
-            $bicepConfiguration | ConvertTo-Json -Depth 10  | Out-File $file.FullName
+            Write-Verbose "Updating Bicep parameter file: $($file.Name)"
+            ConvertTo-Json $bicepConfiguration -Depth 10 | Out-File $file.FullName
         }
     }
 }
