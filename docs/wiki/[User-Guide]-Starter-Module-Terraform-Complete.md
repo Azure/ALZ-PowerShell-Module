@@ -100,11 +100,6 @@ The `avm-ptn-vwan` module is used to deploy a Virtual WAN. Further configuration
 
 ## Inputs
 
-- `default_location`: The default location to deploy resources to.
-- `root_parent_management_group_id`: The id of the management group that the ALZ hierarchy will be nested under.
-- `subscription_id_connectivity`: The identifier of the Connectivity Subscription.
-- `subscription_id_identity`: The identifier of the Identity Subscription.
-- `subscription_id_management`: The identifier of the Management Subscription.
 - `configuration_file_path`: This is the path to your custom config file if you wish to supply one. Leaving this empty will use the default `config.yaml` file. This must be specified as an absolute file paths (e.g. c:\\my-config\\my-config.yaml or /home/user/my-config/my-config.yaml). If you don't supply an absolute path, it will fail.
 
 ## Example
