@@ -74,7 +74,7 @@ function Request-ConfigurationValue {
         if($skipValidationForEmptyDefault) {
             $isNotValid = $false
         } else {
-            Write-Verbose "Checking $($configValue.Value) against $($configValue.Valid)"
+            Write-Verbose "Checking '$($configValue.Value)' against '$($configValue.Valid)'"
             $isNotValid = $hasValidator -and $configValue.Value -match $configValue.Valid -eq $false
         }
 
@@ -94,6 +94,4 @@ function Request-ConfigurationValue {
         Write-InformationColored "Max attempts reached for getting input value. Exiting..." -ForegroundColor Red -InformationAction Continue
         throw "Max attempts reached for getting input value. Exiting..."
     }
-
-    Write-InformationColored "" -InformationAction Continue
 }
