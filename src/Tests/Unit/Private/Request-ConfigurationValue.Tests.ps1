@@ -37,7 +37,7 @@ InModuleScope 'ALZ' {
 
                 Request-ConfigurationValue -configName "prefix" -configValue $configValue
 
-                Should -Invoke -CommandName Write-InformationColored -Times 4 -Exactly
+                Should -Invoke -CommandName Write-InformationColored -Times 3 -Exactly
 
                 $configValue.Value | Should -BeExactly "user input value"
             }
@@ -56,7 +56,7 @@ InModuleScope 'ALZ' {
 
                 Request-ConfigurationValue -configName "prefix" -configValue $configValue
 
-                Should -Invoke -CommandName Write-InformationColored -Times 4 -Exactly
+                Should -Invoke -CommandName Write-InformationColored -Times 3 -Exactly
 
                 $configValue.Value | Should -BeExactly "alz"
             }
@@ -132,7 +132,7 @@ InModuleScope 'ALZ' {
                 }
                 Request-ConfigurationValue -configName "calculated" -configValue $configValue -withRetries $false
 
-                Should -Invoke -CommandName Write-InformationColored -Times 6 -Exactly
+                Should -Invoke -CommandName Write-InformationColored -Times 5 -Exactly
                 $configValue.Value | Should -BeExactly "l"
             }
 
@@ -155,7 +155,7 @@ InModuleScope 'ALZ' {
                 }
                 Request-ConfigurationValue -configName "calculated" -configValue $configValue -withRetries $false
 
-                Should -Invoke -CommandName Write-InformationColored -Times 5 -Exactly
+                Should -Invoke -CommandName Write-InformationColored -Times 4 -Exactly
                 $configValue.Value | Should -BeExactly "l"
             }
         }
