@@ -64,7 +64,7 @@ function Invoke-Terraform {
             $resultIndex = $host.ui.PromptForChoice($title, $message, $choices, 0)
             if($resultIndex -eq 1) {
                 Write-InformationColored "You have chosen not to apply the plan. Exiting..." -ForegroundColor Red -NewLineBefore -InformationAction Continue
-                exit 0
+                return
             }
         }
 

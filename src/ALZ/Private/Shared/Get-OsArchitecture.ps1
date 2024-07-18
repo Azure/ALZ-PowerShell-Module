@@ -35,7 +35,7 @@ function Get-OSArchitecture {
 
     if($supportedOsAndArchitectures -notcontains $osAndArchitecture) {
         Write-Error "Unsupported OS and architecture combination: $osAndArchitecture"
-        exit 1
+        return
     }
 
     if($osAndArchitecture -eq "windows_arm64") {
