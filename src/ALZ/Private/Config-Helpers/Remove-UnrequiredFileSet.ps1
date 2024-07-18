@@ -6,7 +6,9 @@ function Remove-UnrequiredFileSet {
         [Parameter(Mandatory = $false)]
         [array]$foldersOrFilesToRetain = @(),
         [Parameter(Mandatory = $false)]
-        [array]$subFoldersOrFilesToRemove = @()
+        [array]$subFoldersOrFilesToRemove = @(),
+        [Parameter(Mandatory = $false)]
+        [switch]$writeVerboseLogs
     )
 
     if($PSCmdlet.ShouldProcess("Remove files", "modify")) {
@@ -24,7 +26,9 @@ function Remove-UnrequiredFileSet {
             foreach ($folderOrFileToRetain in $foldersOrFilesToRetain) {
                 # If we have an exact match of the file name and path, always retain it.
                 if($folderOrFileToRetain.TrimStart("./") -eq $fileRelativePath) {
-                    Write-Verbose "Exact Match - Retaining: $fileRelativePath at $($file.FullName)"
+                    if($writeVerboseLogs) {
+                        Write-Verbose "Exact Match - Retaining: $fileRelativePath at $($file.FullName)"
+                    }
                     $filesToRetain += $file.FullName
                     continue
                 }
@@ -39,7 +43,9 @@ function Remove-UnrequiredFileSet {
                     }
 
                     if(!$skipFile) {
-                        Write-Verbose "Pattern Match - Retaining: $fileRelativePath at $($file.FullName)"
+                        if($writeVerboseLogs) {
+                            Write-Verbose "Pattern Match - Retaining: $fileRelativePath at $($file.FullName)"
+                        }
                         $filesToRetain += $file.FullName
                     }
                 }
@@ -48,7 +54,9 @@ function Remove-UnrequiredFileSet {
 
         foreach($file in $files) {
             if($filesToRetain -notcontains $file.FullName) {
-                Write-Verbose "Removing: $($file.FullName)"
+                if($writeVerboseLogs) {
+                    Write-Verbose "Removing: $($file.FullName)"
+                }
                 Remove-Item -Path $file.FullName -Force | Out-Null
             }
         }
@@ -58,7 +66,9 @@ function Remove-UnrequiredFileSet {
             if(Test-Path $folder.FullName) {
                 $folderItems = Get-ChildItem -Path $folder.FullName -Recurse -File -Force
                 if($folderItems.Count -eq 0) {
-                    Write-Verbose "Removing empty folder: $($folder.FullName)"
+                    if($writeVerboseLogs) {
+                        Write-Verbose "Removing empty folder: $($folder.FullName)"
+                    }
                     Remove-Item -Path $folder.FullName -Force -Recurse | Out-Null
                 }
             }

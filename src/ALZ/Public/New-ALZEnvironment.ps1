@@ -109,7 +109,11 @@ function New-ALZEnvironment {
 
         [Parameter(Mandatory = $false, HelpMessage = "Whether to overwrite bootstrap and starter modules if they already exist. Warning, this may result in unexpected behaviour and should only be used for local development purposes.")]
         [switch]
-        $replaceFiles
+        $replaceFiles,
+
+        [Parameter(Mandatory = $false, HelpMessage = "An extra level of logging that is turned off by default for easier debugging.")]
+        [switch]
+        $writeVerboseLogs
     )
 
     $ProgressPreference = "SilentlyContinue"
@@ -298,7 +302,8 @@ function New-ALZEnvironment {
                 -destroy:$destroy.IsPresent `
                 -starter $starter `
                 -zonesSupport $zonesSupport `
-                -computedInputs $computedInputs
+                -computedInputs $computedInputs `
+                -writeVerboseLogs:$writeVerboseLogs.IsPresent
         }
     }
 

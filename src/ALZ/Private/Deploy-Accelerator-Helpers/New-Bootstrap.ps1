@@ -47,7 +47,11 @@ function New-Bootstrap {
         [PSCustomObject] $zonesSupport = $null,
 
         [Parameter(Mandatory = $false)]
-        [hashtable] $computedInputs
+        [hashtable] $computedInputs,
+
+        [Parameter(Mandatory = $false, HelpMessage = "An extra level of logging that is turned off by default for easier debugging.")]
+        [switch]
+        $writeVerboseLogs
     )
 
     if ($PSCmdlet.ShouldProcess("ALZ-Terraform module configuration", "modify")) {
@@ -185,12 +189,19 @@ function New-Bootstrap {
         # Set computed interface inputs
         $computedInputs["starter_module_name"] = $starter
         $computedInputs["module_folder_path"] = $starterModulePath
+        $computedInputs["availability_zones_bootstrap"] = @(Get-AvailabilityZonesSupport -region $interfaceConfiguration.bootstrap_location.Value -zonesSupport $zonesSupport)
+        $computedInputs["availability_zones_starter"] = @(Get-AvailabilityZonesSupport -region $interfaceConfiguration.starter_location.Value -zonesSupport $zonesSupport)
 
         foreach($inputConfigItem in $inputConfig.inputs.PSObject.Properties) {
             if($inputConfigItem.Value.source -eq "powershell") {
                 $inputVariable = $interfaceConfiguration.PSObject.Properties | Where-Object { $_.Name -eq $inputConfigItem.Name }
                 $inputValue = $computedInputs[$inputConfigItem.Name]
-                Write-Verbose "Setting $($inputConfigItem.Name) to $inputValue"
+                if($inputValue -is [array]) {
+                    $jsonInputValue = ConvertTo-Json $inputValue -Depth 10
+                    Write-Verbose "Setting computed interface input array $($inputConfigItem.Name) to $jsonInputValue"
+                } else {
+                    Write-Verbose "Setting computed interface input string $($inputConfigItem.Name) to $inputValue"
+                }
                 $inputVariable.Value.Value = $inputValue
             }
         }
@@ -257,7 +268,6 @@ function New-Bootstrap {
             Copy-ParametersFileCollection -starterPath $starterModulePath -configFiles $starterConfig.starter_modules.$starter.deployment_files
             Set-ComputedConfiguration -configuration $starterConfiguration
             Edit-ALZConfigurationFilesInPlace -alzEnvironmentDestination $starterModulePath -configuration $starterConfiguration
-            Add-AvailabilityZonesBicepParameter -alzEnvironmentDestination $starterModulePath -zonesSupport $zonesSupport
             Write-JsonFile -jsonFilePath $starterBicepVarsPath -configuration $starterConfiguration
 
             # Remove unrequired files
@@ -272,7 +282,7 @@ function New-Bootstrap {
 
             $subFoldersOrFilesToRemove = $starterConfig.starter_modules.$starter.subfolders_or_files_to_remove
 
-            Remove-UnrequiredFileSet -path $starterModulePath -foldersOrFilesToRetain $foldersOrFilesToRetain -subFoldersOrFilesToRemove $subFoldersOrFilesToRemove
+            Remove-UnrequiredFileSet -path $starterModulePath -foldersOrFilesToRetain $foldersOrFilesToRetain -subFoldersOrFilesToRemove $subFoldersOrFilesToRemove -writeVerboseLogs:$writeVerboseLogs.IsPresent
         }
 
         # Caching the bootstrap and starter module values paths for retry / upgrade scenarios
