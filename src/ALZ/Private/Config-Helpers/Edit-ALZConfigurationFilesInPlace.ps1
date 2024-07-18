@@ -1,6 +1,5 @@
 function Edit-ALZConfigurationFilesInPlace {
     param(
-
         [Parameter(Mandatory = $false)]
         [Alias("Output")]
         [Alias("OutputDirectory")]

@@ -14,11 +14,15 @@ function Add-AvailabilityZonesBicepParameter {
     $parametersConfig = @(
         [pscustomobject]@{
             source     = "hubNetworking.parameters.all.json";
-            parameters = "parAzErGatewayAvailabilityZones,parAzVpnGatewayAvailabilityZones,parAzFirewallAvailabilityZones"
+            parameters = @(
+                "parAzErGatewayAvailabilityZones.value",
+                "parAzVpnGatewayAvailabilityZones.value",
+                "parAzFirewallAvailabilityZones.value"
+            )
         }
         [pscustomobject]@{
             source     = "vwanConnectivity.parameters.all.json";
-            parameters = "parAzFirewallAvailabilityZones"
+            parameters = @("parVirtualWanHubs.value[0].parAzFirewallAvailabilityZones")
         }
     )
 
@@ -28,27 +32,57 @@ function Add-AvailabilityZonesBicepParameter {
             Write-Verbose -Message "The file $parametersFilePath does not exist, so skipping it..."
             continue
         }
-        $region = (Get-Content $parametersFilePath | ConvertFrom-Json).parameters.parLocation.Value
-        $zones = ($zonesSupport | Where-Object { $_.region -eq $region }).zones
+
         $parametersFileJsonContent = Get-Content -Path $parametersFilePath -Raw
-        $jsonObject = $parametersFileJsonContent | ConvertFrom-Json
-        $parametersFile.parameters.Split(",") | ForEach-Object {
-            $parameter = $_
-            try {
-                if ($null -eq $jsonObject.parameters.$parameter.value) {
-                    $jsonObject.parameters.$parameter.value = @($zones)
+        $bicepConfiguration = $parametersFileJsonContent | ConvertFrom-Json -AsHashtable
+
+        $region = $bicepConfiguration.parameters.parLocation.value
+        $zones = ($zonesSupport | Where-Object { $_.region -eq $region }).zones
+
+        $parametersFile.parameters | ForEach-Object {
+            $target = $_
+
+            Write-Verbose "Attempting to update $($target) in $($parametersFile.source) with '$($zones)'"
+
+            # Find the appropriate item which will be changed in the Bicep file.
+            # Remove array '[' ']' characters so we can use the index value direct.
+            $propertyNames = $target.Replace("[", ".").Replace("]", "").Replace("..", ".") -split "\."
+            $bicepConfigNode = $bicepConfiguration.parameters
+            $index = 0
+
+            # Keep navigating into properties which the configuration specifies until we reach the bottom most object,
+            #  e.g. not a value type - but the object reference so the value is persisted.
+            do {
+                if ($bicepConfigNode -is [array]) {
+                    # If this is an array - use the property as an array index...
+                    if ($propertyNames[$index] -match "[0-9]+" -eq $false) {
+                        throw "Configuration specifies an array, but the index value '${$propertyNames[$index]}' is not a number"
+                    }
+
+                    $bicepConfigNode = $bicepConfigNode[$propertyNames[$index]]
+
+                } elseif ($bicepConfigNode.ContainsKey($propertyNames[$index]) -eq $true) {
+                    # We found the item, keep indexing into the object.
+                    $bicepConfigNode = $bicepConfigNode[$propertyNames[$index]]
+                } else {
+                    # This property doesn't exist at this level in the hierarchy,
+                    #  this isn't the property we're looking for, stop looking.
+                    $bicepConfigNode = $null
                 }
 
-                else {
-                    $jsonObject.parameters.$parameter.value = $zones
-                }
-            }
+                ++$index
 
-            catch {
-                Write-Error -Message "The parameter $parameter does not exist in the file $parametersFilePath"
+            } while (($null -ne $bicepConfigNode) -and ($index -lt $propertyNames.Length - 1))
+
+            # If we're here, we can modify this file and we've got an actual object specified by the Name path value - and we can modify values on it.
+            if ($null -ne $bicepConfigNode) {
+                $leafPropertyName = $propertyNames[-1]
+                Write-Verbose "Attempting to update $($target) in $($parametersFile.source) with '$($zones)'"
+                $bicepConfigNode[$leafPropertyName] = $zones
             }
         }
-        $parametersFileJsonContent = $jsonObject | ConvertTo-Json -Depth 10
-        Set-Content -Path $parametersFilePath -Value $parametersFileJsonContent
+
+        Write-Verbose "Updating Bicep parameter file: $parametersFilePath"
+        ConvertTo-Json $bicepConfiguration -Depth 10 | Out-File $parametersFilePath
     }
 }

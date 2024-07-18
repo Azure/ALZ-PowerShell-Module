@@ -12,21 +12,15 @@ Import-Module $PathToManifest -Force
 #-------------------------------------------------------------------------
 
 InModuleScope 'ALZ' {
+    $VerbosePreference = "Continue"
     Describe "Add-AvailabilityZonesBicepParameter" {
         BeforeAll {
             $alzEnvironmentDestination = "TestDrive:\"
             $hubParametersPath = "https://raw.githubusercontent.com/Azure/ALZ-Bicep/main/infra-as-code/bicep/modules/hubNetworking/parameters/hubNetworking.parameters.all.json"
-            Invoke-WebRequest -Uri $hubParametersPath -OutFile "$alzEnvironmentDestination\hubNetworking.parameters.all.json"
+            New-Item -Path "$alzEnvironmentDestination\config\custom-parameters" -Force -ItemType Directory
+            Invoke-WebRequest -Uri $hubParametersPath -OutFile "$alzEnvironmentDestination\config\custom-parameters\hubNetworking.parameters.all.json"
         }
         Context "Hub networking parameters availability zones check" {
-            BeforeAll {
-                Mock -CommandName Join-Path -MockWith {
-                    $alzEnvironmentDestination + "\hubNetworking.parameters.all.json"
-                }
-                Mock -CommandName Get-Content -ParameterFilter { $Path -contains 'parametersFilePath' } -MockWith {
-                    Get-Content -Path "TestDrive:\hubNetworking.parameters.all.json"
-                }
-            }
             It "Should add 3 availability zones for hub networking parameters" {
                 Add-AvailabilityZonesBicepParameter -alzEnvironmentDestination $alzEnvironmentDestination -zonesSupport (@(
                             [PSCustomObject]@{
@@ -35,7 +29,9 @@ InModuleScope 'ALZ' {
                             }
                         )
                     )
-                $parametersFileJsonContent = Get-Content -Path "TestDrive:\hubNetworking.parameters.all.json" -Raw
+                $parametersFileJsonContent = Get-Content -Path "TestDrive:\config\custom-parameters\hubNetworking.parameters.all.json" -Raw
+                Write-Verbose (Test-Path -Path "TestDrive:\config\custom-parameters\hubNetworking.parameters.all.json")
+                #Write-Verbose $parametersFileJsonContent
                 $jsonObject = $parametersFileJsonContent | ConvertFrom-Json
                 $jsonObject.parameters.parAzErGatewayAvailabilityZones.value | Should -Be @("1", "2", "3")
                 $jsonObject.parameters.parAzVpnGatewayAvailabilityZones.value | Should -Be @("1", "2", "3")
@@ -49,7 +45,7 @@ InModuleScope 'ALZ' {
                             }
                         )
                     )
-                $parametersFileJsonContent = Get-Content -Path "TestDrive:\hubNetworking.parameters.all.json" -Raw
+                $parametersFileJsonContent = Get-Content -Path "TestDrive:\config\custom-parameters\hubNetworking.parameters.all.json" -Raw
                 $jsonObject = $parametersFileJsonContent | ConvertFrom-Json
                 $jsonObject.parameters.parAzErGatewayAvailabilityZones.value | Should -Be @("1", "2")
                 $jsonObject.parameters.parAzVpnGatewayAvailabilityZones.value | Should -Be @("1", "2")
@@ -63,7 +59,7 @@ InModuleScope 'ALZ' {
                             }
                         )
                     )
-                $parametersFileJsonContent = Get-Content -Path "TestDrive:\hubNetworking.parameters.all.json" -Raw
+                $parametersFileJsonContent = Get-Content -Path "TestDrive:\config\custom-parameters\hubNetworking.parameters.all.json" -Raw
                 $jsonObject = $parametersFileJsonContent | ConvertFrom-Json
                 $jsonObject.parameters.parAzErGatewayAvailabilityZones.value | Should -Be @()
                 $jsonObject.parameters.parAzVpnGatewayAvailabilityZones.value | Should -Be @()
