@@ -5,13 +5,22 @@ function Invoke-Terraform {
         [string] $moduleFolderPath,
 
         [Parameter(Mandatory = $false)]
-        [string] $tfvarsFileName,
+        [string] $tfvarsFileName = "",
 
         [Parameter(Mandatory = $false)]
         [switch] $autoApprove,
 
         [Parameter(Mandatory = $false)]
-        [switch] $destroy
+        [switch] $destroy,
+
+        [Parameter(Mandatory = $false)]
+        [string] $output = "",
+
+        [Parameter(Mandatory = $false)]
+        [string] $outputFilePath = "",
+
+        [Parameter(Mandatory = $false)]
+        [switch] $silent
     )
 
     if ($PSCmdlet.ShouldProcess("Apply Terraform", "modify")) {
@@ -21,7 +30,9 @@ function Invoke-Terraform {
             $action = "destroy"
         }
 
-        Write-InformationColored "Terraform init has completed, now running the $action..." -ForegroundColor Green -NewLineBefore -InformationAction Continue
+        if(!$silent) {
+            Write-InformationColored "Terraform init has completed, now running the $action..." -ForegroundColor Green -NewLineBefore -InformationAction Continue
+        }
 
         $planFileName = "tfplan"
 
@@ -35,20 +46,28 @@ function Invoke-Terraform {
         $arguments += "plan"
         $arguments += "-out=$planFileName"
         $arguments += "-input=false"
-        $arguments += "-var-file=$tfvarsFileName"
+        if($tfvarsFileName -ne "") {
+            $arguments += "-var-file=$tfvarsFileName"
+        }
 
         if ($destroy) {
             $arguments += "-destroy"
         }
 
-        Write-InformationColored "Running Plan Command for $action : $command $arguments" -ForegroundColor Green -NewLineBefore -InformationAction Continue
-        & $command $arguments
+        if(!$silent) {
+            Write-InformationColored "Running Plan Command for $action : $command $arguments" -ForegroundColor Green -NewLineBefore -InformationAction Continue
+            & $command $arguments
+        } else {
+            & $command $arguments | Write-Verbose
+        }
 
         $exitCode = $LASTEXITCODE
 
         # Stop and display timer
         $StopWatch.Stop()
-        Write-InformationColored "Time taken to complete Terraform plan:" -ForegroundColor Green -NewLineBefore -InformationAction Continue
+        if(!$silent) {
+            Write-InformationColored "Time taken to complete Terraform plan:" -ForegroundColor Green -NewLineBefore -InformationAction Continue
+        }
         $StopWatch.Elapsed | Format-Table
 
         if($exitCode -ne 0) {
@@ -80,8 +99,12 @@ function Invoke-Terraform {
         $arguments += "-input=false"
         $arguments += "$planFileName"
 
-        Write-InformationColored "Running Apply Command for $action : $command $arguments" -ForegroundColor Green -NewLineBefore -InformationAction Continue
-        & $command $arguments
+        if(!$silent) {
+            Write-InformationColored "Running Apply Command for $action : $command $arguments" -ForegroundColor Green -NewLineBefore -InformationAction Continue
+            & $command $arguments
+        } else {
+            & $command $arguments | Write-Verbose
+        }
 
         $exitCode = $LASTEXITCODE
 
@@ -97,7 +120,9 @@ function Invoke-Terraform {
             $arguments += "apply"
             $arguments += "-auto-approve"
             $arguments += "-input=false"
-            $arguments += "-var-file=$tfvarsFileName"
+            if($tfvarsFileName -ne "") {
+                $arguments += "-var-file=$tfvarsFileName"
+            }
             if ($destroy) {
                 $arguments += "-destroy"
             }
@@ -109,12 +134,30 @@ function Invoke-Terraform {
 
         # Stop and display timer
         $StopWatch.Stop()
-        Write-InformationColored "Time taken to complete Terraform apply:" -ForegroundColor Green -NewLineBefore -InformationAction Continue
+        if(!$silent) {
+            Write-InformationColored "Time taken to complete Terraform apply:" -ForegroundColor Green -NewLineBefore -InformationAction Continue
+        }
         $StopWatch.Elapsed | Format-Table
 
         if($exitCode -ne 0) {
             Write-InformationColored "Terraform $action failed with exit code $exitCode after $maxAttempts attempts. Please review the error and try again or raise an issue." -ForegroundColor Red -NewLineBefore -InformationAction Continue
             throw "Terraform $action failed with exit code $exitCode after $maxAttempts attempts. Please review the error and try again or raise an issue."
+        } else {
+            if($output -ne "") {
+                if($outputFilePath -eq "") {
+                    $outputFilePath = Join-Path $moduleFolderPath "output.json"
+                }
+                $command = "terraform"
+                $arguments = @()
+                $arguments += "-chdir=$moduleFolderPath"
+                $arguments += "output"
+                $arguments += "-json"
+                $arguments += "$output"
+
+                Write-Verbose "Outputting $output to $outputFilePath"
+                Write-Verbose "Running Output Command: $command $arguments"
+                & $command $arguments > $outputFilePath
+            }
         }
     }
 }

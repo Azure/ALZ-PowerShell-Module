@@ -146,15 +146,15 @@ function New-ALZEnvironment {
         }
 
         # Check and install Terraform CLI if needed
-        if (!$isLegacyBicep) {
-            if ($skipInternetChecks) {
+        $toolsPath = Join-Path -Path $targetDirectory -ChildPath ".tools"
+        if(!$isLegacyBicep) {
+            if($skipInternetChecks) {
                 Write-InformationColored "Skipping Terraform tool check as you used the skipInternetCheck parameter. Please ensure you have the most recent version of Terraform installed" -ForegroundColor Yellow -InformationAction Continue
             } else {
                 Write-InformationColored "Checking you have the latest version of Terraform installed..." -ForegroundColor Green -NewLineBefore -InformationAction Continue
                 if ($iac -eq "bicep") {
                     Write-InformationColored "Although you have selected Bicep, the Accelerator leverages the Terraform tool to bootstrap your Version Control System and Azure. This is will not impact your choice of Bicep post this initial bootstrap. Please refer to our documentation for further details..." -ForegroundColor Yellow -InformationAction Continue
                 }
-                $toolsPath = Join-Path -Path $targetDirectory -ChildPath ".tools"
                 Get-TerraformTool -version "latest" -toolsPath $toolsPath
             }
         }
@@ -209,7 +209,8 @@ function New-ALZEnvironment {
                 -bootstrap $bootstrap `
                 -bootstrapPath $bootstrapPath `
                 -bootstrapConfigPath $bootstrapConfigPath `
-                -userInputOverrides $userInputOverrides
+                -userInputOverrides $userInputOverrides `
+                -toolsPath $toolsPath
 
             $bootstrapDetails = $bootstrapAndStarterConfig.bootstrapDetails
             $hasStarterModule = $bootstrapAndStarterConfig.hasStarterModule

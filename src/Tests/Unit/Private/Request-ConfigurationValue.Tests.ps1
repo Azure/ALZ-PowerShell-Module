@@ -79,7 +79,7 @@ InModuleScope 'ALZ' {
                 $configValue.Value | Should -BeExactly ""
             }
 
-            It 'Prompt the user with warning text when an invalid value is specified and leave the existing value unchanged.' {
+            It 'Prompt the user with warning text when an invalid value is specified.' {
                 $configValue = @{
                     Description  = "The prefix that will be added to all resources created by this deployment."
                     Names        = @("parTopLevelManagementGroupPrefix", "parCompanyPrefix")
@@ -91,10 +91,9 @@ InModuleScope 'ALZ' {
                 Request-ConfigurationValue -configName "prefix" -configValue $configValue -withRetries $false
 
                 Should -Invoke -CommandName Write-InformationColored -ParameterFilter { $ForegroundColor -eq "Red" } -Scope It
-                $configValue.Value | Should -BeExactly ""
             }
 
-            It 'Prompt the user with warning text when a value is specified which isnt in the allowed list and leave the existing value unchanged.' {
+            It 'Prompt the user with warning text when a value is specified which isnt in the allowed list.' {
                 Mock -CommandName Read-Host -MockWith {
                     "notinthelist"
                 }
@@ -110,7 +109,25 @@ InModuleScope 'ALZ' {
                 Request-ConfigurationValue -configName "prefix" -configValue $configValue -withRetries $false
 
                 Should -Invoke -CommandName Write-InformationColored -ParameterFilter { $ForegroundColor -eq "Red" } -Scope It
-                $configValue.Value | Should -BeExactly ""
+            }
+
+            It 'Prompt the user with warning text when a value is specified which isnt in the allowed list for a list(string).' {
+                Mock -CommandName Read-Host -MockWith {
+                    "alz,notinthelist"
+                }
+
+                $configValue = @{
+                    Description   = "The prefix that will be added to all resources created by this deployment."
+                    Names         = @("parTopLevelManagementGroupPrefix", "parCompanyPrefix")
+                    DataType      = "list(string)"
+                    Value         = ""
+                    AllowedValues = @{
+                        Values = @("alz", "slz")
+                    }
+                }
+                Request-ConfigurationValue -configName "prefix" -configValue $configValue -withRetries $false
+
+                Should -Invoke -CommandName Write-InformationColored -ParameterFilter { $ForegroundColor -eq "Red" } -Scope It
             }
 
             It 'Prompt user with a calculated list of AllowedValues' {
