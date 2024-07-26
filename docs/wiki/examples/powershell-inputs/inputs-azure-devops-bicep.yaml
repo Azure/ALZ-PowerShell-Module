@@ -34,7 +34,7 @@ apply_approvers: "<email-address-list>"
 create_branch_policies: "true"
 
 # Starter Module Specific Variables
-Prefix: "landing-zone"
+Prefix: "alz"
 Location: "<region>"
 Environment: "live"
 networkType: "hubNetworking"

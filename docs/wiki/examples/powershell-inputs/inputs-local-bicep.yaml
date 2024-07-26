@@ -24,7 +24,7 @@ environment_name: "mgmt"
 postfix_number: "1"
 
 # Starter Module Specific Variables
-Prefix: "landing-zone"
+Prefix: "alz"
 Location: "<region>"
 Environment: "live"
 networkType: "hubNetworking"
