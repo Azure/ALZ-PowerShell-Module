@@ -146,13 +146,13 @@ function Get-GithubRelease {
         Remove-Item -Path "$targetVersionPath/tmp" -Force -Recurse
         Write-InformationColored "The directory for $targetVersionPath has been created and populated." -ForegroundColor Green -InformationAction Continue
     } else {
-        Write-InformationColored "The directory for $targetVersionPath already exists and has content in it, so we are not over-writing it." -ForegroundColor Green -InformationAction Continue
+        Write-InformationColored "The directory for $targetVersionPath already exists and has content in it, so we are not overwriting it." -ForegroundColor Green -InformationAction Continue
         Write-Verbose "===> Content already exists in $releaseDirectory. Skipping"
     }
 
     # Check and replace the .env file release version if it is Bicep
     $envFilePath = Join-Path -Path $parentDirectory -ChildPath ".env"
-    if(Test-Path $envFilePath) {
+    if (Test-Path $envFilePath) {
         Write-Verbose "===> Replacing the .env file release version with $releaseTag"
         (Get-Content $envFilePath) -replace "UPSTREAM_RELEASE_VERSION=.*", "UPSTREAM_RELEASE_VERSION=$releaseTag" | Set-Content $envFilePath
     }
