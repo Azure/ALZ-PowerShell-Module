@@ -17,26 +17,33 @@ function Write-TfvarsFile {
         foreach($configurationProperty in $configuration.PSObject.Properties) {
             $configurationValueRaw = $configurationProperty.Value.Value
 
-            if($configurationProperty.Value.Validator -eq "configuration_file_path") {
+            if ($configurationProperty.Value.Validator -eq "configuration_file_path") {
                 $configurationValueRaw = [System.IO.Path]::GetFileName($configurationValueRaw)
             }
 
             $configurationValue = "`"$($configurationValueRaw)`""
 
             if ($configurationProperty.Value.DataType -eq "list(string)") {
-                if ($configurationValueRaw -eq "") {
-                    $configurationValue = "[]"
+                if (-not $configurationValueRaw -or $configurationValueRaw.Count -eq 0) {
+                    if ($configurationProperty.Value.DefaultValue) {
+                        $configurationValue = $configurationProperty.Value.DefaultValue
+                    } else {
+                        $configurationValue = "[]"
+                    }
                 } else {
                     $split = $configurationValueRaw -split ","
                     $join = $split -join "`",`""
                     $configurationValue = "[`"$join`"]"
                 }
-                Write-Host "list(string) - Raw Value: $configurationValueRaw"
             }
 
             if ($configurationProperty.Value.DataType -eq "map(string)") {
                 if (-not $configurationValueRaw -or $configurationValueRaw.Count -eq 0) {
-                    $configurationValue = "{}"
+                    if ($configurationProperty.Value.DefaultValue) {
+                        $configurationValue = $configurationProperty.Value.DefaultValue
+                    } else {
+                        $configurationValue = "{}"
+                    }
                 } else {
                     $configurationValue = "{"
                     $entries = @()
@@ -49,21 +56,21 @@ function Write-TfvarsFile {
                     $configurationValue = $entries -join ", "
                     $configurationValue = "{ $configurationValue }"
                 }
-                Write-Host "map(string) - Processed Value: $configurationValue"
             }
 
-            if ($configurationProperty.Value.DataType -eq "list(object)") {
-                if ($configurationValueRaw -eq "") {
-                    $configurationValue = "[]"
-                } elseif ($configurationValueRaw -eq "[]") {
-                    $configurationValue = "[]"
+            if ($configurationProperty.Value.DataType -like "list(object*") {
+                if (-not $configurationValueRaw -or $configurationValueRaw.Count -eq 0) {
+                    if ($configurationProperty.Value.DefaultValue) {
+                        $configurationValue = $configurationProperty.Value.DefaultValue
+                    } else {
+                        $configurationValue = "[]"
+                    }
                 } else {
                     $configurationValue = "["
                     foreach ($entry in $configurationValueRaw) {
                         $configurationValue += "{ "
-                        foreach ($keyValue in $entry.PSObject.Properties) {
-                            $key = $keyValue.Name
-                            $value = $keyValue.Value
+                        foreach ($key in $entry.Keys) {
+                            $value = $entry[$key]
                             $configurationValue += "`"$key`": `"$value`", "
                         }
                         $configurationValue = $configurationValue.TrimEnd(", ")
@@ -72,10 +79,7 @@ function Write-TfvarsFile {
                     $configurationValue = $configurationValue.TrimEnd(", ")
                     $configurationValue += "]"
                 }
-                Write-Host "list(object) - Raw Value: $configurationValueRaw"
-                Write-Host "list(object) - Processed Value: $configurationValue"
             }
-
 
             if ($configurationProperty.Value.DataType -eq "number" -or $configurationProperty.Value.DataType -eq "bool") {
                 $configurationValue = $configurationValueRaw
