@@ -3,7 +3,7 @@
 # https://github.com/Azure/ALZ-PowerShell-Module/wiki/%5BUser-Guide%5D-Quick-Start-Phase-2-Azure-DevOps#2211-azure-devops-with-bicep
 
 # Basic Inputs
-iac: "bicep"
+iac: "terraform"
 bootstrap: "alz_local"
 starter: "complete"
 
