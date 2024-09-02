@@ -30,7 +30,7 @@ body:
     attributes:
       label: Module Versions (Required)
       description: Please provide relevant module versions.
-      placeholder: |
+      value: |
         ALZ PowerShell Module: x.x.x
         Accelerator Bootstrap Modules: x.x.x
         Terraform Starter Modules: x.x.x
