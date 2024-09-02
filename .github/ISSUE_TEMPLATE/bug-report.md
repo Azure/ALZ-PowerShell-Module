@@ -1,39 +1,87 @@
----
-name: Bug report
-about: Submit a new bug
-title: Bug report
-labels: 'bug'
-assignees: ''
-
----
-
-<!--- Provide a general summary of the issue in the Title above -->
-
-### Expected Behavior
-<!--- Tell us what should happen -->
-
-### Current Behavior
-<!--- Tell us what happens instead of the expected behavior -->
-
-### Possible Solution
-<!--- Not obligatory, but suggest a fix/reason for the bug, -->
-
-### Steps to Reproduce
-<!--- Provide a link to a live example, or an unambiguous set of steps to -->
-<!--- reproduce this bug. Include code to reproduce, if relevant -->
-
-1.
-2.
-3.
-4.
-
-### Context (Environment)
-<!--- How has this issue affected you? What are you trying to accomplish? -->
-<!--- Include as many relevant details about the environment where the bug was discovered. -->
-* Operating System and version as reported by `$PSVersionTable.OS`:
-* PowerShell versions as reported by `$PSVersionTable.PSEdition`:
-
-<!--- Provide a general summary of the issue in the Title above -->
-
-### Detailed Description
-<!--- Provide a detailed description of the issue you are facing -->
+name: "Bug report \U0001F41B"
+description: Report errors or unexpected behaviour
+title: "bug:"
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for taking the time to fill out a bug report.
+        If you are not running the latest version of this module, please try to reproduce your bug with the latest version before opening an issue.
+  - type: checkboxes
+    attributes:
+      label: Is there an existing issue for this?
+      description: Please search to see if an issue already exists for the bug you encountered.
+      options:
+        - label: I have searched the existing issues
+          required: true
+  - type: dropdown
+    attributes:
+      label: Infrastrcuture as Code Type? (Required)
+      description: Are you using Bicep or Terraform?
+      multiple: false
+      options:
+        - bicep
+        - terraform
+    validations:
+      required: true
+  - type: textarea
+    id: versions
+    attributes:
+      label: Module Versions (Required)
+      description: Please provide relevant module versions.
+      placeholder: |
+        ALZ PowerShell Module: x.x.x
+        Accelerator Bootstrap Modules: x.x.x
+        Terraform Starter Modules: x.x.x
+        Bicep Starter Modules: x.x.x
+    validations:
+      required: true
+  - type: textarea
+    id: inputs
+    attributes:
+      label: Input arguments of the ALZ-PowerShell-Module (Required)
+      description: Please provide any relevant input arguments of the ALZ PowerShell Module that can reproduce the issue. 
+    validations:
+      required: false
+  - type: textarea
+    id: debug
+    attributes:
+      label: Debug Output/Panic Output (Optional)
+      description: |
+        For long debug logs please provide a link to a GitHub Gist containing the complete debug output. Please do NOT paste the debug output in the issue; just paste a link to the Gist.
+        To obtain the debug output, see the [Terraform documentation on debugging](https://www.terraform.io/docs/internals/debugging.html).
+      render: shell
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behaviour (Required)
+      description: What should have happened?
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behaviour (Required)
+      description: What actually happened?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to Reproduce (Optional)
+      description: |
+        Please list the steps required to reproduce the issue, e.g.
+  - type: input
+    id: facts
+    attributes:
+      label: Important Factoids (Optional)
+      description: |
+        Are there anything atypical about your accounts that we should know? For example: Running in a Azure China/Germany/Government?
+  - type: textarea
+    id: references
+    attributes:
+      label: References (Optional)
+      description: |
+        Information about referencing Github Issues: https://help.github.com/articles/basic-writing-and-formatting-syntax/#referencing-issues-and-pull-requests
+        Are there any other GitHub issues (open or closed) or pull requests that should be linked here? Such as vendor documentation?
