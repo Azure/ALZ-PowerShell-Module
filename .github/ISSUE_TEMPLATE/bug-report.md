@@ -1,6 +1,6 @@
 name: "Bug report \U0001F41B"
 description: Report errors or unexpected behaviour
-title: "bug:"
+title: "bug: "
 labels: [bug]
 body:
   - type: markdown
