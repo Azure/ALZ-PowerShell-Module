@@ -40,7 +40,7 @@ body:
   - type: textarea
     id: inputs
     attributes:
-      label: Input arguments of the ALZ-PowerShell-Module (Required)
+      label: Input arguments of the ALZ-PowerShell-Module (Optional)
       description: Please provide any relevant input arguments of the ALZ PowerShell Module that can reproduce the issue. 
     validations:
       required: false
@@ -52,6 +52,8 @@ body:
         For long debug logs please provide a link to a GitHub Gist containing the complete debug output. Please do NOT paste the debug output in the issue; just paste a link to the Gist.
         To obtain the debug output, see the [Terraform documentation on debugging](https://www.terraform.io/docs/internals/debugging.html).
       render: shell
+    validations:
+      required: false
   - type: textarea
     id: expected
     attributes:
@@ -72,7 +74,7 @@ body:
       label: Steps to Reproduce (Optional)
       description: |
         Please list the steps required to reproduce the issue, e.g.
-  - type: input
+  - type: textarea
     id: facts
     attributes:
       label: Important Factoids (Optional)
