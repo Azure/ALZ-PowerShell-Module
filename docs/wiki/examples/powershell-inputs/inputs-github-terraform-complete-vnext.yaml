@@ -30,7 +30,7 @@ allow_storage_access_from_my_ip: "false"
 apply_approvers: "<email-address-list>"
 create_branch_policies: "true"
 
-# Starter Module Specific Variables
-default_location: "<region>"
-default_postfix: "landing-zone"
-configuration_file_path: "<configuration-file-path>"  # Only required for the `complete` starter module
+# Complete vNext Starter Module Specific Variables
+# (Details: https://github.com/Azure/ALZ-PowerShell-Module/wiki/%5BUser-Guide%5D-Starter-Module-Terraform-Complete-vNext)
+configuration_file_path: "<configuration-file-path>"  # Only required for the `complete` starter module. NOTE: This must be an absolute path.
+default_postfix: "<postfix>"

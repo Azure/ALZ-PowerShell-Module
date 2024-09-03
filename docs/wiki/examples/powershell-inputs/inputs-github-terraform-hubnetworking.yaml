@@ -1,9 +1,9 @@
 ---
 # For detailed instructions on using this file, visit:
-# https://github.com/Azure/ALZ-PowerShell-Module/wiki/%5BUser-Guide%5D-Quick-Start-Phase-2-GitHub#2221-github-with-bicep
+# https://github.com/Azure/ALZ-PowerShell-Module/wiki/%5BUser-Guide%5D-Quick-Start-Phase-2-GitHub#2222-github-with-terraform
 
 # Basic Inputs
-iac: "bicep"
+iac: "terraform"
 bootstrap: "alz_github"
 starter: "complete"
 
@@ -30,9 +30,11 @@ allow_storage_access_from_my_ip: "false"
 apply_approvers: "<email-address-list>"
 create_branch_policies: "true"
 
-# Starter Module Specific Variables
-Prefix: "alz"
-Location: "<region>"
-Environment: "live"
-networkType: "hubNetworking"
-SecurityContact: "<email-address>"
+# Hub Networking Starter Module Specific Variables
+# (Details: https://github.com/Azure/ALZ-PowerShell-Module/wiki/%5BUser-Guide%5D-Starter-Module-Terraform-HubNetworking)
+root_id: "<id_prefix>"
+root_name: "<name_prefix>"
+hub_virtual_network_address_prefix: "<hub-virtual-network-address-prefix>"
+firewall_subnet_address_prefix: "<firewall-subnet-address-prefix>"
+gateway_subnet_address_prefix: "<gateway-subnet-address-prefix>"
+virtual_network_gateway_creation_enabled: "true"

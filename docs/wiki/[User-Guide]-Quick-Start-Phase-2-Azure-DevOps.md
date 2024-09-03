@@ -30,7 +30,7 @@ Although you can just run `Deploy-Accelerator` and fill out the prompted inputs,
     ┗ 📂output
     ```
 
-1. Open your `inputs.yaml` file in Visual Studio Code (or your preferred editor) and copy the content from [inputs-azure-devops-bicep.yaml][example_powershell_inputs_azure_devops_bicep] into that file.
+1. Open your `inputs.yaml` file in Visual Studio Code (or your preferred editor) and copy the content from [inputs-azure-devops-bicep-complete.yaml][example_powershell_inputs_azure_devops_bicep_complete] into that file.
 1. Check through the file and update each input as required. It is mandatory to update items with placeholders surrounded by angle brackets `<>`:
 
     | Input | Placeholder | Description |
@@ -106,7 +106,10 @@ Although you can just run `Deploy-Accelerator` and fill out the prompted inputs,
     ┗ 📂output
     ```
 
-1. Open your `inputs.yaml` file in Visual Studio Code (or your preferred editor) and copy the content from [inputs-azure-devops-terraform.yaml][example_powershell_inputs_azure_devops_terraform] into that file.
+1. Open your `inputs.yaml` file in Visual Studio Code (or your preferred editor) and copy the content from the relevant input file for your chosen starter module:
+    1. Basic - [inputs-azure-devops-terraform-basic.yaml][example_powershell_inputs_azure_devops_terraform_basic]
+    1. Hub Networking - [inputs-azure-devops-terraform-hubnetworking.yaml][example_powershell_inputs_azure_devops_terraform_hubnetworking]
+    1. Complete - [inputs-azure-devops-terraform-complete.yaml][example_powershell_inputs_azure_devops_terraform_complete]
 1. Check through the file and update each input as required. It is mandatory to update items with placeholders surrounded by angle brackets `<>`:
 
     | Input | Placeholder | Description |
@@ -172,5 +175,7 @@ Now head to [Phase 3][wiki_quick_start_phase_3].
 [wiki_starter_module_terraform_hubnetworking]:      %5BUser-Guide%5D-Starter-Module-Terraform-HubNetworking "Wiki - Start Modules - Terraform Hub Networking"
 [wiki_starter_module_terraform_complete]:           %5BUser-Guide%5D-Starter-Module-Terraform-Complete "Wiki - Starter Modules - Terraform Complete"
 [wiki_quick_start_phase_3]:                         %5BUser-Guide%5D-Quick-Start-Phase-3 "Wiki - Quick Start - Phase 3"
-[example_powershell_inputs_azure_devops_bicep]:     examples/powershell-inputs/inputs-azure-devops-bicep.yaml "Example - PowerShell Inputs - Azure DevOps - Bicep"
-[example_powershell_inputs_azure_devops_terraform]: examples/powershell-inputs/inputs-azure-devops-terraform.yaml "Example - PowerShell Inputs - Azure DevOps - Terraform"
+[example_powershell_inputs_azure_devops_bicep_complete]:     examples/powershell-inputs/inputs-azure-devops-bicep-complete.yaml "Example - PowerShell Inputs - Azure DevOps - Bicep - Complete"
+[example_powershell_inputs_azure_devops_terraform_basic]:     examples/powershell-inputs/inputs-azure-devops-terraform-basic.yaml "Example - PowerShell Inputs - Azure DevOps - Terraform - Basic"
+[example_powershell_inputs_azure_devops_terraform_hubnetworking]:     examples/powershell-inputs/inputs-azure-devops-terraform-hubnetworking.yaml "Example - PowerShell Inputs - Azure DevOps - Terraform - Hub Networking"
+[example_powershell_inputs_azure_devops_terraform_complete]:     examples/powershell-inputs/inputs-azure-devops-terraform-complete.yaml "Example - PowerShell Inputs - Azure DevOps - Terraform - Complete"

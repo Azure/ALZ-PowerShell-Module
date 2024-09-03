@@ -1,9 +1,9 @@
 ---
 # For detailed instructions on using this file, visit:
-# https://github.com/Azure/ALZ-PowerShell-Module/wiki/%5BUser-Guide%5D-Quick-Start-Phase-2-Azure-DevOps#2211-azure-devops-with-bicep
+# https://github.com/Azure/ALZ-PowerShell-Module/wiki/%5BUser-Guide%5D-Quick-Start-Phase-2-Azure-DevOps#2212-azure-devops-with-terraform
 
 # Basic Inputs
-iac: "bicep"
+iac: "terraform"
 bootstrap: "alz_azuredevops"
 starter: "complete"
 
@@ -33,9 +33,7 @@ allow_storage_access_from_my_ip: "false"
 apply_approvers: "<email-address-list>"
 create_branch_policies: "true"
 
-# Starter Module Specific Variables
-Prefix: "alz"
-Location: "<region>"
-Environment: "live"
-networkType: "hubNetworking"
-SecurityContact: "<email-address>"
+# Basic Starter Module Specific Variables
+# (Details: https://github.com/Azure/ALZ-PowerShell-Module/wiki/%5BUser-Guide%5D-Starter-Module-Terraform-Basic)
+root_id: "<id_prefix>"
+root_name: "<name_prefix>"

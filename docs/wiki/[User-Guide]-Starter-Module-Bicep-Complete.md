@@ -3,8 +3,9 @@ The `complete` starter module is currently the only option available for Bicep.
 
 Example input files can be found here:
 
-- [inputs-azure-devops-bicep.yaml][example_powershell_inputs_azure_devops_bicep]
-- [inputs-github-bicep.yaml][example_powershell_inputs_github_bicep]
+- [inputs-azure-devops-bicep-complete.yaml][example_powershell_inputs_azure_devops_bicep_complete]
+- [inputs-github-bicep-complete.yaml][example_powershell_inputs_github_bicep_complete]
+- [inputs-local-bicep-complete.yaml][example_powershell_inputs_local_bicep_complete]
 
 The following table describes the inputs required for the `complete` starter module.
 
@@ -19,5 +20,6 @@ The following table describes the inputs required for the `complete` starter mod
  [//]: # (INSERT LINK LABELS BELOW)
  [//]: # (************************)
 
-[example_powershell_inputs_azure_devops_bicep]:     examples/powershell-inputs/inputs-azure-devops-bicep.yaml "Example - PowerShell Inputs - Azure DevOps - Bicep"
-[example_powershell_inputs_github_bicep]:     examples/powershell-inputs/inputs-github-bicep.yaml "Example - PowerShell Inputs - GitHub - Bicep"
+[example_powershell_inputs_azure_devops_bicep_complete]:     examples/powershell-inputs/inputs-azure-devops-bicep-complete.yaml "Example - PowerShell Inputs - Azure DevOps - Bicep - Complete"
+[example_powershell_inputs_github_bicep_complete]:     examples/powershell-inputs/inputs-github-bicep-complete.yaml "Example - PowerShell Inputs - GitHub - Bicep - Complete"
+[example_powershell_inputs_local_bicep_complete]:     examples/powershell-inputs/inputs-local-bicep-complete.yaml "Example - PowerShell Inputs - Local - Bicep - Complete"
