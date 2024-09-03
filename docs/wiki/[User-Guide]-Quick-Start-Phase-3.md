@@ -35,8 +35,8 @@ Now you have created your bootstrapped environment you can deploy you Azure land
 1. If you choose to deploy the bootstrap resources in Azure, then you will need to navigate to the Azure Portal and find you storage account.
 1. Make note of the `Resource Group Name`, `Storage account name`and `Container Name` from the storage account.
 1. If you did not choose to deploy the bootstrap resources in Azure, type `terraform init` and hit enter.
-1. If you choose to deploy the bootstrap resources in Azure, type `terraform init -backend-config="resource_group_name=<Resource Group Name>" -backend-config="storage_account_name=<Storage account name>" -backend-config="container_name=<Container Name>" -backend-config="key=terraform.tfstate"` , replacing the items in angle brackets and hit enter.
-1. Type `terraform plan` and hit enter.
-1. Review the plan.
-1. If you are happy with the plan, then type `terraform apply` and hit enter.
+1. If you choose to deploy the bootstrap resources in Azure, type `terraform init -backend-config="resource_group_name=<Resource Group Name>" -backend-config="storage_account_name=<Storage account name>" -backend-config="container_name=<Container Name>" -backend-config="key=terraform.tfstate" -backend-config="use_azuread_auth=true"` , replacing the items in angle brackets and hit enter.
+1. Type `terraform plan -out=tfplan` and hit enter.
+1. Review the plan. Use `terraform show tfplan` to see the plan details.
+1. If you are happy with the plan, then type `terraform apply tfplan` and hit enter.
 1. The ALZ will now be deployed, this may take some time.
