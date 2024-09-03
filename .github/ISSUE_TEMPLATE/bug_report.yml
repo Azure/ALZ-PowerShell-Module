@@ -1,7 +1,8 @@
+---
 name: "Bug report \U0001F41B"
 description: Report errors or unexpected behaviour
 title: "Bug: "
-labels: ['Needs: Triage :mag:','bug']
+labels: ['Needs: Triage :mag:', 'Type: Bug :beetle:']
 body:
   - type: markdown
     attributes:
@@ -41,7 +42,7 @@ body:
     id: inputs
     attributes:
       label: Input arguments of the ALZ-PowerShell-Module (Optional)
-      description: Please provide any relevant input arguments of the ALZ PowerShell Module that can reproduce the issue. 
+      description: Please provide any relevant input arguments of the ALZ PowerShell Module that can reproduce the issue.
     validations:
       required: false
   - type: textarea
