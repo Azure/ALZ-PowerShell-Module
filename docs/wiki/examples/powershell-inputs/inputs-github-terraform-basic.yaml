@@ -1,9 +1,9 @@
 ---
 # For detailed instructions on using this file, visit:
-# https://github.com/Azure/ALZ-PowerShell-Module/wiki/%5BUser-Guide%5D-Quick-Start-Phase-2-GitHub#2221-github-with-bicep
+# https://github.com/Azure/ALZ-PowerShell-Module/wiki/%5BUser-Guide%5D-Quick-Start-Phase-2-GitHub#2222-github-with-terraform
 
 # Basic Inputs
-iac: "bicep"
+iac: "terraform"
 bootstrap: "alz_github"
 starter: "complete"
 
@@ -20,7 +20,7 @@ github_personal_access_token: "<token-1>"
 github_runners_personal_access_token: "<token-2>"
 github_organization_name: "<github-organization>"
 use_separate_repository_for_templates: "true"
-bootstrap_subscription_id: "<bootstrap-subscription-id>"
+bootstrap_subscription_id: ""
 service_name: "alz"
 environment_name: "mgmt"
 postfix_number: "1"
@@ -30,9 +30,7 @@ allow_storage_access_from_my_ip: "false"
 apply_approvers: "<email-address-list>"
 create_branch_policies: "true"
 
-# Starter Module Specific Variables
-Prefix: "alz"
-Location: "<region>"
-Environment: "live"
-networkType: "hubNetworking"
-SecurityContact: "<email-address>"
+# Basic Starter Module Specific Variables
+# (Details: https://github.com/Azure/ALZ-PowerShell-Module/wiki/%5BUser-Guide%5D-Starter-Module-Terraform-Basic)
+root_id: "<id_prefix>"
+root_name: "<name_prefix>"

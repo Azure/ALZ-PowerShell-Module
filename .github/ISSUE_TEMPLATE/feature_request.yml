@@ -1,0 +1,54 @@
+---
+name: "Feature request \U0001F680"
+description: Suggest an idea for this project
+title: 'Feature Request: '
+labels: ['Needs: Triage :mag:', 'Type: Enhancement :sparkles:']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for taking the time to fill out a feature request.
+  - type: checkboxes
+    attributes:
+      label: Is there an existing issue for this?
+      description: Please search to see if an issue already exists for the proposed feature.
+      options:
+        - label: I have searched the existing issues
+          required: true
+  - type: dropdown
+    attributes:
+      label: Infrastrcuture as Code Type? (Required)
+      description: Are you using Bicep or Terraform?
+      multiple: false
+      options:
+        - bicep
+        - terraform
+    validations:
+      required: true
+  - type: textarea
+    id: usecase
+    attributes:
+      label: Use Case (Required)
+      description: Describe the use case for this feature?
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution (Required)
+      description: Describe how this feature could be implemented?
+    validations:
+      required: true
+  - type: textarea
+    id: facts
+    attributes:
+      label: Important Factoids (Optional)
+      description: |
+        Are there anything atypical about your accounts that we should know? For example: Running in a Azure China/Germany/Government?
+  - type: textarea
+    id: references
+    attributes:
+      label: References (Optional)
+      description: |
+        Information about referencing Github Issues: https://help.github.com/articles/basic-writing-and-formatting-syntax/#referencing-issues-and-pull-requests
+        Are there any other GitHub issues (open or closed) or pull requests that should be linked here? Such as vendor documentation?
