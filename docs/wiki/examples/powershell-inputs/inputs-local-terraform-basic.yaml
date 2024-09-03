@@ -3,7 +3,7 @@
 # https://github.com/Azure/ALZ-PowerShell-Module/wiki/%5BUser-Guide%5D-Quick-Start-Phase-2-Azure-DevOps#2211-azure-devops-with-bicep
 
 # Basic Inputs
-iac: "bicep"
+iac: "terraform"
 bootstrap: "alz_local"
 starter: "complete"
 
@@ -23,9 +23,7 @@ service_name: "alz"
 environment_name: "mgmt"
 postfix_number: "1"
 
-# Starter Module Specific Variables
-Prefix: "alz"
-Location: "<region>"
-Environment: "live"
-networkType: "hubNetworking"
-SecurityContact: "<email-address>"
+# Basic Starter Module Specific Variables
+# (Details: https://github.com/Azure/ALZ-PowerShell-Module/wiki/%5BUser-Guide%5D-Starter-Module-Terraform-Basic)
+root_id: "<id_prefix>"
+root_name: "<name_prefix>"
