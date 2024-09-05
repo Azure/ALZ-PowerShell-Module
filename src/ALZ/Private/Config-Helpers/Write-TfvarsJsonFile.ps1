@@ -24,7 +24,11 @@ function Write-TfvarsJsonFile {
             }
 
             if($configurationProperty.Value.DataType -eq "list(string)" -and !($configurationValue -is [array])) {
-                $configurationValue = $configurationValue -split ","
+                if($configurationValue -eq "") {
+                    $configurationValue = @()
+                } else {
+                    $configurationValue = @($configurationValue -split ",")
+                }
             }
 
             if($configurationProperty.Value.DataType -eq "number") {
