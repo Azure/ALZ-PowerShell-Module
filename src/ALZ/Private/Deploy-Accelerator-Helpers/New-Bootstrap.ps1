@@ -301,7 +301,7 @@ function New-Bootstrap {
             $inputName = $input.Name
             $inputValue = $input.Value
 
-            if($bootstrapConfiguration.PSObject.Properties.Name -notcontains $inputName) {
+            if($bootstrapConfiguration.PSObject.Properties.Name -notcontains $inputName -and $interfaceConfiguration.PSObject.Properties.Name -notcontains $inputName -and $starterConfiguration.PSObject.Properties.Name -notcontains $inputName) {
                 Write-Verbose "Setting hidden bootstrap variable '$inputName' to '$inputValue'"
                 $configItem = [PSCustomObject]@{}
                 $configItem | Add-Member -NotePropertyName "Value" -NotePropertyValue $inputValue
