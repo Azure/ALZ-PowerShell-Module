@@ -114,7 +114,7 @@ function New-ALZEnvironment {
         [switch]
         $writeVerboseLogs,
 
-        [Parameter(Mandatory = $false, HelpMessage = "The path to the bootstrap terraform.tfvars file that you would like to replace the default one with. (e.g. c:\accelerator\terraform.tfvars)")]
+        [Parameter(Mandatory = $false, HelpMessage = "The path to the bootstrap terraform.tfvars file that you would like to replace the default one with. (e.g. c:\accelerator\terraform.tfvars). This file can also be in json format.")]
         [string]
         $bootstrapTfVarsOverridePath
     )

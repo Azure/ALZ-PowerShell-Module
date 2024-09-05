@@ -215,7 +215,7 @@ function New-Bootstrap {
         $computedInputs["module_folder_path"] = $starterModulePath
         $computedInputs["availability_zones_bootstrap"] = @(Get-AvailabilityZonesSupport -region $interfaceConfiguration.bootstrap_location.Value -zonesSupport $zonesSupport)
 
-        $starterLocations = $interfaceConfiguration.starter_locations.Value
+        $starterLocations = $interfaceConfiguration.starter_location.Value
         if($starterLocations.Contains(",")) {
             $computedInputs["availability_zones_starter"] = @()
             foreach($region in $starterLocations -split ",") {
@@ -295,6 +295,23 @@ function New-Bootstrap {
         $bootstrapTfvarsPath = Join-Path -Path $bootstrapModulePath -ChildPath $tfVarsFileName
         $starterTfvarsPath = Join-Path -Path $starterModulePath -ChildPath "terraform.tfvars.json"
         $starterBicepVarsPath = Join-Path -Path $starterModulePath -ChildPath "parameters.json"
+
+        # Add any extra inputs to the bootstrap tfvars on the assumption they are hidden inputs
+        foreach($input in $userInputOverrides.PSObject.Properties) {
+            $inputName = $input.Name
+            $inputValue = $input.Value
+
+            if($bootstrapConfiguration.PSObject.Properties.Name -notcontains $inputName) {
+                Write-Verbose "Setting hidden bootstrap variable '$inputName' to '$inputValue'"
+                $configItem = [PSCustomObject]@{}
+                $configItem | Add-Member -NotePropertyName "Value" -NotePropertyValue $inputValue
+                $configItem | Add-Member -NotePropertyName "DataType" -NotePropertyValue "Any"
+
+                $bootstrapConfiguration | Add-Member -NotePropertyName $inputName -NotePropertyValue $configItem
+            }
+        }
+
+        # Write the tfvars file for the bootstrap and starter module
         Write-TfvarsJsonFile -tfvarsFilePath $bootstrapTfvarsPath -configuration $bootstrapConfiguration
 
         if($iac -eq "terraform") {
