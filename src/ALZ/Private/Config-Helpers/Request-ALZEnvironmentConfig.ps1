@@ -89,6 +89,7 @@ function Request-ALZEnvironmentConfig {
                 $userInputOverride = $userInputOverrides.PsObject.Properties | Where-Object { $_.Name -eq $configurationValue.Name }
                 if($null -ne $userInputOverride) {
                     $configurationValue.Value.Value = $userInputOverride.Value
+                    $configurationValue.Value.Source = "InputConfig"
                 } else {
                     if($configurationValue.Value.PSObject.Properties.Name -match "DefaultValue") {
                         Write-Verbose "Input not supplied, so using default value of $($configurationValue.Value.DefaultValue) for $($configurationValue.Name)"

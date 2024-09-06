@@ -42,6 +42,7 @@ function Convert-InterfaceInputToUserInputConfig {
             $starterModuleConfigurationInstance | Add-Member -NotePropertyName "Type" -NotePropertyValue $inputType
             $starterModuleConfigurationInstance | Add-Member -NotePropertyName "DataType" -NotePropertyValue $dataType
             $starterModuleConfigurationInstance | Add-Member -NotePropertyName "Sensitive" -NotePropertyValue $sensitive
+            $starterModuleConfigurationInstance | Add-Member -NotePropertyName "Source" -NotePropertyValue "UserInterface"
 
             if($variable.Value.PSObject.Properties.Name -contains "Value") {
                 $starterModuleConfigurationInstance | Add-Member -NotePropertyName "Value" -NotePropertyValue $variable.Value.Value

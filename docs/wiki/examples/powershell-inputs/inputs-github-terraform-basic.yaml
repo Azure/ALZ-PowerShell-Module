@@ -27,7 +27,7 @@ postfix_number: "1"
 use_self_hosted_runners: "true"
 use_private_networking: "true"
 allow_storage_access_from_my_ip: "false"
-apply_approvers: "<email-address-list>"
+apply_approvers: ["<email-address>"]
 create_branch_policies: "true"
 
 # Basic Starter Module Specific Variables

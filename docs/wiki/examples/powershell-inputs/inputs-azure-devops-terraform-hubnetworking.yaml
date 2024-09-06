@@ -30,7 +30,7 @@ azure_devops_project_name: "<azure-devops-project-name>"
 use_self_hosted_agents: "true"
 use_private_networking: "true"
 allow_storage_access_from_my_ip: "false"
-apply_approvers: "<email-address-list>"
+apply_approvers: ["<email-address>"]
 create_branch_policies: "true"
 
 # Hub Networking Starter Module Specific Variables
