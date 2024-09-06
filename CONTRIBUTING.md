@@ -48,18 +48,18 @@ Example folder structure:
   ┗ 📂acc
       ┣ 📂bicep
       ┃ ┣ 📂config
-      ┃ ┃ ┣ 📜inputs-azuredevops.yaml  # ./docs/wiki/examples/powershell-inputs/inputs-azure-devops-bicep.yaml
-      ┃ ┃ ┣ 📜inputs-github.yaml       # ./docs/wiki/examples/powershell-inputs/inputs-github-bicep.yaml
-      ┃ ┃ ┗ 📜inputs-local.yaml        # ./docs/wiki/examples/powershell-inputs/inputs-local-bicep.yaml
+      ┃ ┃ ┣ 📜inputs-azuredevops.yaml  # ./docs/wiki/examples/powershell-inputs/inputs-azure-devops-bicep-complete.yaml
+      ┃ ┃ ┣ 📜inputs-github.yaml       # ./docs/wiki/examples/powershell-inputs/inputs-github-bicep-complete.yaml
+      ┃ ┃ ┗ 📜inputs-local.yaml        # ./docs/wiki/examples/powershell-inputs/inputs-local-bicep-complete.yaml
       ┃ ┗ 📂output
       ┃   ┣ 📂azuredevops
       ┃   ┣ 📂github
       ┃   ┗ 📂local
       ┗ 📂terraform
         ┣ 📂config
-        ┃ ┣ 📜inputs-azuredevops.yaml  # ./docs/wiki/examples/powershell-inputs/inputs-azure-devops-terraform.yaml
-        ┃ ┣ 📜inputs-github.yaml       # ./docs/wiki/examples/powershell-inputs/inputs-github-terraform.yaml
-        ┃ ┗ 📜inputs-local.yaml        # ./docs/wiki/examples/powershell-inputs/inputs-local-terraform.yaml
+        ┃ ┣ 📜inputs-azuredevops.yaml  # ./docs/wiki/examples/powershell-inputs/inputs-azure-devops-terraform-complete.yaml
+        ┃ ┣ 📜inputs-github.yaml       # ./docs/wiki/examples/powershell-inputs/inputs-github-terraform-complete.yaml
+        ┃ ┗ 📜inputs-local.yaml        # ./docs/wiki/examples/powershell-inputs/inputs-local-terraform-complete.yaml
         ┗ 📂output
           ┣ 📂azuredevops
           ┣ 📂github
@@ -94,12 +94,12 @@ cd /
 
 $exampleFolder = "$targetFolder/code/ALZ-PowerShell-Module/docs/wiki/examples/powershell-inputs"
 
-Copy-Item -Path "$exampleFolder/inputs-azure-devops-bicep.yaml" -Destination "$bicepConfigFolder/inputs-azuredevops.yaml" -Force
-Copy-Item -Path "$exampleFolder/inputs-github-bicep.yaml" -Destination "$bicepConfigFolder/inputs-github.yaml" -Force
-Copy-Item -Path "$exampleFolder/inputs-local-bicep.yaml" -Destination "$bicepConfigFolder/inputs-local.yaml" -Force
-Copy-Item -Path "$exampleFolder/inputs-azure-devops-terraform.yaml" -Destination "$terraformConfigFolder/inputs-azuredevops.yaml" -Force
-Copy-Item -Path "$exampleFolder/inputs-github-terraform.yaml" -Destination "$terraformConfigFolder/inputs-github.yaml" -Force
-Copy-Item -Path "$exampleFolder/inputs-local-terraform.yaml" -Destination "$terraformConfigFolder/inputs-local.yaml" -Force
+Copy-Item -Path "$exampleFolder/inputs-azure-devops-bicep-complete.yaml" -Destination "$bicepConfigFolder/inputs-azuredevops.yaml" -Force
+Copy-Item -Path "$exampleFolder/inputs-github-bicep-complete.yaml" -Destination "$bicepConfigFolder/inputs-github.yaml" -Force
+Copy-Item -Path "$exampleFolder/inputs-local-bicep-complete.yaml" -Destination "$bicepConfigFolder/inputs-local.yaml" -Force
+Copy-Item -Path "$exampleFolder/inputs-azure-devops-terraform-complete.yaml" -Destination "$terraformConfigFolder/inputs-azuredevops.yaml" -Force
+Copy-Item -Path "$exampleFolder/inputs-github-terraform-complete.yaml" -Destination "$terraformConfigFolder/inputs-github.yaml" -Force
+Copy-Item -Path "$exampleFolder/inputs-local-terraform-complete.yaml" -Destination "$terraformConfigFolder/inputs-local.yaml" -Force
 
 ```
 

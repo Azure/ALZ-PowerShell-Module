@@ -72,6 +72,7 @@ function Convert-HCLVariablesToUserInputConfig {
             $starterModuleConfigurationInstance | Add-Member -NotePropertyName "Value" -NotePropertyValue ""
             $starterModuleConfigurationInstance | Add-Member -NotePropertyName "DataType" -NotePropertyValue $dataType
             $starterModuleConfigurationInstance | Add-Member -NotePropertyName "Sensitive" -NotePropertyValue $sensitive
+            $starterModuleConfigurationInstance | Add-Member -NotePropertyName "Source" -NotePropertyValue "UserInterface"
 
             if($variable.Value[0].PSObject.Properties.Name -contains "default") {
                 $defaultValue = $variable.Value[0].default
