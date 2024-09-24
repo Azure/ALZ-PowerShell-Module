@@ -1,17 +1,23 @@
 <!-- markdownlint-disable first-line-h1 -->
-The `basic` starter module creates a management group hierarchy with policy assignments, and deploys management resources such as the Log Analytics Workspace and Automation Account.
+The `basic` starter module deploys the management group hierarchy, management resources and policies only.
 
-## High Level Design
+Example input files can be found here:
 
-![Alt text](./media/starter-module-basic.png)
+- [inputs-azure-devops-terraform-basic.yaml][example_powershell_inputs_azure_devops_terraform_basic]
+- [inputs-github-terraform-basic.yaml][example_powershell_inputs_github_terraform_basic]
+- [inputs-local-terraform-basic.yaml][example_powershell_inputs_local_terraform_basic]
 
-## Terraform Modules
+The following table describes the inputs required for the `basic` starter module.
 
-### `caf-enterprise-scale`
+| Input | Placeholder | Description |
+| - | -- | --- |
+| `root_id` | `<id_prefix>` | This is the prefix for the ID of management groups. |
+| `root_name` | `<name_prefix>` | This is the prefix for the name of management groups. |
 
-The `caf-enterprise-scale` module is solely used for this basic starter module, and has only been populated with its most basic of inputs. It is worth noting that the module itself can be extended to deploy, connectivity resources, custom polices and more. For more information on the module itself see [here](https://github.com/Azure/terraform-azurerm-caf-enterprise-scale).
+ [//]: # (************************)
+ [//]: # (INSERT LINK LABELS BELOW)
+ [//]: # (************************)
 
-## Inputs
-
-- `root_id`: The root id is the identity for the root management group and a prefix applied to all management group identities.
-- `root_name`: The display name for the root management group.
+[example_powershell_inputs_azure_devops_terraform_basic]:     examples/powershell-inputs/inputs-azure-devops-terraform-basic.yaml "Example - PowerShell Inputs - Azure DevOps - Terraform - Basic"
+[example_powershell_inputs_github_terraform_basic]:     examples/powershell-inputs/inputs-github-terraform-basic.yaml "Example - PowerShell Inputs - GitHub - Terraform - Basic"
+[example_powershell_inputs_local_terraform_basic]:     examples/powershell-inputs/inputs-local-terraform-basic.yaml "Example - PowerShell Inputs - Local - Terraform - Basic"

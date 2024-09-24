@@ -1,16 +1,18 @@
 <!-- markdownlint-disable first-line-h1 -->
-The `complete` starter module provides full customization of the Azure Landing Zone using the `config.yaml` file. The `config.yaml` file provides the ability to enable and disable modules, configure module inputs and outputs, and configure module resources.
+> **WARNING:** The Complete vNext starter module is a work in progress. Do not use this for any production workloads.
+
+The `complete_vnext` starter module provides full customization of the Azure Landing Zone using the `config.yaml` file. The `config.yaml` file provides the ability to enable and disable modules, configure module inputs and outputs, and configure module resources.
 A custom `config.yaml` file can be passed to the `configuration_file_path` argument of the ALZ PowerShell Module. This allows you to firstly design your Azure Landing Zone, and then deploy it.
 
-If not specified, the default `config.yaml` file will be used, which can be seen [here](https://github.com/Azure/alz-terraform-accelerator/blob/main/templates/complete/config.yaml).
+If not specified, the default `config.yaml` file will be used, which can be seen [here](https://github.com/Azure/alz-terraform-accelerator/blob/main/templates/complete_vnext/config.yaml).
 
 Example input files can be found here:
 
-- [inputs-azure-devops-terraform-complete.yaml][example_powershell_inputs_azure_devops_terraform_complete]
-- [inputs-github-terraform-complete.yaml][example_powershell_inputs_github_terraform_complete]
-- [inputs-local-terraform-complete.yaml][example_powershell_inputs_local_terraform_complete]
+- [inputs-azure-devops-terraform-complete_vnext.yaml][example_powershell_inputs_azure_devops_terraform_complete_vnext]
+- [inputs-github-terraform-complete_vnext.yaml][example_powershell_inputs_github_terraform_complete_vnext]
+- [inputs-local-terraform-complete_vnext.yaml][example_powershell_inputs_local_terraform_complete_vnext]
 
-The following table describes the inputs required for the `complete` starter module.
+The following table describes the inputs required for the `complete_vnext` starter module.
 
 | Input | Placeholder | Description |
 | - | -- | --- |
@@ -52,16 +54,16 @@ The `avm-ptn-vwan` module is used to deploy a Virtual WAN. Further configuration
 
 Create a custom yaml config to tailor to your needs, for example an Azure Landing Zone with a three-region mesh:
 
-- Example config file for hub and spoke: [config-hub-spoke.yaml][example_starter_module_complete_config_hub_spoke]
-- Example config file for Virtual WAN: [config-vwan.yaml][example_starter_module_complete_config_vwan]
+- Example config file for hub and spoke: [config-hub-spoke.yaml][example_starter_module_complete_vnext_config_hub_spoke]
+- Example config file for Virtual WAN: [config-vwan.yaml][example_starter_module_complete_vnext_config_vwan]
 
  [//]: # (************************)
  [//]: # (INSERT LINK LABELS BELOW)
  [//]: # (************************)
 
 [wiki_yaml_schema_reference]: %5BUser-Guide%5D-YAML-Schema-Reference "Wiki - YAML Schema Reference"
-[example_starter_module_complete_config_hub_spoke]: examples/starter-module-config/complete/config-hub-spoke.yaml "Example - Starter Module Config - Complete - Hub and Spoke"
-[example_starter_module_complete_config_vwan]: examples/starter-module-config/complete/config-vwan.yaml "Example - Starter Module Config - Complete - Virtual WAN"
-[example_powershell_inputs_azure_devops_terraform_complete]:     examples/powershell-inputs/inputs-azure-devops-terraform-complete.yaml "Example - PowerShell Inputs - Azure DevOps - Terraform - Complete"
-[example_powershell_inputs_github_terraform_complete]:     examples/powershell-inputs/inputs-github-terraform-complete.yaml "Example - PowerShell Inputs - GitHub - Terraform - Complete"
-[example_powershell_inputs_local_terraform_complete]:     examples/powershell-inputs/inputs-local-terraform-complete.yaml "Example - PowerShell Inputs - Local - Terraform - Complete"
+[example_starter_module_complete_vnext_config_hub_spoke]: examples/starter-module-config/complete_vnext/config-hub-spoke.yaml "Example - Starter Module Config - Complete - Hub and Spoke"
+[example_starter_module_complete_vnext_config_vwan]: examples/starter-module-config/complete_vnext/config-vwan.yaml "Example - Starter Module Config - Complete - Virtual WAN"
+[example_powershell_inputs_azure_devops_terraform_complete_vnext]:     examples/powershell-inputs/inputs-azure-devops-terraform-complete_vnext.yaml "Example - PowerShell Inputs - Azure DevOps - Terraform - Complete vNext"
+[example_powershell_inputs_github_terraform_complete_vnext]:     examples/powershell-inputs/inputs-github-terraform-complete_vnext.yaml "Example - PowerShell Inputs - GitHub - Terraform - Complete vNext"
+[example_powershell_inputs_local_terraform_complete_vnext]:     examples/powershell-inputs/inputs-local-terraform-complete_vnext.yaml "Example - PowerShell Inputs - Local - Terraform - Complete vNext"

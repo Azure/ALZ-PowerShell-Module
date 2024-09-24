@@ -1,9 +1,9 @@
 ---
 # For detailed instructions on using this file, visit:
-# https://github.com/Azure/ALZ-PowerShell-Module/wiki/%5BUser-Guide%5D-Quick-Start-Phase-2-Azure-DevOps#2211-azure-devops-with-bicep
+# https://github.com/Azure/ALZ-PowerShell-Module/wiki/%5BUser-Guide%5D-Quick-Start-Phase-2-Azure-DevOps#2212-azure-devops-with-terraform
 
 # Basic Inputs
-iac: "bicep"
+iac: "terraform"
 bootstrap: "alz_azuredevops"
 starter: "complete"
 
@@ -20,7 +20,7 @@ azure_devops_personal_access_token: "<token-1>"
 azure_devops_agents_personal_access_token: "<token-2>"
 azure_devops_organization_name: "<azure-devops-organization>"
 use_separate_repository_for_templates: "true"
-bootstrap_subscription_id: "<bootstrap-subscription-id>"
+bootstrap_subscription_id: ""
 service_name: "alz"
 environment_name: "mgmt"
 postfix_number: "1"
@@ -30,12 +30,10 @@ azure_devops_project_name: "<azure-devops-project-name>"
 use_self_hosted_agents: "true"
 use_private_networking: "true"
 allow_storage_access_from_my_ip: "false"
-apply_approvers: "<email-address-list>"
+apply_approvers: ["<email-address>"]
 create_branch_policies: "true"
 
-# Starter Module Specific Variables
-Prefix: "alz"
-Location: "<region>"
-Environment: "live"
-networkType: "hubNetworking"
-SecurityContact: "<email-address>"
+# Complete Starter Module Specific Variables
+# (Details: https://github.com/Azure/ALZ-PowerShell-Module/wiki/%5BUser-Guide%5D-Starter-Module-Terraform-Complete)
+configuration_file_path: "<configuration-file-path>"  # Only required for the `complete` starter module. NOTE: This must be an absolute path.
+default_postfix: "<postfix>"

@@ -115,8 +115,6 @@ InModuleScope 'ALZ' {
                     )
                 }
 
-                Mock -CommandName Write-TfvarsFile -MockWith { }
-
                 Mock -CommandName Write-ConfigurationCache -MockWith { }
 
                 Mock -CommandName Invoke-Terraform -MockWith { }
@@ -139,12 +137,28 @@ InModuleScope 'ALZ' {
                 Mock -CommandName Get-BootstrapAndStarterConfig -MockWith {
                     @{
                         "hasStarterModule" = $true
+                        "validationConfig" = @{
+                            "azure_location" = @{
+                                "AllowedValues" = @{
+                                    "Values" = @( "uksouth", "ukwest" )
+                                }
+                            }
+                        }
                     }
                 }
 
                 Mock -CommandName New-Bootstrap -MockWith {}
 
                 Mock -CommandName New-ALZEnvironmentBicep -MockWith {}
+
+                Mock -CommandName Get-AzureRegionData -MockWith {
+                    @{
+                        "uksouth" = @{
+                            "display_name" = "UK South"
+                            "zone" = @( "1", "2", "3" )
+                        }
+                    }
+                }
             }
 
             It 'should call the correct functions for bicep legacy module configuration' {

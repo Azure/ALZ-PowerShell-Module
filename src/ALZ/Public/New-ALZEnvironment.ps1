@@ -57,7 +57,6 @@ function New-ALZEnvironment {
         [Alias("b")]
         [string] $bootstrap = "",
 
-
         [Parameter(Mandatory = $false, HelpMessage = "The starter module to deploy. You will be prompted to enter this if not supplied.")]
         [string] $starter = "",
 
@@ -113,7 +112,11 @@ function New-ALZEnvironment {
 
         [Parameter(Mandatory = $false, HelpMessage = "An extra level of logging that is turned off by default for easier debugging.")]
         [switch]
-        $writeVerboseLogs
+        $writeVerboseLogs,
+
+        [Parameter(Mandatory = $false, HelpMessage = "The path to the bootstrap terraform.tfvars file that you would like to replace the default one with. (e.g. c:\accelerator\terraform.tfvars). This file can also be in json format.")]
+        [string]
+        $bootstrapTfVarsOverridePath
     )
 
     $ProgressPreference = "SilentlyContinue"
@@ -123,39 +126,39 @@ function New-ALZEnvironment {
     if ($PSCmdlet.ShouldProcess("Accelerator setup", "modify")) {
         # Get User Inputs from the -inputs file
         $userInputOverrides = $null
-        if($userInputOverridePath -ne "") {
+        if ($userInputOverridePath -ne "") {
             $userInputOverrides = Get-ALZConfig -configFilePath $userInputOverridePath
         }
 
         # Get the IAC type if not specified
-        if($iac -eq "") {
+        if ($iac -eq "") {
             $iac = Request-SpecialInput -type "iac" -userInputOverrides $userInputOverrides
         }
 
         # Setup the Bicep flag
         $isLegacyBicep = $false
-        if($iac -eq "bicep") {
+        if ($iac -eq "bicep") {
             $isLegacyBicep = $bicepLegacyMode -eq $true
         }
 
-        if($isLegacyBicep) {
+        if ($isLegacyBicep) {
             Write-Verbose "We are running in legacy Bicep mode"
         }
 
-        if(!$isLegacyBicep){
+        if (!$isLegacyBicep) {
             Write-Verbose "We are running in modern mode"
         }
 
         # Check and install Terraform CLI if needed
+        $toolsPath = Join-Path -Path $targetDirectory -ChildPath ".tools"
         if(!$isLegacyBicep) {
             if($skipInternetChecks) {
                 Write-InformationColored "Skipping Terraform tool check as you used the skipInternetCheck parameter. Please ensure you have the most recent version of Terraform installed" -ForegroundColor Yellow -InformationAction Continue
             } else {
                 Write-InformationColored "Checking you have the latest version of Terraform installed..." -ForegroundColor Green -NewLineBefore -InformationAction Continue
-                if($iac -eq "bicep") {
+                if ($iac -eq "bicep") {
                     Write-InformationColored "Although you have selected Bicep, the Accelerator leverages the Terraform tool to bootstrap your Version Control System and Azure. This is will not impact your choice of Bicep post this initial bootstrap. Please refer to our documentation for further details..." -ForegroundColor Yellow -InformationAction Continue
                 }
-                $toolsPath = Join-Path -Path $targetDirectory -ChildPath ".tools"
                 Get-TerraformTool -version "latest" -toolsPath $toolsPath
             }
         }
@@ -165,7 +168,7 @@ function New-ALZEnvironment {
         $bootstrapPath = ""
         $bootstrapTargetFolder = "bootstrap"
 
-        if(!$isLegacyBicep) {
+        if (!$isLegacyBicep) {
             Write-InformationColored "Checking and Downloading the bootstrap module..." -ForegroundColor Green -NewLineBefore -InformationAction Continue
 
             $versionAndPath = New-ModuleSetup `
@@ -187,8 +190,9 @@ function New-ALZEnvironment {
         $starterFolder = "starter"
 
         $starterModuleTargetFolder = $starterFolder
-        if($isLegacyBicep) {
+        if ($isLegacyBicep) {
             $starterModuleTargetFolder = "./upstream-releases"
+            $starterFolder = ""
         }
 
         # Setup the variables for bootstrap and starter modules
@@ -203,13 +207,14 @@ function New-ALZEnvironment {
         $inputConfig = $null
         $zonesSupport = $null
 
-        if(!$isLegacyBicep) {
+        if (!$isLegacyBicep) {
             $bootstrapAndStarterConfig = Get-BootstrapAndStarterConfig `
                 -iac $iac `
                 -bootstrap $bootstrap `
                 -bootstrapPath $bootstrapPath `
                 -bootstrapConfigPath $bootstrapConfigPath `
-                -userInputOverrides $userInputOverrides
+                -userInputOverrides $userInputOverrides `
+                -toolsPath $toolsPath
 
             $bootstrapDetails = $bootstrapAndStarterConfig.bootstrapDetails
             $hasStarterModule = $bootstrapAndStarterConfig.hasStarterModule
@@ -221,18 +226,17 @@ function New-ALZEnvironment {
             $inputConfig = $bootstrapAndStarterConfig.inputConfig
             $zonesSupport = $bootstrapAndStarterConfig.zonesSupport
         } else {
-            if($bootstrap -eq "") {
+            if ($bootstrap -eq "") {
                 $bootstrap = Request-SpecialInput -type "bootstrap" -bootstrapModules $bootstrapModules -userInputOverrides $userInputOverrides
             }
         }
 
         # Download the starter modules
         $starterReleaseTag = ""
-        $starterPath = ""
         $starterConfig = $null
 
-        if(($hasStarterModule -or $isLegacyBicep)) {
-            Write-InformationColored "Checking and Downloading the starter module..." -ForegroundColor Green -NewLineBefore -InformationAction Continue
+        if (($hasStarterModule -or $isLegacyBicep)) {
+            Write-InformationColored "Checking and downloading the starter module..." -ForegroundColor Green -NewLineBefore -InformationAction Continue
 
             $versionAndPath = New-ModuleSetup `
                 -targetDirectory $targetDirectory `
@@ -247,7 +251,7 @@ function New-ALZEnvironment {
 
             $starterReleaseTag = $versionAndPath.releaseTag
             $starterPath = $versionAndPath.path
-            if($starterConfigFilePath -ne "") {
+            if ($starterConfigFilePath -ne "") {
                 $starterConfig = Get-StarterConfig -starterPath $starterPath -starterConfigPath $starterConfigFilePath
             }
         }
@@ -273,7 +277,7 @@ function New-ALZEnvironment {
         }
 
         # Run the bootstrap
-        if(!$isLegacyBicep) {
+        if (!$isLegacyBicep) {
 
             # Set computed interface inputs
             $computedInputs = @{
@@ -303,7 +307,8 @@ function New-ALZEnvironment {
                 -starter $starter `
                 -zonesSupport $zonesSupport `
                 -computedInputs $computedInputs `
-                -writeVerboseLogs:$writeVerboseLogs.IsPresent
+                -writeVerboseLogs:$writeVerboseLogs.IsPresent `
+                -bootstrapTfVarsOverridePath $bootstrapTfVarsOverridePath
         }
     }
 

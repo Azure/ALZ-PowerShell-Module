@@ -11,7 +11,9 @@ function Get-BootstrapAndStarterConfig {
         [Parameter(Mandatory = $false)]
         [string]$bootstrapConfigPath,
         [Parameter(Mandatory = $false)]
-        [PSCustomObject]$userInputOverrides
+        [PSCustomObject]$userInputOverrides,
+        [Parameter(Mandatory = $false)]
+        [string]$toolsPath
     )
 
     if ($PSCmdlet.ShouldProcess("Get Configuration for Bootstrap and Starter", "modify")) {
@@ -31,7 +33,14 @@ function Get-BootstrapAndStarterConfig {
         Write-Verbose "Bootstrap config path $bootstrapConfigFullPath"
         $bootstrapConfig = Get-ALZConfig -configFilePath $bootstrapConfigFullPath
         $validationConfig = $bootstrapConfig.validators
-        $zonesSupport = $bootstrapConfig.zonesSupport
+
+        Write-Verbose "Getting Supported Regions and Availability Zones with Terraform"
+        $regionsAndZones = Get-AzureRegionData -toolsPath $toolsPath
+        Write-Verbose "Supported Regions: $($regionsAndZones.supportedRegions)"
+
+        $zonesSupport = $regionsAndZones.zonesSupport
+        $azureLocationValidator = $validationConfig.PSObject.Properties["azure_location"].Value
+        $azureLocationValidator.AllowedValues.Values = $regionsAndZones.supportedRegions
 
         # Get the available bootstrap modules
         $bootstrapModules = $bootstrapConfig.bootstrap_modules

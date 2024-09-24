@@ -33,6 +33,9 @@ function Request-ConfigurationValue {
         Write-InformationColored "[allowed: $allowedValues] " -ForegroundColor Yellow -InformationAction Continue
     }
 
+    $dataType = $configValue.DataType
+    Write-Verbose "Data Type: $dataType"
+
     $attempt = 0
     $maxAttempts = 10
 
@@ -54,41 +57,58 @@ function Request-ConfigurationValue {
             $readValue = Read-Host
         }
 
-        $previousValue = $configValue.Value
-
         if ($hasDefaultValue -and $readValue -eq "") {
             $configValue.Value = $configValue.defaultValue
         } else {
             $configValue.Value = $readValue
         }
 
-        $hasNotSpecifiedValue = ($null -eq $configValue.Value -or "" -eq $configValue.Value) -and ($configValue.Value -ne $configValue.DefaultValue)
-        $isDisallowedValue = $hasAllowedValues -and $allowedValues.Contains($configValue.Value) -eq $false
-        $skipValidationForEmptyDefault = $treatEmptyDefaultAsValid -and $hasDefaultValue -and (($defaultValue -eq "" -and $configValue.Value -eq "") -or ($configValue.Value -eq "-"))
-
-        # Reset the value to empty if we have a default and the user entered a dash (this is to handle cached situations and provide a method to clear a value)
-        if($skipValidationForEmptyDefault -and $configValue.Value -eq "-") {
-            $configValue.Value = ""
+        $valuesToCheck = @( $configValue.Value )
+        if($dataType -eq "list(string)") {
+            $valuesToCheck = ($configValue.Value -split ",").Trim() | Where-Object {$_ -ne ''}
+            $configValue.Value = $valuesToCheck -join ","
         }
 
-        if($skipValidationForEmptyDefault) {
-            $isNotValid = $false
-        } else {
-            Write-Verbose "Checking '$($configValue.Value)' against '$($configValue.Valid)'"
-            $isNotValid = $hasValidator -and $configValue.Value -match $configValue.Valid -eq $false
+        $isValid = $false
+
+        foreach($valueToCheck in $valuesToCheck) {
+            $isValid = $true
+
+            $hasNotSpecifiedValue = ($null -eq $valueToCheck -or "" -eq $valueToCheck) -and ($valueToCheck -ne $configValue.DefaultValue)
+
+            if($hasNotSpecifiedValue) {
+                Write-InformationColored "A value must be specified for this input. It cannot be left empty." -ForegroundColor Red -InformationAction Continue
+                $isValid = $false
+                break
+            }
+
+            $skipValidationForEmptyDefault = $treatEmptyDefaultAsValid -and $hasDefaultValue -and (($defaultValue -eq "" -and $valueToCheck -eq ""))
+            if(!$skipValidationForEmptyDefault) {
+                if($hasAllowedValues) {
+                    Write-Verbose "Checking '$($valueToCheck)' against list '$($allowedValues)'"
+                    $isValid = $allowedValues.Contains($valueToCheck)
+                    if(!$isValid) {
+                        Write-InformationColored "The input value '$valueToCheck' is not valid. It must be in the allowed list: '$($allowedValues)'" -ForegroundColor Red -InformationAction Continue
+                        break
+                    }
+                }
+
+                if($hasValidator) {
+                    Write-Verbose "Checking '$($valueToCheck)' against validator '$($configValue.Valid)'"
+                    $isValid = $valueToCheck -match $configValue.Valid
+                    if(!$isValid) {
+                        Write-InformationColored "The input value '$valueToCheck' is not valid. It must match to specified regular expression: '$($configValue.Valid)'" -ForegroundColor Red -InformationAction Continue
+                        break
+                    }
+                }
+            }
         }
 
-        if ($hasNotSpecifiedValue -or $isDisallowedValue -or $isNotValid) {
-            Write-InformationColored "Please specify a valid value for this field." -ForegroundColor Red -InformationAction Continue
-            $configValue.Value = $previousValue
-            $validationError = $true
-        }
-
-        $shouldRetry = $validationError -and $withRetries
+        $shouldRetry = !$isValid -and $withRetries
 
         $attempt += 1
     }
-    while (($hasNotSpecifiedValue -or $isDisallowedValue -or $isNotValid) -and $shouldRetry -and $attempt -lt $maxAttempts)
+    while ($shouldRetry -and $attempt -lt $maxAttempts)
 
     if($attempt -eq $maxAttempts) {
         Write-InformationColored "Max attempts reached for getting input value. Exiting..." -ForegroundColor Red -InformationAction Continue

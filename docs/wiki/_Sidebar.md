@@ -23,12 +23,18 @@
       - [Example Hub and Spoke config][example_starter_module_complete_config_hub_spoke]
       - [Example Virtual WAN config][example_starter_module_complete_config_vwan]
   - Input Files
-    - [Azure DevOps Bicep Inputs][example_powershell_inputs_azure_devops_bicep]
-    - [Azure DevOps Terraform Inputs][example_powershell_inputs_azure_devops_terraform]
-    - [GitHub Bicep Inputs][example_powershell_inputs_github_bicep]
-    - [GitHub Terraform Inputs][example_powershell_inputs_github_terraform]
-    - [Local Bicep Inputs][example_powershell_inputs_local_bicep]
-    - [Local Terraform Inputs][example_powershell_inputs_local_terraform]
+    - [Azure DevOps Bicep Complete][example_powershell_inputs_azure_devops_bicep_complete]
+    - [Azure DevOps Terraform Basic][example_powershell_inputs_azure_devops_terraform_basic]
+    - [Azure DevOps Terraform Hub Networking][example_powershell_inputs_azure_devops_terraform_hubnetworking]
+    - [Azure DevOps Terraform Complete][example_powershell_inputs_azure_devops_terraform_complete]
+    - [GitHub Bicep Complete][example_powershell_inputs_github_bicep_complete]
+    - [GitHub Terraform Basic][example_powershell_inputs_github_terraform_basic]
+    - [GitHub Terraform Hub Networking][example_powershell_inputs_github_terraform_hubnetworking]
+    - [GitHub Terraform Complete][example_powershell_inputs_github_terraform_complete]
+    - [Local Bicep Complete][example_powershell_inputs_local_bicep_complete]
+    - [Local Terraform Basic][example_powershell_inputs_local_terraform_basic]
+    - [Local Terraform Hub Networking][example_powershell_inputs_local_terraform_hubnetworking]
+    - [Local Terraform Complete][example_powershell_inputs_local_terraform_complete]
 - [Frequently Asked Questions][wiki_frequently_asked_questions]
 - [Upgrade Guide][wiki_upgrade_guide]
 - [Advanced Scenarios][wiki_advanced_scenarios]
@@ -69,11 +75,17 @@
 [wiki_contributing_to_documentation]:                                Contributing-to-Documentation "Wiki - Contributing to documentation"
 [wiki_upgrade_guide]:                                              Upgrade-Guide "Wiki - Upgrade Guide"
 [wiki_advanced_scenarios]:                                           %5BUser-Guide%5D-Advanced-Scenarios "Wiki - Advanced Scenarios"
-[example_powershell_inputs_azure_devops_bicep]:     examples/powershell-inputs/inputs-azure-devops-bicep.yaml "Example - PowerShell Inputs - Azure DevOps - Bicep"
-[example_powershell_inputs_azure_devops_terraform]: examples/powershell-inputs/inputs-azure-devops-terraform.yaml "Example - PowerShell Inputs - Azure DevOps - Terraform"
-[example_powershell_inputs_github_bicep]:     examples/powershell-inputs/inputs-github-bicep.yaml "Example - PowerShell Inputs - GitHub - Bicep"
-[example_powershell_inputs_github_terraform]: examples/powershell-inputs/inputs-github-terraform.yaml "Example - PowerShell Inputs - GitHub - Terraform"
-[example_powershell_inputs_local_bicep]:     examples/powershell-inputs/inputs-local-bicep.yaml "Example - PowerShell Inputs - Local - Bicep"
-[example_powershell_inputs_local_terraform]: examples/powershell-inputs/inputs-local-terraform.yaml "Example - PowerShell Inputs - Local - Terraform"
+[example_powershell_inputs_azure_devops_bicep_complete]:     examples/powershell-inputs/inputs-azure-devops-bicep-complete.yaml "Example - PowerShell Inputs - Azure DevOps - Bicep - Complete"
+[example_powershell_inputs_github_bicep_complete]:     examples/powershell-inputs/inputs-github-bicep-complete.yaml "Example - PowerShell Inputs - GitHub - Bicep - Complete"
+[example_powershell_inputs_local_bicep_complete]:     examples/powershell-inputs/inputs-local-bicep-complete.yaml "Example - PowerShell Inputs - Local - Bicep - Complete"
+[example_powershell_inputs_azure_devops_terraform_basic]:     examples/powershell-inputs/inputs-azure-devops-terraform-basic.yaml "Example - PowerShell Inputs - Azure DevOps - Terraform - Basic"
+[example_powershell_inputs_github_terraform_basic]:     examples/powershell-inputs/inputs-github-terraform-basic.yaml "Example - PowerShell Inputs - GitHub - Terraform - Basic"
+[example_powershell_inputs_local_terraform_basic]:     examples/powershell-inputs/inputs-local-terraform-basic.yaml "Example - PowerShell Inputs - Local - Terraform - Basic"
+[example_powershell_inputs_azure_devops_terraform_hubnetworking]:     examples/powershell-inputs/inputs-azure-devops-terraform-hubnetworking.yaml "Example - PowerShell Inputs - Azure DevOps - Terraform - Hub Networking"
+[example_powershell_inputs_github_terraform_hubnetworking]:     examples/powershell-inputs/inputs-github-terraform-hubnetworking.yaml "Example - PowerShell Inputs - GitHub - Terraform - Hub Networking"
+[example_powershell_inputs_local_terraform_hubnetworking]:     examples/powershell-inputs/inputs-local-terraform-hubnetworking.yaml "Example - PowerShell Inputs - Local - Terraform - Hub Networking"
+[example_powershell_inputs_azure_devops_terraform_complete]:     examples/powershell-inputs/inputs-azure-devops-terraform-complete.yaml "Example - PowerShell Inputs - Azure DevOps - Terraform - Complete"
+[example_powershell_inputs_github_terraform_complete]:     examples/powershell-inputs/inputs-github-terraform-complete.yaml "Example - PowerShell Inputs - GitHub - Terraform - Complete"
+[example_powershell_inputs_local_terraform_complete]:     examples/powershell-inputs/inputs-local-terraform-complete.yaml "Example - PowerShell Inputs - Local - Terraform - Complete"
 [example_starter_module_complete_config_hub_spoke]: examples/starter-module-config/complete/config-hub-spoke.yaml "Example - Starter Module Config - Complete - Hub and Spoke"
 [example_starter_module_complete_config_vwan]: examples/starter-module-config/complete/config-vwan.yaml "Example - Starter Module Config - Complete - Virtual WAN"
