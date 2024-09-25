@@ -2,7 +2,7 @@ function Convert-InterfaceInputToUserInputConfig {
     [CmdletBinding(SupportsShouldProcess = $true)]
     param (
         [Parameter(Mandatory = $false)]
-        [PSCustomObject]$inputConfig,
+        [PSCustomObject]$interfaceConfig,
 
         [Parameter(Mandatory = $false)]
         [PSCustomObject]$validators,
@@ -20,7 +20,7 @@ function Convert-InterfaceInputToUserInputConfig {
 
         Write-Verbose $validators
 
-        foreach($variable in $inputConfig.inputs.PSObject.Properties) {
+        foreach($variable in $interfaceConfig.inputs.PSObject.Properties) {
             Write-Verbose "Parsing variable $($variable.Name)"
             $description = $variable.Value.description
 

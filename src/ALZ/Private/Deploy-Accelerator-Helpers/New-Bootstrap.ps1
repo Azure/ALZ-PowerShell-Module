@@ -14,7 +14,7 @@ function New-Bootstrap {
         [PSCustomObject] $inputConfig,
 
         [Parameter(Mandatory = $false)]
-        [PSCustomObject] $userInputOverrides = $null,
+        [PSCustomObject] $interfaceConfig = $null,
 
         [Parameter(Mandatory = $false)]
         [string] $bootstrapTargetPath,
@@ -66,13 +66,6 @@ function New-Bootstrap {
         # Setup tools
         $hclParserToolPath = Get-HCLParserTool -alzEnvironmentDestination $bootstrapPath -toolVersion "v0.6.0"
 
-        # Setup Cache File Names
-        $interfaceCacheFileName = "interface-cache.json"
-        $bootstrapCacheFileName = "bootstrap-cache.json"
-        $starterCacheFileName = "starter-cache.json"
-        $interfaceCachePath = Join-Path -Path $bootstrapPath -ChildPath $interfaceCacheFileName
-        $bootstrapCachePath = Join-Path -Path $bootstrapPath -ChildPath $bootstrapCacheFileName
-        $starterCachePath = Join-Path -Path $starterPath -ChildPath $starterCacheFileName
         $bootstrapModulePath = Join-Path -Path $bootstrapPath -ChildPath $bootstrapDetails.Value.location
 
         Write-Verbose "Bootstrap Module Path: $bootstrapModulePath"
@@ -102,24 +95,14 @@ function New-Bootstrap {
             -bootstrapModuleFolder $bootstrapDetails.Value.location `
             -bootstrapRelease $bootstrapRelease `
             -bootstrapPath $bootstrapTargetPath `
-            -starterRelease $starterRelease `
-            -starterPath $starterTargetPath `
-            -interfaceCacheFileName $interfaceCacheFileName `
-            -bootstrapCacheFileName $bootstrapCacheFileName `
-            -starterCacheFileName $starterCacheFileName `
             -autoApprove:$autoApprove.IsPresent
-
-        # Get cached inputs
-        $interfaceCachedConfig = Get-ALZConfig -configFilePath $interfaceCachePath
-        $bootstrapCachedConfig = Get-ALZConfig -configFilePath $bootstrapCachePath
-        $starterCachedConfig = Get-ALZConfig -configFilePath $starterCachePath
 
         # Get starter module
         $starterModulePath = ""
 
         if($hasStarter) {
             if($starter -eq "") {
-                $starter = Request-SpecialInput -type "starter" -starterConfig $starterConfig -userInputOverrides $userInputOverrides
+                $starter = Request-SpecialInput -type "starter" -starterConfig $starterConfig -inputConfig $inputConfig
             }
 
             Write-Verbose "Selected Starter: $starter"
@@ -131,7 +114,7 @@ function New-Bootstrap {
 
         # Getting the configuration for the interface user input
         Write-Verbose "Getting the interface configuration for user input..."
-        $inputConfigMapped = Convert-InterfaceInputToUserInputConfig -inputConfig $inputConfig -validators $validationConfig
+        $interfaceConfigMapped = Convert-InterfaceInputToUserInputConfig -interfaceConfig $interfaceConfig -validators $validationConfig
 
         # Getting configuration for the bootstrap module user input
         $bootstrapParameters = [PSCustomObject]@{}
@@ -166,7 +149,7 @@ function New-Bootstrap {
             if($inputConfigItem.Value.source -ne "input" -or $inputConfigItem.Value.required -eq $true) {
                 continue
             }
-            $inputVariable = $inputConfigMapped.PSObject.Properties | Where-Object { $_.Name -eq $inputConfigItem.Name }
+            $inputVariable = $interfaceConfigMapped.PSObject.Properties | Where-Object { $_.Name -eq $inputConfigItem.Name }
             $displayMapFilter = $inputConfigItem.Value.PSObject.Properties | Where-Object { $_.Name -eq "display_map_filter" }
             $hasDisplayMapFilter = $null -ne $displayMapFilter
             Write-Verbose "$($inputConfigItem.Name) has display map filter $hasDisplayMapFilter"
@@ -200,15 +183,10 @@ function New-Bootstrap {
             }
         }
 
-        # Prompt user for interface inputs
-        Write-InformationColored "The following shared inputs are for the '$($bootstrapDetails.Name)' bootstrap and '$starter' starter module that you selected:" -ForegroundColor Green -NewLineBefore -InformationAction Continue
+        # Get the inputs for interface
         $interfaceConfiguration = Request-ALZEnvironmentConfig `
-            -configurationParameters $inputConfigMapped `
-            -respectOrdering `
-            -userInputOverrides $userInputOverrides `
-            -userInputDefaultOverrides $interfaceCachedConfig `
-            -treatEmptyDefaultAsValid $true `
-            -autoApprove:$autoApprove.IsPresent
+            -configurationParameters $interfaceConfigMapped `
+            -inputConfig $inputConfig `
 
         # Set computed interface inputs
         $computedInputs["starter_module_name"] = $starter
@@ -267,26 +245,16 @@ function New-Bootstrap {
             }
         }
 
-        # Getting the user input for the bootstrap module
-        Write-InformationColored "The following inputs are specific to the '$($bootstrapDetails.Name)' bootstrap module that you selected:" -ForegroundColor Green -NewLineBefore -InformationAction Continue
+        # Getting the input for the bootstrap module
         $bootstrapConfiguration = Request-ALZEnvironmentConfig `
             -configurationParameters $bootstrapParameters `
-            -respectOrdering `
-            -userInputOverrides $userInputOverrides `
-            -userInputDefaultOverrides $bootstrapCachedConfig `
-            -treatEmptyDefaultAsValid $true `
-            -autoApprove:$autoApprove.IsPresent `
+            -inputConfig $inputConfig `
             -computedInputs $bootstrapComputed
 
-        # Getting the user input for the starter module
-        Write-InformationColored "The following inputs are specific to the '$starter' starter module that you selected:" -ForegroundColor Green -NewLineBefore -InformationAction Continue
+        # Getting the input for the starter module
         $starterConfiguration = Request-ALZEnvironmentConfig `
             -configurationParameters $starterParameters `
-            -respectOrdering `
-            -userInputOverrides $userInputOverrides `
-            -userInputDefaultOverrides $starterCachedConfig `
-            -treatEmptyDefaultAsValid $true `
-            -autoApprove:$autoApprove.IsPresent `
+            -inputConfig $inputConfig `
             -computedInputs $starterComputed
 
         # Creating the tfvars files for the bootstrap and starter module
@@ -296,7 +264,7 @@ function New-Bootstrap {
         $starterBicepVarsPath = Join-Path -Path $starterModulePath -ChildPath "parameters.json"
 
         # Add any extra inputs to the bootstrap tfvars on the assumption they are hidden inputs
-        foreach($input in $userInputOverrides.PSObject.Properties) {
+        foreach($input in $inputConfig.PSObject.Properties) {
             $inputName = $input.Name
             $inputValue = $input.Value
 
@@ -338,11 +306,6 @@ function New-Bootstrap {
 
             Remove-UnrequiredFileSet -path $starterModulePath -foldersOrFilesToRetain $foldersOrFilesToRetain -subFoldersOrFilesToRemove $subFoldersOrFilesToRemove -writeVerboseLogs:$writeVerboseLogs.IsPresent
         }
-
-        # Caching the bootstrap and starter module values paths for retry / upgrade scenarios
-        Write-ConfigurationCache -filePath $interfaceCachePath -configuration $interfaceConfiguration
-        Write-ConfigurationCache -filePath $bootstrapCachePath -configuration $bootstrapConfiguration
-        Write-ConfigurationCache -filePath $starterCachePath -configuration $starterConfiguration
 
         # Running terraform init and apply
         Write-InformationColored "Thank you for providing those inputs, we are now initializing and applying Terraform to bootstrap your environment..." -ForegroundColor Green -NewLineBefore -InformationAction Continue

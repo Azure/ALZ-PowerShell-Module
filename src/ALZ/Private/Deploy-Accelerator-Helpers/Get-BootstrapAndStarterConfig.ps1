@@ -11,7 +11,7 @@ function Get-BootstrapAndStarterConfig {
         [Parameter(Mandatory = $false)]
         [string]$bootstrapConfigPath,
         [Parameter(Mandatory = $false)]
-        [PSCustomObject]$userInputOverrides,
+        [PSCustomObject]$inputConfig,
         [Parameter(Mandatory = $false)]
         [string]$toolsPath
     )
@@ -26,7 +26,7 @@ function Get-BootstrapAndStarterConfig {
         $bootstrapDetails = $null
         $validationConfig = $null
         $zonesSupport = $null
-        $inputConfig = $null
+        $interfaceConfig = $null
 
         # Get the bootstap configuration
         $bootstrapConfigFullPath = Join-Path $bootstrapPath $bootstrapConfigPath
@@ -47,7 +47,7 @@ function Get-BootstrapAndStarterConfig {
 
         # Request the bootstrap type if not already specified
         if($bootstrap -eq "") {
-            $bootstrap = Request-SpecialInput -type "bootstrap" -bootstrapModules $bootstrapModules -userInputOverrides $userInputOverrides
+            $bootstrap = Request-SpecialInput -type "bootstrap" -bootstrapModules $bootstrapModules -inputConfig $inputConfig
         }
 
         # Get the bootstrap details and validate it exists (use alias for legacy values)
@@ -78,9 +78,9 @@ function Get-BootstrapAndStarterConfig {
         }
 
         # Get the bootstrap interface user input config
-        $inputConfigFilePath = Join-Path -Path $bootstrapPath -ChildPath $bootstrapDetails.Value.interface_config_file
-        Write-Verbose "Interface config path $inputConfigFilePath"
-        $inputConfig = Get-ALZConfig -configFilePath $inputConfigFilePath
+        $interfaceConfigFilePath = Join-Path -Path $bootstrapPath -ChildPath $bootstrapDetails.Value.interface_config_file
+        Write-Verbose "Interface config path $interfaceConfigFilePath"
+        $interfaceConfig = Get-ALZConfig -configFilePath $interfaceConfigFilePath
 
         return @{
             bootstrapDetails           = $bootstrapDetails
@@ -91,7 +91,7 @@ function Get-BootstrapAndStarterConfig {
             starterConfigFilePath      = $starterConfigFilePath
             validationConfig           = $validationConfig
             zonesSupport               = $zonesSupport
-            inputConfig                = $inputConfig
+            interfaceConfig            = $interfaceConfig
         }
     }
 }

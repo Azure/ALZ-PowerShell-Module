@@ -23,24 +23,6 @@ function Write-TfvarsJsonFile {
                 $configurationValue = [System.IO.Path]::GetFileName($configurationValue)
             }
 
-            if($configurationProperty.Value.Source -eq "UserInterface") {
-                if($configurationProperty.Value.DataType -eq "list(string)") {
-                    if($configurationValue -eq "") {
-                        $configurationValue = @()
-                    } else {
-                        $configurationValue = @($configurationValue -split ",")
-                    }
-                }
-
-                if($configurationProperty.Value.DataType -eq "number") {
-                    $configurationValue = [int]($configurationValue)
-                }
-
-                if($configurationProperty.Value.DataType -eq "bool") {
-                    $configurationValue = [bool]($configurationValue)
-                }
-            }
-
             $jsonObject["$($configurationProperty.Name)"] = $configurationValue
         }
 
