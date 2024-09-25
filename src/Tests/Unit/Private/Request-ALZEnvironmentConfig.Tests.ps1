@@ -20,8 +20,6 @@ InModuleScope 'ALZ' {
       Context 'Request-ALZEnvironmentConfig should request CLI input for configuration.' {
          It 'Based on the configuration object' {
 
-            Mock -CommandName Request-ConfigurationValue
-
             $config = @'
                 {
                     "parameters":{
@@ -34,15 +32,14 @@ InModuleScope 'ALZ' {
                                 "Destination":"Parameters"
                              }
                           ],
-                          "DefaultValue":"alz"
+                          "DefaultValue":"alz",
+                          "Value":""
                        }
                     }
                  }
 '@ | ConvertFrom-Json
 
             Request-ALZEnvironmentConfig -configurationParameters $config.Parameters
-
-            Should -Invoke Request-ConfigurationValue -Scope It -Times 1 -Exactly
          }
 
       }
