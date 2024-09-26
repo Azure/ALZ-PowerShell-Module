@@ -21,10 +21,10 @@
     - [Terraform - Complete][wiki_starter_module_terraform_complete]
     - [Terraform - Complete Multi Region][wiki_starter_module_terraform_complete_multi_region]
       - [Configuration YAML Schema][wiki_yaml_schema_reference]
-      - [Example Hub and Spoke config][example_starter_module_complete_config_hub_spoke]
-      - [Example Virtual WAN config][example_starter_module_complete_config_vwan]
       - [Example Multi Region Hub and Spoke config][example_starter_module_complete_config_hub_spoke_multi_region]
       - [Example Multi Region Virtual WAN config][example_starter_module_complete_config_vwan_multi_region]
+      - [Example Hub and Spoke config][example_starter_module_complete_config_hub_spoke]
+      - [Example Virtual WAN config][example_starter_module_complete_config_vwan]
   - Input Files
     - [Azure DevOps Bicep Complete][example_powershell_inputs_azure_devops_bicep_complete]
     - [Azure DevOps Terraform Basic][example_powershell_inputs_azure_devops_terraform_basic]
