@@ -5,7 +5,7 @@
 # Basic Inputs
 iac: "terraform"
 bootstrap: "alz_local"
-starter: "complete"
+starter: "complete_multi_region"
 
 # Shared Interface Inputs
 bootstrap_location: "<region-1>"
