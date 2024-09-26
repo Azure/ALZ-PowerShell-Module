@@ -17,6 +17,11 @@ The following table describes the inputs required for the `complete_multi_region
 | `configuration_file_path` | `<configuration-file-path>` | This is the absolute path to the configuration file. E.g. `c:\my-config\config.yaml` or `~/my-config/config.yaml` |
 | `default_postfix` | `<postfix>` | This is the default postfix used for resource names. |
 
+You can create a custom yaml config to tailor to your needs, for example an Azure Landing Zone with a three-region mesh. Get started with our two region samples:
+
+- Example config file for hub and spoke virtual network: [config-hub-and-spoke-vnet.yaml][example_starter_module_complete_config_hub_spoke_multi_region]
+- Example config file for virtual WAN: [config-virtual-wan.yaml][example_starter_module_complete_config_vwan_multi_region]
+
 ## Further details on the Complete Starter Module and config file
 
 The `config.yaml` file also comes with helpful templated variables such as `default_location` and `root_parent_management_group_id` which get prompted for during the ALZ PowerShell Module run. Alternatively, you can opt to not use the templated variables and hard-code the values in the `config.yaml` file.
@@ -31,14 +36,16 @@ The schema for the `config.yaml` is documented here - [Configuration YAML Schema
 
 ### Terraform Modules
 
+The following modules are composed together in the `complete_multi_region` starter module.
+
 #### `caf-enterprise-scale`
 
 The `caf-enterprise-scale` module is used to deploy the management group hierarchy, policy assignments and management resources. For more information on the module itself see [here](https://github.com/Azure/terraform-azurerm-caf-enterprise-scale).
 
-#### `hubnetworking`
+#### `avm-ptn-hubnetworking`
 
-The `hubnetworking` module is used to deploy connectivity resources such as Virtual Networks and Firewalls.
-This module can be extended to deploy multiple Virtual Networks at scale, Route Tables, and Resource Locks. For more information on the module itself see [here](https://github.com/Azure/terraform-azurerm-hubnetworking).
+The `avm-ptn-hubnetworking` module is used to deploy connectivity resources such as Virtual Networks and Firewalls.
+This module can be extended to deploy multiple Virtual Networks at scale, Route Tables, and Resource Locks. For more information on the module itself see [here](https://github.com/Azure/terraform-azurerm-avm-ptn-hu).
 
 #### `avm-ptn-vnetgateway`
 
@@ -48,20 +55,17 @@ The `avm-ptn-vnetgateway` module is used to deploy a Virtual Network Gateway ins
 
 The `avm-ptn-vwan` module is used to deploy a Virtual WAN. Further configuration can be added (depending on requirements) to deploy VPN Sites, configure VPN Connections, and more. Additional information on the module can be found [here](https://github.com/Azure/terraform-azurerm-avm-ptn-vwan).
 
-#### Design your Azure Landing Zone through a custom config file
+#### `avm-ptn-network-private-link-private-dns-zones`
 
-Create a custom yaml config to tailor to your needs, for example an Azure Landing Zone with a three-region mesh:
-
-- Example config file for hub and spoke: [config-hub-spoke.yaml][example_starter_module_complete_config_hub_spoke]
-- Example config file for Virtual WAN: [config-vwan.yaml][example_starter_module_complete_config_vwan]
+The `avm-ptn-network-private-link-private-dns-zones` module is used to deploy Private DNS Zones for Private Link Services. Further configuration can be added depending on requirements. Additional information on the module can be found [here](https://github.com/Azure/terraform-azurerm-avm-ptn-network-private-link-private-dns-zones).
 
  [//]: # (************************)
  [//]: # (INSERT LINK LABELS BELOW)
  [//]: # (************************)
 
 [wiki_yaml_schema_reference]: %5BUser-Guide%5D-YAML-Schema-Reference "Wiki - YAML Schema Reference"
-[example_starter_module_complete_config_hub_spoke]: examples/starter-module-config/complete/config-hub-spoke.yaml "Example - Starter Module Config - Complete - Hub and Spoke"
-[example_starter_module_complete_config_vwan]: examples/starter-module-config/complete/config-vwan.yaml "Example - Starter Module Config - Complete - Virtual WAN"
+[example_starter_module_complete_config_hub_spoke_multi_region]: examples/starter-module-config/complete-multi-region/config-hub-and-spoke-vnet.yaml "Example - Starter Module Config - Complete - Hub and Spoke VNet Multi Region"
+[example_starter_module_complete_config_vwan_multi_region]: examples/starter-module-config/complete-multi-region/config-virtual-wan.yaml "Example - Starter Module Config - Complete - Virtual WAN Multi Region"
 [example_powershell_inputs_azure_devops_terraform_complete_multi_region]:     examples/powershell-inputs/inputs-azure-devops-terraform-complete-multi-region.yaml "Example - PowerShell Inputs - Azure DevOps - Terraform - Complete Multi Region"
 [example_powershell_inputs_github_terraform_complete_multi_region]:     examples/powershell-inputs/inputs-github-terraform-complete-multi-region.yaml "Example - PowerShell Inputs - GitHub - Terraform - Complete Multi Region"
 [example_powershell_inputs_local_terraform_complete_multi_region]:     examples/powershell-inputs/inputs-local-terraform-complete-multi-region.yaml "Example - PowerShell Inputs - Local - Terraform - Complete Multi Region"
