@@ -97,9 +97,9 @@ $exampleFolder = "$targetFolder/code/ALZ-PowerShell-Module/docs/wiki/examples/po
 Copy-Item -Path "$exampleFolder/inputs-azure-devops-bicep-complete.yaml" -Destination "$bicepConfigFolder/inputs-azuredevops.yaml" -Force
 Copy-Item -Path "$exampleFolder/inputs-github-bicep-complete.yaml" -Destination "$bicepConfigFolder/inputs-github.yaml" -Force
 Copy-Item -Path "$exampleFolder/inputs-local-bicep-complete.yaml" -Destination "$bicepConfigFolder/inputs-local.yaml" -Force
-Copy-Item -Path "$exampleFolder/inputs-azure-devops-terraform-complete.yaml" -Destination "$terraformConfigFolder/inputs-azuredevops.yaml" -Force
-Copy-Item -Path "$exampleFolder/inputs-github-terraform-complete.yaml" -Destination "$terraformConfigFolder/inputs-github.yaml" -Force
-Copy-Item -Path "$exampleFolder/inputs-local-terraform-complete.yaml" -Destination "$terraformConfigFolder/inputs-local.yaml" -Force
+Copy-Item -Path "$exampleFolder/inputs-azure-devops-terraform-complete-multi-region.yaml" -Destination "$terraformConfigFolder/inputs-azuredevops.yaml" -Force
+Copy-Item -Path "$exampleFolder/inputs-github-terraform-complete-multi-region.yaml" -Destination "$terraformConfigFolder/inputs-github.yaml" -Force
+Copy-Item -Path "$exampleFolder/inputs-local-terraform-complete-multi-region.yaml" -Destination "$terraformConfigFolder/inputs-local.yaml" -Force
 
 ```
 

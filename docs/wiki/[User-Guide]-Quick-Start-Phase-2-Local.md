@@ -92,6 +92,7 @@ Although you can just run `Deploy-Accelerator` and fill out the prompted inputs,
     ```
 
 1. Open your `inputs.yaml` file in Visual Studio Code (or your preferred editor) and copy the content from the relevant input file for your chosen starter module:
+    1. Complete Multi Region - [inputs-local-terraform-complete-multi-region.yaml][example_powershell_inputs_local_terraform_complete_multi_region]
     1. Basic - [inputs-local-terraform-basic.yaml][example_powershell_inputs_local_terraform_basic]
     1. Hub Networking - [inputs-local-terraform-hubnetworking.yaml][example_powershell_inputs_local_terraform_hubnetworking]
     1. Complete - [inputs-local-terraform-complete.yaml][example_powershell_inputs_local_terraform_complete]
@@ -104,6 +105,7 @@ Although you can just run `Deploy-Accelerator` and fill out the prompted inputs,
     | `starter` | `complete` | This is the choice of [Starter Modules][wiki_starter_modules], which is the baseline configuration you want for your Azure landing zone. Choose `complete`, `hubnetworking` or `basic` for this example. This also determines the second set of inputs you'll be prompted for. |
     | `bootstrap_location` | `<region>` | Replace `<region>` with the Azure region where you would like to deploy the bootstrap resources in Azure. This field expects the `name` of the region, such as `uksouth`. You can find a full list of names by running `az account list-locations -o table`. |
     | `starter_location` | `<region>` | Replace `<region>` with the Azure region where you would like to deploy the starter module resources in Azure. This field expects the `name` of the region, such as `uksouth`. You can find a full list of names by running `az account list-locations -o table`. |
+    | `starter_locations` | `[<region-1>,<region-2>]` | This field is only required for multi-region starter modules and should be supplied in place of `starter_location`. Replace `<region-1>` and `<region-2>` with the Azure regions where you would like to deploy the starter module resources in Azure. This field expects the `name` of the regions in and array, such as `["uksouth", "ukwest"]`. You can find a full list of names by running `az account list-locations -o table`. |
     | `root_parent_management_group_id` | `""` | This is the id of the management group that will be the parent of the management group structure created by the accelerator. If you are using the `Tenant Root Group` management group, you leave this as an empty string `""` or supply the tenant id. |
     | `subscription_id_management` | `<management-subscription-id>` | Replace `<management-subscription-id>` with the id of the management subscription you created in the previous phase. |
     | `subscription_id_identity` | `<identity-subscription-id>` | Replace `<identity-subscription-id>` with the id of the identity subscription you created in the previous phase. |
@@ -154,3 +156,4 @@ Now head to [Phase 3][wiki_quick_start_phase_3].
 [example_powershell_inputs_local_terraform_basic]:     examples/powershell-inputs/inputs-local-terraform-basic.yaml "Example - PowerShell Inputs - Local - Terraform - Basic"
 [example_powershell_inputs_local_terraform_hubnetworking]:     examples/powershell-inputs/inputs-local-terraform-hubnetworking.yaml "Example - PowerShell Inputs - Local - Terraform - Hub Networking"
 [example_powershell_inputs_local_terraform_complete]:     examples/powershell-inputs/inputs-local-terraform-complete.yaml "Example - PowerShell Inputs - Local - Terraform - Complete"
+[example_powershell_inputs_local_terraform_complete_multi_region]:     examples/powershell-inputs/inputs-local-terraform-complete-multi-region.yaml "Example - PowerShell Inputs - Local - Terraform - Complete Multi Region"

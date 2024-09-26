@@ -215,17 +215,16 @@ function New-Bootstrap {
         $computedInputs["module_folder_path"] = $starterModulePath
         $computedInputs["availability_zones_bootstrap"] = @(Get-AvailabilityZonesSupport -region $interfaceConfiguration.bootstrap_location.Value -zonesSupport $zonesSupport)
 
-        $starterLocations = $interfaceConfiguration.starter_location.Value
-        if($starterLocations.Contains(",")) {
+        if($interfaceConfiguration.starter_locations.Value.Length -gt 0) {
             $computedInputs["availability_zones_starter"] = @()
-            foreach($region in $starterLocations -split ",") {
+            foreach($region in $interfaceConfiguration.starter_locations.Value -split ",") {
                 $computedInputs["availability_zones_starter"] +=  @{
                     region = $region
                     zones  = @(Get-AvailabilityZonesSupport -region $region -zonesSupport $zonesSupport)
                 }
             }
         } else {
-            $computedInputs["availability_zones_starter"] = @(Get-AvailabilityZonesSupport -region $starterLocations -zonesSupport $zonesSupport)
+            $computedInputs["availability_zones_starter"] = @(Get-AvailabilityZonesSupport -region $interfaceConfiguration.starter_location.Value -zonesSupport $zonesSupport)
         }
 
         foreach($inputConfigItem in $inputConfig.inputs.PSObject.Properties) {
@@ -315,6 +314,7 @@ function New-Bootstrap {
         Write-TfvarsJsonFile -tfvarsFilePath $bootstrapTfvarsPath -configuration $bootstrapConfiguration
 
         if($iac -eq "terraform") {
+            Remove-TerraformMetaFileSet -path $starterModulePath -writeVerboseLogs:$writeVerboseLogs.IsPresent
             Write-TfvarsJsonFile -tfvarsFilePath $starterTfvarsPath -configuration $starterConfiguration
         }
 
