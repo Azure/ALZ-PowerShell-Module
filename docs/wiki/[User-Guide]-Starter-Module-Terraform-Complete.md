@@ -19,7 +19,7 @@ The following table describes the inputs required for the `complete` starter mod
 
 ## Further details on the Complete Starter Module and config file
 
-The `config.yaml` file also comes with helpful templated variables such as `default_location` and `root_parent_management_group_id` which get prompted for during the ALZ PowerShell Module run. Alternatively, you can opt to not use the templated variables and hard-code the values in the `config.yaml` file.
+The `config.yaml` file also comes with helpful templated variables such as `starter_location` and `root_parent_management_group_id` which get prompted for during the ALZ PowerShell Module run. Alternatively, you can opt to not use the templated variables and hard-code the values in the `config.yaml` file.
 
 > **Note:** We recommend that you use the `caf-enterprise-scale` module for management groups and policies, and the `hubnetworking` module for connectivity resources. However, connectivity resources can be deployed using the `caf-enterprise-scale` module if you desire.
 

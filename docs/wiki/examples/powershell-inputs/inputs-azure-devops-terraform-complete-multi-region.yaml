@@ -34,6 +34,6 @@ apply_approvers: ["<email-address>"]
 create_branch_policies: "true"
 
 # Complete Starter Module Specific Variables
-# (Details: https://github.com/Azure/ALZ-PowerShell-Module/wiki/%5BUser-Guide%5D-Starter-Module-Terraform-Complete)
+# (Details: https://github.com/Azure/ALZ-PowerShell-Module/wiki/%5BUser-Guide%5D-Starter-Module-Terraform-Complete-Multi-Region)
 configuration_file_path: "<configuration-file-path>"  # Only required for the `complete` starter module. NOTE: This must be an absolute path.
 default_postfix: "<postfix>"

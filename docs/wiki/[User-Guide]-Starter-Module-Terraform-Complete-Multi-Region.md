@@ -1,6 +1,7 @@
 <!-- markdownlint-disable first-line-h1 -->
 The `complete_multi_region` starter module provides full customization of the Azure Landing Zone using the `config.yaml` file. The `config.yaml` file provides the ability to enable and disable modules, configure module inputs and outputs, and configure module resources. It is multi-regional by default and can support 2 or more regions.
-A custom `config.yaml` file can be passed to the `configuration_file_path` argument of the ALZ PowerShell Module. This allows you to firstly design your Azure Landing Zone, and then deploy it.
+
+A custom config file can be passed to the `configuration_file_path` argument of the ALZ PowerShell Module. This allows you to firstly design your Azure Landing Zone, and then deploy it. The config file can be in `yaml` or `json` format, our examples are all `yaml`.
 
 If not specified, the default `config-hub-and-spoke-vnet.yaml` file will be used, which can be seen [here](https://github.com/Azure/alz-terraform-accelerator/blob/main/templates/complete_multi_region/config-hub-and-spoke-vnet.yaml).
 
@@ -24,7 +25,7 @@ You can create a custom yaml config to tailor to your needs, for example an Azur
 
 ## Further details on the Complete Starter Module and config file
 
-The `config.yaml` file also comes with helpful templated variables such as `default_location` and `root_parent_management_group_id` which get prompted for during the ALZ PowerShell Module run. Alternatively, you can opt to not use the templated variables and hard-code the values in the `config.yaml` file.
+The example config files have helpful templated variables such as `starter_location_##` and `root_parent_management_group_id` which get prompted for during the ALZ PowerShell Module run. Alternatively, you can opt to not use the templated variables and hard-code the values in your config file.
 
 > **Note:** We recommend that you use the `caf-enterprise-scale` module for management groups and policies, and the `hubnetworking` module for connectivity resources. However, connectivity resources can be deployed using the `caf-enterprise-scale` module if you desire.
 
