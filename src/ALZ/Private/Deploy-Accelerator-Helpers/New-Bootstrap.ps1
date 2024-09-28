@@ -113,17 +113,18 @@ function New-Bootstrap {
         $bootstrapParameters = [PSCustomObject]@{}
 
         Write-Verbose "Getting the bootstrap configuration for user input..."
-        $terraformFiles = Get-ChildItem -Path $bootstrapModulePath -Include "*.tf" -File
+        $terraformFiles = Get-ChildItem -Path $bootstrapModulePath -Filter "*.tf" -File
         foreach($terraformFile in $terraformFiles) {
             $bootstrapParameters = Convert-HCLVariablesToInputConfig -targetVariableFile $terraformFile.FullName -hclParserToolPath $hclParserToolPath -validators $validationConfig -appendToObject $bootstrapParameters
         }
+        Write-Verbose "Bootstrap Config: $(ConvertTo-Json $bootstrapParameters -Depth 100)"
 
         # Getting the configuration for the starter module user input
         $starterParameters  = [PSCustomObject]@{}
 
         if($hasStarter) {
             if($iac -eq "terraform") {
-                $terraformFiles = Get-ChildItem -Path $starterModulePath -Include "*.tf" -File
+                $terraformFiles = Get-ChildItem -Path $starterModulePath -Filter "*.tf" -File
                 foreach($terraformFile in $terraformFiles) {
                     $starterParameters = Convert-HCLVariablesToInputConfig -targetVariableFile $terraformFile.FullName -hclParserToolPath $hclParserToolPath -validators $validationConfig -appendToObject $starterParameters
                 }
@@ -135,13 +136,14 @@ function New-Bootstrap {
         }
 
         # Set computed inputs
+        Write-Verbose "Input config: $(ConvertTo-Json $inputConfig -Depth 100)"
         $computedInputs["starter_module_name"] = $starter
         $computedInputs["module_folder_path"] = $starterModulePath
-        $computedInputs["availability_zones_bootstrap"] = @(Get-AvailabilityZonesSupport -region $interfaceConfiguration.bootstrap_location.Value -zonesSupport $zonesSupport)
+        $computedInputs["availability_zones_bootstrap"] = @(Get-AvailabilityZonesSupport -region $inputConfig.bootstrap_location -zonesSupport $zonesSupport)
 
-        if($inputConfig.inputs.PSObject.Properties.Name -contains "starter_locations") {
+        if($inputConfig.PSObject.Properties.Name -contains "starter_locations") {
             $computedInputs["availability_zones_starter"] = @()
-            foreach($region in $interfaceConfiguration.starter_locations.Value -split ",") {
+            foreach($region in $inputConfig.starter_locations) {
                 $computedInputs["availability_zones_starter"] += @(Get-AvailabilityZonesSupport -region $region -zonesSupport $zonesSupport)
             }
             Write-Verbose "Computed availability zones for starter: $(ConvertTo-Json $computedInputs["availability_zones_starter"] -Depth 100)"
