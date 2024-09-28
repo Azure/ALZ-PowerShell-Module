@@ -8,7 +8,7 @@ function Set-ComputedConfiguration {
 
     if ($PSCmdlet.ShouldProcess("ALZ-Bicep computed configuration.", "calculate computed values")) {
         foreach ($configKey in $configuration.PsObject.Properties) {
-            if (@("ComputedInput", "Computed") -notcontains $configKey.Value.Type) {
+            if ("calculated" -ne $configKey.Value.Source) {
                 continue;
             }
 
@@ -26,7 +26,6 @@ function Set-ComputedConfiguration {
 
                 $configKey.Value.Value = $formattedValues
             } else {
-
                 $formattedValue = Format-TokenizedConfigurationString -tokenizedString $configKey.Value.Value -configuration $configuration
 
                 if ($null -ne $configKey.Value.Process) {

@@ -14,9 +14,6 @@ function New-Bootstrap {
         [PSCustomObject] $inputConfig,
 
         [Parameter(Mandatory = $false)]
-        [PSCustomObject] $interfaceConfig = $null,
-
-        [Parameter(Mandatory = $false)]
         [string] $bootstrapTargetPath,
 
         [Parameter(Mandatory = $false)]
@@ -55,17 +52,17 @@ function New-Bootstrap {
 
         [Parameter(Mandatory = $false, HelpMessage = "The path to the bootstrap terraform.tfvars file that you would like to replace the default one with. (e.g. c:\accelerator\terraform.tfvars)")]
         [string]
-        $bootstrapTfVarsOverridePath
+        $bootstrapTfVarsOverridePath,
+
+        [Parameter(Mandatory = $false)]
+        [string]
+        $hclParserToolPath
     )
 
     if ($PSCmdlet.ShouldProcess("ALZ-Terraform module configuration", "modify")) {
 
         $bootstrapPath = Join-Path $bootstrapTargetPath $bootstrapRelease
         $starterPath = Join-Path $starterTargetPath $starterRelease
-
-        # Setup tools
-        $hclParserToolPath = Get-HCLParserTool -alzEnvironmentDestination $bootstrapPath -toolVersion "v0.6.0"
-
         $bootstrapModulePath = Join-Path -Path $bootstrapPath -ChildPath $bootstrapDetails.Value.location
 
         Write-Verbose "Bootstrap Module Path: $bootstrapModulePath"
@@ -112,22 +109,13 @@ function New-Bootstrap {
             Write-Verbose "Starter Module Path: $starterModulePath"
         }
 
-        # Getting the configuration for the interface user input
-        Write-Verbose "Getting the interface configuration for user input..."
-        $interfaceConfigMapped = Convert-InterfaceInputToUserInputConfig -interfaceConfig $interfaceConfig -validators $validationConfig
-
         # Getting configuration for the bootstrap module user input
         $bootstrapParameters = [PSCustomObject]@{}
 
         Write-Verbose "Getting the bootstrap configuration for user input..."
-        foreach($inputVariablesFile in $bootstrapDetails.Value.input_variable_files) {
-            $inputVariablesFilePath = Join-Path -Path $bootstrapModulePath -ChildPath $inputVariablesFile
-            $bootstrapParameters = Convert-HCLVariablesToUserInputConfig -targetVariableFile $inputVariablesFilePath -hclParserToolPath $hclParserToolPath -validators $validationConfig -appendToObject $bootstrapParameters
-        }
-        Write-Verbose "Getting the bootstrap configuration computed interface input..."
-        foreach($interfaceVariablesFile in $bootstrapDetails.Value.interface_variable_files) {
-            $inputVariablesFilePath = Join-Path -Path $bootstrapModulePath -ChildPath $interfaceVariablesFile
-            $bootstrapParameters = Convert-HCLVariablesToUserInputConfig -targetVariableFile $inputVariablesFilePath -hclParserToolPath $hclParserToolPath -validators $validationConfig -appendToObject $bootstrapParameters -allComputedInputs
+        $terraformFiles = Get-ChildItem -Path $bootstrapModulePath -Include "*.tf" -File
+        foreach($terraformFile in $terraformFiles) {
+            $bootstrapParameters = Convert-HCLVariablesToInputConfig -targetVariableFile $terraformFile.FullName -hclParserToolPath $hclParserToolPath -validators $validationConfig -appendToObject $bootstrapParameters
         }
 
         # Getting the configuration for the starter module user input
@@ -135,148 +123,47 @@ function New-Bootstrap {
 
         if($hasStarter) {
             if($iac -eq "terraform") {
-                $targetVariableFilePath = Join-Path -Path $starterModulePath -ChildPath "variables.tf"
-                $starterParameters = Convert-HCLVariablesToUserInputConfig -targetVariableFile $targetVariableFilePath -hclParserToolPath $hclParserToolPath -validators $validationConfig
+                $terraformFiles = Get-ChildItem -Path $starterModulePath -Include "*.tf" -File
+                foreach($terraformFile in $terraformFiles) {
+                    $starterParameters = Convert-HCLVariablesToInputConfig -targetVariableFile $terraformFile.FullName -hclParserToolPath $hclParserToolPath -validators $validationConfig -appendToObject $starterParameters
+                }
             }
 
             if($iac -eq "bicep") {
-                $starterParameters = Convert-InterfaceInputToUserInputConfig -inputConfig $starterConfig.starter_modules.$starter -validators $validationConfig
+                $starterParameters = Convert-BicepConfigToInputConfig -inputConfig $starterConfig.starter_modules.$starter -validators $validationConfig
             }
         }
 
-        # Filter interface inputs if not in bootstrap or starter
-        foreach($inputConfigItem in $inputConfig.inputs.PSObject.Properties) {
-            if($inputConfigItem.Value.source -ne "input" -or $inputConfigItem.Value.required -eq $true) {
-                continue
-            }
-            $inputVariable = $interfaceConfigMapped.PSObject.Properties | Where-Object { $_.Name -eq $inputConfigItem.Name }
-            $displayMapFilter = $inputConfigItem.Value.PSObject.Properties | Where-Object { $_.Name -eq "display_map_filter" }
-            $hasDisplayMapFilter = $null -ne $displayMapFilter
-            Write-Verbose "$($inputConfigItem.Name) has display map filter $hasDisplayMapFilter"
-
-            $inBootstrapOrStarter = $false
-            if("bootstrap" -in $inputConfigItem.Value.maps_to) {
-                $checkFilter = !$hasDisplayMapFilter -or ($hasDisplayMapFilter -and "bootstrap" -in $displayMapFilter.Value)
-
-                if($checkFilter) {
-                    Write-Verbose "Checking bootstrap for $($inputConfigItem.Name)"
-                    $boostrapParameter = $bootstrapParameters.PSObject.Properties | Where-Object { $_.Name -eq $inputVariable.Name }
-                    if($null -ne $boostrapParameter) {
-                        $inBootstrapOrStarter = $true
-                    }
-                }
-            }
-            if("starter" -in $inputConfigItem.Value.maps_to) {
-                $checkFilter = !$hasDisplayMapFilter -or ($hasDisplayMapFilter -and "starter" -in $displayMapFilter.Value)
-
-                if($checkFilter) {
-                    Write-Verbose "Checking starter for $($inputConfigItem.Name)"
-                    $starterParameter = $starterParameters.PSObject.Properties | Where-Object { $_.Name -eq $inputVariable.Name }
-                    if($null -ne $starterParameter) {
-                        $inBootstrapOrStarter = $true
-                    }
-                }
-            }
-
-            if(!$inBootstrapOrStarter) {
-                $inputVariable.Value.Type = "SkippedInput"
-            }
-        }
-
-        # Get the inputs for interface
-        $interfaceConfiguration = Request-ALZEnvironmentConfig `
-            -configurationParameters $interfaceConfigMapped `
-            -inputConfig $inputConfig `
-
-        # Set computed interface inputs
+        # Set computed inputs
         $computedInputs["starter_module_name"] = $starter
         $computedInputs["module_folder_path"] = $starterModulePath
         $computedInputs["availability_zones_bootstrap"] = @(Get-AvailabilityZonesSupport -region $interfaceConfiguration.bootstrap_location.Value -zonesSupport $zonesSupport)
 
-        if($interfaceConfiguration.starter_locations.Value.Length -gt 0) {
+        if($inputConfig.inputs.PSObject.Properties.Name -contains "starter_locations") {
             $computedInputs["availability_zones_starter"] = @()
             foreach($region in $interfaceConfiguration.starter_locations.Value -split ",") {
-                $computedInputs["availability_zones_starter"] +=  @{
-                    region = $region
-                    zones  = @(Get-AvailabilityZonesSupport -region $region -zonesSupport $zonesSupport)
-                }
+                $computedInputs["availability_zones_starter"] += @(Get-AvailabilityZonesSupport -region $region -zonesSupport $zonesSupport)
             }
-        } else {
-            $computedInputs["availability_zones_starter"] = @(Get-AvailabilityZonesSupport -region $interfaceConfiguration.starter_location.Value -zonesSupport $zonesSupport)
-        }
-
-        foreach($inputConfigItem in $inputConfig.inputs.PSObject.Properties) {
-            if($inputConfigItem.Value.source -eq "powershell") {
-                $inputVariable = $interfaceConfiguration.PSObject.Properties | Where-Object { $_.Name -eq $inputConfigItem.Name }
-                $inputValue = $computedInputs[$inputConfigItem.Name]
-                if($inputValue -is [array]) {
-                    $jsonInputValue = ConvertTo-Json $inputValue -Depth 10
-                    Write-Verbose "Setting computed interface input array $($inputConfigItem.Name) to $jsonInputValue"
-                } else {
-                    Write-Verbose "Setting computed interface input string $($inputConfigItem.Name) to $inputValue"
-                }
-                $inputVariable.Value.Value = $inputValue
-            }
-        }
-
-        # Split interface inputs
-        $bootstrapComputed = [PSCustomObject]@{}
-        $starterComputed = [PSCustomObject]@{}
-
-        foreach($inputConfigItem in $inputConfig.inputs.PSObject.Properties) {
-            $inputVariable = $interfaceConfiguration.PSObject.Properties | Where-Object { $_.Name -eq $inputConfigItem.Name }
-            if("bootstrap" -in $inputConfigItem.Value.maps_to) {
-                $bootstrapComputed | Add-Member -NotePropertyName $inputVariable.Name -NotePropertyValue $inputVariable.Value
-            }
-
-            if("starter" -in $inputConfigItem.Value.maps_to) {
-                if($iac -eq "terraform") {
-                    $starterComputed | Add-Member -NotePropertyName $inputVariable.Name -NotePropertyValue $inputVariable.Value
-                }
-
-                if($iac -eq "bicep") {
-                    if($inputConfigItem.Value.PSObject.Properties.Name -contains "bicep_alias") {
-                        Write-Verbose "Setting computed bicep alias $($inputConfigItem.Value.bicep_alias)"
-                        $starterComputed | Add-Member -NotePropertyName $inputConfigItem.Value.bicep_alias -NotePropertyValue $inputVariable.Value
-                    } else {
-                        $starterComputed | Add-Member -NotePropertyName $inputVariable.Name -NotePropertyValue $inputVariable.Value
-                    }
-                }
-            }
+            Write-Verbose "Computed availability zones for starter: $(ConvertTo-Json $computedInputs["availability_zones_starter"] -Depth 100)"
         }
 
         # Getting the input for the bootstrap module
-        $bootstrapConfiguration = Request-ALZEnvironmentConfig `
+        $bootstrapConfiguration = Set-Config `
             -configurationParameters $bootstrapParameters `
             -inputConfig $inputConfig `
-            -computedInputs $bootstrapComputed
+            -computedInputs $computedInputs
 
         # Getting the input for the starter module
-        $starterConfiguration = Request-ALZEnvironmentConfig `
+        $starterConfiguration = Set-Config `
             -configurationParameters $starterParameters `
             -inputConfig $inputConfig `
-            -computedInputs $starterComputed
+            -computedInputs $computedInputs
 
         # Creating the tfvars files for the bootstrap and starter module
         $tfVarsFileName = "override.tfvars.json"
         $bootstrapTfvarsPath = Join-Path -Path $bootstrapModulePath -ChildPath $tfVarsFileName
         $starterTfvarsPath = Join-Path -Path $starterModulePath -ChildPath "terraform.tfvars.json"
         $starterBicepVarsPath = Join-Path -Path $starterModulePath -ChildPath "parameters.json"
-
-        # Add any extra inputs to the bootstrap tfvars on the assumption they are hidden inputs
-        foreach($input in $inputConfig.PSObject.Properties) {
-            $inputName = $input.Name
-            $inputValue = $input.Value
-
-            if($bootstrapConfiguration.PSObject.Properties.Name -notcontains $inputName -and $interfaceConfiguration.PSObject.Properties.Name -notcontains $inputName -and $starterConfiguration.PSObject.Properties.Name -notcontains $inputName -and @("bootstrap", "starter", "iac") -notcontains $inputName) {
-                Write-Verbose "Setting hidden bootstrap variable '$inputName' to '$inputValue'"
-                $configItem = [PSCustomObject]@{}
-                $configItem | Add-Member -NotePropertyName "Value" -NotePropertyValue $inputValue
-                $configItem | Add-Member -NotePropertyName "DataType" -NotePropertyValue "Any"
-
-                $bootstrapConfiguration | Add-Member -NotePropertyName $inputName -NotePropertyValue $configItem
-            }
-        }
 
         # Write the tfvars file for the bootstrap and starter module
         Write-TfvarsJsonFile -tfvarsFilePath $bootstrapTfvarsPath -configuration $bootstrapConfiguration

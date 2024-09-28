@@ -140,6 +140,7 @@ function New-ALZEnvironment {
                 Write-InformationColored "Although you have selected Bicep, the Accelerator leverages the Terraform tool to bootstrap your Version Control System and Azure. This is will not impact your choice of Bicep post this initial bootstrap. Please refer to our documentation for further details..." -ForegroundColor Yellow -InformationAction Continue
             }
             Get-TerraformTool -version "latest" -toolsPath $toolsPath
+            $hclParserToolPath = Get-HCLParserTool -toolVersion "v0.6.0" -toolsPath $toolsPath
         }
 
         # Download the bootstrap modules
@@ -176,7 +177,6 @@ function New-ALZEnvironment {
 
         $bootstrapDetails = $null
         $validationConfig = $null
-        $interfaceConfig = $null
         $zonesSupport = $null
 
         $bootstrapAndStarterConfig = Get-BootstrapAndStarterConfig `
@@ -194,7 +194,6 @@ function New-ALZEnvironment {
         $starterReleaseArtifactName = $bootstrapAndStarterConfig.starterReleaseArtifactName
         $starterConfigFilePath = $bootstrapAndStarterConfig.starterConfigFilePath
         $validationConfig = $bootstrapAndStarterConfig.validationConfig
-        $interfaceConfig = $bootstrapAndStarterConfig.interfaceConfig
         $zonesSupport = $bootstrapAndStarterConfig.zonesSupport
 
         # Download the starter modules
@@ -243,14 +242,14 @@ function New-ALZEnvironment {
             -starterTargetPath $starterTargetPath `
             -starterRelease $starterReleaseTag `
             -starterConfig $starterConfig `
-            -interfaceConfig $interfaceConfig `
             -autoApprove:$autoApprove.IsPresent `
             -destroy:$destroy.IsPresent `
             -starter $starter `
             -zonesSupport $zonesSupport `
             -computedInputs $computedInputs `
             -writeVerboseLogs:$writeVerboseLogs.IsPresent `
-            -bootstrapTfVarsOverridePath $bootstrapTfVarsOverridePath
+            -bootstrapTfVarsOverridePath $bootstrapTfVarsOverridePath `
+            -hclParserToolPath $hclParserToolPath
     }
 
     $ProgressPreference = "Continue"

@@ -1,7 +1,4 @@
 function Get-ALZConfig {
-    <#
-
-    #>
     param(
         [Parameter(Mandatory = $false)]
         [string] $configFilePath = ""

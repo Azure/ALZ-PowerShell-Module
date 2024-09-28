@@ -2,7 +2,7 @@ function Get-HCLParserTool {
     [CmdletBinding(SupportsShouldProcess = $true)]
     param (
         [Parameter(Mandatory = $false)]
-        [string] $alzEnvironmentDestination,
+        [string] $toolsPath,
 
         [Parameter(Mandatory = $false)]
         [string] $toolVersion
@@ -11,13 +11,13 @@ function Get-HCLParserTool {
     if ($PSCmdlet.ShouldProcess("Download Terraform Tools", "modify")) {
         $osArchitecture = Get-OSArchitecture
 
-        $toolFileName = "hcl2json_$($osArchitecture.osAndArchitecture)"
+        $toolFileName = "hcl_parser_$($toolVersion)/hcl2json_$($osArchitecture.osAndArchitecture)"
 
         if($osArchitecture.os -eq "windows") {
             $toolFileName = "$($toolFileName).exe"
         }
 
-        $toolFilePath = Join-Path -Path $alzEnvironmentDestination -ChildPath $toolFileName
+        $toolFilePath = Join-Path -Path $toolsPath -ChildPath $toolFileName
 
         if(!(Test-Path $toolFilePath)) {
             Invoke-WebRequest -Uri "https://github.com/tmccombs/hcl2json/releases/download/$($toolVersion)/$($toolFileName)" -OutFile "$toolFilePath" | Out-String | Write-Verbose
