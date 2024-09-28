@@ -37,7 +37,7 @@ InModuleScope 'ALZ' {
             )
             $config = [pscustomobject]@{
                 Nested = [pscustomobject]@{
-                    Type        = "Computed"
+                    Source      = "calculated"
                     Description = "A Test Value"
                     Value       = $withValue
                     Targets     = @(
@@ -148,7 +148,7 @@ InModuleScope 'ALZ' {
 
                 $config = [pscustomobject]@{
                     Nested = [pscustomobject]@{
-                        Type        = "Computed"
+                        Source      = "calculated"
                         Description = "A Test Value"
                         Value       = @(
                             "1",
@@ -399,7 +399,7 @@ InModuleScope 'ALZ' {
                         Value        = "dev"
                     }
                     Logging     = [pscustomobject]@{
-                        Type        = "Computed"
+                        Source      = "calculated"
                         Description = "The type of environment that will be created . Example: dev, test, qa, staging, prod"
                         Value       = "logs/{%Environment%}/{%Location%}"
                         Targets     = @(

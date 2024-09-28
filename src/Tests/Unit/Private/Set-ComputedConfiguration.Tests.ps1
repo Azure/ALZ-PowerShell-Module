@@ -34,8 +34,8 @@ InModuleScope 'ALZ' {
                                 Name        = "Setting2"
                                 Destination = "Environment"
                             })
-                        Type    = "Computed"
-                        Value   = "{%Setting1%}"
+                        Source = "calculated"
+                        Value  = "{%Setting1%}"
                     }
                 }
 
@@ -46,7 +46,7 @@ InModuleScope 'ALZ' {
             It 'Computed, Processed array values replace values correctly' {
                 $configuration = [pscustomobject]@{
                     Nested     = [pscustomobject]@{
-                        Type        = "Computed"
+                        Source      = "calculated"
                         Description = "A Test Value"
                         Process = '@($args | Select-Object -Unique)'
                         Value   = @(
@@ -69,7 +69,7 @@ InModuleScope 'ALZ' {
             It 'Computed, Processed array values replace values correctly in a case insensitive deduplication.' {
                 $configuration = [pscustomobject]@{
                     Nested     = [pscustomobject]@{
-                        Type        = "Computed"
+                        Source      = "calculated"
                         Description = "A Test Value"
                         Process = '@($args | ForEach-Object { $_.ToLower() } | Select-Object -Unique)'
                         Value   = @(
@@ -93,7 +93,7 @@ InModuleScope 'ALZ' {
             It 'Computed, Processed array values replace values correctly and keep array type when only one item remains.' {
                 $configuration = [pscustomobject]@{
                     Nested     = [pscustomobject]@{
-                        Type        = "Computed"
+                        Source      = "calculated"
                         Description = "A Test Value"
                         Process = '@($args | Select-Object -Unique)'
                         Value   = @(
@@ -116,7 +116,7 @@ InModuleScope 'ALZ' {
             It 'Computed, Processed values replace values correctly' {
                 $configuration = [pscustomobject]@{
                     Nested     = [pscustomobject]@{
-                        Type        = "Computed"
+                        Source      = "calculated"
                         Description = "A Test Value"
                         Process = '($args[0] -eq "eastus") ? "eastus2" : ($args[0] -eq "eastus2") ? "eastus" : $args[0]'
                         Value       = "eastus"
@@ -135,7 +135,7 @@ InModuleScope 'ALZ' {
             It 'Computed, Processed values replace values correctly' {
                 $configuration = [pscustomobject]@{
                     Nested     = [pscustomobject]@{
-                        Type        = "Computed"
+                        Source      = "calculated"
                         Description = "A Test Value"
                         Process = '($args[0] -eq "goodbye") ? "Hello" : "Goodbye"'
                         Value       = "goodbye"

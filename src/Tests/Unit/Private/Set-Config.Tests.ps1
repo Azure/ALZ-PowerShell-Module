@@ -12,12 +12,12 @@ Import-Module $PathToManifest -Force
 #-------------------------------------------------------------------------
 
 InModuleScope 'ALZ' {
-   Describe 'Request-ALZEnvironmentConfig Private Function Tests' -Tag Unit {
+   Describe 'Set-Config Private Function Tests' -Tag Unit {
       BeforeAll {
          $WarningPreference = 'SilentlyContinue'
          $ErrorActionPreference = 'SilentlyContinue'
       }
-      Context 'Request-ALZEnvironmentConfig should request CLI input for configuration.' {
+      Context 'Set-Config should request CLI input for configuration.' {
          It 'Based on the configuration object' {
 
             $config = @'
@@ -39,7 +39,7 @@ InModuleScope 'ALZ' {
                  }
 '@ | ConvertFrom-Json
 
-            Request-ALZEnvironmentConfig -configurationParameters $config.Parameters
+            Set-Config -configurationParameters $config.Parameters
          }
 
       }

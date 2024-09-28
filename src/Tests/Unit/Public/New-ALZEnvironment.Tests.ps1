@@ -21,7 +21,7 @@ InModuleScope 'ALZ' {
         }
         Context 'Success' {
             BeforeEach {
-                Mock -CommandName Request-ALZEnvironmentConfig -MockWith {
+                Mock -CommandName Set-Config -MockWith {
                     @(
                         @{
                             "description"  = "Test configuration 1"
@@ -91,7 +91,7 @@ InModuleScope 'ALZ' {
 
                 Mock -CommandName Get-TerraformTool -MockWith { }
 
-                Mock -CommandName Convert-HCLVariablesToUserInputConfig -MockWith {
+                Mock -CommandName Convert-HCLVariablesToInputConfig -MockWith {
                     @(
                         @{
                             "description"  = "Test configuration 1"

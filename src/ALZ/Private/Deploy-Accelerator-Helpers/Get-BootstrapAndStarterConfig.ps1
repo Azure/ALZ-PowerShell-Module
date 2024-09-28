@@ -26,7 +26,6 @@ function Get-BootstrapAndStarterConfig {
         $bootstrapDetails = $null
         $validationConfig = $null
         $zonesSupport = $null
-        $interfaceConfig = $null
 
         # Get the bootstap configuration
         $bootstrapConfigFullPath = Join-Path $bootstrapPath $bootstrapConfigPath
@@ -34,10 +33,10 @@ function Get-BootstrapAndStarterConfig {
         $bootstrapConfig = Get-ALZConfig -configFilePath $bootstrapConfigFullPath
         $validationConfig = $bootstrapConfig.validators
 
+        # Get the supported regions and availability zones
         Write-Verbose "Getting Supported Regions and Availability Zones with Terraform"
         $regionsAndZones = Get-AzureRegionData -toolsPath $toolsPath
         Write-Verbose "Supported Regions: $($regionsAndZones.supportedRegions)"
-
         $zonesSupport = $regionsAndZones.zonesSupport
         $azureLocationValidator = $validationConfig.PSObject.Properties["azure_location"].Value
         $azureLocationValidator.AllowedValues.Values = $regionsAndZones.supportedRegions
@@ -77,11 +76,6 @@ function Get-BootstrapAndStarterConfig {
             $starterConfigFilePath = $starterModuleDetails.Value.$iac.release_artifact_config_file
         }
 
-        # Get the bootstrap interface user input config
-        $interfaceConfigFilePath = Join-Path -Path $bootstrapPath -ChildPath $bootstrapDetails.Value.interface_config_file
-        Write-Verbose "Interface config path $interfaceConfigFilePath"
-        $interfaceConfig = Get-ALZConfig -configFilePath $interfaceConfigFilePath
-
         return @{
             bootstrapDetails           = $bootstrapDetails
             hasStarterModule           = $hasStarterModule
@@ -91,7 +85,6 @@ function Get-BootstrapAndStarterConfig {
             starterConfigFilePath      = $starterConfigFilePath
             validationConfig           = $validationConfig
             zonesSupport               = $zonesSupport
-            interfaceConfig            = $interfaceConfig
         }
     }
 }
