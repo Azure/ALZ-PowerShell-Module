@@ -17,7 +17,7 @@ function Get-ALZConfig {
             Install-Module powershell-Yaml -Force
         }
         try {
-            $config = [PSCustomObject](Get-Content -Path $configFilePath | ConvertFrom-Yaml)
+            $config = [PSCustomObject](Get-Content -Path $configFilePath | ConvertFrom-Yaml -Ordered)
         } catch {
             $errorMessage = "Failed to parse YAML inputs. Please check the YAML file for errors and try again. $_"
             Write-Error $errorMessage

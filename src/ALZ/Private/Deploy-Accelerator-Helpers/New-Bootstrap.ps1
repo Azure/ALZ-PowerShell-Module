@@ -50,10 +50,6 @@ function New-Bootstrap {
         [switch]
         $writeVerboseLogs,
 
-        [Parameter(Mandatory = $false, HelpMessage = "The path to the bootstrap terraform.tfvars file that you would like to replace the default one with. (e.g. c:\accelerator\terraform.tfvars)")]
-        [string]
-        $bootstrapTfVarsOverridePath,
-
         [Parameter(Mandatory = $false)]
         [string]
         $hclParserToolPath
@@ -66,26 +62,6 @@ function New-Bootstrap {
         $bootstrapModulePath = Join-Path -Path $bootstrapPath -ChildPath $bootstrapDetails.Value.location
 
         Write-Verbose "Bootstrap Module Path: $bootstrapModulePath"
-
-        # Override default tfvars file
-        if($bootstrapTfVarsOverridePath -ne "" -and (Test-Path $bootstrapTfVarsOverridePath)) {
-            $fileExtension = [System.IO.Path]::GetExtension($bootstrapTfVarsOverridePath)
-            $terraformTfVars = Get-Content $bootstrapTfVarsOverridePath
-            $targetTfVarsFileName = "terraform.tfvars"
-            $targetTfVarsPath = Join-Path $bootstrapModulePath $targetTfVarsFileName
-
-            if(Test-Path $targetTfVarsPath) {
-                Write-Verbose "Removing $targetTfVarsPath"
-                Remove-Item $targetTfVarsPath -Force | Write-Verbose
-            }
-
-            if($fileExtension.ToLower() -eq "json") {
-                $targetTfVarsPath = "$targetTfVarsPath.json"
-            }
-
-            Write-Verbose "Creating $targetTfVarsPath"
-            $terraformTfVars | Out-File $targetTfVarsPath -Force
-        }
 
         # Run upgrade
         Invoke-FullUpgrade `
@@ -117,7 +93,7 @@ function New-Bootstrap {
         foreach($terraformFile in $terraformFiles) {
             $bootstrapParameters = Convert-HCLVariablesToInputConfig -targetVariableFile $terraformFile.FullName -hclParserToolPath $hclParserToolPath -validators $validationConfig -appendToObject $bootstrapParameters
         }
-        Write-Verbose "Bootstrap Config: $(ConvertTo-Json $bootstrapParameters -Depth 100)"
+        #Write-Verbose "Bootstrap Config: $(ConvertTo-Json $bootstrapParameters -Depth 100)"
 
         # Getting the configuration for the starter module user input
         $starterParameters  = [PSCustomObject]@{}
@@ -136,7 +112,7 @@ function New-Bootstrap {
         }
 
         # Set computed inputs
-        Write-Verbose "Input config: $(ConvertTo-Json $inputConfig -Depth 100)"
+        #Write-Verbose "Input config: $(ConvertTo-Json $inputConfig -Depth 100)"
         $computedInputs["starter_module_name"] = $starter
         $computedInputs["module_folder_path"] = $starterModulePath
         $computedInputs["availability_zones_bootstrap"] = @(Get-AvailabilityZonesSupport -region $inputConfig.bootstrap_location -zonesSupport $zonesSupport)
@@ -148,6 +124,8 @@ function New-Bootstrap {
             }
             Write-Verbose "Computed availability zones for starter: $(ConvertTo-Json $computedInputs["availability_zones_starter"] -Depth 100)"
         }
+
+        Write-Verbose "Computed Inputs: $(ConvertTo-Json $computedInputs -Depth 100)"
 
         # Getting the input for the bootstrap module
         $bootstrapConfiguration = Set-Config `
@@ -162,7 +140,7 @@ function New-Bootstrap {
             -computedInputs $computedInputs
 
         # Creating the tfvars files for the bootstrap and starter module
-        $tfVarsFileName = "override.tfvars.json"
+        $tfVarsFileName = "terraform.tfvars.json"
         $bootstrapTfvarsPath = Join-Path -Path $bootstrapModulePath -ChildPath $tfVarsFileName
         $starterTfvarsPath = Join-Path -Path $starterModulePath -ChildPath "terraform.tfvars.json"
         $starterBicepVarsPath = Join-Path -Path $starterModulePath -ChildPath "parameters.json"
@@ -200,10 +178,10 @@ function New-Bootstrap {
         Write-InformationColored "Thank you for providing those inputs, we are now initializing and applying Terraform to bootstrap your environment..." -ForegroundColor Green -NewLineBefore -InformationAction Continue
 
         if($autoApprove) {
-            Invoke-Terraform -moduleFolderPath $bootstrapModulePath -tfvarsFileName $tfVarsFileName -autoApprove -destroy:$destroy.IsPresent
+            Invoke-Terraform -moduleFolderPath $bootstrapModulePath -autoApprove -destroy:$destroy.IsPresent
         } else {
             Write-InformationColored "Once the plan is complete you will be prompted to confirm the apply." -ForegroundColor Green -NewLineBefore -InformationAction Continue
-            Invoke-Terraform -moduleFolderPath $bootstrapModulePath -tfvarsFileName $tfVarsFileName -destroy:$destroy.IsPresent
+            Invoke-Terraform -moduleFolderPath $bootstrapModulePath -destroy:$destroy.IsPresent
         }
 
         Write-InformationColored "Bootstrap has completed successfully! Thanks for using our tool. Head over to Phase 3 in the documentation to continue..." -ForegroundColor Green -NewLineBefore -InformationAction Continue

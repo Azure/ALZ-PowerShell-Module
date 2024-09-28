@@ -7,7 +7,7 @@ function Set-Config {
         [Parameter(Mandatory = $false)]
         [PSCustomObject] $inputConfig = $null,
         [Parameter(Mandatory = $false)]
-        [PSCustomObject] $computedInputs
+        [hashtable] $computedInputs
     )
 
     if ($PSCmdlet.ShouldProcess("Set Configuration.", "Set configuration values.")) {
@@ -22,11 +22,13 @@ function Set-Config {
             }
 
             # Look for computed input match
-            $computedInput = $computedInputs.PsObject.Properties | Where-Object { $_.Name -eq $configurationValue.Name }
+            if($null -ne $computedInputs) {
+                $computedInput = $computedInputs[$configurationValue.Name]
 
-            if($null -ne $computedInput) {
-                $configurationValue.Value.Value = $computedInput.Value.Value
-                continue
+                if($null -ne $computedInput) {
+                    $configurationValue.Value.Value = $computedInput
+                    continue
+                }
             }
 
             # Look for input config match

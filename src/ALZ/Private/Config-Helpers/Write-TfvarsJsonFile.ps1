@@ -14,9 +14,9 @@ function Write-TfvarsJsonFile {
             Remove-Item -Path $tfvarsFilePath
         }
 
-        $jsonObject = @{}
+        $jsonObject = [ordered]@{}
 
-        foreach($configurationProperty in $configuration.PSObject.Properties) {
+        foreach($configurationProperty in $configuration.PSObject.Properties | Sort-Object Name) {
             $configurationValue = $configurationProperty.Value.Value
 
             if($configurationProperty.Value.Validator -eq "configuration_file_path") {
@@ -26,8 +26,7 @@ function Write-TfvarsJsonFile {
             $jsonObject["$($configurationProperty.Name)"] = $configurationValue
         }
 
-        $jsonString = ConvertTo-Json $jsonObject
-
+        $jsonString = ConvertTo-Json $jsonObject -Depth 100
         $jsonString | Out-File $tfvarsFilePath
     }
 }

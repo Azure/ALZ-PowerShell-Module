@@ -104,11 +104,7 @@ function New-ALZEnvironment {
 
         [Parameter(Mandatory = $false, HelpMessage = "An extra level of logging that is turned off by default for easier debugging.")]
         [switch]
-        $writeVerboseLogs,
-
-        [Parameter(Mandatory = $false, HelpMessage = "The path to the bootstrap terraform.tfvars file that you would like to replace the default one with. (e.g. c:\accelerator\terraform.tfvars). This file can also be in json format.")]
-        [string]
-        $bootstrapTfVarsOverridePath
+        $writeVerboseLogs
     )
 
     $ProgressPreference = "SilentlyContinue"
@@ -248,7 +244,6 @@ function New-ALZEnvironment {
             -zonesSupport $zonesSupport `
             -computedInputs $computedInputs `
             -writeVerboseLogs:$writeVerboseLogs.IsPresent `
-            -bootstrapTfVarsOverridePath $bootstrapTfVarsOverridePath `
             -hclParserToolPath $hclParserToolPath
     }
 
