@@ -31,12 +31,21 @@ function Set-Config {
                 }
             }
 
-            # Look for input config match
+            # Get input config name
             $inputConfigName = $configurationValue.Name
             if($configurationValue.PSObject.Properties.Name -contains "SourceInput") {
                 $inputConfigName = $configurationValue.SourceInput
             }
 
+            # Look for environment variables
+            $environmentVariable = [Environment]::GetEnvironmentVariable("TF_VAR_$inputConfigName")
+            if($null -ne $environmentVariable) {
+                $configurationValue.Value.Value = "sourced-from-env"
+                Write-Verbose "Using environment variable for $inputConfigName"
+                continue
+            }
+
+            # Look for input config match
             $inputConfigItem = $inputConfig.PsObject.Properties | Where-Object { $_.Name -eq $inputConfigName }
             if($null -ne $inputConfigItem) {
                 $configurationValue.Value.Value = $inputConfigItem.Value

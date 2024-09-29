@@ -19,6 +19,10 @@ function Write-TfvarsJsonFile {
         foreach($configurationProperty in $configuration.PSObject.Properties | Sort-Object Name) {
             $configurationValue = $configurationProperty.Value.Value
 
+            if($configurationValue -eq "sourced-from-env") {
+                continue
+            }
+
             if($configurationProperty.Value.Validator -eq "configuration_file_path") {
                 $configurationValue = [System.IO.Path]::GetFileName($configurationValue)
             }
