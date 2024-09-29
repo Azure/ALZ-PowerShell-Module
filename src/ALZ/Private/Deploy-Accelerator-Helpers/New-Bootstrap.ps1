@@ -137,7 +137,8 @@ function New-Bootstrap {
         $starterConfiguration = Set-Config `
             -configurationParameters $starterParameters `
             -inputConfig $inputConfig `
-            -computedInputs $computedInputs
+            -computedInputs $computedInputs `
+            -copyEnvVarToConfig
 
         # Creating the tfvars files for the bootstrap and starter module
         $tfVarsFileName = "terraform.tfvars.json"

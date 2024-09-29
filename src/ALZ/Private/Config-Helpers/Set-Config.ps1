@@ -7,7 +7,9 @@ function Set-Config {
         [Parameter(Mandatory = $false)]
         [PSCustomObject] $inputConfig = $null,
         [Parameter(Mandatory = $false)]
-        [hashtable] $computedInputs
+        [hashtable] $computedInputs,
+        [Parameter(Mandatory = $false)]
+        [switch] $copyEnvVarToConfig
     )
 
     if ($PSCmdlet.ShouldProcess("Set Configuration.", "Set configuration values.")) {
@@ -40,8 +42,13 @@ function Set-Config {
             # Look for environment variables
             $environmentVariable = [Environment]::GetEnvironmentVariable("TF_VAR_$inputConfigName")
             if($null -ne $environmentVariable) {
-                $configurationValue.Value.Value = "sourced-from-env"
-                Write-Verbose "Using environment variable for $inputConfigName"
+                if($copyEnvVarToConfig) {
+                    $configurationValue.Value.Value = $environmentVariable
+                    Write-Verbose "Set value from environment variable for $inputConfigName"
+                } else {
+                    $configurationValue.Value.Value = "sourced-from-env"
+                    Write-Verbose "Using environment variable for $inputConfigName"
+                }
                 continue
             }
 
