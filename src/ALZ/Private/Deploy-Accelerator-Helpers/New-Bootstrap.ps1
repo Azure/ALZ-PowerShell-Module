@@ -43,9 +43,6 @@ function New-Bootstrap {
         [Parameter(Mandatory = $false)]
         [PSCustomObject] $zonesSupport = $null,
 
-        [Parameter(Mandatory = $false)]
-        [hashtable] $computedInputs,
-
         [Parameter(Mandatory = $false, HelpMessage = "An extra level of logging that is turned off by default for easier debugging.")]
         [switch]
         $writeVerboseLogs,
@@ -88,7 +85,7 @@ function New-Bootstrap {
         # Getting configuration for the bootstrap module user input
         $bootstrapParameters = [PSCustomObject]@{}
 
-        Write-Verbose "Getting the bootstrap configuration for user input..."
+        Write-Verbose "Getting the bootstrap configuration..."
         $terraformFiles = Get-ChildItem -Path $bootstrapModulePath -Filter "*.tf" -File
         foreach($terraformFile in $terraformFiles) {
             $bootstrapParameters = Convert-HCLVariablesToInputConfig -targetVariableFile $terraformFile.FullName -hclParserToolPath $hclParserToolPath -validators $validationConfig -appendToObject $bootstrapParameters
@@ -99,6 +96,7 @@ function New-Bootstrap {
         $starterParameters  = [PSCustomObject]@{}
 
         if($hasStarter) {
+            Write-Verbose "Getting the starter configuration..."
             if($iac -eq "terraform") {
                 $terraformFiles = Get-ChildItem -Path $starterModulePath -Filter "*.tf" -File
                 foreach($terraformFile in $terraformFiles) {
@@ -107,38 +105,46 @@ function New-Bootstrap {
             }
 
             if($iac -eq "bicep") {
-                $starterParameters = Convert-BicepConfigToInputConfig -inputConfig $starterConfig.starter_modules.$starter -validators $validationConfig
+                $starterParameters = Convert-BicepConfigToInputConfig -bicepConfig $starterConfig.starter_modules.$starter -validators $validationConfig
             }
         }
+
+        #Write-Verbose "Starter config: $(ConvertTo-Json $starterParameters -Depth 100)"
 
         # Set computed inputs
-        #Write-Verbose "Input config: $(ConvertTo-Json $inputConfig -Depth 100)"
-        $computedInputs["starter_module_name"] = $starter
-        $computedInputs["module_folder_path"] = $starterModulePath
-        $computedInputs["availability_zones_bootstrap"] = @(Get-AvailabilityZonesSupport -region $inputConfig.bootstrap_location -zonesSupport $zonesSupport)
+        $inputConfig | Add-Member -NotePropertyName "starter_module_name" -NotePropertyValue $starter
+        $inputConfig | Add-Member -NotePropertyName "module_folder_path" -NotePropertyValue $starterModulePath
+        $inputConfig | Add-Member -NotePropertyName "availability_zones_bootstrap" -NotePropertyValue @(Get-AvailabilityZonesSupport -region $inputConfig.bootstrap_location -zonesSupport $zonesSupport)
 
-        if($inputConfig.PSObject.Properties.Name -contains "starter_locations") {
-            $computedInputs["availability_zones_starter"] = @()
-            foreach($region in $inputConfig.starter_locations) {
-                $computedInputs["availability_zones_starter"] += @(Get-AvailabilityZonesSupport -region $region -zonesSupport $zonesSupport)
-            }
-            Write-Verbose "Computed availability zones for starter: $(ConvertTo-Json $computedInputs["availability_zones_starter"] -Depth 100)"
+        if($inputConfig.PSObject.Properties.Name -contains "starter_location" -and $inputConfig.PSObject.Properties.Name -notcontains "starter_locations") {
+            Write-Verbose "Converting starter_location $($inputConfig.starter_location) to starter_locations..."
+            $inputConfig | Add-Member -NotePropertyName "starter_locations" -NotePropertyValue @($inputConfig.starter_location)
         }
 
-        Write-Verbose "Computed Inputs: $(ConvertTo-Json $computedInputs -Depth 100)"
+        if($inputConfig.PSObject.Properties.Name -contains "starter_locations") {
+            $availabilityZonesStarter = @()
+            foreach($region in $inputConfig.starter_locations) {
+                $availabilityZonesStarter += , @(Get-AvailabilityZonesSupport -region $region -zonesSupport $zonesSupport)
+            }
+            $inputConfig | Add-Member -NotePropertyName "availability_zones_starter" -NotePropertyValue $availabilityZonesStarter
+        }
+
+        #Write-Verbose "Input config: $(ConvertTo-Json $inputConfig -Depth 100)"
 
         # Getting the input for the bootstrap module
+        Write-Verbose "Setting the configuration for the bootstrap module..."
         $bootstrapConfiguration = Set-Config `
             -configurationParameters $bootstrapParameters `
-            -inputConfig $inputConfig `
-            -computedInputs $computedInputs
+            -inputConfig $inputConfig
 
         # Getting the input for the starter module
+        Write-Verbose "Setting the configuration for the starter module..."
         $starterConfiguration = Set-Config `
             -configurationParameters $starterParameters `
             -inputConfig $inputConfig `
-            -computedInputs $computedInputs `
             -copyEnvVarToConfig
+
+        
 
         # Creating the tfvars files for the bootstrap and starter module
         $tfVarsFileName = "terraform.tfvars.json"

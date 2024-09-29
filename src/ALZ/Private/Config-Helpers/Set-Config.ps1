@@ -7,12 +7,11 @@ function Set-Config {
         [Parameter(Mandatory = $false)]
         [PSCustomObject] $inputConfig = $null,
         [Parameter(Mandatory = $false)]
-        [hashtable] $computedInputs,
-        [Parameter(Mandatory = $false)]
         [switch] $copyEnvVarToConfig
     )
 
     if ($PSCmdlet.ShouldProcess("Set Configuration.", "Set configuration values.")) {
+
         $configurations = $configurationParameters.PsObject.Properties
 
         foreach ($configurationValue in $configurations) {
@@ -23,20 +22,11 @@ function Set-Config {
                 continue
             }
 
-            # Look for computed input match
-            if($null -ne $computedInputs) {
-                $computedInput = $computedInputs[$configurationValue.Name]
-
-                if($null -ne $computedInput) {
-                    $configurationValue.Value.Value = $computedInput
-                    continue
-                }
-            }
-
             # Get input config name
             $inputConfigName = $configurationValue.Name
-            if($configurationValue.PSObject.Properties.Name -contains "SourceInput") {
-                $inputConfigName = $configurationValue.SourceInput
+            if($configurationValue.Value.PSObject.Properties.Name -contains "SourceInput") {
+                $inputConfigName = $configurationValue.Value.SourceInput
+                Write-Verbose "Using source input $inputConfigName for $($configurationValue.Name)"
             }
 
             # Look for environment variables
@@ -50,6 +40,33 @@ function Set-Config {
                     Write-Verbose "Using environment variable for $inputConfigName"
                 }
                 continue
+            }
+
+            # Look for array config match
+            if($inputConfigName.EndsWith("]")) {
+                $indexSplit = $inputConfigName.Split([char[]]@('[', ']'), [System.StringSplitOptions]::RemoveEmptyEntries)
+                $inputConfigItem = $inputConfig.PsObject.Properties | Where-Object { $_.Name -eq $indexSplit[0] }
+                if($null -ne $inputConfigItem) {
+                    if(!$inputConfigItem.Value.GetType().ImplementedInterfaces.Contains([System.Collections.ICollection])) {
+                        Write-Error "Input config item $($inputConfigName) is not an array, but an index was specified."
+                        throw "Input config item $($inputConfigName) is not an array, but an index was specified."
+                    }
+                    $index = [int]$indexSplit[1]
+                    if($inputConfigItem.Value.Length -le $index) {
+                        Write-Verbose "Input config item $($inputConfigName) does not have an index of $index."
+                    } else {
+                        $inputConfigItemValue = $inputConfigItem.Value[$index]
+                        if($null -ne $inputConfigItemValue) {
+                            $configurationValue.Value.Value = $inputConfigItemValue
+                            continue
+                        } else {
+                            Write-Verbose "Input config item $($inputConfigName) with index $index is null."
+                        }
+                    }
+                } else {
+                    Write-Error "Input config item $($inputConfigName) not found."
+                    throw "Input config item $($inputConfigName) not found."
+                }
             }
 
             # Look for input config match

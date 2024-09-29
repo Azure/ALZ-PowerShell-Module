@@ -1,4 +1,4 @@
-function Convert-BicepConfigToInmputConfig {
+function Convert-BicepConfigToInputConfig {
     [CmdletBinding(SupportsShouldProcess = $true)]
     param (
         [Parameter(Mandatory = $false)]
@@ -34,6 +34,10 @@ function Convert-BicepConfigToInmputConfig {
 
             if($variable.Value.PSObject.Properties.Name -contains "pattern") {
                 $configItem | Add-Member -NotePropertyName "Pattern" -NotePropertyValue $variable.Value.pattern
+            }
+
+            if($variable.Value.PSObject.Properties.Name -contains "process") {
+                $configItem | Add-Member -NotePropertyName "Process" -NotePropertyValue $variable.Value.process
             }
 
             if($variable.Value.PSObject.Properties.Name -contains "default") {

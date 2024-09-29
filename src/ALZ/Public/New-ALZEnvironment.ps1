@@ -216,12 +216,10 @@ function New-ALZEnvironment {
         }
 
         # Set computed interface inputs
-        $computedInputs = @{
-            "iac_type"                       = $iac
-            "on_demand_folder_repository"    = $starterModuleUrl
-            "on_demand_folder_artifact_name" = $starterReleaseArtifactName
-            "release_version"                = $starterReleaseTag -eq "local" ? $starterRelease : $starterReleaseTag
-        }
+        $inputConfig | Add-Member -MemberType NoteProperty -Name "iac_type" -Value $iac
+        $inputConfig | Add-Member -MemberType NoteProperty -Name "on_demand_folder_repository" -Value $starterModuleUrl
+        $inputConfig | Add-Member -MemberType NoteProperty -Name "on_demand_folder_artifact_name" -Value $starterReleaseArtifactName
+        $inputConfig | Add-Member -MemberType NoteProperty -Name "release_version" -Value ($starterReleaseTag -eq "local" ? $starterRelease : $starterReleaseTag)
 
         # Run the bootstrap
         $bootstrapTargetPath = Join-Path $targetDirectory $bootstrapTargetFolder
@@ -242,7 +240,6 @@ function New-ALZEnvironment {
             -destroy:$destroy.IsPresent `
             -starter $starter `
             -zonesSupport $zonesSupport `
-            -computedInputs $computedInputs `
             -writeVerboseLogs:$writeVerboseLogs.IsPresent `
             -hclParserToolPath $hclParserToolPath
     }
