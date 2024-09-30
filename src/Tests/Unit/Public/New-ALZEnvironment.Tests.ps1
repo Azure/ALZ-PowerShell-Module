@@ -151,13 +151,13 @@ InModuleScope 'ALZ' {
             }
 
             It 'should call the correct functions for bicep module configuration' {
-                Deploy-Accelerator -i "bicep" -c "github" -inputs "example.yml"
+                Deploy-Accelerator -i "bicep" -b "github" -inputs "example.yml"
                 Assert-MockCalled -CommandName Get-BootstrapAndStarterConfig -Exactly 1
                 Assert-MockCalled -CommandName New-ModuleSetup -Exactly 2
             }
 
             It 'should call the correct functions for terraform module configuration' {
-                Deploy-Accelerator -i "terraform" -c "github" -inputs "example.yml"
+                Deploy-Accelerator -i "terraform" -b "github" -inputs "example.yml"
                 Assert-MockCalled -CommandName Get-BootstrapAndStarterConfig -Exactly 1
                 Assert-MockCalled -CommandName New-Bootstrap -Exactly 1
                 Assert-MockCalled -CommandName New-ModuleSetup -Exactly 2

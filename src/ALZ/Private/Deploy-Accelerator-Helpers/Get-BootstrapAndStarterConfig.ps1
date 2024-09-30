@@ -44,11 +44,6 @@ function Get-BootstrapAndStarterConfig {
         # Get the available bootstrap modules
         $bootstrapModules = $bootstrapConfig.bootstrap_modules
 
-        # Request the bootstrap type if not already specified
-        if($bootstrap -eq "") {
-            $bootstrap = Request-SpecialInput -type "bootstrap" -bootstrapModules $bootstrapModules -inputConfig $inputConfig
-        }
-
         # Get the bootstrap details and validate it exists (use alias for legacy values)
         $bootstrapDetails = $bootstrapModules.PsObject.Properties | Where-Object { $_.Name -eq $bootstrap -or $bootstrap -in $_.Value.aliases }
         if($null -eq $bootstrapDetails) {

@@ -8,10 +8,7 @@ function Request-SpecialInput {
         [PSCustomObject] $starterConfig,
 
         [Parameter(Mandatory = $false)]
-        [PSCustomObject] $bootstrapModules,
-
-        [Parameter(Mandatory = $false)]
-        [PSCustomObject] $inputConfig = $null
+        [PSCustomObject] $bootstrapModules
     )
 
     if ($PSCmdlet.ShouldProcess("ALZ-Terraform module configuration", "modify")) {
@@ -95,18 +92,6 @@ function Request-SpecialInput {
             if($retryCount -eq $maxRetryCount) {
                 Write-InformationColored "You have exceeded the maximum number of retries. Exiting..." -ForegroundColor Red -InformationAction Continue
                 throw "You have exceeded the maximum number of retries. Exiting..."
-            }
-        }
-
-        if($null -ne $inputConfig) {
-            $userInputOverride = $inputConfig.PSObject.Properties | Where-Object { $_.Name -eq $type }
-            if($null -ne $userInputOverride) {
-                $result = $userInputOverride.Value
-                if($options.key -notcontains $result -and $aliasOptions.key -notcontains $result) {
-                    Write-InformationColored "The $typeDescription '$result' that you have selected does not exist. Please try again with a valid $typeDescription..." -ForegroundColor Red -InformationAction Continue
-                    throw "The $typeDescription '$result' that you have selected does not exist. Please try again with a valid $typeDescription..."
-                }
-                return $result
             }
         }
 

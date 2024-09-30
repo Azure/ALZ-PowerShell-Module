@@ -38,9 +38,6 @@ function New-Bootstrap {
         [switch] $destroy,
 
         [Parameter(Mandatory = $false)]
-        [string] $starter = "",
-
-        [Parameter(Mandatory = $false)]
         [PSCustomObject] $zonesSupport = $null,
 
         [Parameter(Mandatory = $false, HelpMessage = "An extra level of logging that is turned off by default for easier debugging.")]
@@ -71,14 +68,12 @@ function New-Bootstrap {
         $starterModulePath = ""
 
         if($hasStarter) {
-            if($starter -eq "") {
-                $starter = Request-SpecialInput -type "starter" -starterConfig $starterConfig -inputConfig $inputConfig
+            if($inputConfig.starter_module_name -eq "") {
+                $inputConfig.starter_module_name = Request-SpecialInput -type "starter" -starterConfig $starterConfig
             }
 
-            Write-Verbose "Selected Starter: $starter"
-
-            $starterModulePath = (Resolve-Path (Join-Path -Path $starterPath -ChildPath $starterConfig.starter_modules.$starter.location)).Path
-
+            Write-Verbose "Selected Starter: $($inputConfig.starter_module_name))"
+            $starterModulePath = (Resolve-Path (Join-Path -Path $starterPath -ChildPath $starterConfig.starter_modules.$($inputConfig.starter_module_name).location)).Path
             Write-Verbose "Starter Module Path: $starterModulePath"
         }
 
@@ -90,7 +85,6 @@ function New-Bootstrap {
         foreach($terraformFile in $terraformFiles) {
             $bootstrapParameters = Convert-HCLVariablesToInputConfig -targetVariableFile $terraformFile.FullName -hclParserToolPath $hclParserToolPath -validators $validationConfig -appendToObject $bootstrapParameters
         }
-        #Write-Verbose "Bootstrap Config: $(ConvertTo-Json $bootstrapParameters -Depth 100)"
 
         # Getting the configuration for the starter module user input
         $starterParameters  = [PSCustomObject]@{}
@@ -105,14 +99,11 @@ function New-Bootstrap {
             }
 
             if($iac -eq "bicep") {
-                $starterParameters = Convert-BicepConfigToInputConfig -bicepConfig $starterConfig.starter_modules.$starter -validators $validationConfig
+                $starterParameters = Convert-BicepConfigToInputConfig -bicepConfig $starterConfig.starter_modules.$($inputConfig.starter_module_name) -validators $validationConfig
             }
         }
 
-        #Write-Verbose "Starter config: $(ConvertTo-Json $starterParameters -Depth 100)"
-
         # Set computed inputs
-        $inputConfig | Add-Member -NotePropertyName "starter_module_name" -NotePropertyValue $starter
         $inputConfig | Add-Member -NotePropertyName "module_folder_path" -NotePropertyValue $starterModulePath
         $inputConfig | Add-Member -NotePropertyName "availability_zones_bootstrap" -NotePropertyValue @(Get-AvailabilityZonesSupport -region $inputConfig.bootstrap_location -zonesSupport $zonesSupport)
 
@@ -129,7 +120,7 @@ function New-Bootstrap {
             $inputConfig | Add-Member -NotePropertyName "availability_zones_starter" -NotePropertyValue $availabilityZonesStarter
         }
 
-        #Write-Verbose "Input config: $(ConvertTo-Json $inputConfig -Depth 100)"
+        Write-Verbose "Final Input config: $(ConvertTo-Json $inputConfig -Depth 100)"
 
         # Getting the input for the bootstrap module
         Write-Verbose "Setting the configuration for the bootstrap module..."
@@ -143,8 +134,6 @@ function New-Bootstrap {
             -configurationParameters $starterParameters `
             -inputConfig $inputConfig `
             -copyEnvVarToConfig
-
-        
 
         # Creating the tfvars files for the bootstrap and starter module
         $tfVarsFileName = "terraform.tfvars.json"
@@ -161,22 +150,22 @@ function New-Bootstrap {
         }
 
         if($iac -eq "bicep") {
-            Copy-ParametersFileCollection -starterPath $starterModulePath -configFiles $starterConfig.starter_modules.$starter.deployment_files
+            Copy-ParametersFileCollection -starterPath $starterModulePath -configFiles $starterConfig.starter_modules.$($inputConfig.starter_module_name).deployment_files
             Set-ComputedConfiguration -configuration $starterConfiguration
             Edit-ALZConfigurationFilesInPlace -alzEnvironmentDestination $starterModulePath -configuration $starterConfiguration
             Write-JsonFile -jsonFilePath $starterBicepVarsPath -configuration $starterConfiguration
 
             # Remove unrequired files
-            $foldersOrFilesToRetain = $starterConfig.starter_modules.$starter.folders_or_files_to_retain
+            $foldersOrFilesToRetain = $starterConfig.starter_modules.$($inputConfig.starter_module_name).folders_or_files_to_retain
             $foldersOrFilesToRetain += "parameters.json"
             $foldersOrFilesToRetain += "config"
             $foldersOrFilesToRetain += "starter-cache.json"
 
-            foreach($deployment_file in $starterConfig.starter_modules.$starter.deployment_files) {
+            foreach($deployment_file in $starterConfig.starter_modules.$($inputConfig.starter_module_name).deployment_files) {
                 $foldersOrFilesToRetain += $deployment_file.templateParametersSourceFilePath
             }
 
-            $subFoldersOrFilesToRemove = $starterConfig.starter_modules.$starter.subfolders_or_files_to_remove
+            $subFoldersOrFilesToRemove = $starterConfig.starter_modules.$($inputConfig.starter_module_name).subfolders_or_files_to_remove
 
             Remove-UnrequiredFileSet -path $starterModulePath -foldersOrFilesToRetain $foldersOrFilesToRetain -subFoldersOrFilesToRemove $subFoldersOrFilesToRemove -writeVerboseLogs:$writeVerboseLogs.IsPresent
         }

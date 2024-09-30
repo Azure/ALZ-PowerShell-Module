@@ -4,107 +4,149 @@ function New-ALZEnvironment {
     Deploys an accelerator according to the supplied inputs.
     .DESCRIPTION
     This function is used to deploy accelerators consisting or bootstrap and optionally starter modules. The accelerators are designed to simplify and speed up configuration of common Microsoft patterns, such as CI / CD for Azure Landing Zones.
-    .PARAMETER output
-    The target directory for the accelerator artifacts. Depending on the choice and type of accelerlerator, this may be an intermediate stage or the final result of the accelerator.
-    .PARAMETER iac
-    The type of infrastructure as code that the accelerator implements. For example bicep or terraform.
-    .PARAMETER bootstrap
-    The accelerator bootstrap type to deploy.
-    .PARAMETER alzIacProvider
-    The IaC provider to use for the ALZ environment.
-    .PARAMETER inputs
-    A json or yaml file containing user input. This will cause the tool to by-pass requesting user input for the inputs supplied in the file. This is useful for automation or defining the inputs up front.
-    .PARAMETER autoApprove
-    Automatically approve the bootstrap deployment. This is useful for automation scenarios.
-    .PARAMETER destroy
-    Setting this will case the bootstrap to be destroyed. This is useful for cleaning up test environments.
     .EXAMPLE
     Deploy-Accelerator
     .EXAMPLE
-    Deploy-Accelerator -o "."
-    .EXAMPLE
-    Deploy-Accelerator -o "." -i "bicep" -b "alz_github"
+    Deploy-Accelerator -c "./config.yaml" -o "."
     #>
     [CmdletBinding(SupportsShouldProcess = $true)]
     param (
-        [Parameter(Mandatory = $false, HelpMessage = "The target directory for the accelerator output. Defaults to current folder.")]
-        [Alias("Output")]
-        [Alias("OutputDirectory")]
-        [Alias("O")]
-        [Alias("alzEnvironmentDestination")]
-        [string] $targetDirectory = ".",
-
-        [Parameter(Mandatory = $false, HelpMessage = "The specific bootstrap module release version to download. Defaults to latest.")]
-        [string] $bootstrapRelease = "latest",
-
-        [Parameter(Mandatory = $false, HelpMessage = "The specific starter module release version tom download. Defaults to latest.")]
-        [Alias("alzBicepVersion")]
-        [Alias("version")]
-        [Alias("v")]
-        [Alias("alzVersion")]
-        [Alias("release")]
-        [string] $starterRelease = "latest",
-
-        [Parameter(Mandatory = $false, HelpMessage = "The infrastructure as code type to target. Supported options are 'bicep', 'terrform' or 'local'. You will be prompted to enter this if not supplied.")]
-        [Alias("i")]
-        [Alias("alzIacProvider")]
-        [string] $iac = "",
-
-        [Parameter(Mandatory = $false, HelpMessage = "The bootstrap module to deploy. You will be prompted to enter this if not supplied.")]
-        [Alias("Cicd")]
-        [Alias("c")]
-        [Alias("alzCicdPlatform")]
-        [Alias("b")]
-        [string] $bootstrap = "",
-
-        [Parameter(Mandatory = $false, HelpMessage = "The starter module to deploy. You will be prompted to enter this if not supplied.")]
-        [string] $starter = "",
-
-        [Parameter(Mandatory = $false, HelpMessage = "The inputs in json or yaml format. This is optional and used to automate or pre-prepare the accelerator inputs.")]
+        [Parameter(
+            Mandatory = $false,
+            HelpMessage = "[REQUIRED] The configuration inputs in json or yaml format. Environment variable: ALZ_input_config_path"
+        )]
         [Alias("inputs")]
-        [string] $inputConfigFilePath = "",
+        [Alias("c")]
+        [string] $inputConfigFilePath = $env:ALZ_input_config_path ?? "",
 
-        [Parameter(Mandatory = $false, HelpMessage = "Determines whether to deploy the bootstrap without prompting for approval. This is used for automation.")]
-        [switch] $autoApprove,
+        [Parameter(
+            Mandatory = $false,
+            HelpMessage = "[REQUIRED] The infrastructure as code type to target. Supported options are 'bicep', 'terrform' or 'local'. Environment variable: ALZ_iac_type. Config file input: iac_type.")]
+        [Alias("i")]
+        [Alias("iac")]
+        [string] $iac_type = "",
 
-        [Parameter(Mandatory = $false, HelpMessage = "Determines that this run is to destroup the bootstrap. This is used to cleanup experiments.")]
+        [Parameter(Mandatory = $false, HelpMessage = "[REQUIRED] The bootstrap module to deploy. Environment variable: ALZ_bootstrap_module_name. Config file input: bootstrap_module_name.")]
+        [Alias("b")]
+        [Alias("bootstrap")]
+        [string] $bootstrap_module_name = "",
+
+        [Parameter(Mandatory = $false, HelpMessage = "[REQUIRED] The starter module to deploy. Environment variable: ALZ_starter_module_name. Config file input: starter_module_name.")]
+        [Alias("s")]
+        [Alias("starter")]
+        [string] $starter_module_name = "",
+
+        [Parameter(
+            Mandatory = $false,
+            HelpMessage = "[OPTIONAL] The target directory for the accelerator working set of files. Defaults to current working folder. Environment variable: ALZ_output_folder_path. Config file input: output_folder_path."
+        )]
+        [Alias("output")]
+        [Alias("o")]
+        [Alias("targetDirectory")]
+        [string] $output_folder_path = ".",
+
+        [Parameter(
+            Mandatory = $false,
+            HelpMessage = "[OPTIONAL] The version tag of the bootstrap module release to download. Defaults to latest. Environment variable: ALZ_bootstrap_release_version. Config file input: bootstrap_release_version."
+        )]
+        [Alias("bv")]
+        [Alias("bootstrapRelease")]
+        [string] $bootstrap_release_version = "latest",
+
+        [Parameter(
+            Mandatory = $false,
+            HelpMessage = "[OPTIONAL] The version tag of the starter module release to download. Defaults to latest. Environment variable: ALZ_starter_release_version. Config file input: starter_release_version."
+        )]
+        [Alias("sv")]
+        [Alias("starterRelease")]
+        [string] $starter_release_version = "latest",
+
+        [Parameter(
+            Mandatory = $false,
+            HelpMessage = "[OPTIONAL] Determines whether to deploy the bootstrap without prompting for approval. This is used for automation. Environment variable: ALZ_auto_approve. Config file input: auto_approve."
+        )]
+        [Alias("aa")]
+        [Alias("autoApprove")]
+        [switch] $auto_approve,
+
+        [Parameter(
+            Mandatory = $false,
+            HelpMessage = "[OPTIONAL] Determines that this run is to destroup the bootstrap. This is used to cleanup experiments. Environment variable: ALZ_destroy. Config file input: destroy."
+        )]
+        [Alias("d")]
         [switch] $destroy,
 
-        [Parameter(Mandatory = $false, HelpMessage = "The bootstrap modules reposiotry url. This can be overridden for custom modules.")]
-        [string]
-        $bootstrapModuleUrl = "https://github.com/Azure/accelerator-bootstrap-modules",
+        [Parameter(
+            Mandatory = $false,
+            HelpMessage = "[OPTIONAL] The bootstrap modules reposiotry url. This can be overridden for custom modules. Environment variable: ALZ_bootstrap_module_url. Config file input: bootstrap_module_url."
+        )]
+        [Alias("bu")]
+        [Alias("bootstrapModuleUrl")]
+        [string] $bootstrap_module_url = "https://github.com/Azure/accelerator-bootstrap-modules",
 
-        [Parameter(Mandatory = $false, HelpMessage = "The bootstrap modules release artifact name.")]
-        [string]
-        $bootstrapModuleReleaseArtifactName = "bootstrap_modules.zip",
+        [Parameter(
+            Mandatory = $false,
+            HelpMessage = "[OPTIONAL] The bootstrap modules release artifact name. This can be overridden for custom modules. Environment variable: ALZ_bootstrap_module_release_artifact_name. Config file input: bootstrap_module_release_artifact_name."
+        )]
+        [Alias("ba")]
+        [Alias("bootstrapModuleReleaseArtifactName")]
+        [string] $bootstrap_module_release_artifact_name = "bootstrap_modules.zip",
 
-        [Parameter(Mandatory = $false, HelpMessage = "The bootstrap config file path within the bootstrap module. This can be overridden for custom modules.")]
-        [string]
-        $bootstrapConfigPath = ".config/ALZ-Powershell.config.json",
+        [Parameter(
+            Mandatory = $false,
+            HelpMessage = "[OPTIONAL] The bootstrap config file path within the bootstrap module. This can be overridden for custom modules. Environment variable: ALZ_bootstrap_config_path. Config file input: bootstrap_config_path."
+        )]
+        [Alias("bc")]
+        [Alias("bootstrapConfigPath")]
+        [string] $bootstrap_config_path = ".config/ALZ-Powershell.config.json",
 
-        [Parameter(Mandatory = $false, HelpMessage = "The folder that containes the bootstrap modules in the bootstrap repo. This can be overridden for custom modules.")]
-        [string]
-        $bootstrapSourceFolder = ".",
+        [Parameter(
+            Mandatory = $false,
+            HelpMessage = "[OPTIONAL] The folder that containes the bootstrap modules in the bootstrap repo. This can be overridden for custom modules. Environment variable: ALZ_bootstrap_source_folder. Config file input: bootstrap_source_folder."
+        )]
+        [Alias("bf")]
+        [Alias("bootstrapSourceFolder")]
+        [string] $bootstrap_source_folder = ".",
 
-        [Parameter(Mandatory = $false, HelpMessage = "Used to override the bootstrap folder location. This can be used to provide a folder locally in restricted environments.")]
-        [string]
-        $bootstrapModuleOverrideFolderPath = "",
+        [Parameter(
+            Mandatory = $false,
+            HelpMessage = "[OPTIONAL] Used to override the bootstrap folder source. This can be used to provide a folder locally in restricted environments or dev. Environment variable: ALZ_bootstrapModuleOverrideFolderPath. Config file input: bootstrapModuleOverrideFolderPath."
+        )]
+        [Alias("bo")]
+        [Alias("bootstrapModuleOverrideFolderPath")]
+        [string] $bootstrap_module_override_folder_path = "",
 
-        [Parameter(Mandatory = $false, HelpMessage = "Used to override the starter folder location. This can be used to provide a folder locally in restricted environments.")]
-        [string]
-        $starterModuleOverrideFolderPath = "",
+        [Parameter(
+            Mandatory = $false,
+            HelpMessage = "[OPTIONAL] Used to override the starter folder source. This can be used to provide a folder locally in restricted environments. Environment variable: ALZ_starterModuleOverrideFolderPath. Config file input: starterModuleOverrideFolderPath."
+        )]
+        [Alias("so")]
+        [Alias("starterModuleOverrideFolderPath")]
+        [string] $starter_module_override_folder_path = "",
 
-        [Parameter(Mandatory = $false, HelpMessage = "Whether to skip checks that involve internet connection. The can allow running in restricted environments.")]
-        [switch]
-        $skipInternetChecks,
+        [Parameter(
+            Mandatory = $false,
+            HelpMessage = "[OPTIONAL] Whether to skip checks that involve internet connection. The can allow running in restricted environments. Environment variable: ALZ_skip_internet_checks. Config file input: skip_internet_checks."
+        )]
+        [Alias("si")]
+        [Alias("skipInternetChecks")]
+        [switch] $skip_internet_checks,
 
-        [Parameter(Mandatory = $false, HelpMessage = "Whether to overwrite bootstrap and starter modules if they already exist. Warning, this may result in unexpected behaviour and should only be used for local development purposes.")]
-        [switch]
-        $replaceFiles,
+        [Parameter(
+            Mandatory = $false,
+            HelpMessage = "[OPTIONAL] Whether to overwrite bootstrap and starter modules if they already exist. Warning, this may result in unexpected behaviour and should only be used for local development purposes. Environment variable: ALZ_replace_files. Config file input: replace_files."
+        )]
+        [Alias("rf")]
+        [Alias("replaceFiles")]
+        [switch] $replace_files,
 
-        [Parameter(Mandatory = $false, HelpMessage = "An extra level of logging that is turned off by default for easier debugging.")]
-        [switch]
-        $writeVerboseLogs
+        [Parameter(
+            Mandatory = $false,
+            HelpMessage = "[OPTIONAL] An extra level of logging that is turned off by default for easier debugging. Environment variable: ALZ_write_verbose_logs. Config file input: writeVerboseLogs."
+        )]
+        [Alias("v")]
+        [Alias("writeVerboseLogs")]
+        [switch] $write_verbose_logs
     )
 
     $ProgressPreference = "SilentlyContinue"
@@ -112,27 +154,48 @@ function New-ALZEnvironment {
     Write-InformationColored "Getting ready to deploy the accelerator with you..." -ForegroundColor Green -InformationAction Continue
 
     if ($PSCmdlet.ShouldProcess("Accelerator setup", "modify")) {
-        # Get User Inputs from the -inputs file
+
+        # Get User Inputs from the input config file
         $inputConfig = $null
-
         if ($inputConfigFilePath -eq "") {
-            $inputConfigFilePath = Request-SpecialInput -type "inputConfigFilePath" -inputConfig $inputConfig
+            Write-InformationColored "No input configuration file path has been provided. Please provide the path to your configuration file..." -ForegroundColor Yellow -InformationAction Continue
+            $inputConfigFilePath = Request-SpecialInput -type "inputConfigFilePath"
         }
-
         $inputConfig = Get-ALZConfig -configFilePath $inputConfigFilePath
 
+        # Set accelerator input config from input file, environment variables or parameters
+        $parameters = (Get-Command -Name $MyInvocation.InvocationName).Parameters
+        $parametersWithValues = @{}
+        foreach ($parameterKey in $parameters.Keys) {
+            $parameter = $parameters[$parameterKey]
+            if($parameter.IsDynamic) {
+                continue
+            }
+
+            $parameterValue = Get-Variable -Name $parameterKey -ValueOnly -ErrorAction SilentlyContinue
+
+            if($null -ne $parameterValue) {
+                $parametersWithValues[$parameterKey] = @{
+                    type    = $parameters[$parameterKey].ParameterType.Name
+                    value   = $parameterValue
+                    aliases = $parameter.Aliases
+                }
+            }
+        }
+        $inputConfig = Convert-ParametersToInputConfig -inputConfig $inputConfig -parameters $parametersWithValues
+
         # Get the IAC type if not specified
-        if ($iac -eq "") {
-            $iac = Request-SpecialInput -type "iac" -inputConfig $inputConfig
+        if ($inputConfig.iac_type -eq "") {
+            $inputConfig.iac_type = Request-SpecialInput -type "iac"
         }
 
         # Check and install Terraform CLI if needed
-        $toolsPath = Join-Path -Path $targetDirectory -ChildPath ".tools"
+        $toolsPath = Join-Path -Path $inputConfig.output_folder_path -ChildPath ".tools"
         if($skipInternetChecks) {
             Write-InformationColored "Skipping Terraform tool check as you used the skipInternetCheck parameter. Please ensure you have the most recent version of Terraform installed" -ForegroundColor Yellow -InformationAction Continue
         } else {
             Write-InformationColored "Checking you have the latest version of Terraform installed..." -ForegroundColor Green -NewLineBefore -InformationAction Continue
-            if ($iac -eq "bicep") {
+            if ($inputConfig.iac_type -eq "bicep") {
                 Write-InformationColored "Although you have selected Bicep, the Accelerator leverages the Terraform tool to bootstrap your Version Control System and Azure. This is will not impact your choice of Bicep post this initial bootstrap. Please refer to our documentation for further details..." -ForegroundColor Yellow -InformationAction Continue
             }
             Get-TerraformTool -version "latest" -toolsPath $toolsPath
@@ -147,15 +210,15 @@ function New-ALZEnvironment {
         Write-InformationColored "Checking and Downloading the bootstrap module..." -ForegroundColor Green -NewLineBefore -InformationAction Continue
 
         $versionAndPath = New-ModuleSetup `
-            -targetDirectory $targetDirectory `
+            -targetDirectory $inputConfig.output_folder_path `
             -targetFolder $bootstrapTargetFolder `
-            -sourceFolder $bootstrapSourceFolder `
-            -url $bootstrapModuleUrl `
-            -release $bootstrapRelease `
-            -releaseArtifactName $bootstrapModuleReleaseArtifactName `
-            -moduleOverrideFolderPath $bootstrapModuleOverrideFolderPath `
-            -skipInternetChecks $skipInternetChecks `
-            -replaceFile:$replaceFiles.IsPresent
+            -sourceFolder $inputConfig.bootstrap_source_folder `
+            -url $inputConfig.bootstrap_module_url `
+            -release $inputConfig.bootstrap_release_version `
+            -releaseArtifactName $inputConfig.bootstrap_module_release_artifact_name `
+            -moduleOverrideFolderPath $inputConfig.bootstrap_module_override_folder_path `
+            -skipInternetChecks $inputConfig.skip_internet_checks `
+            -replaceFile:$inputConfig.replace_files
 
         $bootstrapReleaseTag = $versionAndPath.releaseTag
         $bootstrapPath = $versionAndPath.path
@@ -175,11 +238,16 @@ function New-ALZEnvironment {
         $validationConfig = $null
         $zonesSupport = $null
 
+        # Request the bootstrap type if not already specified
+        if($inputConfig.bootstrap_module_name -eq "") {
+            $inputConfig.bootstrap_module_name = Request-SpecialInput -type "bootstrap" -bootstrapModules $bootstrapModules
+        }
+
         $bootstrapAndStarterConfig = Get-BootstrapAndStarterConfig `
-            -iac $iac `
-            -bootstrap $bootstrap `
+            -iac $inputConfig.iac_type `
+            -bootstrap $inputConfig.bootstrap_module_name `
             -bootstrapPath $bootstrapPath `
-            -bootstrapConfigPath $bootstrapConfigPath `
+            -bootstrapConfigPath $inputConfig.bootstrap_config_path `
             -inputConfig $inputConfig `
             -toolsPath $toolsPath
 
@@ -200,15 +268,15 @@ function New-ALZEnvironment {
             Write-InformationColored "Checking and downloading the starter module..." -ForegroundColor Green -NewLineBefore -InformationAction Continue
 
             $versionAndPath = New-ModuleSetup `
-                -targetDirectory $targetDirectory `
+                -targetDirectory $inputConfig.output_folder_path `
                 -targetFolder $starterModuleTargetFolder `
                 -sourceFolder $starterModuleSourceFolder `
                 -url $starterModuleUrl `
-                -release $starterRelease `
+                -release $inputConfig.starter_release_version `
                 -releaseArtifactName $starterReleaseArtifactName `
-                -moduleOverrideFolderPath $starterModuleOverrideFolderPath `
-                -skipInternetChecks $skipInternetChecks `
-                -replaceFile:$replaceFiles.IsPresent
+                -moduleOverrideFolderPath $inputConfig.starter_module_override_folder_path `
+                -skipInternetChecks $inputConfig.skip_internet_checks `
+                -replaceFile:$inputConfig.replace_files
 
             $starterReleaseTag = $versionAndPath.releaseTag
             $starterPath = $versionAndPath.path
@@ -216,17 +284,16 @@ function New-ALZEnvironment {
         }
 
         # Set computed interface inputs
-        $inputConfig | Add-Member -MemberType NoteProperty -Name "iac_type" -Value $iac
         $inputConfig | Add-Member -MemberType NoteProperty -Name "on_demand_folder_repository" -Value $starterModuleUrl
         $inputConfig | Add-Member -MemberType NoteProperty -Name "on_demand_folder_artifact_name" -Value $starterReleaseArtifactName
-        $inputConfig | Add-Member -MemberType NoteProperty -Name "release_version" -Value ($starterReleaseTag -eq "local" ? $starterRelease : $starterReleaseTag)
+        $inputConfig | Add-Member -MemberType NoteProperty -Name "release_version" -Value ($starterReleaseTag -eq "local" ? $inputConfig.starter_release_version : $starterReleaseTag)
 
         # Run the bootstrap
-        $bootstrapTargetPath = Join-Path $targetDirectory $bootstrapTargetFolder
-        $starterTargetPath = Join-Path $targetDirectory $starterFolder
+        $bootstrapTargetPath = Join-Path $inputConfig.output_folder_path $bootstrapTargetFolder
+        $starterTargetPath = Join-Path $inputConfig.output_folder_path $starterFolder
 
         New-Bootstrap `
-            -iac $iac `
+            -iac $inputConfig.iac_type `
             -bootstrapDetails $bootstrapDetails `
             -validationConfig $validationConfig `
             -inputConfig $inputConfig `
@@ -236,11 +303,10 @@ function New-ALZEnvironment {
             -starterTargetPath $starterTargetPath `
             -starterRelease $starterReleaseTag `
             -starterConfig $starterConfig `
-            -autoApprove:$autoApprove.IsPresent `
-            -destroy:$destroy.IsPresent `
-            -starter $starter `
+            -autoApprove:$inputConfig.auto_approve `
+            -destroy:$inputConfig.destroy `
             -zonesSupport $zonesSupport `
-            -writeVerboseLogs:$writeVerboseLogs.IsPresent `
+            -writeVerboseLogs:$inputConfig.write_verbose_logs `
             -hclParserToolPath $hclParserToolPath
     }
 
