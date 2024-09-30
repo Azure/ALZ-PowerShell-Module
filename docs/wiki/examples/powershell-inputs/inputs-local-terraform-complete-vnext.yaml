@@ -3,20 +3,21 @@
 # https://github.com/Azure/ALZ-PowerShell-Module/wiki/%5BUser-Guide%5D-Quick-Start-Phase-2-Azure-DevOps#2211-azure-devops-with-bicep
 
 # Basic Inputs
-iac: "terraform"
-bootstrap: "alz_local"
-starter: "complete"
+iac_type: "terraform"
+bootstrap_module_name: "alz_local"
+starter_module_name: "complete"
+output_folder_path: "/accelerator/output"
 
 # Shared Interface Inputs
 bootstrap_location: "<region>"
-starter_location: "<region>"
+starter_locations: ["<region>"]
 root_parent_management_group_id: ""
 subscription_id_management: "<management-subscription-id>"
 subscription_id_identity: "<identity-subscription-id>"
 subscription_id_connectivity: "<connectivity-subscription-id>"
 
 # Bootstrap Inputs
-target_directory: "<target-directory>"
+target_directory: "/accelerator/target"
 create_bootstrap_resources_in_azure: "true"
 bootstrap_subscription_id: ""
 service_name: "alz"
@@ -27,3 +28,7 @@ postfix_number: "1"
 # (Details: https://github.com/Azure/ALZ-PowerShell-Module/wiki/%5BUser-Guide%5D-Starter-Module-Terraform-Complete-vNext)
 configuration_file_path: "<configuration-file-path>"  # Only required for the `complete` starter module. NOTE: This must be an absolute path.
 default_postfix: "<postfix>"
+
+# Advanced Inputs
+bootstrap_module_version: "latest"
+starter_module_version: "latest"

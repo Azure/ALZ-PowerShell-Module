@@ -26,12 +26,18 @@ function New-ALZEnvironment {
         [Alias("iac")]
         [string] $iac_type = "",
 
-        [Parameter(Mandatory = $false, HelpMessage = "[REQUIRED] The bootstrap module to deploy. Environment variable: ALZ_bootstrap_module_name. Config file input: bootstrap_module_name.")]
+        [Parameter(
+            Mandatory = $false,
+            HelpMessage = "[REQUIRED] The bootstrap module to deploy. Environment variable: ALZ_bootstrap_module_name. Config file input: bootstrap_module_name."
+        )]
         [Alias("b")]
         [Alias("bootstrap")]
         [string] $bootstrap_module_name = "",
 
-        [Parameter(Mandatory = $false, HelpMessage = "[REQUIRED] The starter module to deploy. Environment variable: ALZ_starter_module_name. Config file input: starter_module_name.")]
+        [Parameter(
+            Mandatory = $false,
+            HelpMessage = "[REQUIRED] The starter module to deploy. Environment variable: ALZ_starter_module_name. Config file input: starter_module_name."
+        )]
         [Alias("s")]
         [Alias("starter")]
         [string] $starter_module_name = "",
@@ -47,19 +53,19 @@ function New-ALZEnvironment {
 
         [Parameter(
             Mandatory = $false,
-            HelpMessage = "[OPTIONAL] The version tag of the bootstrap module release to download. Defaults to latest. Environment variable: ALZ_bootstrap_release_version. Config file input: bootstrap_release_version."
+            HelpMessage = "[OPTIONAL] The version tag of the bootstrap module release to download. Defaults to latest. Environment variable: ALZ_bootstrap_module_version. Config file input: bootstrap_module_version."
         )]
         [Alias("bv")]
         [Alias("bootstrapRelease")]
-        [string] $bootstrap_release_version = "latest",
+        [string] $bootstrap_module_version = "latest",
 
         [Parameter(
             Mandatory = $false,
-            HelpMessage = "[OPTIONAL] The version tag of the starter module release to download. Defaults to latest. Environment variable: ALZ_starter_release_version. Config file input: starter_release_version."
+            HelpMessage = "[OPTIONAL] The version tag of the starter module release to download. Defaults to latest. Environment variable: ALZ_starter_module_version. Config file input: starter_module_version."
         )]
         [Alias("sv")]
         [Alias("starterRelease")]
-        [string] $starter_release_version = "latest",
+        [string] $starter_module_version = "latest",
 
         [Parameter(
             Mandatory = $false,
@@ -214,7 +220,7 @@ function New-ALZEnvironment {
             -targetFolder $bootstrapTargetFolder `
             -sourceFolder $inputConfig.bootstrap_source_folder `
             -url $inputConfig.bootstrap_module_url `
-            -release $inputConfig.bootstrap_release_version `
+            -release $inputConfig.bootstrap_module_version `
             -releaseArtifactName $inputConfig.bootstrap_module_release_artifact_name `
             -moduleOverrideFolderPath $inputConfig.bootstrap_module_override_folder_path `
             -skipInternetChecks $inputConfig.skip_internet_checks `
@@ -272,7 +278,7 @@ function New-ALZEnvironment {
                 -targetFolder $starterModuleTargetFolder `
                 -sourceFolder $starterModuleSourceFolder `
                 -url $starterModuleUrl `
-                -release $inputConfig.starter_release_version `
+                -release $inputConfig.starter_module_version `
                 -releaseArtifactName $starterReleaseArtifactName `
                 -moduleOverrideFolderPath $inputConfig.starter_module_override_folder_path `
                 -skipInternetChecks $inputConfig.skip_internet_checks `
@@ -286,7 +292,7 @@ function New-ALZEnvironment {
         # Set computed interface inputs
         $inputConfig | Add-Member -MemberType NoteProperty -Name "on_demand_folder_repository" -Value $starterModuleUrl
         $inputConfig | Add-Member -MemberType NoteProperty -Name "on_demand_folder_artifact_name" -Value $starterReleaseArtifactName
-        $inputConfig | Add-Member -MemberType NoteProperty -Name "release_version" -Value ($starterReleaseTag -eq "local" ? $inputConfig.starter_release_version : $starterReleaseTag)
+        $inputConfig | Add-Member -MemberType NoteProperty -Name "release_version" -Value ($starterReleaseTag -eq "local" ? $inputConfig.starter_module_version : $starterReleaseTag)
 
         # Run the bootstrap
         $bootstrapTargetPath = Join-Path $inputConfig.output_folder_path $bootstrapTargetFolder

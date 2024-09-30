@@ -3,13 +3,14 @@
 # https://github.com/Azure/ALZ-PowerShell-Module/wiki/%5BUser-Guide%5D-Quick-Start-Phase-2-Azure-DevOps#2212-azure-devops-with-terraform
 
 # Basic Inputs
-iac: "terraform"
-bootstrap: "alz_azuredevops"
-starter: "complete"
+iac_type: "terraform"
+bootstrap_module_name: "alz_azuredevops"
+starter_module_name: "complete"
+output_folder_path: "/accelerator/output"
 
 # Shared Interface Inputs
 bootstrap_location: "<region>"
-starter_location: "<region>"
+starter_locations: ["<region>"]
 root_parent_management_group_id: ""
 subscription_id_management: "<management-subscription-id>"
 subscription_id_identity: "<identity-subscription-id>"
@@ -37,3 +38,7 @@ create_branch_policies: "true"
 # (Details: https://github.com/Azure/ALZ-PowerShell-Module/wiki/%5BUser-Guide%5D-Starter-Module-Terraform-Basic)
 root_id: "<id_prefix>"
 root_name: "<name_prefix>"
+
+# Advanced Inputs
+bootstrap_module_version: "latest"
+starter_module_version: "latest"
