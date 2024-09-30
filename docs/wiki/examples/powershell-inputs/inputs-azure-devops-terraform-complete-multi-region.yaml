@@ -6,7 +6,6 @@
 iac_type: "terraform"
 bootstrap_module_name: "alz_azuredevops"
 starter_module_name: "complete_multi_region"
-output_folder_path: "/accelerator/output"
 
 # Shared Interface Inputs
 bootstrap_location: "<region-1>"
@@ -42,3 +41,4 @@ default_postfix: "<postfix>"
 # Advanced Inputs
 bootstrap_module_version: "latest"
 starter_module_version: "latest"
+#output_folder_path: "/accelerator/output"

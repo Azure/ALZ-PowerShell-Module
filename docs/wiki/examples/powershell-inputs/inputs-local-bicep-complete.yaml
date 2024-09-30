@@ -6,7 +6,6 @@
 iac_type: "bicep"
 bootstrap_module_name: "alz_local"
 starter_module_name: "complete"
-output_folder_path: "/accelerator/output"
 
 # Shared Interface Inputs
 bootstrap_location: "<region>"
@@ -35,3 +34,4 @@ SecurityContact: "<email-address>"
 # Advanced Inputs
 bootstrap_module_version: "latest"
 starter_module_version: "latest"
+#output_folder_path: "/accelerator/output"

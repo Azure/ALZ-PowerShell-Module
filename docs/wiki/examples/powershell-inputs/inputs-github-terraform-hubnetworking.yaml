@@ -6,7 +6,6 @@
 iac_type: "terraform"
 bootstrap_module_name: "alz_github"
 starter_module_name: "complete"
-output_folder_path: "/accelerator/output"
 
 # Shared Interface Inputs
 bootstrap_location: "<region>"
@@ -43,3 +42,4 @@ virtual_network_gateway_creation_enabled: "true"
 # Advanced Inputs
 bootstrap_module_version: "latest"
 starter_module_version: "latest"
+#output_folder_path: "/accelerator/output"

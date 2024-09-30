@@ -5,7 +5,8 @@ function Get-ALZConfig {
     )
 
     if(!(Test-Path $configFilePath)) {
-        return $null
+        Write-Error "The config file does not exist at $configFilePath"
+        throw "The config file does not exist at $configFilePath"
     }
 
     # Import the config and transform it to a PowerShell object

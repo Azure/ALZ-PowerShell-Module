@@ -14,7 +14,7 @@ Although you can just run `Deploy-Accelerator` and fill out the prompted inputs,
     ```pwsh
     # Windows
     New-Item -ItemType "file" c:\accelerator\config\inputs.yaml -Force
-    New-Item  -ItemType "directory" c:\accelerator\output
+    New-Item -ItemType "directory" c:\accelerator\output
 
     # Linux/Mac
     New-Item -ItemType "file" /accelerator/config/inputs.yaml -Force
@@ -38,7 +38,6 @@ Although you can just run `Deploy-Accelerator` and fill out the prompted inputs,
     | `iac_type` | `ALZ` | `bicep` | This is the choice of `bicep` or `terraform`. Keep this as `bicep` for this example. |
     | `bootstrap_module_name` | `ALZ` | `alz_github` | This is the choice of Version Control System. Keep this as `alz_github` for this example. |
     | `starter_module_name` | `ALZ` | `complete` | This is the choice of [Starter Modules][wiki_starter_modules], which is the baseline configuration you want for your Azure landing zone. Keep this as `complete` for this example. |
-    | `output_folder_path` | `ALZ` | `/accelerator/output` | This is the location you would like the working set of files place. Excluding this defaults to the current working folder. You can supply an absolute or relative path. |
     | `bootstrap_location` | `TF_VAR` | `<region>` | Replace `<region>` with the Azure region where you would like to deploy the bootstrap resources in Azure. This field expects the `name` of the region, such as `uksouth`. You can find a full list of names by running `az account list-locations -o table`. |
     | `starter_locations` | `TF_VAR` | `[<region-1>,<region-2>]` | Replace `<region-1>` and `<region-2>` with the Azure regions where you would like to deploy the starter module resources in Azure. This field expects the `name` of the regions in and array, such as `["uksouth", "ukwest"]`. You can find a full list of names by running `az account list-locations -o table`. |
     | `root_parent_management_group_id` | `TF_VAR` | `""` | This is the id of the management group that will be the parent of the management group structure created by the accelerator. If you are using the `Tenant Root Group` management group, you leave this as an empty string `""` or supply the tenant id. |
@@ -85,7 +84,7 @@ Although you can just run `Deploy-Accelerator` and fill out the prompted inputs,
     ```pwsh
     # Windows
     New-Item -ItemType "file" c:\accelerator\config\inputs.yaml -Force
-    New-Item  -ItemType "directory" c:\accelerator\output
+    New-Item -ItemType "directory" c:\accelerator\output
 
     # Linux/Mac
     New-Item -ItemType "file" /accelerator/config/inputs.yaml -Force
@@ -113,7 +112,6 @@ Although you can just run `Deploy-Accelerator` and fill out the prompted inputs,
     | `iac_type` | `ALZ` | `terraform` | This is the choice of `bicep` or `terraform`. Keep this as `terraform` for this example. |
     | `bootstrap_module_name` | `ALZ` | `alz_github` | This is the choice of Version Control System. Keep this as `alz_github` for this example. |
     | `starter_module_name` | `ALZ` | `complete_multi_region` | This is the choice of [Starter Modules][wiki_starter_modules], which is the baseline configuration you want for your Azure landing zone. Choose `complete_multi_region`, `complete`, `hubnetworking` or `basic` for this example. |
-    | `output_folder_path` | `ALZ` | `/accelerator/output` | This is the location you would like the working set of files place. Excluding this defaults to the current working folder. You can supply an absolute or relative path. |
     | `bootstrap_location` | `TF_VAR` | `<region>` | Replace `<region>` with the Azure region where you would like to deploy the bootstrap resources in Azure. This field expects the `name` of the region, such as `uksouth`. You can find a full list of names by running `az account list-locations -o table`. |
     | `starter_locations` | `TF_VAR` | `[<region-1>,<region-2>]` | Replace `<region-1>` and `<region-2>` with the Azure regions where you would like to deploy the starter module resources in Azure. This field expects the `name` of the regions in and array, such as `["uksouth", "ukwest"]`. You can find a full list of names by running `az account list-locations -o table`. |
     | `root_parent_management_group_id` | `TF_VAR` | `""` | This is the id of the management group that will be the parent of the management group structure created by the accelerator. If you are using the `Tenant Root Group` management group, you leave this as an empty string `""` or supply the tenant id. |

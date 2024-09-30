@@ -168,6 +168,7 @@ function New-ALZEnvironment {
             $inputConfigFilePath = Request-SpecialInput -type "inputConfigFilePath"
         }
         $inputConfig = Get-ALZConfig -configFilePath $inputConfigFilePath
+        Write-Verbose "Initial Input config: $(ConvertTo-Json $inputConfig -Depth 100)"
 
         # Set accelerator input config from input file, environment variables or parameters
         $parameters = (Get-Command -Name $MyInvocation.InvocationName).Parameters
