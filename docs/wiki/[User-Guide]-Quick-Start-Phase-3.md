@@ -40,7 +40,7 @@ Follow the steps below to deploy the landing zone locally. If you want to hook i
 1. Ensure you have the latest versions of the [AZ PowerShell Module](https://learn.microsoft.com/en-us/powershell/azure/install-azure-powershell) and [Bicep](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/install) installed.
 1. Open a new PowerShell Core (pwsh) terminal or use the one you already have open.
 1. Navigate to the directory shown in the `module_output_directory_path` output from the bootstrap.
-1. Login to Azure using `Connect-AzAccount`.
+1. Login to Azure using `Connect-AzAccount -TenantId 00000000-0000-0000-0000-000000000000 -SubscriptionId 00000000-0000-0000-0000-000000000000`.
 1. (Optional) Examine the `./scripts/deploy-local.ps1` to understand what it is doing.
 1. Run `./scripts/deploy-local.ps1`.
 1. A what if will run and then you'll be prompted to check it and run the deploy.
