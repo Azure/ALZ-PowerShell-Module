@@ -19,16 +19,16 @@ subscription_id_connectivity: "<connectivity-subscription-id>"
 github_personal_access_token: "<token-1>"
 github_runners_personal_access_token: "<token-2>"
 github_organization_name: "<github-organization>"
-use_separate_repository_for_templates: "true"
+use_separate_repository_for_templates: true
 bootstrap_subscription_id: ""
 service_name: "alz"
 environment_name: "mgmt"
-postfix_number: "1"
-use_self_hosted_runners: "true"
-use_private_networking: "true"
-allow_storage_access_from_my_ip: "false"
+postfix_number: 1
+use_self_hosted_runners: true
+use_private_networking: true
+allow_storage_access_from_my_ip: false
 apply_approvers: ["<email-address>"]
-create_branch_policies: "true"
+create_branch_policies: true
 
 # Complete Starter Module Specific Variables
 # (Details: https://github.com/Azure/ALZ-PowerShell-Module/wiki/%5BUser-Guide%5D-Starter-Module-Terraform-Complete)

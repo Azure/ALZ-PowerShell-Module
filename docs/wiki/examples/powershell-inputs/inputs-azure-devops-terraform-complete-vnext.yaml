@@ -19,19 +19,19 @@ subscription_id_connectivity: "<connectivity-subscription-id>"
 azure_devops_personal_access_token: "<token-1>"
 azure_devops_agents_personal_access_token: "<token-2>"
 azure_devops_organization_name: "<azure-devops-organization>"
-use_separate_repository_for_templates: "true"
+use_separate_repository_for_templates: true
 bootstrap_subscription_id: ""
 service_name: "alz"
 environment_name: "mgmt"
-postfix_number: "1"
-azure_devops_use_organisation_legacy_url: "false"
-azure_devops_create_project: "true"
+postfix_number: 1
+azure_devops_use_organisation_legacy_url: false
+azure_devops_create_project: true
 azure_devops_project_name: "<azure-devops-project-name>"
-use_self_hosted_agents: "true"
-use_private_networking: "true"
-allow_storage_access_from_my_ip: "false"
+use_self_hosted_agents: true
+use_private_networking: true
+allow_storage_access_from_my_ip: false
 apply_approvers: ["<email-address>"]
-create_branch_policies: "true"
+create_branch_policies: true
 
 # Complete vNext Starter Module Specific Variables
 # (Details: https://github.com/Azure/ALZ-PowerShell-Module/wiki/%5BUser-Guide%5D-Starter-Module-Terraform-Complete-vNext)

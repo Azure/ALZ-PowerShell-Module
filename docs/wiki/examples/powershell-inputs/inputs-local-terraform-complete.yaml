@@ -17,11 +17,12 @@ subscription_id_connectivity: "<connectivity-subscription-id>"
 
 # Bootstrap Inputs
 target_directory: "/accelerator/target"
-create_bootstrap_resources_in_azure: "true"
+create_bootstrap_resources_in_azure: true
 bootstrap_subscription_id: ""
 service_name: "alz"
 environment_name: "mgmt"
-postfix_number: "1"
+postfix_number: 1
+grant_permissions_to_current_user: true
 
 # Complete Starter Module Specific Variables
 # (Details: https://github.com/Azure/ALZ-PowerShell-Module/wiki/%5BUser-Guide%5D-Starter-Module-Terraform-Complete)

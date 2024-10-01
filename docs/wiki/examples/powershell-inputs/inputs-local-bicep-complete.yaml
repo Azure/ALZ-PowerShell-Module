@@ -21,7 +21,7 @@ create_bootstrap_resources_in_azure: "true"
 bootstrap_subscription_id: ""
 service_name: "alz"
 environment_name: "mgmt"
-postfix_number: "1"
+postfix_number: 1
 
 # Starter Module Specific Variables
 # (Details: https://github.com/Azure/ALZ-PowerShell-Module/wiki/%5BUser-Guide%5D-Starter-Module-Bicep-Complete)
