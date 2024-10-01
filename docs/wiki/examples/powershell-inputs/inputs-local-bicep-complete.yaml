@@ -26,7 +26,6 @@ postfix_number: "1"
 # Starter Module Specific Variables
 # (Details: https://github.com/Azure/ALZ-PowerShell-Module/wiki/%5BUser-Guide%5D-Starter-Module-Bicep-Complete)
 Prefix: "alz"
-SecondaryLocation: ""
 Environment: "live"
 networkType: "hubNetworking"
 SecurityContact: "<email-address>"
