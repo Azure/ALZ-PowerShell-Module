@@ -5,7 +5,7 @@
 # Basic Inputs
 iac_type: "terraform"
 bootstrap_module_name: "alz_local"
-starter_module_name: "complete"
+starter_module_name: "basic"
 
 # Shared Interface Inputs
 bootstrap_location: "<region>"
