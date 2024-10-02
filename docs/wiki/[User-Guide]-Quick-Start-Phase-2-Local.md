@@ -15,20 +15,17 @@ Although you can just run `Deploy-Accelerator` and fill out the prompted inputs,
     # Windows
     New-Item -ItemType "file" c:\accelerator\config\inputs.yaml -Force
     New-Item -ItemType "directory" c:\accelerator\output
-    New-Item -ItemType "directory" c:\accelerator\target
 
     # Linux/Mac
     New-Item -ItemType "file" /accelerator/config/inputs.yaml -Force
     New-Item -ItemType "directory" /accelerator/output
-    New-Item -ItemType "directory" /accelerator/target
     ```
 
     ```plaintext
     📂accelerator
     ┣ 📂config
     ┃ ┗ 📜inputs.yaml
-    ┃ 📂output
-    ┗ 📂target
+    ┗ 📂output
     ```
 
 1. Open your `inputs.yaml` file in Visual Studio Code (or your preferred editor) and copy the content from [inputs-local-bicep-complete.yaml][example_powershell_inputs_local_bicep_complete] into that file.
@@ -71,6 +68,7 @@ Although you can just run `Deploy-Accelerator` and fill out the prompted inputs,
 1. There will be a pause after the `plan` phase you allow you to validate what is going to be deployed.
 1. If you are happy with the plan, then type `yes` and hit enter.
 1. The Terraform will `apply` and your environment will be bootstrapped.
+1. You will find the output in the `/accelerator/output/local-output` folder if you didn't specifiy a different location for `target_directory`.
 
 ### 2.2.3.2 Local File System with Terraform
 
@@ -82,20 +80,17 @@ Although you can just run `Deploy-Accelerator` and fill out the prompted inputs,
     # Windows
     New-Item -ItemType "file" c:\accelerator\config\inputs.yaml -Force
     New-Item -ItemType "directory" c:\accelerator\output
-    New-Item -ItemType "directory" c:\accelerator\target
 
     # Linux/Mac
     New-Item -ItemType "file" /accelerator/config/inputs.yaml -Force
     New-Item -ItemType "directory" /accelerator/output
-    New-Item -ItemType "directory" /accelerator/target
     ```
 
     ```plaintext
     📂accelerator
     ┣ 📂config
     ┃ ┗ 📜inputs.yaml
-    ┃ 📂output
-    ┗ 📂target
+    ┗ 📂output
     ```
 
 1. Open your `inputs.yaml` file in Visual Studio Code (or your preferred editor) and copy the content from the relevant input file for your chosen starter module:
@@ -146,6 +141,7 @@ Although you can just run `Deploy-Accelerator` and fill out the prompted inputs,
 1. There will be a pause after the `plan` phase you allow you to validate what is going to be deployed.
 1. If you are happy with the plan, then type `yes` and hit enter.
 1. The Terraform will `apply` and your environment will be bootstrapped.
+1. You will find the output in the `/accelerator/output/local-output` folder if you didn't specifiy a different location for `target_directory`.
 
 ## Next Steps
 
