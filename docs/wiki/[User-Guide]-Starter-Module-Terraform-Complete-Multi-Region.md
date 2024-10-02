@@ -15,7 +15,7 @@ The following table describes the inputs required for the `complete_multi_region
 
 | Input | Placeholder | Description |
 | - | -- | --- |
-| `configuration_file_path` | `<configuration-file-path>` | This is the absolute path to the configuration file. E.g. `c:\my-config\config.yaml` or `~/my-config/config.yaml` |
+| `configuration_file_path` | `<configuration-file-path>` | This is the absolute path to the configuration file. E.g. `c:\my-config\config.yaml` or `~/my-config/config.yaml`. For YAML on Windows you will need to escape the `\`, i.e. `c:\\my-config\\config.yaml`. |
 | `default_postfix` | `<postfix>` | This is the default postfix used for resource names. |
 
 You can create a custom yaml config to tailor to your needs, for example an Azure Landing Zone with a three-region mesh. Get started with our two region samples:

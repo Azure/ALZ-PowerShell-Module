@@ -15,20 +15,17 @@ Although you can just run `Deploy-Accelerator` and fill out the prompted inputs,
     # Windows
     New-Item -ItemType "file" c:\accelerator\config\inputs.yaml -Force
     New-Item -ItemType "directory" c:\accelerator\output
-    New-Item -ItemType "directory" c:\accelerator\target
 
     # Linux/Mac
     New-Item -ItemType "file" /accelerator/config/inputs.yaml -Force
     New-Item -ItemType "directory" /accelerator/output
-    New-Item -ItemType "directory" /accelerator/target
     ```
 
     ```plaintext
     📂accelerator
     ┣ 📂config
     ┃ ┗ 📜inputs.yaml
-    ┃ 📂output
-    ┗ 📂target
+    ┗ 📂output
     ```
 
 1. Open your `inputs.yaml` file in Visual Studio Code (or your preferred editor) and copy the content from [inputs-local-bicep-complete.yaml][example_powershell_inputs_local_bicep_complete] into that file.
@@ -47,7 +44,7 @@ Although you can just run `Deploy-Accelerator` and fill out the prompted inputs,
     | `subscription_id_management` | `TF_VAR` | `<management-subscription-id>` | Replace `<management-subscription-id>` with the id of the management subscription you created in the previous phase. |
     | `subscription_id_identity` | `TF_VAR` | `<identity-subscription-id>` | Replace `<identity-subscription-id>` with the id of the identity subscription you created in the previous phase. |
     | `subscription_id_connectivity` | `TF_VAR` | `<connectivity-subscription-id>` | Replace `<connectivity-subscription-id>` with the id of the connectivity subscription you created in the previous phase. |
-    | `target_directory` | `TF_VAR` | `/accelerator/target` | This is the directory where the ALZ module code will be created. This defaults a directory called `local-output` in the root of the accelerator output directory if not supplied. |
+    | `target_directory` | `TF_VAR` | `""` | This is the directory where the ALZ module code will be created. This defaults a directory called `local-output` in the root of the accelerator output directory if not supplied. |
     | `create_bootstrap_resources_in_azure` | `TF_VAR` | `true` | This determines whether the bootstrap will create the bootstrap resources in Azure. This defaults to `true`. |
     | `bootstrap_subscription_id` | `TF_VAR` | `""` | Enter the id of the subscription in which you would like to deploy the bootstrap resources in Azure. If left blank, the subscription you are connected to via `az login` will be used. In most cases this is the management subscription, but you can specifiy a separate subscription if you prefer. |
     | `service_name` | `TF_VAR` | `alz` | This is used to build up the names of your Azure and Azure DevOps resources, for example `rg-<service_name>-mgmt-uksouth-001`. We recommend using `alz` for this. |
@@ -71,6 +68,7 @@ Although you can just run `Deploy-Accelerator` and fill out the prompted inputs,
 1. There will be a pause after the `plan` phase you allow you to validate what is going to be deployed.
 1. If you are happy with the plan, then type `yes` and hit enter.
 1. The Terraform will `apply` and your environment will be bootstrapped.
+1. You will find the output in the `/accelerator/output/local-output` folder if you didn't specifiy a different location for `target_directory`.
 
 ### 2.2.3.2 Local File System with Terraform
 
@@ -82,20 +80,17 @@ Although you can just run `Deploy-Accelerator` and fill out the prompted inputs,
     # Windows
     New-Item -ItemType "file" c:\accelerator\config\inputs.yaml -Force
     New-Item -ItemType "directory" c:\accelerator\output
-    New-Item -ItemType "directory" c:\accelerator\target
 
     # Linux/Mac
     New-Item -ItemType "file" /accelerator/config/inputs.yaml -Force
     New-Item -ItemType "directory" /accelerator/output
-    New-Item -ItemType "directory" /accelerator/target
     ```
 
     ```plaintext
     📂accelerator
     ┣ 📂config
     ┃ ┗ 📜inputs.yaml
-    ┃ 📂output
-    ┗ 📂target
+    ┗ 📂output
     ```
 
 1. Open your `inputs.yaml` file in Visual Studio Code (or your preferred editor) and copy the content from the relevant input file for your chosen starter module:
@@ -118,7 +113,7 @@ Although you can just run `Deploy-Accelerator` and fill out the prompted inputs,
     | `subscription_id_management` | `TF_VAR` | `<management-subscription-id>` | Replace `<management-subscription-id>` with the id of the management subscription you created in the previous phase. |
     | `subscription_id_identity` | `TF_VAR` | `<identity-subscription-id>` | Replace `<identity-subscription-id>` with the id of the identity subscription you created in the previous phase. |
     | `subscription_id_connectivity` | `TF_VAR` | `<connectivity-subscription-id>` | Replace `<connectivity-subscription-id>` with the id of the connectivity subscription you created in the previous phase. |
-    | `target_directory` | `TF_VAR` | `/accelerator/target` | This is the directory where the ALZ module code will be created. This defaults a directory called `local-output` in the root of the accelerator output directory if not supplied. |
+    | `target_directory` | `TF_VAR` | `""` | This is the directory where the ALZ module code will be created. This defaults a directory called `local-output` in the root of the accelerator output directory if not supplied. |
     | `create_bootstrap_resources_in_azure` | `TF_VAR` | `true` | This determines whether the bootstrap will create the bootstrap resources in Azure. This defaults to `true`. |
     | `bootstrap_subscription_id` | `TF_VAR` | `""` | Enter the id of the subscription in which you would like to deploy the bootstrap resources in Azure. If left blank, the subscription you are connected to via `az login` will be used. In most cases this is the management subscription, but you can specifiy a separate subscription if you prefer. |
     | `service_name` | `TF_VAR` | `alz` | This is used to build up the names of your Azure and Azure DevOps resources, for example `rg-<service_name>-mgmt-uksouth-001`. We recommend using `alz` for this. |
@@ -146,6 +141,7 @@ Although you can just run `Deploy-Accelerator` and fill out the prompted inputs,
 1. There will be a pause after the `plan` phase you allow you to validate what is going to be deployed.
 1. If you are happy with the plan, then type `yes` and hit enter.
 1. The Terraform will `apply` and your environment will be bootstrapped.
+1. You will find the output in the `/accelerator/output/local-output` folder if you didn't specifiy a different location for `target_directory`.
 
 ## Next Steps
 
