@@ -122,6 +122,7 @@ Although you can just run `Deploy-Accelerator` and fill out the prompted inputs,
     | `grant_permissions_to_current_user` | `TF_VAR` | `true` | This determines whether the bootstrap will grant the current user permissions to the management group structure and stroage account created by the accelerator. This defaults to `true` so that the starter module can be immediately deployed from the local file system. Set this to `false` if you itend to wire up CI/CD with your own provider. |
 
 1. Now head over to your chosen starter module documentation to get the specific inputs for that module. Come back here when you are done.
+    - [Terraform Complete Multi Region Starter Module][wiki_starter_module_terraform_complete_multi_region]: Management groups, policies, Multi Region hub networking with fully custom configuration.
     - [Terraform Basic Starter Module][wiki_starter_module_terraform_basic]: Management groups and policies.
     - [Terraform Hub Networking Starter Module][wiki_starter_module_terraform_hubnetworking]: Management groups, policies and hub networking.
     - [Terraform Complete Starter Module][wiki_starter_module_terraform_complete]: Management groups, policies, hub networking with fully custom configuration.
@@ -156,6 +157,7 @@ Now head to [Phase 3][wiki_quick_start_phase_3].
 [wiki_starter_module_terraform_basic]:              %5BUser-Guide%5D-Starter-Module-Terraform-Basic "Wiki - Starter Modules - Terraform Basic"
 [wiki_starter_module_terraform_hubnetworking]:      %5BUser-Guide%5D-Starter-Module-Terraform-HubNetworking "Wiki - Start Modules - Terraform Hub Networking"
 [wiki_starter_module_terraform_complete]:           %5BUser-Guide%5D-Starter-Module-Terraform-Complete "Wiki - Starter Modules - Terraform Complete"
+[wiki_starter_module_terraform_complete_multi_region]:           %5BUser-Guide%5D-Starter-Module-Terraform-Complete-Multi-Region "Wiki - Starter Modules - Terraform Complete Multi Region"
 [wiki_quick_start_phase_3]:                         %5BUser-Guide%5D-Quick-Start-Phase-3 "Wiki - Quick Start - Phase 3"
 [example_powershell_inputs_local_bicep_complete]:     examples/powershell-inputs/inputs-local-bicep-complete.yaml "Example - PowerShell Inputs - Local - Bicep - Complete"
 [example_powershell_inputs_local_terraform_basic]:     examples/powershell-inputs/inputs-local-terraform-basic.yaml "Example - PowerShell Inputs - Local - Terraform - Basic"
