@@ -146,7 +146,7 @@ Although you can just run `Deploy-Accelerator` and fill out the prompted inputs,
     | `create_branch_policies` | `TF_VAR` | `true` | This controls whether to create branch policies for the repository. This defaults to `true`. |
 
 1. Now head over to your chosen starter module documentation to get the specific inputs for that module. Come back here when you are done.
-    - [Terraform Complete Multi Region Starter Module][wiki_starter_module_terraform_complete_multi_region]: Management groups, policies, Muti Region hub networking with fully custom configuration.
+    - [Terraform Complete Multi Region Starter Module][wiki_starter_module_terraform_complete_multi_region]: Management groups, policies, Multi Region hub networking with fully custom configuration.
     - [Terraform Basic Starter Module][wiki_starter_module_terraform_basic]: Management groups and policies.
     - [Terraform Hub Networking Starter Module][wiki_starter_module_terraform_hubnetworking]: Management groups, policies and hub networking.
     - [Terraform Complete Starter Module][wiki_starter_module_terraform_complete]: Management groups, policies, hub networking with fully custom configuration.

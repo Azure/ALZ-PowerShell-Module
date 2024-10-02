@@ -122,7 +122,7 @@ Although you can just run `Deploy-Accelerator` and fill out the prompted inputs,
     | `grant_permissions_to_current_user` | `TF_VAR` | `true` | This determines whether the bootstrap will grant the current user permissions to the management group structure and stroage account created by the accelerator. This defaults to `true` so that the starter module can be immediately deployed from the local file system. Set this to `false` if you itend to wire up CI/CD with your own provider. |
 
 1. Now head over to your chosen starter module documentation to get the specific inputs for that module. Come back here when you are done.
-    - [Terraform Complete Multi Region Starter Module][wiki_starter_module_terraform_complete_multi_region]: Management groups, policies, Muti Region hub networking with fully custom configuration.
+    - [Terraform Complete Multi Region Starter Module][wiki_starter_module_terraform_complete_multi_region]: Management groups, policies, Multi Region hub networking with fully custom configuration.
     - [Terraform Basic Starter Module][wiki_starter_module_terraform_basic]: Management groups and policies.
     - [Terraform Hub Networking Starter Module][wiki_starter_module_terraform_hubnetworking]: Management groups, policies and hub networking.
     - [Terraform Complete Starter Module][wiki_starter_module_terraform_complete]: Management groups, policies, hub networking with fully custom configuration.
