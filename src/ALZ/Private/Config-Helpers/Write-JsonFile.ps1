@@ -14,9 +14,9 @@ function Write-JsonFile {
             Remove-Item -Path $jsonFilePath
         }
 
-        $environmentVariables = @{}
+        $environmentVariables = [ordered]@{}
 
-        foreach ($configKey in $configuration.PsObject.Properties) {
+        foreach ($configKey in $configuration.PsObject.Properties | Sort-Object Name) {
             foreach ($target in $configKey.Value.Targets) {
                 if($target.Destination -eq "Environment") {
                     $environmentVariables.$($target.Name) = $configKey.Value.Value
@@ -24,7 +24,7 @@ function Write-JsonFile {
             }
         }
 
-        $json = ConvertTo-Json -InputObject $environmentVariables -Depth 10
+        $json = ConvertTo-Json -InputObject $environmentVariables -Depth 100
         $json | Out-File -FilePath $jsonFilePath
     }
 }

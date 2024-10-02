@@ -155,6 +155,30 @@ Deploy-Accelerator `
 
 ```
 
+### Bicep Local
+
+Run this from the VSCode terminal for the ALZ-PowerShell-Module repository:
+
+>IMPORTANT! - Make sure to update the input file with your settings for VCS, etc.
+
+```pwsh
+Invoke-Build -File .\src\ALZ.build.ps1
+
+$targetFolder = "dev"
+
+# Uncomment to start fresh rather than relying on the -replaceFiles parameter
+# Remove-Item -Path "/$targetFolder/acc/bicep/output/github" -Recurse -Force
+
+Deploy-Accelerator `
+    -bootstrapModuleOverrideFolderPath "/$targetFolder/code/accelerator-bootstrap-modules" `
+    -starterModuleOverrideFolderPath "/$targetFolder/code/ALZ-Bicep" `
+    -output "/$targetFolder/acc/bicep/output/local" `
+    -inputs "/$targetFolder/acc/bicep/config/inputs-local.yaml" `
+    -verbose `
+    -replaceFiles  # This will replace the files in the output folder with the files in the bootstrap and starter modules, so any updates are taken into account
+
+```
+
 ### Terraform Azure DevOps
 
 Run this from the VSCode terminal for the ALZ-PowerShell-Module repository:
@@ -198,6 +222,30 @@ Deploy-Accelerator `
     -starterModuleOverrideFolderPath "/$targetFolder/code/alz-terraform-accelerator/templates" `
     -output "/$targetFolder/acc/terraform/output/github" `
     -inputs "/$targetFolder/acc/terraform/config/inputs-github.yaml" `
+    -verbose `
+    -replaceFiles  # This will replace the files in the output folder with the files in the bootstrap and starter modules, so any updates are taken into account
+
+```
+
+### Terraform Local
+
+Run this from the VSCode terminal for the ALZ-PowerShell-Module repository:
+
+>IMPORTANT! - Make sure to update the input file with your settings for VCS, etc.
+
+```pwsh
+Invoke-Build -File .\src\ALZ.build.ps1
+
+$targetFolder = "dev"
+
+# Uncomment to start fresh rather than relying on the -replaceFiles parameter
+# Remove-Item -Path "/$targetFolder/acc/terraform/output/azuredevops" -Recurse -Force
+
+Deploy-Accelerator `
+    -bootstrapModuleOverrideFolderPath "/$targetFolder/code/accelerator-bootstrap-modules" `
+    -starterModuleOverrideFolderPath "/$targetFolder/code/alz-terraform-accelerator/templates" `
+    -output "/$targetFolder/acc/terraform/output/local" `
+    -inputs "/$targetFolder/acc/terraform/config/inputs-local.yaml" `
     -verbose `
     -replaceFiles  # This will replace the files in the output folder with the files in the bootstrap and starter modules, so any updates are taken into account
 

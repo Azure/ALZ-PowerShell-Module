@@ -21,7 +21,7 @@ InModuleScope 'ALZ' {
         }
         Context 'Success' {
             BeforeEach {
-                Mock -CommandName Request-ALZEnvironmentConfig -MockWith {
+                Mock -CommandName Set-Config -MockWith {
                     @(
                         @{
                             "description"  = "Test configuration 1"
@@ -39,9 +39,6 @@ InModuleScope 'ALZ' {
                 }
 
                 Mock -CommandName Edit-ALZConfigurationFilesInPlace
-                Mock -CommandName Build-ALZDeploymentEnvFile
-
-                Mock -CommandName New-ALZDirectoryEnvironment -MockWith { }
 
                 Mock -CommandName Copy-Item -MockWith { }
 
@@ -88,17 +85,13 @@ InModuleScope 'ALZ' {
 
                 Mock -CommandName Get-GithubRelease -MockWith { $("v0.0.1") }
 
-                Mock -CommandName Test-ALZGitRepository -MockWith { $false }
-
-                Mock -CommandName Copy-ALZParametersFile -MockWith { }
-
                 Mock -CommandName Write-InformationColored
 
                 Mock -CommandName Get-HCLParserTool -MockWith { "test" }
 
                 Mock -CommandName Get-TerraformTool -MockWith { }
 
-                Mock -CommandName Convert-HCLVariablesToUserInputConfig -MockWith {
+                Mock -CommandName Convert-HCLVariablesToInputConfig -MockWith {
                     @(
                         @{
                             "description"  = "Test configuration 1"
@@ -114,8 +107,6 @@ InModuleScope 'ALZ' {
                         }
                     )
                 }
-
-                Mock -CommandName Write-ConfigurationCache -MockWith { }
 
                 Mock -CommandName Invoke-Terraform -MockWith { }
 
@@ -149,8 +140,6 @@ InModuleScope 'ALZ' {
 
                 Mock -CommandName New-Bootstrap -MockWith {}
 
-                Mock -CommandName New-ALZEnvironmentBicep -MockWith {}
-
                 Mock -CommandName Get-AzureRegionData -MockWith {
                     @{
                         "uksouth" = @{
@@ -161,20 +150,14 @@ InModuleScope 'ALZ' {
                 }
             }
 
-            It 'should call the correct functions for bicep legacy module configuration' {
-                New-ALZEnvironment -i "bicep" -c "github" -bicepLegacyMode $true
-                Assert-MockCalled -CommandName New-ALZEnvironmentBicep -Exactly 1
-                Assert-MockCalled -CommandName New-ModuleSetup -Exactly 1
-            }
-
-            It 'should call the correct functions for bicep modern module configuration' {
-                Deploy-Accelerator -i "bicep" -c "github" -bicepLegacyMode $false
+            It 'should call the correct functions for bicep module configuration' {
+                Deploy-Accelerator -i "bicep" -b "github" -inputs "example.yml"
                 Assert-MockCalled -CommandName Get-BootstrapAndStarterConfig -Exactly 1
                 Assert-MockCalled -CommandName New-ModuleSetup -Exactly 2
             }
 
             It 'should call the correct functions for terraform module configuration' {
-                Deploy-Accelerator -i "terraform" -c "github"
+                Deploy-Accelerator -i "terraform" -b "github" -inputs "example.yml"
                 Assert-MockCalled -CommandName Get-BootstrapAndStarterConfig -Exactly 1
                 Assert-MockCalled -CommandName New-Bootstrap -Exactly 1
                 Assert-MockCalled -CommandName New-ModuleSetup -Exactly 2

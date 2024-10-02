@@ -11,7 +11,7 @@ function Get-BootstrapAndStarterConfig {
         [Parameter(Mandatory = $false)]
         [string]$bootstrapConfigPath,
         [Parameter(Mandatory = $false)]
-        [PSCustomObject]$userInputOverrides,
+        [PSCustomObject]$inputConfig,
         [Parameter(Mandatory = $false)]
         [string]$toolsPath
     )
@@ -26,7 +26,6 @@ function Get-BootstrapAndStarterConfig {
         $bootstrapDetails = $null
         $validationConfig = $null
         $zonesSupport = $null
-        $inputConfig = $null
 
         # Get the bootstap configuration
         $bootstrapConfigFullPath = Join-Path $bootstrapPath $bootstrapConfigPath
@@ -34,21 +33,16 @@ function Get-BootstrapAndStarterConfig {
         $bootstrapConfig = Get-ALZConfig -configFilePath $bootstrapConfigFullPath
         $validationConfig = $bootstrapConfig.validators
 
+        # Get the supported regions and availability zones
         Write-Verbose "Getting Supported Regions and Availability Zones with Terraform"
         $regionsAndZones = Get-AzureRegionData -toolsPath $toolsPath
         Write-Verbose "Supported Regions: $($regionsAndZones.supportedRegions)"
-
         $zonesSupport = $regionsAndZones.zonesSupport
         $azureLocationValidator = $validationConfig.PSObject.Properties["azure_location"].Value
         $azureLocationValidator.AllowedValues.Values = $regionsAndZones.supportedRegions
 
         # Get the available bootstrap modules
         $bootstrapModules = $bootstrapConfig.bootstrap_modules
-
-        # Request the bootstrap type if not already specified
-        if($bootstrap -eq "") {
-            $bootstrap = Request-SpecialInput -type "bootstrap" -bootstrapModules $bootstrapModules -userInputOverrides $userInputOverrides
-        }
 
         # Get the bootstrap details and validate it exists (use alias for legacy values)
         $bootstrapDetails = $bootstrapModules.PsObject.Properties | Where-Object { $_.Name -eq $bootstrap -or $bootstrap -in $_.Value.aliases }
@@ -77,11 +71,6 @@ function Get-BootstrapAndStarterConfig {
             $starterConfigFilePath = $starterModuleDetails.Value.$iac.release_artifact_config_file
         }
 
-        # Get the bootstrap interface user input config
-        $inputConfigFilePath = Join-Path -Path $bootstrapPath -ChildPath $bootstrapDetails.Value.interface_config_file
-        Write-Verbose "Interface config path $inputConfigFilePath"
-        $inputConfig = Get-ALZConfig -configFilePath $inputConfigFilePath
-
         return @{
             bootstrapDetails           = $bootstrapDetails
             hasStarterModule           = $hasStarterModule
@@ -91,7 +80,6 @@ function Get-BootstrapAndStarterConfig {
             starterConfigFilePath      = $starterConfigFilePath
             validationConfig           = $validationConfig
             zonesSupport               = $zonesSupport
-            inputConfig                = $inputConfig
         }
     }
 }

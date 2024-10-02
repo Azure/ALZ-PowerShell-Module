@@ -14,38 +14,23 @@ function Write-TfvarsJsonFile {
             Remove-Item -Path $tfvarsFilePath
         }
 
-        $jsonObject = @{}
+        $jsonObject = [ordered]@{}
 
-        foreach($configurationProperty in $configuration.PSObject.Properties) {
+        foreach($configurationProperty in $configuration.PSObject.Properties | Sort-Object Name) {
             $configurationValue = $configurationProperty.Value.Value
+
+            if($configurationValue -eq "sourced-from-env") {
+                continue
+            }
 
             if($configurationProperty.Value.Validator -eq "configuration_file_path") {
                 $configurationValue = [System.IO.Path]::GetFileName($configurationValue)
             }
 
-            if($configurationProperty.Value.Source -eq "UserInterface") {
-                if($configurationProperty.Value.DataType -eq "list(string)") {
-                    if($configurationValue -eq "") {
-                        $configurationValue = @()
-                    } else {
-                        $configurationValue = @($configurationValue -split ",")
-                    }
-                }
-
-                if($configurationProperty.Value.DataType -eq "number") {
-                    $configurationValue = [int]($configurationValue)
-                }
-
-                if($configurationProperty.Value.DataType -eq "bool") {
-                    $configurationValue = [bool]($configurationValue)
-                }
-            }
-
             $jsonObject["$($configurationProperty.Name)"] = $configurationValue
         }
 
-        $jsonString = ConvertTo-Json $jsonObject
-
+        $jsonString = ConvertTo-Json $jsonObject -Depth 100
         $jsonString | Out-File $tfvarsFilePath
     }
 }

@@ -1,14 +1,12 @@
 function Get-ALZConfig {
-    <#
-
-    #>
     param(
         [Parameter(Mandatory = $false)]
         [string] $configFilePath = ""
     )
 
     if(!(Test-Path $configFilePath)) {
-        return $null
+        Write-Error "The config file does not exist at $configFilePath"
+        throw "The config file does not exist at $configFilePath"
     }
 
     # Import the config and transform it to a PowerShell object
@@ -20,7 +18,7 @@ function Get-ALZConfig {
             Install-Module powershell-Yaml -Force
         }
         try {
-            $config = [PSCustomObject](Get-Content -Path $configFilePath | ConvertFrom-Yaml)
+            $config = [PSCustomObject](Get-Content -Path $configFilePath | ConvertFrom-Yaml -Ordered)
         } catch {
             $errorMessage = "Failed to parse YAML inputs. Please check the YAML file for errors and try again. $_"
             Write-Error $errorMessage

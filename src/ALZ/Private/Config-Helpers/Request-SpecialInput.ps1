@@ -8,10 +8,7 @@ function Request-SpecialInput {
         [PSCustomObject] $starterConfig,
 
         [Parameter(Mandatory = $false)]
-        [PSCustomObject] $bootstrapModules,
-
-        [Parameter(Mandatory = $false)]
-        [PSCustomObject] $userInputOverrides = $null
+        [PSCustomObject] $bootstrapModules
     )
 
     if ($PSCmdlet.ShouldProcess("ALZ-Terraform module configuration", "modify")) {
@@ -55,15 +52,46 @@ function Request-SpecialInput {
             $typeDescription = "starter module"
         }
 
-        if($null -ne $userInputOverrides) {
-            $userInputOverride = $userInputOverrides.PSObject.Properties | Where-Object { $_.Name -eq $type }
-            if($null -ne $userInputOverride) {
-                $result = $userInputOverride.Value
-                if($options.key -notcontains $result -and $aliasOptions.key -notcontains $result) {
-                    Write-InformationColored "The $typeDescription '$result' that you have selected does not exist. Please try again with a valid $typeDescription..." -ForegroundColor Red -InformationAction Continue
-                    throw "The $typeDescription '$result' that you have selected does not exist. Please try again with a valid $typeDescription..."
+        if($type -eq "inputConfigFilePath") {
+            $retryCount = 0
+            $maxRetryCount = 3
+
+            if($IsWindows) {
+                $filePath = ""
+
+                while($filePath -ne "OK" -and $retryCount -lt $maxRetryCount) {
+                    Add-Type -AssemblyName System.Windows.Forms
+                    $FileBrowser = New-Object System.Windows.Forms.OpenFileDialog -Property @{
+                        InitialDirectory = [Environment]::GetFolderPath("MyComputer")
+                        Filter           = "YAML or JSON (*.yml;*.yaml;*.json)|*.yml;*.yaml;*.json"
+                        Title            = "Select your input configuration file..."
+                    }
+                    $filePath = $FileBrowser.ShowDialog()
+                    if($filePath -eq "OK") {
+                        $result = $FileBrowser.FileName
+                        return $result
+                    } else {
+                        $retryCount++
+                        Write-InformationColored "You must select a file to continue..." -ForegroundColor Red -InformationAction Continue
+                    }
                 }
-                return $result
+            } else {
+                $validPath = $false
+                while(-not $validPath -and $retryCount -lt $maxRetryCount) {
+                    $result = Read-Host "Please enter the path to your input configuration file..."
+                    if(Test-Path $result) {
+                        $validPath = $true
+                        return $result
+                    } else {
+                        $retryCount++
+                        Write-InformationColored "The path '$result' that you have entered does not exist. Please try again with a valid path..." -ForegroundColor Red -InformationAction Continue
+                    }
+                }
+            }
+
+            if($retryCount -eq $maxRetryCount) {
+                Write-InformationColored "You have exceeded the maximum number of retries. Exiting..." -ForegroundColor Red -InformationAction Continue
+                throw "You have exceeded the maximum number of retries. Exiting..."
             }
         }
 

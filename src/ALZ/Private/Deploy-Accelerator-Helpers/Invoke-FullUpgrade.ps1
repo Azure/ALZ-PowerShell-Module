@@ -11,21 +11,6 @@ function Invoke-FullUpgrade {
         [string] $bootstrapModuleFolder,
 
         [Parameter(Mandatory = $false)]
-        [string] $starterRelease,
-
-        [Parameter(Mandatory = $false)]
-        [string] $starterPath,
-
-        [Parameter(Mandatory = $false)]
-        [string] $interfaceCacheFileName,
-
-        [Parameter(Mandatory = $false)]
-        [string] $bootstrapCacheFileName,
-
-        [Parameter(Mandatory = $false)]
-        [string] $starterCacheFileName,
-
-        [Parameter(Mandatory = $false)]
         [switch] $autoApprove
     )
 
@@ -41,30 +26,6 @@ function Invoke-FullUpgrade {
             -autoApprove:$autoApprove.IsPresent
 
         if($bootstrapWasUpgraded) {
-            # Run upgrade for interface inputs
-            Invoke-Upgrade `
-                -targetDirectory $bootstrapPath `
-                -cacheFileName $interfaceCacheFileName `
-                -release $bootstrapRelease `
-                -autoApprove:$bootstrapWasUpgraded | Out-String | Write-Verbose
-
-            # Run upgrade for bootstrap inputs
-            Invoke-Upgrade `
-                -targetDirectory $bootstrapPath `
-                -cacheFileName $bootstrapCacheFileName `
-                -release $bootstrapRelease `
-                -autoApprove:$bootstrapWasUpgraded | Out-String | Write-Verbose
-        }
-
-        # Run upgrade for starter
-        $starterWasUpgraded = Invoke-Upgrade `
-            -moduleType "starter" `
-            -targetDirectory $starterPath `
-            -cacheFileName $starterCacheFileName `
-            -release $starterRelease `
-            -autoApprove:$autoApprove.IsPresent | Out-String | Write-Verbose
-
-        if($starterWasUpgraded -or $bootstrapWasUpgraded) {
             Write-InformationColored "AUTOMATIC UPGRADE: Upgrade complete. If any starter files have been updated, you will need to remove branch protection in order for the Terraform apply to succeed." -NewLineBefore -ForegroundColor Yellow -InformationAction Continue
         }
     }
