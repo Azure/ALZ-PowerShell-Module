@@ -3,7 +3,7 @@ The `complete_multi_region` starter module provides full customization of the Az
 
 A custom config file can be passed to the `configuration_file_path` argument of the ALZ PowerShell Module. This allows you to firstly design your Azure Landing Zone, and then deploy it. The config file can be in YAML or JSON format, our examples are all YAML.
 
-If not specified, the default `config-hub-and-spoke-vnet.yaml` file will be used, which can be seen [here](https://github.com/Azure/alz-terraform-accelerator/blob/main/templates/complete_multi_region/config-hub-and-spoke-vnet.yaml).
+If not specified, the default `config-hub-and-spoke-vnet-multi-region.yaml` file will be used, which can be seen [here][example_starter_module_complete_config_hub_spoke_multi_region].
 
 The following table describes the inputs required for the `complete_multi_region` starter module.
 
@@ -66,8 +66,8 @@ The `avm-ptn-network-private-link-private-dns-zones` module is used to deploy Pr
 
 [example_starter_module_complete_config_hub_spoke_single_region]: https://raw.githubusercontent.com/Azure/alz-terraform-accelerator/refs/heads/main/templates/complete_multi_region/config-hub-and-spoke-vnet-single-region.yaml "Example - Starter Module Config - Complete - Hub and Spoke VNet Single Region"
 [example_starter_module_complete_config_vwan_single_region]: https://raw.githubusercontent.com/Azure/alz-terraform-accelerator/refs/heads/main/templates/complete_multi_region/config-virtual-wan-single-region.yaml "Example - Starter Module Config - Complete - Virtual WAN Single Region"
-[example_starter_module_complete_config_hub_spoke_multi_region]: https://raw.githubusercontent.com/Azure/alz-terraform-accelerator/refs/heads/main/templates/complete_multi_region/config-hub-and-spoke-vnet.yaml "Example - Starter Module Config - Complete - Hub and Spoke VNet Multi Region"
-[example_starter_module_complete_config_vwan_multi_region]: https://raw.githubusercontent.com/Azure/alz-terraform-accelerator/refs/heads/main/templates/complete_multi_region/config-virtual-wan.yaml "Example - Starter Module Config - Complete - Virtual WAN Multi Region"
+[example_starter_module_complete_config_hub_spoke_multi_region]: https://raw.githubusercontent.com/Azure/alz-terraform-accelerator/refs/heads/main/templates/complete_multi_region/config-hub-and-spoke-vnet-multi-region.yaml "Example - Starter Module Config - Complete - Hub and Spoke VNet Multi Region"
+[example_starter_module_complete_config_vwan_multi_region]: https://raw.githubusercontent.com/Azure/alz-terraform-accelerator/refs/heads/main/templates/complete_multi_region/config-virtual-wan-multi-region.yaml "Example - Starter Module Config - Complete - Virtual WAN Multi Region"
 [example_powershell_inputs_azure_devops_terraform_complete_multi_region]:     examples/powershell-inputs/inputs-azure-devops-terraform-complete-multi-region.yaml "Example - PowerShell Inputs - Azure DevOps - Terraform - Complete Multi Region"
 [example_powershell_inputs_github_terraform_complete_multi_region]:     examples/powershell-inputs/inputs-github-terraform-complete-multi-region.yaml "Example - PowerShell Inputs - GitHub - Terraform - Complete Multi Region"
 [example_powershell_inputs_local_terraform_complete_multi_region]:     examples/powershell-inputs/inputs-local-terraform-complete-multi-region.yaml "Example - PowerShell Inputs - Local - Terraform - Complete Multi Region"
