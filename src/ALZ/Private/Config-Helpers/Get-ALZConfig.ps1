@@ -1,12 +1,18 @@
 function Get-ALZConfig {
     param(
         [Parameter(Mandatory = $false)]
-        [string] $configFilePath = ""
+        [string] $configFilePath = "",
+        [Parameter(Mandatory = $false)]
+        [string] $inputConfig = $null
     )
 
     if(!(Test-Path $configFilePath)) {
         Write-Error "The config file does not exist at $configFilePath"
         throw "The config file does not exist at $configFilePath"
+    }
+
+    if($null -eq $inputConfig) {
+        $inputConfig = [PSCustomObject]@{}
     }
 
     # Import the config and transform it to a PowerShell object
@@ -38,5 +44,10 @@ function Get-ALZConfig {
     }
 
     Write-Verbose "Config file loaded from $configFilePath with $($config.PSObject.Properties.Name.Count) properties."
-    return $config
+
+    foreach($property in $config.PSObject.Properties) {
+        $inputConfig | Add-Member -NotePropertyName $property.Name -NotePropertyValue $property.Value
+    }
+
+    return $inputConfig
 }

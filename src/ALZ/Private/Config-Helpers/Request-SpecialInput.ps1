@@ -65,10 +65,11 @@ function Request-SpecialInput {
                         InitialDirectory = [Environment]::GetFolderPath("MyComputer")
                         Filter           = "YAML or JSON (*.yml;*.yaml;*.json)|*.yml;*.yaml;*.json"
                         Title            = "Select your input configuration file..."
+                        MultSelect       = $true
                     }
                     $filePath = $FileBrowser.ShowDialog()
                     if($filePath -eq "OK") {
-                        $result = $FileBrowser.FileName
+                        $result = $FileBrowser.FileNames
                         return $result
                     } else {
                         $retryCount++
@@ -76,15 +77,21 @@ function Request-SpecialInput {
                     }
                 }
             } else {
-                $validPath = $false
+                $validPaths = $false
                 while(-not $validPath -and $retryCount -lt $maxRetryCount) {
-                    $result = Read-Host "Please enter the path to your input configuration file..."
-                    if(Test-Path $result) {
-                        $validPath = $true
+                    $paths = Read-Host "Please enter the paths to your input configuration file. Separate multiple files with a comma..."
+                    $result = $paths -split "," | ForEach-Object { $_.Trim() }
+                    $validPaths = $true
+                    foreach($file in $result) {
+                        if(!(Test-Path $file)) {
+                            $validPaths = $false
+                            Write-InformationColored "The path '$result' that you have entered does not exist. Please try again with a valid path..." -ForegroundColor Red -InformationAction Continue
+                        }
+                    }
+                    if($validPaths) {
                         return $result
                     } else {
                         $retryCount++
-                        Write-InformationColored "The path '$result' that you have entered does not exist. Please try again with a valid path..." -ForegroundColor Red -InformationAction Continue
                     }
                 }
             }
