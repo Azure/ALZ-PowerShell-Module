@@ -18,7 +18,7 @@ function New-ALZEnvironment {
         [Alias("inputs")]
         [Alias("c")]
         [Alias("inputConfigFilePath")]
-        [string[]] $inputConfigFilePaths = $null -eq $env:ALZ_input_config_path ? @() : $env:ALZ_input_config_path -split ",",
+        [string[]] $inputConfigFilePaths = @(),
 
         [Parameter(
             Mandatory = $false,
@@ -165,11 +165,16 @@ function New-ALZEnvironment {
         # Get User Inputs from the input config file
         $inputConfig = $null
         if ($inputConfigFilePaths.Length -eq 0) {
-            Write-InformationColored "No input configuration file path has been provided. Please provide the path(s) to your configuration file(s)..." -ForegroundColor Yellow -InformationAction Continue
-            $inputConfigFilePaths = @(Request-SpecialInput -type "inputConfigFilePath")
+            $envInputConfigPaths = $env:ALZ_input_config_path
+            if($null -ne $envInputConfigPaths -and $envInputConfigPaths -ne "") {
+                $inputConfigFilePaths = $envInputConfigPaths -split ","
+            } else {
+                Write-InformationColored "No input configuration file path has been provided. Please provide the path(s) to your configuration file(s)..." -ForegroundColor Yellow -InformationAction Continue
+                $inputConfigFilePaths = @(Request-SpecialInput -type "inputConfigFilePath")
+            }
         }
         foreach($inputConfigFilePath in $inputConfigFilePaths) {
-          $inputConfig = Get-ALZConfig -configFilePath $inputConfigFilePath -inputConfig $inputConfig
+            $inputConfig = Get-ALZConfig -configFilePath $inputConfigFilePath -inputConfig $inputConfig
         }
         Write-Verbose "Initial Input config: $(ConvertTo-Json $inputConfig -Depth 100)"
 

@@ -83,7 +83,7 @@ function Request-SpecialInput {
                     $result = $paths -split "," | ForEach-Object { $_.Trim() }
                     $validPaths = $true
                     foreach($file in $result) {
-                        if(!(Test-Path $file)) {
+                        if(-not (Test-Path $file)) {
                             $validPaths = $false
                             Write-InformationColored "The path '$result' that you have entered does not exist. Please try again with a valid path..." -ForegroundColor Red -InformationAction Continue
                         }
