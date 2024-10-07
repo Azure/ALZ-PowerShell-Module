@@ -65,7 +65,7 @@ function Request-SpecialInput {
                         InitialDirectory = [Environment]::GetFolderPath("MyComputer")
                         Filter           = "YAML or JSON (*.yml;*.yaml;*.json)|*.yml;*.yaml;*.json"
                         Title            = "Select your input configuration file..."
-                        MultSelect       = $true
+                        MultiSelect      = $true
                     }
                     $filePath = $FileBrowser.ShowDialog()
                     if($filePath -eq "OK") {
