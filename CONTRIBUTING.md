@@ -204,7 +204,7 @@ Deploy-Accelerator `
     -bootstrapModuleOverrideFolderPath "/$targetFolder/code/accelerator-bootstrap-modules" `
     -starterModuleOverrideFolderPath "/$targetFolder/code/alz-terraform-accelerator/templates" `
     -output "/$targetFolder/acc/terraform/output/azuredevops" `
-    -inputs "/$targetFolder/acc/terraform/config/inputs-azuredevops.yaml" "/$targetFolder/acc/terraform/config/config-hub-and-spoke-vnet-multi-region.yaml" `
+    -inputs "/$targetFolder/acc/terraform/config/inputs-azuredevops.yaml", "/$targetFolder/acc/terraform/config/config-hub-and-spoke-vnet-multi-region.yaml" `
     -verbose `
     -replaceFiles  # This will replace the files in the output folder with the files in the bootstrap and starter modules, so any updates are taken into account
 
@@ -230,7 +230,7 @@ Deploy-Accelerator `
     -bootstrapModuleOverrideFolderPath "/$targetFolder/code/accelerator-bootstrap-modules" `
     -starterModuleOverrideFolderPath "/$targetFolder/code/alz-terraform-accelerator/templates" `
     -output "/$targetFolder/acc/terraform/output/github" `
-    -inputs "/$targetFolder/acc/terraform/config/inputs-github.yaml" "/$targetFolder/acc/terraform/config/config-hub-and-spoke-vnet-multi-region.yaml"`
+    -inputs "/$targetFolder/acc/terraform/config/inputs-github.yaml", "/$targetFolder/acc/terraform/config/config-hub-and-spoke-vnet-multi-region.yaml" `
     -verbose `
     -replaceFiles  # This will replace the files in the output folder with the files in the bootstrap and starter modules, so any updates are taken into account
 
@@ -256,7 +256,7 @@ Deploy-Accelerator `
     -bootstrapModuleOverrideFolderPath "/$targetFolder/code/accelerator-bootstrap-modules" `
     -starterModuleOverrideFolderPath "/$targetFolder/code/alz-terraform-accelerator/templates" `
     -output "/$targetFolder/acc/terraform/output/local" `
-    -inputs "/$targetFolder/acc/terraform/config/inputs-local.yaml" "/$targetFolder/acc/terraform/config/config-hub-and-spoke-vnet-multi-region.yaml"`
+    -inputs "/$targetFolder/acc/terraform/config/inputs-local.yaml", "/$targetFolder/acc/terraform/config/config-hub-and-spoke-vnet-multi-region.yaml" `
     -verbose `
     -replaceFiles  # This will replace the files in the output folder with the files in the bootstrap and starter modules, so any updates are taken into account
 
