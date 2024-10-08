@@ -19,8 +19,10 @@ function Convert-HCLVariablesToInputConfig {
 
         if($terraformVariables.PSObject.Properties.Name -notcontains "variable") {
             Write-Verbose "No variables found in $targetVariableFile, skipping..."
-            return
+            return $appendToObject
         }
+
+        Write-Verbose "Variables found in $targetVariableFile, processing..."
 
         $configItems = [PSCustomObject]@{}
         if($appendToObject -ne $null) {
@@ -54,7 +56,6 @@ function Convert-HCLVariablesToInputConfig {
             }
 
             if($hasValidation) {
-                Write-Verbose "Validation: $hasValidation - $validationType"
                 $validator = $validators.PSObject.Properties[$validationType].Value
                 $description = "$description ($($validator.Description))"
                 if($validator.Type -eq "AllowedValues"){
@@ -68,6 +69,7 @@ function Convert-HCLVariablesToInputConfig {
 
             $configItem | Add-Member -NotePropertyName "Description" -NotePropertyValue $description
 
+            Write-Verbose "Adding variable $($variable.Name) to the configuration..."
             $configItems | Add-Member -NotePropertyName $variable.Name -NotePropertyValue $configItem
         }
     }

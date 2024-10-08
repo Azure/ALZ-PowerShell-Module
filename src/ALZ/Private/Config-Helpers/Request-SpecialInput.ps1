@@ -57,18 +57,18 @@ function Request-SpecialInput {
             $maxRetryCount = 3
 
             if($IsWindows) {
-                $filePath = ""
-
-                while($filePath -ne "OK" -and $retryCount -lt $maxRetryCount) {
+                while($retryCount -lt $maxRetryCount) {
                     Add-Type -AssemblyName System.Windows.Forms
                     $FileBrowser = New-Object System.Windows.Forms.OpenFileDialog -Property @{
                         InitialDirectory = [Environment]::GetFolderPath("MyComputer")
                         Filter           = "YAML or JSON (*.yml;*.yaml;*.json)|*.yml;*.yaml;*.json"
                         Title            = "Select your input configuration file..."
+                        MultiSelect      = $true
                     }
-                    $filePath = $FileBrowser.ShowDialog()
-                    if($filePath -eq "OK") {
-                        $result = $FileBrowser.FileName
+
+                    if($FileBrowser.ShowDialog() -eq "OK") {
+                        $result = $FileBrowser.FileNames
+                        Write-Verbose "Selected file(s): $result"
                         return $result
                     } else {
                         $retryCount++
@@ -76,15 +76,21 @@ function Request-SpecialInput {
                     }
                 }
             } else {
-                $validPath = $false
+                $validPaths = $false
                 while(-not $validPath -and $retryCount -lt $maxRetryCount) {
-                    $result = Read-Host "Please enter the path to your input configuration file..."
-                    if(Test-Path $result) {
-                        $validPath = $true
+                    $paths = Read-Host "Please enter the paths to your input configuration file. Separate multiple files with a comma..."
+                    $result = $paths -split "," | ForEach-Object { $_.Trim() }
+                    $validPaths = $true
+                    foreach($file in $result) {
+                        if(-not (Test-Path $file)) {
+                            $validPaths = $false
+                            Write-InformationColored "The path '$result' that you have entered does not exist. Please try again with a valid path..." -ForegroundColor Red -InformationAction Continue
+                        }
+                    }
+                    if($validPaths) {
                         return $result
                     } else {
                         $retryCount++
-                        Write-InformationColored "The path '$result' that you have entered does not exist. Please try again with a valid path..." -ForegroundColor Red -InformationAction Continue
                     }
                 }
             }

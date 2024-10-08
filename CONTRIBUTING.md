@@ -101,6 +101,13 @@ Copy-Item -Path "$exampleFolder/inputs-azure-devops-terraform-complete-multi-reg
 Copy-Item -Path "$exampleFolder/inputs-github-terraform-complete-multi-region.yaml" -Destination "$terraformConfigFolder/inputs-github.yaml" -Force
 Copy-Item -Path "$exampleFolder/inputs-local-terraform-complete-multi-region.yaml" -Destination "$terraformConfigFolder/inputs-local.yaml" -Force
 
+$exampleFolder = "$targetFolder/code/ALZ-PowerShell-Module/docs/wiki/examples/starter-module-config/complete-multi-region"
+
+Copy-Item -Path "$exampleFolder/config-hub-and-spoke-vnet-multi-region.yaml" -Destination "$terraformConfigFolder/config-hub-and-spoke-vnet-multi-region.yaml" -Force
+Copy-Item -Path "$exampleFolder/config-hub-and-spoke-vnet-single-region.yaml" -Destination "$terraformConfigFolder/config-hub-and-spoke-vnet-single-region.yaml" -Force
+Copy-Item -Path "$exampleFolder/config-virtual-wan-multi-region.yaml" -Destination "$terraformConfigFolder/config-virtual-wan-multi-region.yaml" -Force
+Copy-Item -Path "$exampleFolder/config-virtual-wan-single-region.yaml" -Destination "$terraformConfigFolder/config-virtual-wan-single-region.yaml" -Force
+
 ```
 
 >IMPORTANT! - Now you'll need to update the input files with your settings for VCS, etc.
@@ -197,11 +204,13 @@ Deploy-Accelerator `
     -bootstrapModuleOverrideFolderPath "/$targetFolder/code/accelerator-bootstrap-modules" `
     -starterModuleOverrideFolderPath "/$targetFolder/code/alz-terraform-accelerator/templates" `
     -output "/$targetFolder/acc/terraform/output/azuredevops" `
-    -inputs "/$targetFolder/acc/terraform/config/inputs-azuredevops.yaml" `
+    -inputs "/$targetFolder/acc/terraform/config/inputs-azuredevops.yaml", "/$targetFolder/acc/terraform/config/config-hub-and-spoke-vnet-multi-region.yaml" `
     -verbose `
     -replaceFiles  # This will replace the files in the output folder with the files in the bootstrap and starter modules, so any updates are taken into account
 
 ```
+
+>NOTE: The `config-hub-and-spoke-vnet-multi-region.yaml` file is an example. You can use any of the other configuration files.
 
 ### Terraform GitHub
 
@@ -221,11 +230,13 @@ Deploy-Accelerator `
     -bootstrapModuleOverrideFolderPath "/$targetFolder/code/accelerator-bootstrap-modules" `
     -starterModuleOverrideFolderPath "/$targetFolder/code/alz-terraform-accelerator/templates" `
     -output "/$targetFolder/acc/terraform/output/github" `
-    -inputs "/$targetFolder/acc/terraform/config/inputs-github.yaml" `
+    -inputs "/$targetFolder/acc/terraform/config/inputs-github.yaml", "/$targetFolder/acc/terraform/config/config-hub-and-spoke-vnet-multi-region.yaml" `
     -verbose `
     -replaceFiles  # This will replace the files in the output folder with the files in the bootstrap and starter modules, so any updates are taken into account
 
 ```
+
+>NOTE: The `config-hub-and-spoke-vnet-multi-region.yaml` file is an example. You can use any of the other configuration files.
 
 ### Terraform Local
 
@@ -245,8 +256,10 @@ Deploy-Accelerator `
     -bootstrapModuleOverrideFolderPath "/$targetFolder/code/accelerator-bootstrap-modules" `
     -starterModuleOverrideFolderPath "/$targetFolder/code/alz-terraform-accelerator/templates" `
     -output "/$targetFolder/acc/terraform/output/local" `
-    -inputs "/$targetFolder/acc/terraform/config/inputs-local.yaml" `
+    -inputs "/$targetFolder/acc/terraform/config/inputs-local.yaml", "/$targetFolder/acc/terraform/config/config-hub-and-spoke-vnet-multi-region.yaml" `
     -verbose `
     -replaceFiles  # This will replace the files in the output folder with the files in the bootstrap and starter modules, so any updates are taken into account
 
 ```
+
+>NOTE: The `config-hub-and-spoke-vnet-multi-region.yaml` file is an example. You can use any of the other configuration files.

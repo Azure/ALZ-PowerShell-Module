@@ -128,14 +128,16 @@ Although you can just run `Deploy-Accelerator` and fill out the prompted inputs,
     - [Terraform Complete Starter Module][wiki_starter_module_terraform_complete]: Management groups, policies, hub networking with fully custom configuration.
 1. In your PowerShell Core (pwsh) terminal run the module:
 
+    >NOTE: The following examples include 2 input files. This is the recommended approach for the `complete_multi_region` starter module. However, all inputs can be combined into a single file if desired and other starter modules only require a single input file.
+
     ```pwsh
     # Windows (adjust the paths to match your setup)
-    Deploy-Accelerator -inputs "c:\accelerator\config\inputs.yaml" -output "c:\accelerator\output"
+    Deploy-Accelerator -inputs "c:\accelerator\config\inputs.yaml", "c:\accelerator\config\networking.yaml" -output "c:\accelerator\output"
     ```
 
     ```pwsh
     # Linux/Mac (adjust the paths to match your setup)
-    Deploy-Accelerator -inputs "/accelerator/config/inputs.yaml" -output "/accelerator/output"
+    Deploy-Accelerator -inputs "/accelerator/config/inputs.yaml", "/accelerator/config/networking.yaml" -output "/accelerator/output"
     ```
 
 1. You will see a Terraform `init` and `apply` happen.

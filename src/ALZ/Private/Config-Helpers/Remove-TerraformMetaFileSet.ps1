@@ -9,7 +9,9 @@ function Remove-TerraformMetaFileSet {
             "terraform.tfstate.backup",
             ".terraform",
             "terraform.tfvars",
-            ".terraform.lock.hcl"
+            ".terraform.lock.hcl",
+            "examples",
+            "yaml.tf"
         ),
         [Parameter(Mandatory = $false)]
         [switch]$writeVerboseLogs
