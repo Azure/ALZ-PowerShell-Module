@@ -57,9 +57,7 @@ function Request-SpecialInput {
             $maxRetryCount = 3
 
             if($IsWindows) {
-                $filePath = ""
-
-                while($filePath -ne "OK" -and $retryCount -lt $maxRetryCount) {
+                while($retryCount -lt $maxRetryCount) {
                     Add-Type -AssemblyName System.Windows.Forms
                     $FileBrowser = New-Object System.Windows.Forms.OpenFileDialog -Property @{
                         InitialDirectory = [Environment]::GetFolderPath("MyComputer")
@@ -67,9 +65,10 @@ function Request-SpecialInput {
                         Title            = "Select your input configuration file..."
                         MultiSelect      = $true
                     }
-                    $filePath = $FileBrowser.ShowDialog()
-                    if($filePath -eq "OK") {
+
+                    if($FileBrowser.ShowDialog() -eq "OK") {
                         $result = $FileBrowser.FileNames
+                        Write-Verbose "Selected file(s): $result"
                         return $result
                     } else {
                         $retryCount++

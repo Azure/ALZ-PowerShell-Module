@@ -3,7 +3,7 @@ function Get-ALZConfig {
         [Parameter(Mandatory = $false)]
         [string] $configFilePath = "",
         [Parameter(Mandatory = $false)]
-        [string] $inputConfig = $null
+        [PSCustomObject] $inputConfig = $null
     )
 
     if(!(Test-Path $configFilePath)) {
