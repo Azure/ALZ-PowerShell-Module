@@ -51,7 +51,7 @@ Follow the steps below to deploy the landing zone locally. If you want to hook i
 
 The Terraform option outputs a `run.ps1` file that you can use to deploy the ALZ.
 
->NOTE: If you set the `grant_permissions_to_current_user` input to `false` in the bootstrap, you will need to set permissions on your storage account before the `terraform init` command will work.
+>NOTE: If you set the `grant_permissions_to_current_user` input to `false` in the bootstrap, you will need to set permissions on your management group, subscriptions and storage account before the commands will succeed.
 
 1. Open a new PowerShell Core (pwsh) terminal or use the one you already have open.
 1. Navigate to the directory shown in the `module_output_directory_path` output from the bootstrap.
