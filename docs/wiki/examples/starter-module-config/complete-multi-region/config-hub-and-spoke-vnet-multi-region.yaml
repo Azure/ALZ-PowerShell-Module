@@ -10,6 +10,7 @@
 # `subscription_id_connectivity`: The subscription ID of the subscription to deploy the connectivity resources to, sourced from the variable `subscription_id_connectivity`.
 # `subscription_id_management`: The subscription ID of the subscription to deploy the management resources to, sourced from the variable `subscription_id_management`.
 
+---
 connectivity_resource_groups:
   ddos:
     location: ${starter_location_01}
@@ -33,7 +34,7 @@ hub_and_spoke_vnet_virtual_networks:
   primary:
     hub_virtual_network:
       address_space:
-      - 10.0.0.0/16
+        - 10.0.0.0/16
       firewall:
         default_ip_configuration:
           public_ip_config:
@@ -56,7 +57,7 @@ hub_and_spoke_vnet_virtual_networks:
       subnets:
         virtual_network_gateway:
           address_prefixes:
-          - 10.0.1.0/24
+            - 10.0.1.0/24
           assign_generated_route_table: false
           name: GatewaySubnet
     private_dns_zones:
@@ -88,7 +89,7 @@ hub_and_spoke_vnet_virtual_networks:
   secondary:
     hub_virtual_network:
       address_space:
-      - 10.1.0.0/16
+        - 10.1.0.0/16
       firewall:
         default_ip_configuration:
           public_ip_config:
@@ -111,7 +112,7 @@ hub_and_spoke_vnet_virtual_networks:
       subnets:
         virtual_network_gateway:
           address_prefixes:
-          - 10.1.1.0/24
+            - 10.1.1.0/24
           assign_generated_route_table: false
           name: GatewaySubnet
     private_dns_zones:

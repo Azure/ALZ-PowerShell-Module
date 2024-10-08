@@ -29,7 +29,7 @@ The following tables describe the inputs required for the `complete_multi_region
 | Input | Placeholder | Description |
 | - | -- | --- |
 | `virtual_wan_settings` | `{}` | This is for configuring global resources, such as the Virtual WAN and DDOS protection plan. See the example files for usage. |
-| `virtual_wan_virtual_hubs` | `{}` | This is the details configuration of each region for the virtual hubs. There are three top level components for each region: `hub`, `firewall` and `private_dns_zones`. Detailed information for `hub` and `firewall` inputs can be found [here](hhttps://registry.terraform.io/modules/Azure/avm-ptn-virtualwan/azurerm/latest). See the example files for usage. |
+| `virtual_wan_virtual_hubs` | `{}` | This is the details configuration of each region for the virtual hubs. There are three top level components for each region: `hub`, `firewall` and `private_dns_zones`. Detailed information for `hub` and `firewall` inputs can be found [here](https://registry.terraform.io/modules/Azure/avm-ptn-virtualwan/azurerm/latest). See the example files for usage. |
 
 Example ALZ PowerShell input files can be found here:
 
