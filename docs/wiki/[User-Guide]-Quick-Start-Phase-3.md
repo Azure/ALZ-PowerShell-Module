@@ -37,6 +37,10 @@ Follow the steps below to deploy the landing zone locally. If you want to hook i
 
 #### 3.1.3.1 Bicep
 
+The Bicep option outputs a `deploy-local.ps1` file that you can use to deploy the ALZ.
+
+>NOTE: If you set the `grant_permissions_to_current_user` input to `false` in the bootstrap, you will need to set permissions on your management group and subscriptions before the commands will succeed.
+
 1. Ensure you have the latest versions of the [AZ PowerShell Module](https://learn.microsoft.com/en-us/powershell/azure/install-azure-powershell) and [Bicep](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/install) installed.
 1. Open a new PowerShell Core (pwsh) terminal or use the one you already have open.
 1. Navigate to the directory shown in the `module_output_directory_path` output from the bootstrap.
@@ -49,13 +53,16 @@ Follow the steps below to deploy the landing zone locally. If you want to hook i
 
 #### 3.1.3.2 Terraform
 
-The Terraform option outputs a `run.ps1` file that you can use to deploy the ALZ.
+The Terraform option outputs a `deploy-local.ps1` file that you can use to deploy the ALZ.
 
 >NOTE: If you set the `grant_permissions_to_current_user` input to `false` in the bootstrap, you will need to set permissions on your management group, subscriptions and storage account before the commands will succeed.
 
 1. Open a new PowerShell Core (pwsh) terminal or use the one you already have open.
 1. Navigate to the directory shown in the `module_output_directory_path` output from the bootstrap.
-1. Open and examine the `run.ps1` file also found in the `module_output_directory_path` directory using your favourite editor (vscode).
-1. Follow each step found in the `run.ps1` file and paste the commands into the terminal.
-1. You will `init`, `plan` and `apply` the Terraform configuration.
+1. (Optional) Ensure you are still logged in to Azure using `az login --tenant 00000000-0000-0000-0000-000000000000`.
+1. (Optional) Connect to your target subscription using `az account set --subscription 00000000-0000-0000-0000-000000000000`.
+1. (Optional) Examine the `./scripts/deploy-local.ps1` to understand what it is doing.
+1. Run `./scripts/deploy-local.ps1`.
+1. A plan will run and then you'll be prompted to check it and run the deploy.
+1. Type `yes` and hit enter to run the deploy.
 1. The ALZ will now be deployed, this may take some time.
