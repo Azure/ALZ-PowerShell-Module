@@ -27,7 +27,6 @@
       - [Configuration YAML Schema][wiki_yaml_schema_reference]
       - [Example Hub and Spoke config][example_starter_module_complete_config_hub_spoke]
       - [Example Virtual WAN config][example_starter_module_complete_config_vwan]
-
   - Input Files
     - [Azure DevOps Bicep Complete][example_powershell_inputs_azure_devops_bicep_complete]
     - [Azure DevOps Terraform Basic][example_powershell_inputs_azure_devops_terraform_basic]
@@ -102,7 +101,7 @@
 [example_powershell_inputs_local_terraform_complete_multi_region]:     examples/powershell-inputs/inputs-local-terraform-complete-multi-region.yaml "Example - PowerShell Inputs - Local - Terraform - Complete Multi Region"
 [example_starter_module_complete_config_hub_spoke]: examples/starter-module-config/complete/config-hub-spoke.yaml "Example - Starter Module Config - Complete - Hub and Spoke"
 [example_starter_module_complete_config_vwan]: examples/starter-module-config/complete/config-vwan.yaml "Example - Starter Module Config - Complete - Virtual WAN"
-[example_starter_module_complete_config_hub_spoke_single_region]: https://raw.githubusercontent.com/Azure/alz-terraform-accelerator/refs/heads/main/templates/complete_multi_region/config-hub-and-spoke-vnet-single-region.yaml "Example - Starter Module Config - Complete - Hub and Spoke VNet Single Region"
-[example_starter_module_complete_config_vwan_single_region]: https://raw.githubusercontent.com/Azure/alz-terraform-accelerator/refs/heads/main/templates/complete_multi_region/config-virtual-wan-single-region.yaml "Example - Starter Module Config - Complete - Virtual WAN Single Region"
-[example_starter_module_complete_config_hub_spoke_multi_region]: https://raw.githubusercontent.com/Azure/alz-terraform-accelerator/refs/heads/main/templates/complete_multi_region/config-hub-and-spoke-vnet-multi-region.yaml "Example - Starter Module Config - Complete - Hub and Spoke VNet Multi Region"
-[example_starter_module_complete_config_vwan_multi_region]: https://raw.githubusercontent.com/Azure/alz-terraform-accelerator/refs/heads/main/templates/complete_multi_region/config-virtual-wan-multi-region.yaml "Example - Starter Module Config - Complete - Virtual WAN Multi Region"
+[example_starter_module_complete_config_hub_spoke_single_region]: https://raw.githubusercontent.com/wiki/Azure/ALZ-PowerShell-Module/examples/starter-module-config/complete-multi-region/config-hub-and-spoke-vnet-single-region.yaml "Example - Starter Module Config - Complete - Hub and Spoke VNet Single Region"
+[example_starter_module_complete_config_vwan_single_region]: https://raw.githubusercontent.com/wiki/Azure/ALZ-PowerShell-Module/examples/starter-module-config/complete-multi-region/config-virtual-wan-single-region.yaml "Example - Starter Module Config - Complete - Virtual WAN Single Region"
+[example_starter_module_complete_config_hub_spoke_multi_region]: https://raw.githubusercontent.com/wiki/Azure/ALZ-PowerShell-Module/examples/starter-module-config/complete-multi-region/config-hub-and-spoke-vnet-multi-region.yaml "Example - Starter Module Config - Complete - Hub and Spoke VNet Multi Region"
+[example_starter_module_complete_config_vwan_multi_region]: https://raw.githubusercontent.com/wiki/Azure/ALZ-PowerShell-Module/examples/starter-module-config/complete-multi-region/config-virtual-wan-multi-region.yaml "Example - Starter Module Config - Complete - Virtual WAN Multi Region"
