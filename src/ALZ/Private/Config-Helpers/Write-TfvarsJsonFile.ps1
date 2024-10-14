@@ -19,7 +19,7 @@ function Write-TfvarsJsonFile {
         foreach($configurationProperty in $configuration.PSObject.Properties | Sort-Object Name) {
             $configurationValue = $configurationProperty.Value.Value
 
-            if($configurationValue -eq "sourced-from-env") {
+            if($configurationValue.ToString() -eq "sourced-from-env") {
                 continue
             }
 
@@ -27,7 +27,8 @@ function Write-TfvarsJsonFile {
                 $configurationValue = [System.IO.Path]::GetFileName($configurationValue)
             }
 
-            $jsonObject["$($configurationProperty.Name)"] = $configurationValue
+            Write-Verbose "Writing to tfvars.json - Configuration Property: $($configurationProperty.Name) - Configuration Value: $configurationValue"
+            $jsonObject.Add("$($configurationProperty.Name)", $configurationValue)
         }
 
         $jsonString = ConvertTo-Json $jsonObject -Depth 100

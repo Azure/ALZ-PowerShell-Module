@@ -135,6 +135,8 @@ function New-Bootstrap {
             -inputConfig $inputConfig `
             -copyEnvVarToConfig
 
+        Write-Verbose "Final Starter Parameters: $(ConvertTo-Json $starterParameters -Depth 100)"
+
         # Creating the tfvars files for the bootstrap and starter module
         $tfVarsFileName = "terraform.tfvars.json"
         $bootstrapTfvarsPath = Join-Path -Path $bootstrapModulePath -ChildPath $tfVarsFileName
