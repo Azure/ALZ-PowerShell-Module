@@ -18,12 +18,6 @@ The following table describes the inputs required for the `microsoft_cloud_for_s
 | `default_location` | `<location>` | This is the Azure region to deploy all SLZ resources into. |
 | `allowed_locations` | `<list of locations>` | This is a list of Azure regions all workloads running outside of the Confidential Management Group scopes are allowed to be deployed into. |
 | `allowed_locations_for_confidential_computing` | `<list of locations>` | This is a list of Azure regions all workloads running inside of the Confidential Management Group scopes are allowed to be deployed into. |
-| `iac` | `terraform` | For public preview, only `"terraform"` is supported. |
-| `bootstrap` | `alz_local` | For public preview, only `"alz_local"` is supported. |
-| `bootstrap_location` | `<location>` | Use the same value as the `default_location`. As of the current release, it is required but not used. |
-| `create_bootstrap_resources_in_azure` | `false` | For public preview, only `false` is supported. |
-| `starter` | `false` | For public preview, only `false` is supported. |
-| `starter_location` | `<location>` | Use the same value as the `default_location`. As of the current release, it is required but not used. |
 
 Full parameter details can be found [here][parameter_description_powershell_inputs_local_terraform_slz].
 

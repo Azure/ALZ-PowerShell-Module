@@ -33,16 +33,19 @@
     - [Azure DevOps Terraform Hub Networking][example_powershell_inputs_azure_devops_terraform_hubnetworking]
     - [Azure DevOps Terraform Complete][example_powershell_inputs_azure_devops_terraform_complete]
     - [Azure DevOps Terraform Complete Multi Region][example_powershell_inputs_azure_devops_terraform_complete_multi_region]
+    - [Azure DevOps Terraform Sovereign Landing Zone][example_powershell_inputs_azure_devops_terraform_sovereign_landing_zone]
     - [GitHub Bicep Complete][example_powershell_inputs_github_bicep_complete]
     - [GitHub Terraform Basic][example_powershell_inputs_github_terraform_basic]
     - [GitHub Terraform Hub Networking][example_powershell_inputs_github_terraform_hubnetworking]
     - [GitHub Terraform Complete][example_powershell_inputs_github_terraform_complete]
     - [GitHub Terraform Complete Multi Region][example_powershell_inputs_github_terraform_complete_multi_region]
+    - [GitHub Terraform Sovereign Landing Zone][example_powershell_inputs_github_terraform_sovereign_landing_zone]
     - [Local Bicep Complete][example_powershell_inputs_local_bicep_complete]
     - [Local Terraform Basic][example_powershell_inputs_local_terraform_basic]
     - [Local Terraform Hub Networking][example_powershell_inputs_local_terraform_hubnetworking]
     - [Local Terraform Complete][example_powershell_inputs_local_terraform_complete]
     - [Local Terraform Complete Multi Region][example_powershell_inputs_local_terraform_complete_multi_region]
+    - [Local Terraform Sovereign Landing Zone][example_powershell_inputs_local_terraform_sovereign_landing_zone]
 - [Frequently Asked Questions][wiki_frequently_asked_questions]
 - [Upgrade Guide][wiki_upgrade_guide]
 - [Advanced Scenarios][wiki_advanced_scenarios]
@@ -99,6 +102,9 @@
 [example_powershell_inputs_azure_devops_terraform_complete_multi_region]:     examples/powershell-inputs/inputs-azure-devops-terraform-complete-multi-region.yaml "Example - PowerShell Inputs - Azure DevOps - Terraform - Complete Multi Region"
 [example_powershell_inputs_github_terraform_complete_multi_region]:     examples/powershell-inputs/inputs-github-terraform-complete-multi-region.yaml "Example - PowerShell Inputs - GitHub - Terraform - Complete Multi Region"
 [example_powershell_inputs_local_terraform_complete_multi_region]:     examples/powershell-inputs/inputs-local-terraform-complete-multi-region.yaml "Example - PowerShell Inputs - Local - Terraform - Complete Multi Region"
+[example_powershell_inputs_azure_devops_terraform_complete_multi_region]:     examples/powershell-inputs/inputs-azure-devops-terraform-microsoft-cloud-for-sovereignty.yaml "Example - PowerShell Inputs - Azure DevOps - Terraform - Sovereign Landing Zone"
+[example_powershell_inputs_github_terraform_complete_multi_region]:     examples/powershell-inputs/inputs-github-terraform-microsoft-cloud-for-sovereignty.yaml "Example - PowerShell Inputs - GitHub - Terraform - Sovereign Landing Zone"
+[example_powershell_inputs_local_terraform_complete_multi_region]:     examples/powershell-inputs/inputs-local-terraform-microsoft-cloud-for-sovereignty.yaml "Example - PowerShell Inputs - Local - Terraform - Sovereign Landing Zone"
 [example_starter_module_complete_config_hub_spoke]: examples/starter-module-config/complete/config-hub-spoke.yaml "Example - Starter Module Config - Complete - Hub and Spoke"
 [example_starter_module_complete_config_vwan]: examples/starter-module-config/complete/config-vwan.yaml "Example - Starter Module Config - Complete - Virtual WAN"
 [example_starter_module_complete_config_hub_spoke_single_region]: examples/starter-module-config/complete-multi-region/config-hub-and-spoke-vnet-single-region.yaml "Example - Starter Module Config - Complete - Hub and Spoke VNet Single Region"
