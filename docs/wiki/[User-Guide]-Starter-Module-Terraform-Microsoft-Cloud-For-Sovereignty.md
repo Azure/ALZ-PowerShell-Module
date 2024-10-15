@@ -6,7 +6,9 @@ The default `inputs.yaml` file will need to be modified based off the documentat
 
 Default input files can be found here:
 
-- [inputs-local-terraform-slz.yaml][example_powershell_inputs_local_terraform_slz]
+- [inputs-azure-devops-terraform-microsoft-cloud-for-sovereignty.yaml][example_powershell_inputs_azure_devops_terraform_microsoft_cloud_for_sovereignty]
+- [inputs-github-terraform-microsoft-cloud-for-sovereignty.yaml][example_powershell_inputs_github_terraform_microsoft_cloud_for_sovereignty]
+- [inputs-local-terraform-microsoft-cloud-for-sovereignty.yaml][example_powershell_inputs_local_terraform_microsoft_cloud_for_sovereignty]
 
 The following table describes the inputs required for the `microsoft_cloud_for_sovereignty` starter module.
 
