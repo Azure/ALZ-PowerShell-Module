@@ -35,6 +35,8 @@ body:
       options:
         - complete - bicep
         - complete_multi_region - terraform
+        - microsoft_cloud_for_sovereignty - terraform
+        - microsoft_cloud_for_financial_services - terraform
         - complete - terraform
         - hubnetworking - terraform
         - basic - terraform
