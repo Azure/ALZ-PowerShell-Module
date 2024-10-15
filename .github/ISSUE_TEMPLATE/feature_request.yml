@@ -17,12 +17,31 @@ body:
           required: true
   - type: dropdown
     attributes:
-      label: Infrastrcuture as Code Type? (Required)
+      label: Infrastructure as Code Type? (Required)
       description: Are you using Bicep or Terraform?
       multiple: false
       options:
         - bicep
         - terraform
+        - both
+        - not relevant
+    validations:
+      required: true
+  - type: dropdown
+    attributes:
+      label: Starter Module? (Required)
+      description: Which starter module are you using?
+      multiple: false
+      options:
+        - bicep - complete
+        - terraform - complete_multi_region
+        - terraform - microsoft_cloud_for_sovereignty
+        - terraform - microsoft_cloud_for_financial_services
+        - terraform - complete
+        - terraform - hubnetworking
+        - terraform - basic
+        - other
+        - not relevant
     validations:
       required: true
   - type: textarea
