@@ -18,7 +18,7 @@ body:
           required: true
   - type: dropdown
     attributes:
-      label: Infrastrcuture as Code Type? (Required)
+      label: Infrastructure as Code Type? (Required)
       description: Are you using Bicep or Terraform?
       multiple: false
       options:
