@@ -5,8 +5,8 @@ bootstrap: "alz_local"
 starter: "microsoft_cloud_for_sovereignty"
 
 # Shared Interface Inputs
-bootstrap_location: "eastus"
-starter_locations: ["eastus"]
+bootstrap_location: ""
+starter_locations: []
 root_parent_management_group_id: ""
 subscription_id_management: ""
 subscription_id_identity: ""
