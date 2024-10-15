@@ -23,6 +23,23 @@ body:
       options:
         - bicep
         - terraform
+        - both
+        - not relevant
+    validations:
+      required: true
+  - type: dropdown
+    attributes:
+      label: Starter Module? (Required)
+      description: Which starter module are you using?
+      multiple: false
+      options:
+        - complete - bicep
+        - complete_multi_region - terraform
+        - complete - terraform
+        - hubnetworking - terraform
+        - basic - terraform
+        - other
+        - not relevant
     validations:
       required: true
   - type: textarea
