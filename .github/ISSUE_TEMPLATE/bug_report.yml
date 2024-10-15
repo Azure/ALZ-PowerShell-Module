@@ -18,26 +18,51 @@ body:
           required: true
   - type: dropdown
     attributes:
-      label: Infrastrcuture as Code Type? (Required)
+      label: Infrastructure as Code Type? (Required)
       description: Are you using Bicep or Terraform?
       multiple: false
       options:
         - bicep
         - terraform
+        - both
+        - not relevant
     validations:
       required: true
-  - type: textarea
-    id: versions
+  - type: input
     attributes:
-      label: Module Versions (Required)
-      description: Please provide relevant module versions.
-      value: |
-        ALZ PowerShell Module: x.x.x
-        Accelerator Bootstrap Modules: x.x.x
-        Terraform Starter Modules: x.x.x
-        Bicep Starter Modules: x.x.x
+      label: PowerShell Module Version (Optional)
+      description: Please provide the version of the PowerShell Module you are using if relevant.
+    validations:
+      required: false
+  - type: input
+    attributes:
+      label: Bootstrap Module Version (Optional)
+      description: Please provide the version of the Bootstap Module you are using if relevant.
+    validations:
+      required: false
+  - type: dropdown
+    attributes:
+      label: Starter Module? (Required)
+      description: Which starter module are you using?
+      multiple: false
+      options:
+        - bicep - complete
+        - terraform - complete_multi_region
+        - terraform - microsoft_cloud_for_sovereignty
+        - terraform - microsoft_cloud_for_financial_services
+        - terraform - complete
+        - terraform - hubnetworking
+        - terraform - basic
+        - other
+        - not relevant
     validations:
       required: true
+  - type: input
+    attributes:
+      label: Starter Module Version (Optional)
+      description: Please provide the version of the Starter Module you are using if relevant.
+    validations:
+      required: false
   - type: textarea
     id: inputs
     attributes:
