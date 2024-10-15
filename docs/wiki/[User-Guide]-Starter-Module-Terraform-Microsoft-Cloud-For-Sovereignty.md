@@ -89,6 +89,8 @@ The `networksecuritygroup` module is used to deploy a default NSG for the Azure 
  [//]: # (INSERT LINK LABELS BELOW)
  [//]: # (************************)
 
-[example_powershell_inputs_local_terraform_slz]:               examples/powershell-inputs/inputs-local-terraform-slz.yaml "Example - PowerShell Inputs - Local - Terraform - SLZ"
+[example_powershell_inputs_azure_devops_terraform_microsoft_cloud_for_sovereignty]:               examples/powershell-inputs/inputs-azure-devops-terraform-microsoft-cloud-for-sovereignty.yaml "Example - PowerShell Inputs - Devops - Terraform - Microsoft Cloud For Sovereignty"
+[example_powershell_inputs_github_terraform_microsoft_cloud_for_sovereignty]:               examples/powershell-inputs/inputs-github-terraform-microsoft-cloud-for-sovereignty.yaml "Example - PowerShell Inputs - Local - Terraform - Microsoft Cloud For Sovereignty"
+[example_powershell_inputs_local_terraform_microsoft_cloud_for_sovereignty]:               examples/powershell-inputs/inputs-local-terraform-microsoft-cloud-for-sovereignty.yaml "Example - PowerShell Inputs - Local - Terraform - Microsoft Cloud For Sovereignty"
 [parameter_description_powershell_inputs_local_terraform_slz]: https://aka.ms/slz/terraform/params "Parameter Description - PowerShell Inputs - Local - Terraform - SLZ"
 [bicep_implementation_slz]:                                    https://aka.ms/slz/bicep "Sovereign Landing Zone (Bicep)"
