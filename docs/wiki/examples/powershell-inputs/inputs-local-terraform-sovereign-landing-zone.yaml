@@ -17,7 +17,7 @@ subscription_id_connectivity: "<connectivity-subscription-id>"
 
 # Bootstrap Inputs
 target_directory: ""
-create_bootstrap_resources_in_azure: true
+create_bootstrap_resources_in_azure: false
 bootstrap_subscription_id: ""
 service_name: "slz"
 environment_name: "mgmt"
