@@ -264,7 +264,7 @@ The `networksecuritygroup` module is used to deploy a default NSG for the Azure 
  [//]: # (INSERT LINK LABELS BELOW)
  [//]: # (************************)
 
-[example_powershell_inputs_azure_devops_terraform_sovereign_landing_zone]:               examples/powershell-inputs/inputs-azure-devops-terraform-sovereign_landing_zone.yaml "Example - PowerShell Inputs - Devops - Terraform - Sovereign Landing Zone"
-[example_powershell_inputs_github_terraform_sovereign_landing_zone]:               examples/powershell-inputs/inputs-github-terraform-sovereign_landing_zone.yaml "Example - PowerShell Inputs - Local - Terraform - Sovereign Landing Zone"
-[example_powershell_inputs_local_terraform_sovereign_landing_zone]:               examples/powershell-inputs/inputs-local-terraform-sovereign_landing_zone.yaml "Example - PowerShell Inputs - Local - Terraform - Sovereign Landing Zone"
+[example_powershell_inputs_azure_devops_terraform_sovereign_landing_zone]:               examples/powershell-inputs/inputs-azure-devops-Terraform-Sovereign-Landing-Zone.yaml "Example - PowerShell Inputs - Devops - Terraform - Sovereign Landing Zone"
+[example_powershell_inputs_github_terraform_sovereign_landing_zone]:               examples/powershell-inputs/inputs-github-Terraform-Sovereign-Landing-Zone.yaml "Example - PowerShell Inputs - Local - Terraform - Sovereign Landing Zone"
+[example_powershell_inputs_local_terraform_sovereign_landing_zone]:               examples/powershell-inputs/inputs-local-Terraform-Sovereign-Landing-Zone.yaml "Example - PowerShell Inputs - Local - Terraform - Sovereign Landing Zone"
 [bicep_implementation_slz]:                                    https://aka.ms/slz/bicep "Sovereign Landing Zone (Bicep)"
