@@ -1,4 +1,7 @@
 ---
+# For detailed instructions on using this file, visit:
+# https://github.com/Azure/ALZ-PowerShell-Module/wiki/%5BUser-Guide%5D-Quick-Start-Phase-2-Local#2232-local-file-system-with-terraform
+
 # Basic Inputs
 iac: "terraform"
 bootstrap: "alz_local"
@@ -21,7 +24,8 @@ environment_name: "mgmt"
 postfix_number: 1
 architecture_definition_name: "slz"
 
-# Starter Module Specific Variables
+# Sovereign Landing Zone Starter Module Specific Variables
+# (Details: https://github.com/Azure/ALZ-PowerShell-Module/wiki/%5BUser-Guide%5D-Stater-Module-Terraform-Sovereign-Landing-Zone)
 allowed_locations: []
 allowed_locations_for_confidential_computing: []
 apply_alz_archetypes_via_architecture_definition_template: true
