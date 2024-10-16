@@ -25,7 +25,7 @@ postfix_number: 1
 architecture_definition_name: "slz"
 
 # Sovereign Landing Zone Starter Module Specific Variables
-# (Details: https://github.com/Azure/ALZ-PowerShell-Module/wiki/%5BUser-Guide%5D-Stater-Module-Terraform-Sovereign-Landing-Zone)
+# (Details: https://github.com/Azure/ALZ-PowerShell-Module/wiki/%5BUser-Guide%5D-Starter-Module-Terraform-Sovereign-Landing-Zone)
 allowed_locations: []
 allowed_locations_for_confidential_computing: []
 apply_alz_archetypes_via_architecture_definition_template: true
