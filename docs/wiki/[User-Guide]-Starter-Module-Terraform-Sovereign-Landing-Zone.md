@@ -2,9 +2,9 @@
 The `sovereign_landing_zone` starter module provides full customization of the Sovereign Landing Zone (SLZ) using the `inputs.yaml` file. The `inputs.yaml` file provides the ability to enable and disable modules, configure module inputs and outputs, and configure module resources.
 A custom `inputs.yaml` file can be passed to the `inputs` argument of the ALZ PowerShell Module. This allows you to firstly design your Azure Landing Zone, and then deploy it.
 
-The default `inputs.yaml` file will need to be modified based off the documentation found [here][parameter_description_powershell_inputs_local_terraform_slz].
+The default `inputs.yaml` file will need to be modified based on the documentation below.
 
-Default input files can be found here:
+Example input files can be found here:
 
 - [inputs-azure-devops-terraform-sovereign-landing-zone.yaml][example_powershell_inputs_azure_devops_terraform_sovereign_landing_zone]
 - [inputs-github-terraform-sovereign-landing-zone.yaml][example_powershell_inputs_github_terraform_sovereign_landing_zone]
@@ -42,8 +42,6 @@ The following table describes the inputs for the `sovereign_landing_zone` starte
 | `tags` |  | Map | See the Custom Tagging section below for details. | Set of tags to apply to all resources deployed. |
 | `use_premium_firewall` |  | Boolean | `true` | Set to `true` to deploy Premium SKU of the Azure Firewall if `enable_firewall` is also `true`. |
 | `vpn_gateway_config` |  | Map | `{name: "noconfigEr"}` | Leave as default to not deploy an VPN Gateway. See the Network Connectivity section below for details. |
-
-Full parameter details can be found [here][parameter_description_powershell_inputs_local_terraform_slz].
 
 ## Further details on the Sovereign Landing Zone Starter Module
 
@@ -110,5 +108,4 @@ The `networksecuritygroup` module is used to deploy a default NSG for the Azure 
 [example_powershell_inputs_azure_devops_terraform_sovereign_landing_zone]:               examples/powershell-inputs/inputs-azure-devops-terraform-sovereign_landing_zone.yaml "Example - PowerShell Inputs - Devops - Terraform - Sovereign Landing Zone"
 [example_powershell_inputs_github_terraform_sovereign_landing_zone]:               examples/powershell-inputs/inputs-github-terraform-sovereign_landing_zone.yaml "Example - PowerShell Inputs - Local - Terraform - Sovereign Landing Zone"
 [example_powershell_inputs_local_terraform_sovereign_landing_zone]:               examples/powershell-inputs/inputs-local-terraform-sovereign_landing_zone.yaml "Example - PowerShell Inputs - Local - Terraform - Sovereign Landing Zone"
-[parameter_description_powershell_inputs_local_terraform_slz]: https://aka.ms/slz/terraform/params "Parameter Description - PowerShell Inputs - Local - Terraform - Sovereign Landing Zone"
 [bicep_implementation_slz]:                                    https://aka.ms/slz/bicep "Sovereign Landing Zone (Bicep)"
