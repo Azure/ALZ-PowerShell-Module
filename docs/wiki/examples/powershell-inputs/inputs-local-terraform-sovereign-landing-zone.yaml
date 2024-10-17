@@ -23,12 +23,12 @@ service_name: "slz"
 environment_name: "mgmt"
 postfix_number: 1
 architecture_definition_name: "slz"
+apply_alz_archetypes_via_architecture_definition_template: true
 
 # Sovereign Landing Zone Starter Module Specific Variables
 # (Details: https://github.com/Azure/ALZ-PowerShell-Module/wiki/%5BUser-Guide%5D-Starter-Module-Terraform-Sovereign-Landing-Zone)
 allowed_locations: []
 allowed_locations_for_confidential_computing: []
-apply_alz_archetypes_via_architecture_definition_template: true
 az_firewall_policies_enabled: true
 bastion_outbound_ssh_rdp_ports: ["22", "3389"]
 custom_subnets: {
