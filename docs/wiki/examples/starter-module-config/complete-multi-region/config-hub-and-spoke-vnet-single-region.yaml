@@ -122,6 +122,9 @@ management_settings_es:
   default_location: ${starter_location_01}
   deploy_connectivity_resources: false
   deploy_management_resources: true
+  deploy_core_landing_zones: true
+  deploy_corp_landing_zones: true
+  deploy_online_landing_zones: true
   root_id: alz
   root_name: Azure-Landing-Zones
   root_parent_id: ${root_parent_management_group_id}
