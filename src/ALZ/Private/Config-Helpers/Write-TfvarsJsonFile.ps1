@@ -19,7 +19,8 @@ function Write-TfvarsJsonFile {
         foreach($configurationProperty in $configuration.PSObject.Properties | Sort-Object Name) {
             $configurationValue = $configurationProperty.Value.Value
 
-            if($configurationValue.ToString() -eq "sourced-from-env") {
+            if($null -ne $configurationValue -and $configurationValue.ToString() -eq "sourced-from-env") {
+                Write-Verbose "Sourced from env var: $($configurationProperty.Name)"
                 continue
             }
 
