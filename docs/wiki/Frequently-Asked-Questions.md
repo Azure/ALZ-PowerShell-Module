@@ -188,4 +188,4 @@ Alternatively, if you are also supplying a custom bootstrap module, you can spec
 [//]: # "INSERT LINK LABELS BELOW"
 [//]: # "************************"
 
-[wiki_upgrade_process]:                                              Upgrade-Process "Wiki - Upgrade Process"
+[wiki_upgrade_process]:                                              Upgrade-Guide "Wiki - Upgrade Process"
