@@ -67,6 +67,7 @@ function New-Bootstrap {
         # Get starter module
         $starterModulePath = ""
         $starterRootModuleFolder = ""
+        $starterRootModuleFolderPath = ""
         $starterFoldersToRetain = @()
 
         if($hasStarter) {
@@ -78,6 +79,7 @@ function New-Bootstrap {
 
             Write-Verbose "Selected Starter: $($inputConfig.starter_module_name))"
             $starterModulePath = (Resolve-Path (Join-Path -Path $starterPath -ChildPath $chosenStarterConfig.location)).Path
+            $starterRootModuleFolderPath = $starterModulePath
             Write-Verbose "Starter Module Path: $starterModulePath"
 
             if($chosenStarterConfig.PSObject.Properties.Name -contains "additional_retained_folders") {
@@ -93,6 +95,9 @@ function New-Bootstrap {
 
                 # Add the root module folder to bootstrap input config
                 $inputConfig | Add-Member -NotePropertyName "root_module_folder_relative_path" -NotePropertyValue $starterRootModuleFolder
+
+                # Set the starter root module folder full path
+                $starterRootModuleFolderPath = Join-Path -Path $starterModulePath -ChildPath $starterRootModuleFolder
 
                 Write-Verbose "Starter root module folder: $starterRootModuleFolder"
                 Write-Verbose "Starter final folders to retain: $($starterFoldersToRetain -join ",")"
@@ -114,7 +119,7 @@ function New-Bootstrap {
         if($hasStarter) {
             Write-Verbose "Getting the starter configuration..."
             if($iac -eq "terraform") {
-                $terraformFiles = Get-ChildItem -Path $starterModulePath -Filter "*.tf" -File
+                $terraformFiles = Get-ChildItem -Path $starterRootModuleFolderPath -Filter "*.tf" -File
                 foreach($terraformFile in $terraformFiles) {
                     $starterParameters = Convert-HCLVariablesToInputConfig -targetVariableFile $terraformFile.FullName -hclParserToolPath $hclParserToolPath -validators $validationConfig -appendToObject $starterParameters
                 }
@@ -162,7 +167,7 @@ function New-Bootstrap {
         # Creating the tfvars files for the bootstrap and starter module
         $tfVarsFileName = "terraform.tfvars.json"
         $bootstrapTfvarsPath = Join-Path -Path $bootstrapModulePath -ChildPath $tfVarsFileName
-        $starterTfvarsPath = Join-Path -Path $starterModulePath -ChildPath "terraform.tfvars.json"
+        $starterTfvarsPath = Join-Path -Path $starterRootModuleFolderPath -ChildPath "terraform.tfvars.json"
         $starterBicepVarsPath = Join-Path -Path $starterModulePath -ChildPath "parameters.json"
 
         # Write the tfvars file for the bootstrap and starter module
