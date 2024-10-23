@@ -8,7 +8,7 @@ This upgrade path is specifically for customers using the accelerator who haven'
 
 - The upgrade process does not support the scenario where you have made any changes to the deployed bootstrap or starter modules via git or the VCS system. If you run the upgrade it will overwrite your changes or fail.
 - The upgrade process does not support breaking changes to major version of bootstrap or starter modules. If there is a breaking change, it will likely result in a destroy and re-create as part of the Terraform plan for the deployment. In most cases this may not be a problem, but you should validate prior to accepting the plan.
-- If changes are made to the starter module as part of the upgrade, you will have to disable brach protection rules in the VCS system in order the update to succeed. To do this, you will need to navigate to the branmc protection rules in the VCS system and disable them. The apply will see that they have been disabled and re-apply them for you automatically.
+- If changes are made to the starter module as part of the upgrade, you will have to disable branch protection rules in the VCS system in order the update to succeed. To do this, you will need to navigate to the branch protection rules in the VCS system and disable them. The apply will see that they have been disabled and re-apply them for you automatically.
 
 ## Upgrade Process
 
@@ -16,7 +16,7 @@ If you want to upgrade to a newer version of the accelerator bootstrap and / or 
 
 > NOTE: Behind the scenes the upgrade process copies the Terraform state file and the last set of cacched variables you entered, it is not any more intelligent than that.
 
-1. Run `Deploy-Accelerator`, targetting the same output folder you did for the previous version and optionally specifiy the version you wish to upgrade to.
+1. Run `Deploy-Accelerator`, targeting the same output folder you did for the previous version and optionally specify the version you wish to upgrade to.
     - For example if you want to upgrade to specific versions of the starter and bootstrap module, you could run:
 
     ```powershell
