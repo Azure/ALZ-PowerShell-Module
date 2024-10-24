@@ -14,6 +14,7 @@ The following table describes the inputs for the `sovereign_landing_zone` starte
 
 | Input | Required | Type | Default Value | Description |
 | - | -- | --- | ---- | ----- |
+| `starter_locations` | Required | List |  | The location for Azure resources. Use the first region in starter_locations as the default location. |
 | `allowed_locations` | Required | List |  | This is a list of Azure regions all workloads running outside of the Confidential Management Group scopes are allowed to be deployed into. |
 | `allowed_locations_for_confidential_computing` | Required | List |  | This is a list of Azure regions all workloads running inside of the Confidential Management Group scopes are allowed to be deployed into. |
 | `az_firewall_policies_enabled` |  | Boolean | `true` | Set to `true` to deploy a default Azure Firewall Policy resource if `enable_firewall` is also `true`. |
@@ -172,7 +173,7 @@ locals {
 
 ### Multiple Inputs for Location
 
-The inputs for `bootstrap_location` and `starter_locations` and `default_location` must be identical. In a future release, we will have defaults and overrides for these values.
+The inputs for `bootstrap_location` and `starter_locations` must be identical, using the first region in starter_locations as the default location. Therefore, starter_locations is required and must include at least one region. In a future release, we will have defaults and overrides for these values.
 
 ### Terraform Plan or Apply Fails After Updating tfvars
 
