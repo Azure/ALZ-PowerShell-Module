@@ -14,7 +14,7 @@ The following table describes the inputs for the `sovereign_landing_zone` starte
 
 | Input | Required | Type | Default Value | Description |
 | - | -- | --- | ---- | ----- |
-| `starter_locations` | Required | List |  | The location for Azure resources. |
+| `starter_locations` | Required | List |  | The location for Azure resources. Use the first region in starter_locations as the default location. |
 | `allowed_locations` | Required | List |  | This is a list of Azure regions all workloads running outside of the Confidential Management Group scopes are allowed to be deployed into. |
 | `allowed_locations_for_confidential_computing` | Required | List |  | This is a list of Azure regions all workloads running inside of the Confidential Management Group scopes are allowed to be deployed into. |
 | `az_firewall_policies_enabled` |  | Boolean | `true` | Set to `true` to deploy a default Azure Firewall Policy resource if `enable_firewall` is also `true`. |
