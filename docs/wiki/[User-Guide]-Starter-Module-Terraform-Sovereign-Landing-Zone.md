@@ -172,7 +172,7 @@ locals {
 
 ### Multiple Inputs for Location
 
-The inputs for `bootstrap_location` and `starter_locations` and `default_location` must be identical. In a future release, we will have defaults and overrides for these values.
+The inputs for `bootstrap_location` and `starter_locations` must be identical, using the first region in starter_locations as the default location. Therefore, starter_locations is required and must include at least one region. In a future release, we will have defaults and overrides for these values.
 
 ### Terraform Plan or Apply Fails After Updating tfvars
 
