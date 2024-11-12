@@ -7,7 +7,7 @@ Although you can just run `Deploy-Accelerator` and fill out the prompted inputs,
 
 ### 2.2.1.1 Azure DevOps with Bicep
 
-1. Create a new folder on you local drive called `accelerator`.
+1. Create a new folder on your local drive called `accelerator`.
 1. Inside the accelerator create two folders called `config` and `output`. You'll store you input file inside config and the output folder will be the place that the accelerator stores files while it works.
 1. Inside the `config` folder create a new file called `inputs.yaml`. You can use `json` if you prefer, but our examples here are `yaml`.
 
@@ -110,6 +110,7 @@ Although you can just run `Deploy-Accelerator` and fill out the prompted inputs,
 
 1. Open your `inputs.yaml` file in Visual Studio Code (or your preferred editor) and copy the content from the relevant input file for your chosen starter module:
     1. Complete Multi Region - [inputs-azure-devops-terraform-complete-multi-region.yaml][example_powershell_inputs_azure_devops_terraform_complete_multi_region]
+    1. Financial Services Industry Landing Zone - [inputs-azure-devops-terraform-financial-services-landing-zone.yaml][example_powershell_inputs_azure_devops_terraform_financial_services_industry_landing_zone]
     1. Sovereign Landing Zone - [inputs-azure-devops-terraform-sovereign-landing-zone.yaml][example_powershell_inputs_azure_devops_terraform_sovereign_landing_zone]
     1. Basic - [inputs-azure-devops-terraform-basic.yaml][example_powershell_inputs_azure_devops_terraform_basic]
     1. Hub Networking - [inputs-azure-devops-terraform-hubnetworking.yaml][example_powershell_inputs_azure_devops_terraform_hubnetworking]
@@ -150,6 +151,7 @@ Although you can just run `Deploy-Accelerator` and fill out the prompted inputs,
 
 1. Now head over to your chosen starter module documentation to get the specific inputs for that module. Come back here when you are done.
     - [Terraform Complete Multi Region Starter Module][wiki_starter_module_terraform_complete_multi_region]: Management groups, policies, Multi Region hub networking with fully custom configuration.
+    - [Terraform Financial Services Industry Landing Zone Starter Module][wiki_starter_module_terraform_financial_services_industry_landing_zone]: Management groups, policies, hub networking for the Financial Services Industry Landing Zone.
     - [Terraform Sovereign Landing Zone Starter Module][wiki_starter_module_terraform_sovereign_landing_zone]: Management groups, policies, hub networking for the Sovereign Landing Zone.
     - [Terraform Basic Starter Module][wiki_starter_module_terraform_basic]: Management groups and policies.
     - [Terraform Hub Networking Starter Module][wiki_starter_module_terraform_hubnetworking]: Management groups, policies and hub networking.
@@ -188,6 +190,7 @@ Now head to [Phase 3][wiki_quick_start_phase_3].
 [wiki_starter_module_terraform_hubnetworking]:      %5BUser-Guide%5D-Starter-Module-Terraform-HubNetworking "Wiki - Start Modules - Terraform Hub Networking"
 [wiki_starter_module_terraform_complete]:           %5BUser-Guide%5D-Starter-Module-Terraform-Complete "Wiki - Starter Modules - Terraform Complete"
 [wiki_starter_module_terraform_complete_multi_region]:           %5BUser-Guide%5D-Starter-Module-Terraform-Complete-Multi-Region "Wiki - Starter Modules - Terraform Complete Multi Region"
+[wiki_starter_module_terraform_financial_services_industry_landing_zone]:           %5BUser-Guide%5D-Starter-Module-Terraform-Financial-Services-Industry-Landing-Zone "Wiki - Starter Modules - Terraform Financial Services Industry Landing Zone"
 [wiki_starter_module_terraform_sovereign_landing_zone]:           %5BUser-Guide%5D-Starter-Module-Terraform-Sovereign-Landing-Zone "Wiki - Starter Modules - Terraform Sovereign Landing Zone"
 [wiki_quick_start_phase_3]:                         %5BUser-Guide%5D-Quick-Start-Phase-3 "Wiki - Quick Start - Phase 3"
 [example_powershell_inputs_azure_devops_bicep_complete]:     examples/powershell-inputs/inputs-azure-devops-bicep-complete.yaml "Example - PowerShell Inputs - Azure DevOps - Bicep - Complete"
@@ -195,4 +198,5 @@ Now head to [Phase 3][wiki_quick_start_phase_3].
 [example_powershell_inputs_azure_devops_terraform_hubnetworking]:     examples/powershell-inputs/inputs-azure-devops-terraform-hubnetworking.yaml "Example - PowerShell Inputs - Azure DevOps - Terraform - Hub Networking"
 [example_powershell_inputs_azure_devops_terraform_complete]:     examples/powershell-inputs/inputs-azure-devops-terraform-complete.yaml "Example - PowerShell Inputs - Azure DevOps - Terraform - Complete"
 [example_powershell_inputs_azure_devops_terraform_complete_multi_region]:     examples/powershell-inputs/inputs-azure-devops-terraform-complete-multi-region.yaml "Example - PowerShell Inputs - Azure DevOps - Terraform - Complete Multi Region"
+[example_powershell_inputs_azure_devops_terraform_financial_services_industry_landing_zone]:     examples/powershell-inputs/inputs-azure-devops-terraform-financial-services-landing-zone.yaml "Example - PowerShell Inputs - Azure DevOps - Terraform - Financial Services Industry Landing Zone"
 [example_powershell_inputs_azure_devops_terraform_sovereign_landing_zone]:     examples/powershell-inputs/inputs-azure-devops-terraform-sovereign-landing-zone.yaml "Example - PowerShell Inputs - Azure DevOps - Terraform - Sovereign Landing Zone"
