@@ -90,7 +90,7 @@ An example of the format for the `landing_zone_management_group_children` map is
 landing_zone_management_group_children: {
   child1: {
     id: "child1",
-    display_name: "Landing zone child one"
+    displayName: "Landing zone child one"
   }
 }
 ```
