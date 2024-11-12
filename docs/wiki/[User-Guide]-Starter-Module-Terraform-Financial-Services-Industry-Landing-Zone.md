@@ -375,6 +375,6 @@ If a user toggles the Networking resources, such as Deploy Hub Network, the TF w
  [//]: # (INSERT LINK LABELS BELOW)
  [//]: # (************************)
 
-[example_powershell_inputs_azure_devops_terraform_financial_services_industry_landing_zone]: examples\powershell-inputs\inputs-azure-devops-terraform-financial-services-landing-zone.yaml "Example - PowerShell Inputs - Devops - Terraform - Financial Services Industry Landing Zone"
-[example_powershell_inputs_github_terraform_financial_services_industry_landing_zone]:               examples\powershell-inputs\inputs-github-terraform-financial-services-landing-zone.yaml "Example - PowerShell Inputs - Local - Terraform - Financial Services Industry Landing Zone"
-[example_powershell_inputs_local_terraform_financial_services_industry_landing_zone]:               examples\powershell-inputs\inputs-local-terraform-financial-services-landing-zone.yaml "Example - PowerShell Inputs - Local - Terraform - Financial Services Industry Landing Zone"
+[example_powershell_inputs_azure_devops_terraform_financial_services_industry_landing_zone]: examples/powershell-inputs/inputs-azure-devops-terraform-financial-services-landing-zone.yaml "Example - PowerShell Inputs - Devops - Terraform - Financial Services Industry Landing Zone"
+[example_powershell_inputs_github_terraform_financial_services_industry_landing_zone]:               examples/powershell-inputs/inputs-github-terraform-financial-services-landing-zone.yaml "Example - PowerShell Inputs - Local - Terraform - Financial Services Industry Landing Zone"
+[example_powershell_inputs_local_terraform_financial_services_industry_landing_zone]:               examples/powershell-inputs/inputs-local-terraform-financial-services-landing-zone.yaml "Example - PowerShell Inputs - Local - Terraform - Financial Services Industry Landing Zone"
