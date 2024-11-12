@@ -196,7 +196,7 @@ The Terraform-based deployment for the Financial Services Industry Landing Zone 
 
 ### High Level Design
 
-![Alt text](.\media\starter-module-microsoft_cloud_for_financial_services_industry.png)
+![Alt text](./media/starter-module-microsoft_cloud_for_financial_services_industry.png)
 
 ### Terraform Modules
 
