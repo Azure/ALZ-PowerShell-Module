@@ -57,7 +57,7 @@ customer_policy_sets: {
     policySetAssignmentDisplayName: "FedRAMP High",
     policySetAssignmentDescription: "FedRAMP High",
     policySetManagementGroupAssignmentScope: "/providers/Microsoft.management/managementGroups/<MG-ID-SCOPE>",
-    policyParameterFilePath: "./policy_parameters/policySetParameterSampleFile.json"
+    policyParameterFilePath: "../modules/compliance/policy_parameters/policySetParameterSampleFile.json"
   }
 }
 ```
@@ -255,7 +255,7 @@ The `networksecuritygroup` module is used to deploy a default NSG for the Azure 
 Please follow the below example to change the Policy Assignments (example: Data Residency being moved to Root level)
 
 In deployment workspace, navigate to:
-starter\{version}\microsoft_cloud_for_industry\financial_services_landing_zone\templates\fsi.alz_architecture_definition.json.tftpl
+bootstrap\{version}\modules\template_architecture_definition\templates\fsi.alz_architecture_definition.json.tftpl
 
 Update fsi.alz_architecture_definition.json.tftpl file with preferred archetype management group assignments, e.g., to add so_01_data_residency to the “Financial Services Industry Landing Zone” management group, make the following change:
 
