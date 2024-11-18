@@ -42,7 +42,7 @@ function Request-SpecialInput {
         }
 
         if($type -eq "starter") {
-            foreach($starter in $starterConfig.starter_modules.PsObject.Properties) {
+            foreach($starter in $starterConfig.starter_modules.Value.PsObject.Properties) {
                 if($starter.Name -eq $starterPipelineFolder) {
                     continue
                 }

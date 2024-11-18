@@ -86,7 +86,7 @@ function New-Bootstrap {
                 }
             }
 
-            $chosenStarterConfig = $starterConfig.starter_modules.$($inputConfig.starter_module_name.Value)
+            $chosenStarterConfig = $starterConfig.starter_modules.Value.$($inputConfig.starter_module_name.Value)
 
             Write-Verbose "Selected Starter: $($inputConfig.starter_module_name.Value))"
             $starterModulePath = (Resolve-Path (Join-Path -Path $starterPath -ChildPath $chosenStarterConfig.location)).Path
@@ -140,7 +140,7 @@ function New-Bootstrap {
             }
 
             if($iac -eq "bicep") {
-                $starterParameters = Convert-BicepConfigToInputConfig -bicepConfig $starterConfig.starter_modules.$($inputConfig.starter_module_name.Value) -validators $validationConfig
+                $starterParameters = Convert-BicepConfigToInputConfig -bicepConfig $starterConfig.starter_modules.Value.$($inputConfig.starter_module_name.Value) -validators $validationConfig
             }
         }
 
@@ -229,22 +229,22 @@ function New-Bootstrap {
         }
 
         if($iac -eq "bicep") {
-            Copy-ParametersFileCollection -starterPath $starterModulePath -configFiles $starterConfig.starter_modules.$($inputConfig.starter_module_name.Value).deployment_files
+            Copy-ParametersFileCollection -starterPath $starterModulePath -configFiles $starterConfig.starter_modules.Value.$($inputConfig.starter_module_name.Value).deployment_files
             Set-ComputedConfiguration -configuration $starterConfiguration
             Edit-ALZConfigurationFilesInPlace -alzEnvironmentDestination $starterModulePath -configuration $starterConfiguration
             Write-JsonFile -jsonFilePath $starterBicepVarsPath -configuration $starterConfiguration
 
             # Remove unrequired files
-            $foldersOrFilesToRetain = $starterConfig.starter_modules.$($inputConfig.starter_module_name.Value).folders_or_files_to_retain
+            $foldersOrFilesToRetain = $starterConfig.starter_modules.Value.$($inputConfig.starter_module_name.Value).folders_or_files_to_retain
             $foldersOrFilesToRetain += "parameters.json"
             $foldersOrFilesToRetain += "config"
             $foldersOrFilesToRetain += "starter-cache.json"
 
-            foreach($deployment_file in $starterConfig.starter_modules.$($inputConfig.starter_module_name.Value).deployment_files) {
+            foreach($deployment_file in $starterConfig.starter_modules.Value.$($inputConfig.starter_module_name.Value).deployment_files) {
                 $foldersOrFilesToRetain += $deployment_file.templateParametersSourceFilePath
             }
 
-            $subFoldersOrFilesToRemove = $starterConfig.starter_modules.$($inputConfig.starter_module_name.Value).subfolders_or_files_to_remove
+            $subFoldersOrFilesToRemove = $starterConfig.starter_modules.Value.$($inputConfig.starter_module_name.Value).subfolders_or_files_to_remove
 
             Remove-UnrequiredFileSet -path $starterModulePath -foldersOrFilesToRetain $foldersOrFilesToRetain -subFoldersOrFilesToRemove $subFoldersOrFilesToRemove -writeVerboseLogs:$writeVerboseLogs.IsPresent
         }

@@ -29,7 +29,7 @@ function Get-BootstrapAndStarterConfig {
         $bootstrapConfigFullPath = Join-Path $bootstrapPath $bootstrapConfigPath
         Write-Verbose "Bootstrap config path $bootstrapConfigFullPath"
         $bootstrapConfig = Get-ALZConfig -configFilePath $bootstrapConfigFullPath
-        $validationConfig = $bootstrapConfig.validators
+        $validationConfig = $bootstrapConfig.validators.Value
 
         # Get the supported regions and availability zones
         Write-Verbose "Getting Supported Regions and Availability Zones with Terraform"
@@ -40,7 +40,7 @@ function Get-BootstrapAndStarterConfig {
         $azureLocationValidator.AllowedValues.Values = $regionsAndZones.supportedRegions
 
         # Get the available bootstrap modules
-        $bootstrapModules = $bootstrapConfig.bootstrap_modules
+        $bootstrapModules = $bootstrapConfig.bootstrap_modules.Value
 
         # Get the bootstrap details and validate it exists (use alias for legacy values)
         $bootstrapDetails = $bootstrapModules.PsObject.Properties | Where-Object { $_.Name -eq $bootstrap -or $bootstrap -in $_.Value.aliases }
@@ -55,9 +55,9 @@ function Get-BootstrapAndStarterConfig {
         if($null -ne $bootstrapStarterModule) {
             # If the bootstrap has starter modules, get the details and url
             $hasStarterModule = $true
-            $starterModules = $bootstrapConfig.PSObject.Properties | Where-Object { $_.Name -eq "starter_modules" }
+            $starterModules = $bootstrapConfig.starter_modules.Value
             $starterModuleType = $bootstrapStarterModule.Value
-            $starterModuleDetails = $starterModules.Value.PSObject.Properties | Where-Object { $_.Name -eq $starterModuleType }
+            $starterModuleDetails = $starterModules.PSObject.Properties | Where-Object { $_.Name -eq $starterModuleType }
             if($null -eq $starterModuleDetails) {
                 Write-InformationColored "The starter modules '$($starterModuleType)' for the bootstrap type '$bootstrap' that you have selected does not exist. This could be an issue with your custom configuration, please check and try again..." -ForegroundColor Red -InformationAction Continue
                 throw
