@@ -3,7 +3,9 @@ function Get-ALZConfig {
         [Parameter(Mandatory = $false)]
         [string] $configFilePath = "",
         [Parameter(Mandatory = $false)]
-        [PSCustomObject] $inputConfig = $null
+        [PSCustomObject] $inputConfig = $null,
+        [Parameter(Mandatory = $false)]
+        [string] $hclParserToolPath = ""
     )
 
     if(!(Test-Path $configFilePath)) {
@@ -39,14 +41,25 @@ function Get-ALZConfig {
             Write-Error $errorMessage
             throw $errorMessage
         }
+    } elseif($extension -eq ".tfvars") {
+        try {
+            $config = [PSCustomObject](& $hclParserToolPath $configFilePath | ConvertFrom-Json)
+        } catch {
+            $errorMessage = "Failed to parse HCL inputs. Please check the HCL file for errors and try again. $_"
+            Write-Error $errorMessage
+            throw $errorMessage
+        }
     } else {
-        throw "The config file must be a json or yaml/yml file"
+        throw "The config file must be a json, yaml/yml or tfvars file"
     }
 
     Write-Verbose "Config file loaded from $configFilePath with $($config.PSObject.Properties.Name.Count) properties."
 
     foreach($property in $config.PSObject.Properties) {
-        $inputConfig | Add-Member -NotePropertyName $property.Name -NotePropertyValue $property.Value
+        $inputConfig | Add-Member -NotePropertyName $property.Name -NotePropertyValue @{
+            Value  = $property.Value
+            Source = $extension
+        }
     }
 
     return $inputConfig

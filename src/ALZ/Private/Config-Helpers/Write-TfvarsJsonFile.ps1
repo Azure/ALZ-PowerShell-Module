@@ -5,7 +5,10 @@ function Write-TfvarsJsonFile {
         [string] $tfvarsFilePath,
 
         [Parameter(Mandatory = $false)]
-        [PSObject] $configuration
+        [PSObject] $configuration,
+
+        [Parameter(Mandatory = $false)]
+        [string[]] $skipItems = @()
     )
 
     if ($PSCmdlet.ShouldProcess("Download Terraform Tools", "modify")) {
@@ -17,6 +20,11 @@ function Write-TfvarsJsonFile {
         $jsonObject = [ordered]@{}
 
         foreach($configurationProperty in $configuration.PSObject.Properties | Sort-Object Name) {
+            if($skipItems -contains $configurationProperty.Name) {
+                Write-Verbose "Skipping configuration property: $($configurationProperty.Name)"
+                continue
+            }
+            
             $configurationValue = $configurationProperty.Value.Value
 
             if($null -ne $configurationValue -and $configurationValue.ToString() -eq "sourced-from-env") {

@@ -72,7 +72,7 @@ function Set-Config {
             # Look for input config match
             $inputConfigItem = $inputConfig.PsObject.Properties | Where-Object { $_.Name -eq $inputConfigName }
             if($null -ne $inputConfigItem) {
-                $configurationValue.Value.Value = $inputConfigItem.Value
+                $configurationValue.Value.Value = $inputConfigItem.Value.Value
                 continue
             }
 

@@ -46,7 +46,15 @@ function New-Bootstrap {
 
         [Parameter(Mandatory = $false)]
         [string]
-        $hclParserToolPath
+        $hclParserToolPath,
+
+        [Parameter(Mandatory = $false)]
+        [switch]
+        $convertTfvarsToJson,
+
+        [Parameter(Mandatory = $false)]
+        [string[]]
+        $inputConfigFilePaths = @()
     )
 
     if ($PSCmdlet.ShouldProcess("ALZ-Terraform module configuration", "modify")) {
@@ -71,13 +79,16 @@ function New-Bootstrap {
         $starterFoldersToRetain = @()
 
         if($hasStarter) {
-            if($inputConfig.starter_module_name -eq "") {
-                $inputConfig.starter_module_name = Request-SpecialInput -type "starter" -starterConfig $starterConfig
+            if($inputConfig.starter_module_name.Value -eq "") {
+                $inputConfig.starter_module_name = @{
+                    Value  = Request-SpecialInput -type "starter" -starterConfig $starterConfig
+                    Source = "user"
+                }
             }
 
-            $chosenStarterConfig = $starterConfig.starter_modules.$($inputConfig.starter_module_name)
+            $chosenStarterConfig = $starterConfig.starter_modules.$($inputConfig.starter_module_name.Value)
 
-            Write-Verbose "Selected Starter: $($inputConfig.starter_module_name))"
+            Write-Verbose "Selected Starter: $($inputConfig.starter_module_name.Value))"
             $starterModulePath = (Resolve-Path (Join-Path -Path $starterPath -ChildPath $chosenStarterConfig.location)).Path
             $starterRootModuleFolderPath = $starterModulePath
             Write-Verbose "Starter Module Path: $starterModulePath"
@@ -94,7 +105,10 @@ function New-Bootstrap {
                 $starterFoldersToRetain += $starterRootModuleFolder
 
                 # Add the root module folder to bootstrap input config
-                $inputConfig | Add-Member -NotePropertyName "root_module_folder_relative_path" -NotePropertyValue $starterRootModuleFolder
+                $inputConfig | Add-Member -NotePropertyName "root_module_folder_relative_path" -NotePropertyValue @{
+                    Value  = $starterRootModuleFolder
+                    Source = "caluated"
+                }
 
                 # Set the starter root module folder full path
                 $starterRootModuleFolderPath = Join-Path -Path $starterModulePath -ChildPath $starterRootModuleFolder
@@ -126,25 +140,37 @@ function New-Bootstrap {
             }
 
             if($iac -eq "bicep") {
-                $starterParameters = Convert-BicepConfigToInputConfig -bicepConfig $starterConfig.starter_modules.$($inputConfig.starter_module_name) -validators $validationConfig
+                $starterParameters = Convert-BicepConfigToInputConfig -bicepConfig $starterConfig.starter_modules.$($inputConfig.starter_module_name.Value) -validators $validationConfig
             }
         }
 
         # Set computed inputs
-        $inputConfig | Add-Member -NotePropertyName "module_folder_path" -NotePropertyValue $starterModulePath
-        $inputConfig | Add-Member -NotePropertyName "availability_zones_bootstrap" -NotePropertyValue @(Get-AvailabilityZonesSupport -region $inputConfig.bootstrap_location -zonesSupport $zonesSupport)
+        $inputConfig | Add-Member -NotePropertyName "module_folder_path" -NotePropertyValue @{
+            Value  = $starterModulePath
+            Source = "calculated"
+        }
+        $inputConfig | Add-Member -NotePropertyName "availability_zones_bootstrap" -NotePropertyValue @{
+            Value  = @(Get-AvailabilityZonesSupport -region $inputConfig.bootstrap_location.Value -zonesSupport $zonesSupport)
+            Source = "calculated"
+        }
 
         if($inputConfig.PSObject.Properties.Name -contains "starter_location" -and $inputConfig.PSObject.Properties.Name -notcontains "starter_locations") {
-            Write-Verbose "Converting starter_location $($inputConfig.starter_location) to starter_locations..."
-            $inputConfig | Add-Member -NotePropertyName "starter_locations" -NotePropertyValue @($inputConfig.starter_location)
+            Write-Verbose "Converting starter_location $($inputConfig.starter_location.Value) to starter_locations..."
+            $inputConfig | Add-Member -NotePropertyName "starter_locations" -NotePropertyValue @{
+                Value  = @($inputConfig.starter_location.Value)
+                Source = "calculated"
+            }
         }
 
         if($inputConfig.PSObject.Properties.Name -contains "starter_locations") {
             $availabilityZonesStarter = @()
-            foreach($region in $inputConfig.starter_locations) {
+            foreach($region in $inputConfig.starter_locations.Value) {
                 $availabilityZonesStarter += , @(Get-AvailabilityZonesSupport -region $region -zonesSupport $zonesSupport)
             }
-            $inputConfig | Add-Member -NotePropertyName "availability_zones_starter" -NotePropertyValue $availabilityZonesStarter
+            $inputConfig | Add-Member -NotePropertyName "availability_zones_starter" -NotePropertyValue @{
+                Value  = $availabilityZonesStarter
+                Source = "calculated"
+            }
         }
 
         Write-Verbose "Final Input config: $(ConvertTo-Json $inputConfig -Depth 100)"
@@ -188,7 +214,18 @@ function New-Bootstrap {
                 }
             }
             Remove-TerraformMetaFileSet -path $starterModulePath -writeVerboseLogs:$writeVerboseLogs.IsPresent
-            Write-TfvarsJsonFile -tfvarsFilePath $starterTfvarsPath -configuration $starterConfiguration
+            if($convertTfvarsToJson) {
+                Write-TfvarsJsonFile -tfvarsFilePath $starterTfvarsPath -configuration $starterConfiguration
+            } else {
+                $inputsFromTfvars = $inputConfig.PSObject.Properties | Where-Object { $_.Value.Source -eq ".tfvars" } | Select-Object -ExpandProperty Name
+                Write-TfvarsJsonFile -tfvarsFilePath $starterTfvarsPath -configuration $starterConfiguration -skipItems $inputsFromTfvars
+                foreach($inputConfigFilePath in $inputConfigFilePaths | Where-Object { $_ -like "*.tfvars" }) {
+                    $fileName = [System.IO.Path]::GetFileName($inputConfigFilePath)
+                    $fileName = $fileName.Replace(".tfvars", ".auto.tfvars")
+                    $destination = Join-Path -Path $starterModulePath -ChildPath $fileName
+                    Copy-Item -Path $inputConfigFilePath -Destination $destination
+                }
+            }
         }
 
         if($iac -eq "bicep") {
@@ -198,16 +235,16 @@ function New-Bootstrap {
             Write-JsonFile -jsonFilePath $starterBicepVarsPath -configuration $starterConfiguration
 
             # Remove unrequired files
-            $foldersOrFilesToRetain = $starterConfig.starter_modules.$($inputConfig.starter_module_name).folders_or_files_to_retain
+            $foldersOrFilesToRetain = $starterConfig.starter_modules.$($inputConfig.starter_module_name.Value).folders_or_files_to_retain
             $foldersOrFilesToRetain += "parameters.json"
             $foldersOrFilesToRetain += "config"
             $foldersOrFilesToRetain += "starter-cache.json"
 
-            foreach($deployment_file in $starterConfig.starter_modules.$($inputConfig.starter_module_name).deployment_files) {
+            foreach($deployment_file in $starterConfig.starter_modules.$($inputConfig.starter_module_name.Value).deployment_files) {
                 $foldersOrFilesToRetain += $deployment_file.templateParametersSourceFilePath
             }
 
-            $subFoldersOrFilesToRemove = $starterConfig.starter_modules.$($inputConfig.starter_module_name).subfolders_or_files_to_remove
+            $subFoldersOrFilesToRemove = $starterConfig.starter_modules.$($inputConfig.starter_module_name.Value).subfolders_or_files_to_remove
 
             Remove-UnrequiredFileSet -path $starterModulePath -foldersOrFilesToRetain $foldersOrFilesToRetain -subFoldersOrFilesToRemove $subFoldersOrFilesToRemove -writeVerboseLogs:$writeVerboseLogs.IsPresent
         }

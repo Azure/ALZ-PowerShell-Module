@@ -11,8 +11,6 @@ function Get-BootstrapAndStarterConfig {
         [Parameter(Mandatory = $false)]
         [string]$bootstrapConfigPath,
         [Parameter(Mandatory = $false)]
-        [PSCustomObject]$inputConfig,
-        [Parameter(Mandatory = $false)]
         [string]$toolsPath
     )
 

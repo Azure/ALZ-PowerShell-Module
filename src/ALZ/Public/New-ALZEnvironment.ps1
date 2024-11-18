@@ -117,7 +117,7 @@ function New-ALZEnvironment {
 
         [Parameter(
             Mandatory = $false,
-            HelpMessage = "[OPTIONAL] Used to override the bootstrap folder source. This can be used to provide a folder locally in restricted environments or dev. Environment variable: ALZ_bootstrapModuleOverrideFolderPath. Config file input: bootstrapModuleOverrideFolderPath."
+            HelpMessage = "[OPTIONAL] Used to override the bootstrap folder source. This can be used to provide a folder locally in restricted environments or dev. Environment variable: ALZ_bootstrapModuleOverrideFolderPath. Config file input: bootstrap_module_override_folder_path."
         )]
         [Alias("bo")]
         [Alias("bootstrapModuleOverrideFolderPath")]
@@ -125,7 +125,7 @@ function New-ALZEnvironment {
 
         [Parameter(
             Mandatory = $false,
-            HelpMessage = "[OPTIONAL] Used to override the starter folder source. This can be used to provide a folder locally in restricted environments. Environment variable: ALZ_starterModuleOverrideFolderPath. Config file input: starterModuleOverrideFolderPath."
+            HelpMessage = "[OPTIONAL] Used to override the starter folder source. This can be used to provide a folder locally in restricted environments. Environment variable: ALZ_starterModuleOverrideFolderPath. Config file input: starter_module_override_folder_path."
         )]
         [Alias("so")]
         [Alias("starterModuleOverrideFolderPath")]
@@ -149,11 +149,19 @@ function New-ALZEnvironment {
 
         [Parameter(
             Mandatory = $false,
-            HelpMessage = "[OPTIONAL] An extra level of logging that is turned off by default for easier debugging. Environment variable: ALZ_write_verbose_logs. Config file input: writeVerboseLogs."
+            HelpMessage = "[OPTIONAL] An extra level of logging that is turned off by default for easier debugging. Environment variable: ALZ_write_verbose_logs. Config file input: write_verbose_logs."
         )]
         [Alias("v")]
         [Alias("writeVerboseLogs")]
-        [switch] $write_verbose_logs
+        [switch] $write_verbose_logs,
+
+        [Parameter(
+            Mandatory = $false,
+            HelpMessage = "[OPTIONAL] Determines whether to convert tfvars input files to tfvars.json files. Environment variable: ALZ_convert_tfvars_to_json. Config file input: convert_tfvars_to_json."
+        )]
+        [Alias("tj")]
+        [Alias("convertTfvarsToJson")]
+        [switch] $convert_tfvars_to_json
     )
 
     $ProgressPreference = "SilentlyContinue"
@@ -161,6 +169,16 @@ function New-ALZEnvironment {
     Write-InformationColored "Getting ready to deploy the accelerator with you..." -ForegroundColor Green -InformationAction Continue
 
     if ($PSCmdlet.ShouldProcess("Accelerator setup", "modify")) {
+
+        # Check and install tools needed
+        $toolsPath = Join-Path -Path $output_folder_path -ChildPath ".tools"
+        if($skipInternetChecks) {
+            Write-InformationColored "Skipping Terraform tool check as you used the skipInternetCheck parameter. Please ensure you have the most recent version of Terraform installed" -ForegroundColor Yellow -InformationAction Continue
+        } else {
+            Write-InformationColored "Checking you have the latest version of Terraform installed..." -ForegroundColor Green -NewLineBefore -InformationAction Continue
+            Get-TerraformTool -version "latest" -toolsPath $toolsPath
+            $hclParserToolPath = Get-HCLParserTool -toolVersion "v0.6.0" -toolsPath $toolsPath
+        }
 
         # Get User Inputs from the input config file
         $inputConfig = $null
@@ -173,10 +191,11 @@ function New-ALZEnvironment {
                 $inputConfigFilePaths = @(Request-SpecialInput -type "inputConfigFilePath")
             }
         }
+
+        # Get the input config from yaml and json files
         foreach($inputConfigFilePath in $inputConfigFilePaths) {
-            $inputConfig = Get-ALZConfig -configFilePath $inputConfigFilePath -inputConfig $inputConfig
+            $inputConfig = Get-ALZConfig -configFilePath $inputConfigFilePath -inputConfig $inputConfig -hclParserToolPath $hclParserToolPath
         }
-        Write-Verbose "Initial Input config: $(ConvertTo-Json $inputConfig -Depth 100)"
 
         # Set accelerator input config from input file, environment variables or parameters
         $parameters = (Get-Command -Name $MyInvocation.InvocationName).Parameters
@@ -200,22 +219,18 @@ function New-ALZEnvironment {
         $inputConfig = Convert-ParametersToInputConfig -inputConfig $inputConfig -parameters $parametersWithValues
 
         # Get the IAC type if not specified
-        if ($inputConfig.iac_type -eq "") {
-            $inputConfig.iac_type = Request-SpecialInput -type "iac"
+        if ($inputConfig.iac_type.Value -eq "") {
+            $inputConfig.iac_type = @{
+                Value  = Request-SpecialInput -type "iac"
+                Source = "user"
+            }
         }
 
-        # Check and install Terraform CLI if needed
-        $toolsPath = Join-Path -Path $inputConfig.output_folder_path -ChildPath ".tools"
-        if($skipInternetChecks) {
-            Write-InformationColored "Skipping Terraform tool check as you used the skipInternetCheck parameter. Please ensure you have the most recent version of Terraform installed" -ForegroundColor Yellow -InformationAction Continue
-        } else {
-            Write-InformationColored "Checking you have the latest version of Terraform installed..." -ForegroundColor Green -NewLineBefore -InformationAction Continue
-            if ($inputConfig.iac_type -eq "bicep") {
-                Write-InformationColored "Although you have selected Bicep, the Accelerator leverages the Terraform tool to bootstrap your Version Control System and Azure. This is will not impact your choice of Bicep post this initial bootstrap. Please refer to our documentation for further details..." -ForegroundColor Yellow -InformationAction Continue
-            }
-            Get-TerraformTool -version "latest" -toolsPath $toolsPath
-            $hclParserToolPath = Get-HCLParserTool -toolVersion "v0.6.0" -toolsPath $toolsPath
+        if ($inputConfig.iac_type.Value -eq "bicep") {
+            Write-InformationColored "Although you have selected Bicep, the Accelerator leverages the Terraform tool to bootstrap your Version Control System and Azure. This is will not impact your choice of Bicep post this initial bootstrap. Please refer to our documentation for further details..." -ForegroundColor Yellow -InformationAction Continue
         }
+
+        Write-Verbose "Initial Input config: $(ConvertTo-Json $inputConfig -Depth 100)"
 
         # Download the bootstrap modules
         $bootstrapReleaseTag = ""
@@ -225,15 +240,15 @@ function New-ALZEnvironment {
         Write-InformationColored "Checking and Downloading the bootstrap module..." -ForegroundColor Green -NewLineBefore -InformationAction Continue
 
         $versionAndPath = New-ModuleSetup `
-            -targetDirectory $inputConfig.output_folder_path `
+            -targetDirectory $inputConfig.output_folder_path.Value `
             -targetFolder $bootstrapTargetFolder `
-            -sourceFolder $inputConfig.bootstrap_source_folder `
-            -url $inputConfig.bootstrap_module_url `
-            -release $inputConfig.bootstrap_module_version `
-            -releaseArtifactName $inputConfig.bootstrap_module_release_artifact_name `
-            -moduleOverrideFolderPath $inputConfig.bootstrap_module_override_folder_path `
-            -skipInternetChecks $inputConfig.skip_internet_checks `
-            -replaceFile:$inputConfig.replace_files
+            -sourceFolder $inputConfig.bootstrap_source_folder.Value `
+            -url $inputConfig.bootstrap_module_url.Value `
+            -release $inputConfig.bootstrap_module_version.Value `
+            -releaseArtifactName $inputConfig.bootstrap_module_release_artifact_name.Value `
+            -moduleOverrideFolderPath $inputConfig.bootstrap_module_override_folder_path.Value `
+            -skipInternetChecks $inputConfig.skip_internet_checks.Value `
+            -replaceFile:$inputConfig.replace_files.Value
 
         $bootstrapReleaseTag = $versionAndPath.releaseTag
         $bootstrapPath = $versionAndPath.path
@@ -254,16 +269,18 @@ function New-ALZEnvironment {
         $zonesSupport = $null
 
         # Request the bootstrap type if not already specified
-        if($inputConfig.bootstrap_module_name -eq "") {
-            $inputConfig.bootstrap_module_name = Request-SpecialInput -type "bootstrap" -bootstrapModules $bootstrapModules
+        if($inputConfig.bootstrap_module_name.Value -eq "") {
+            $inputConfig.bootstrap_module_name = @{
+                Value  = Request-SpecialInput -type "bootstrap" -bootstrapModules $bootstrapModules
+                Source = "user"
+            }
         }
 
         $bootstrapAndStarterConfig = Get-BootstrapAndStarterConfig `
-            -iac $inputConfig.iac_type `
-            -bootstrap $inputConfig.bootstrap_module_name `
+            -iac $inputConfig.iac_type.Value `
+            -bootstrap $inputConfig.bootstrap_module_name.Value `
             -bootstrapPath $bootstrapPath `
-            -bootstrapConfigPath $inputConfig.bootstrap_config_path `
-            -inputConfig $inputConfig `
+            -bootstrapConfigPath $inputConfig.bootstrap_config_path.Value `
             -toolsPath $toolsPath
 
         $bootstrapDetails = $bootstrapAndStarterConfig.bootstrapDetails
@@ -283,15 +300,15 @@ function New-ALZEnvironment {
             Write-InformationColored "Checking and downloading the starter module..." -ForegroundColor Green -NewLineBefore -InformationAction Continue
 
             $versionAndPath = New-ModuleSetup `
-                -targetDirectory $inputConfig.output_folder_path `
+                -targetDirectory $inputConfig.output_folder_path.Value `
                 -targetFolder $starterModuleTargetFolder `
                 -sourceFolder $starterModuleSourceFolder `
                 -url $starterModuleUrl `
-                -release $inputConfig.starter_module_version `
+                -release $inputConfig.starter_module_version.Value `
                 -releaseArtifactName $starterReleaseArtifactName `
-                -moduleOverrideFolderPath $inputConfig.starter_module_override_folder_path `
-                -skipInternetChecks $inputConfig.skip_internet_checks `
-                -replaceFile:$inputConfig.replace_files
+                -moduleOverrideFolderPath $inputConfig.starter_module_override_folder_path.Value `
+                -skipInternetChecks $inputConfig.skip_internet_checks.Value `
+                -replaceFile:$inputConfig.replace_files.Value
 
             $starterReleaseTag = $versionAndPath.releaseTag
             $starterPath = $versionAndPath.path
@@ -299,16 +316,25 @@ function New-ALZEnvironment {
         }
 
         # Set computed interface inputs
-        $inputConfig | Add-Member -MemberType NoteProperty -Name "on_demand_folder_repository" -Value $starterModuleUrl
-        $inputConfig | Add-Member -MemberType NoteProperty -Name "on_demand_folder_artifact_name" -Value $starterReleaseArtifactName
-        $inputConfig | Add-Member -MemberType NoteProperty -Name "release_version" -Value ($starterReleaseTag -eq "local" ? $inputConfig.starter_module_version : $starterReleaseTag)
+        $inputConfig | Add-Member -MemberType NoteProperty -Name "on_demand_folder_repository" -Value @{
+            Value  = $starterModuleUrl
+            Source = "calaculated"
+        }
+        $inputConfig | Add-Member -MemberType NoteProperty -Name "on_demand_folder_artifact_name" -Value @{
+            Value  = $starterReleaseArtifactName
+            Source = "calaculated"
+        }
+        $inputConfig | Add-Member -MemberType NoteProperty -Name "release_version" -Value @{
+            Value  = ($starterReleaseTag -eq "local" ? $inputConfig.starter_module_version.Value : $starterReleaseTag)
+            Source = "calaculated"
+        }
 
         # Run the bootstrap
-        $bootstrapTargetPath = Join-Path $inputConfig.output_folder_path $bootstrapTargetFolder
-        $starterTargetPath = Join-Path $inputConfig.output_folder_path $starterFolder
+        $bootstrapTargetPath = Join-Path $inputConfig.output_folder_path.Value $bootstrapTargetFolder
+        $starterTargetPath = Join-Path $inputConfig.output_folder_path.Value $starterFolder
 
         New-Bootstrap `
-            -iac $inputConfig.iac_type `
+            -iac $inputConfig.iac_type.Value `
             -bootstrapDetails $bootstrapDetails `
             -validationConfig $validationConfig `
             -inputConfig $inputConfig `
@@ -318,11 +344,13 @@ function New-ALZEnvironment {
             -starterTargetPath $starterTargetPath `
             -starterRelease $starterReleaseTag `
             -starterConfig $starterConfig `
-            -autoApprove:$inputConfig.auto_approve `
-            -destroy:$inputConfig.destroy `
+            -autoApprove:$inputConfig.auto_approve.Value `
+            -destroy:$inputConfig.destroy.Value `
             -zonesSupport $zonesSupport `
-            -writeVerboseLogs:$inputConfig.write_verbose_logs `
-            -hclParserToolPath $hclParserToolPath
+            -writeVerboseLogs:$inputConfig.write_verbose_logs.Value `
+            -hclParserToolPath $hclParserToolPath `
+            -convertTfvarsToJson:$inputConfig.convert_tfvars_to_json.Value `
+            -inputConfigFilePaths $inputConfigFilePaths
     }
 
     $ProgressPreference = "Continue"
