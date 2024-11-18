@@ -229,7 +229,7 @@ function New-Bootstrap {
         }
 
         if($iac -eq "bicep") {
-            Copy-ParametersFileCollection -starterPath $starterModulePath -configFiles $starterConfig.starter_modules.$($inputConfig.starter_module_name).deployment_files
+            Copy-ParametersFileCollection -starterPath $starterModulePath -configFiles $starterConfig.starter_modules.$($inputConfig.starter_module_name.Value).deployment_files
             Set-ComputedConfiguration -configuration $starterConfiguration
             Edit-ALZConfigurationFilesInPlace -alzEnvironmentDestination $starterModulePath -configuration $starterConfiguration
             Write-JsonFile -jsonFilePath $starterBicepVarsPath -configuration $starterConfiguration
