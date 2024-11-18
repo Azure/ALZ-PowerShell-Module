@@ -222,7 +222,7 @@ function New-Bootstrap {
                 foreach($inputConfigFilePath in $inputConfigFilePaths | Where-Object { $_ -like "*.tfvars" }) {
                     $fileName = [System.IO.Path]::GetFileName($inputConfigFilePath)
                     $fileName = $fileName.Replace(".tfvars", ".auto.tfvars")
-                    $destination = Join-Path -Path $starterModulePath -ChildPath $fileName
+                    $destination = Join-Path -Path $starterRootModuleFolderPath -ChildPath $fileName
                     Copy-Item -Path $inputConfigFilePath -Destination $destination
                 }
             }
