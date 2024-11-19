@@ -13,7 +13,7 @@ function New-ALZEnvironment {
     param (
         [Parameter(
             Mandatory = $false,
-            HelpMessage = "[REQUIRED] The configuration inputs in json or yaml format. Environment variable: ALZ_input_config_path"
+            HelpMessage = "[REQUIRED] The configuration inputs in json, yaml or tfvars format. Environment variable: ALZ_input_config_path"
         )]
         [Alias("inputs")]
         [Alias("c")]
@@ -42,6 +42,14 @@ function New-ALZEnvironment {
         [Alias("s")]
         [Alias("starter")]
         [string] $starter_module_name = "",
+
+        [Parameter(
+            Mandatory = $false,
+            HelpMessage = "[OPTIONAL] The additional files or folders to be copied directly to the starter module root folder. Environment variable: ALZ_starter_additional_files. Config file input: starter_additional_files."
+        )]
+        [Alias("saf")]
+        [Alias("starterAdditionalFiles")]
+        [string[]] $starter_additional_files = @(),
 
         [Parameter(
             Mandatory = $false,
@@ -350,7 +358,8 @@ function New-ALZEnvironment {
             -writeVerboseLogs:$inputConfig.write_verbose_logs.Value `
             -hclParserToolPath $hclParserToolPath `
             -convertTfvarsToJson:$inputConfig.convert_tfvars_to_json.Value `
-            -inputConfigFilePaths $inputConfigFilePaths
+            -inputConfigFilePaths $inputConfigFilePaths `
+            -starterAdditionalFiles $inputConfig.starter_additional_files.Value
     }
 
     $ProgressPreference = "Continue"

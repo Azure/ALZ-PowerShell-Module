@@ -54,7 +54,11 @@ function New-Bootstrap {
 
         [Parameter(Mandatory = $false)]
         [string[]]
-        $inputConfigFilePaths = @()
+        $inputConfigFilePaths = @(),
+
+        [Parameter(Mandatory = $false)]
+        [string[]]
+        $starterAdditionalFiles = @()
     )
 
     if ($PSCmdlet.ShouldProcess("ALZ-Terraform module configuration", "modify")) {
@@ -223,7 +227,23 @@ function New-Bootstrap {
                     $fileName = [System.IO.Path]::GetFileName($inputConfigFilePath)
                     $fileName = $fileName.Replace(".tfvars", ".auto.tfvars")
                     $destination = Join-Path -Path $starterRootModuleFolderPath -ChildPath $fileName
-                    Copy-Item -Path $inputConfigFilePath -Destination $destination
+                    Write-Verbose "Copying tfvars file $inputConfigFilePath to $destination"
+                    Copy-Item -Path $inputConfigFilePath -Destination $destination -Force
+                }
+            }
+
+            # Copy additional files
+            foreach($additionalFile in $starterAdditionalFiles) {
+                if(Test-Path $additionalFile -PathType Container) {
+                    $folderName = ([System.IO.DirectoryInfo]::new($additionalFile)).Name
+                    $destination = Join-Path -Path $starterRootModuleFolderPath -ChildPath $folderName
+                    Write-Verbose "Copying folder $additionalFile to $destination"
+                    Copy-Item -Path "$additionalFile/*" -Destination $destination -Recurse -Force
+                } else {
+                    $fileName = [System.IO.Path]::GetFileName($inputConfigFilePath)
+                    $destination = Join-Path -Path $starterRootModuleFolderPath -ChildPath $fileName
+                    Write-Verbose "Copying file $additionalFile to $destination"
+                    Copy-Item -Path $additionalFile -Destination $destination -Force
                 }
             }
         }
