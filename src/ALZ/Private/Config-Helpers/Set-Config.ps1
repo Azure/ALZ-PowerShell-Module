@@ -47,20 +47,29 @@ function Set-Config {
                 $indexSplit = $inputConfigName.Split([char[]]@('[', ']'), [System.StringSplitOptions]::RemoveEmptyEntries)
                 $inputConfigItem = $inputConfig.PsObject.Properties | Where-Object { $_.Name -eq $indexSplit[0] }
                 if($null -ne $inputConfigItem) {
-                    if(!$inputConfigItem.Value.GetType().ImplementedInterfaces.Contains([System.Collections.ICollection])) {
+                    $inputConfigItemValue = $inputConfigItem.Value.Value
+                    if(!$inputConfigItemValue.GetType().ImplementedInterfaces.Contains([System.Collections.ICollection])) {
                         Write-Error "Input config item $($inputConfigName) is not an array, but an index was specified."
                         throw "Input config item $($inputConfigName) is not an array, but an index was specified."
                     }
                     $index = [int]$indexSplit[1]
-                    if($inputConfigItem.Value.Length -le $index) {
+                    if($inputConfigItemValue.Length -le $index) {
                         Write-Verbose "Input config item $($inputConfigName) does not have an index of $index."
+                        if($index -eq 0) {
+                            Write-Error "At least one value is required for input config item $($inputConfigName)."
+                            throw "At least one value is required for input config item $($inputConfigName)."
+                        }
                     } else {
-                        $inputConfigItemValue = $inputConfigItem.Value[$index]
-                        if($null -ne $inputConfigItemValue) {
-                            $configurationValue.Value.Value = $inputConfigItemValue
+                        $inputConfigItemIndexValue = $inputConfigItemValue[$index]
+                        if($null -ne $inputConfigItemIndexValue) {
+                            $configurationValue.Value.Value = $inputConfigItemIndexValue
                             continue
                         } else {
                             Write-Verbose "Input config item $($inputConfigName) with index $index is null."
+                            if($index -eq 0) {
+                                Write-Error "At least one value is required for input config item $($inputConfigName)."
+                                throw "At least one value is required for input config item $($inputConfigName)."
+                            }
                         }
                     }
                 } else {
