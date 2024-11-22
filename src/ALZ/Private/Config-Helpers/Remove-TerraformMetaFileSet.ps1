@@ -11,7 +11,8 @@ function Remove-TerraformMetaFileSet {
             "terraform.tfvars",
             ".terraform.lock.hcl",
             "examples",
-            "yaml.tf"
+            "yaml.tf",
+            ".alzlib"
         ),
         [Parameter(Mandatory = $false)]
         [switch]$writeVerboseLogs
