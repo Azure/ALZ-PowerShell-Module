@@ -35,14 +35,14 @@ management_settings_es:
         azurerm_network_ddos_protection_plan:
           ddos:
             ${starter_location_01}:
-              name: ddos-${starter_location_01}
+              name: ddos-hub-${starter_location_01}
         azurerm_resource_group:
           ddos:
             ${starter_location_01}:
-              name: rg-ddos-${starter_location_01}
+              name: ${connectivity_resource_group_ddos}
           dns:
             ${starter_location_01}:
-              name: rg-dns-${starter_location_01}
+              name: ${connectivity_resource_group_dns}
     settings:
       ddos_protection_plan:
         config:
@@ -76,15 +76,14 @@ management_settings_es:
   subscription_id_connectivity: ${subscription_id_connectivity}
   subscription_id_identity: ${subscription_id_identity}
   subscription_id_management: ${subscription_id_management}
-management_use_avm: false
 virtual_wan_settings:
   ddos_protection_plan:
     location: ${starter_location_01}
     name: ddos-hub-${starter_location_01}
-    resource_group_name: rg-hub-ddos-${starter_location_01}
+    resource_group_name: ${connectivity_resource_group_ddos}
   location: ${starter_location_01}
   name: vwan-hub-${starter_location_01}
-  resource_group_name: rg-vwan-${starter_location_01}
+  resource_group_name: ${connectivity_resource_group_vwan}
 virtual_wan_virtual_hubs:
   primary:
     firewall:
@@ -98,21 +97,21 @@ virtual_wan_virtual_hubs:
       address_prefix: 10.0.0.0/16
       location: ${starter_location_01}
       name: vwan-hub-${starter_location_01}
-      resource_group_name: rg-vwan-hub-${starter_location_01}
+      resource_group_name: ${connectivity_resource_group_vnet_primary}
     private_dns_zones:
       is_primary: true
       networking:
         private_dns_resolver:
           name: pdr-hub-dns-${starter_location_01}
-          resource_group_name: rg-vwan-hub-${starter_location_01}
+          resource_group_name: ${connectivity_resource_group_vnet_primary}
         virtual_network:
           address_space: 10.10.0.0/24
           name: vnet-hub-dns-${starter_location_01}
           private_dns_resolver_subnet:
             address_prefix: 10.10.0.0/28
             name: subnet-hub-dns-${starter_location_01}
-          resource_group_name: rg-vwan-hub-${starter_location_01}
-      resource_group_name: rg-hub-dns-${starter_location_01}
+          resource_group_name: ${connectivity_resource_group_vnet_primary}
+      resource_group_name: ${connectivity_resource_group_dns}
   secondary:
     firewall:
       firewall_policy:
@@ -125,18 +124,18 @@ virtual_wan_virtual_hubs:
       address_prefix: 10.1.0.0/16
       location: ${starter_location_02}
       name: vwan-hub-${starter_location_02}
-      resource_group_name: rg-vwan-hub-${starter_location_02}
+      resource_group_name: ${connectivity_resource_group_vnet_secondary}
     private_dns_zones:
       is_primary: false
       networking:
         private_dns_resolver:
           name: pdr-hub-dns-${starter_location_02}
-          resource_group_name: rg-vwan-hub-${starter_location_02}
+          resource_group_name: ${connectivity_resource_group_vnet_secondary}
         virtual_network:
           address_space: 10.11.0.0/24
           name: vnet-hub-dns-${starter_location_02}
           private_dns_resolver_subnet:
             address_prefix: 10.11.0.0/28
             name: subnet-hub-dns-${starter_location_02}
-          resource_group_name: rg-vwan-hub-${starter_location_02}
-      resource_group_name: rg-hub-dns-${starter_location_01}
+          resource_group_name: ${connectivity_resource_group_vnet_secondary}
+      resource_group_name: ${connectivity_resource_group_dns}
