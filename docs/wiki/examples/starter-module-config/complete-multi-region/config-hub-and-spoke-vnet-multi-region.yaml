@@ -29,7 +29,7 @@ hub_and_spoke_vnet_settings:
   ddos_protection_plan:
     location: ${starter_location_01}
     name: ddos-hub-${starter_location_01}
-    resource_group_name: rg-hub-ddos-${starter_location_01}
+    resource_group_name: ${connectivity_resource_group_ddos}
 hub_and_spoke_vnet_virtual_networks:
   primary:
     hub_virtual_network:
@@ -53,16 +53,19 @@ hub_and_spoke_vnet_virtual_networks:
       location: ${starter_location_01}
       name: vnet-hub-${starter_location_01}
       resource_group_creation_enabled: false
-      resource_group_name: rg-hub-${starter_location_01}
+      resource_group_name: ${connectivity_resource_group_vnet_primary}
       subnets:
         virtual_network_gateway:
           address_prefixes:
             - 10.0.1.0/24
           assign_generated_route_table: false
           name: GatewaySubnet
+      tags:
+        deployment: terraform
+        source: Azure Landing Zones Accelerator
     private_dns_zones:
       is_primary: true
-      resource_group_name: rg-hub-dns-${starter_location_01}
+      resource_group_name: ${connectivity_resource_group_dns}
     virtual_network_gateways:
       express_route:
         ip_configurations:
@@ -108,16 +111,19 @@ hub_and_spoke_vnet_virtual_networks:
       location: ${starter_location_02}
       name: vnet-hub-${starter_location_02}
       resource_group_creation_enabled: false
-      resource_group_name: rg-hub-${starter_location_02}
+      resource_group_name: ${connectivity_resource_group_vnet_secondary}
       subnets:
         virtual_network_gateway:
           address_prefixes:
             - 10.1.1.0/24
           assign_generated_route_table: false
           name: GatewaySubnet
+      tags:
+        deployment: terraform
+        source: Azure Landing Zones Accelerator
     private_dns_zones:
       is_primary: false
-      resource_group_name: rg-hub-dns-${starter_location_01}
+      resource_group_name: ${connectivity_resource_group_dns}
     virtual_network_gateways:
       express_route:
         ip_configurations:
@@ -152,10 +158,10 @@ management_settings_es:
         azurerm_resource_group:
           ddos:
             ${starter_location_01}:
-              name: rg-hub-ddos-${starter_location_01}
+              name: ${connectivity_resource_group_ddos}
           dns:
             ${starter_location_01}:
-              name: rg-hub-dns-${starter_location_01}
+              name: ${connectivity_resource_group_dns}
     settings:
       ddos_protection_plan:
         config:
@@ -189,4 +195,3 @@ management_settings_es:
   subscription_id_connectivity: ${subscription_id_connectivity}
   subscription_id_identity: ${subscription_id_identity}
   subscription_id_management: ${subscription_id_management}
-management_use_avm: false
