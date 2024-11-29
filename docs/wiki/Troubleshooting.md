@@ -56,7 +56,7 @@ runner_container_zone_support: false
 agent_container_zone_support: false
 ```
 
-```
+```text
 ╷
 │ Error: creating Container Group (Subscription: "0d754f66-65b4-4f64-97f5-221f0174ad48"
 │ Resource Group Name: "rg-alz-r14c67r424-agents-swedencentral-001"

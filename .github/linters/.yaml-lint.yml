@@ -4,7 +4,7 @@ extends: default
 rules:
   # 500 chars should be enough, but don't fail if a line is longer
   line-length:
-    max: 500
+    max: 1000
     level: warning
   truthy:
     check-keys: false
