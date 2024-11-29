@@ -41,3 +41,44 @@ This only affects you if you have Enterprise licensing and have chosen to use a 
 <!-- markdownlint-enable no-inline-html -->
 
 [Issues]:     https://github.com/Azure/alz-terraform-accelerator/issues "Our issues log"
+
+## Error: creating Container Group
+
+If you see the following error, it is due to region (e.g. swedencentral) stating it supports availability zones, but it does not support them for Azure Container Instance. There is no way to detect this with automation, so requires a manual workaround at this time.
+
+In order to work around this issue, add the following setting to your input config file:
+
+```yaml
+# GitHub
+runner_container_zone_support: false
+
+# Azure DevOps
+agent_container_zone_support: false
+```
+
+```
+╷
+│ Error: creating Container Group (Subscription: "0d754f66-65b4-4f64-97f5-221f0174ad48"
+│ Resource Group Name: "rg-alz-r14c67r424-agents-swedencentral-001"
+│ Container Group Name: "aci-alz-r14c67r424-swedencentral-002"): polling after ContainerGroupsCreateOrUpdate: polling failed: the Azure API returned the following error:
+│
+│ Status: "Failed"
+│ Code: "Failed"
+│ Message: "The requested resource is not available in the location 'swedencentral' at this moment. Please retry with a different resource request or in another location. Resource requested: '2' CPU '4' GB memory 'Linux' OS"
+│ Activity Id: ""
+│
+│ ---
+│
+│ API Response:
+│
+│ ----[start]----
+│ {"id":"/subscriptions/**754f66-****-4f64-****-221f0174ad4**/resourceGroups/rg-alz-r14c67r424-agents-swedencentral-001/providers/Microsoft.ContainerInstance/containerGroups/aci-alz-r14c67r424-swedencentral-002","status":"Failed","startTime":"2024-11-29T11:15:39.9940663Z","properties":{"events":[{"count":1,"firstTimestamp":"2024-11-29T11:15:41.1163736Z","lastTimestamp":"2024-11-29T11:15:41.1163736Z","name":"InsufficientCapacity.","message":"The requested resource is not available in the location 'swedencentral' at this moment. Please retry with a different resource request or in another location. Resource requested: '2' CPU '4' GB memory 'Linux' OS","type":"Warning"}]},"error":{"message":"The requested resource is not available in the location 'swedencentral' at this moment. Please retry with a different resource request or in another location. Resource requested: '2' CPU '4' GB memory 'Linux' OS"}}
+│ -----[end]-----
+│
+│
+│   with module.azure.azurerm_container_group.alz["agent_02"],
+│   on ../../modules/azure/container_instances.tf line 1, in resource "azurerm_container_group" "alz":
+│    1: resource "azurerm_container_group" "alz" {
+│
+╵
+```
