@@ -22,7 +22,7 @@ MD004: false                  # ul-style - Unordered list style
 MD007:
   indent: 2                   # ul-indent - Unordered list indentation
 MD013:
-  line_length: 600            # line-length - Line length
+  line_length: 1000            # line-length - Line length
 MD026:
   punctuation: ".,;:!。，；:"  # no-trailing-punctuation - Trailing punctuation in heading
 MD029: false                  # ol-prefix - Ordered list item prefix
