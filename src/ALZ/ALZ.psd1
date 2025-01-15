@@ -32,8 +32,10 @@
     # Description of the functionality provided by this module
     Description       = 'Azure Landing Zones Powershell Module'
 
+    CompatiblePSEditions = 'Core'
+
     # Minimum version of the PowerShell engine required by this module
-    # PowerShellVersion = ''
+    PowerShellVersion = '7.4'
 
     # Name of the PowerShell host required by this module
     # PowerShellHostName = ''
