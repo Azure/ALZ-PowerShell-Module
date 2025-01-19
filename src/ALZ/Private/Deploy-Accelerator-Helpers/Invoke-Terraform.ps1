@@ -29,7 +29,7 @@ function Invoke-Terraform {
             Write-Verbose "Setting environment variable ARM_SUBSCRIPTION_ID"
             $subscriptionId = $(az account show --query id -o tsv)
             if($null -eq $subscriptionId -or $subscriptionId -eq "") {
-                Write-Error "Subscription ID not found. Please ensure you are logged in to Azure and have selected a subscription."
+                Write-Error "Subscription ID not found. Please ensure you are logged in to Azure and have selected a subscription. Use `az account show` to check."
                 return
             }
             $env:ARM_SUBSCRIPTION_ID = $subscriptionId
