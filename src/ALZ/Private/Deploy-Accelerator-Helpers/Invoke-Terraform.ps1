@@ -25,7 +25,7 @@ function Invoke-Terraform {
 
     if ($PSCmdlet.ShouldProcess("Apply Terraform", "modify")) {
         # Check and Set Subscription ID
-        if($null -eq $env:ARM_SUBSCRIPTION_ID) {
+        if($null -eq $env:ARM_SUBSCRIPTION_ID -or $env:ARM_SUBSCRIPTION_ID -eq "") {
             Write-Verbose "Setting environment variable ARM_SUBSCRIPTION_ID"
             $subscriptionId = $(az account show --query id -o tsv)
             if($null -eq $subscriptionId -or $subscriptionId -eq "") {
