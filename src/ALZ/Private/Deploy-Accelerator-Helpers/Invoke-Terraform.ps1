@@ -24,6 +24,18 @@ function Invoke-Terraform {
     )
 
     if ($PSCmdlet.ShouldProcess("Apply Terraform", "modify")) {
+        # Check and Set Subscription ID
+        if($null -eq $env:ARM_SUBSCRIPTION_ID) {
+            Write-Verbose "Setting environment variable ARM_SUBSCRIPTION_ID"
+            $subscriptionId = $(az account show --query id -o tsv)
+            if($null -eq $subscriptionId -or $subscriptionId -eq "") {
+                Write-Error "Subscription ID not found. Please ensure you are logged in to Azure and have selected a subscription."
+                return
+            }
+            $env:ARM_SUBSCRIPTION_ID = $subscriptionId
+            Write-Verbose "Environment variable ARM_SUBSCRIPTION_ID set to $subscriptionId"
+        }
+
         terraform -chdir="$moduleFolderPath" init
         $action = "apply"
         if($destroy) {
