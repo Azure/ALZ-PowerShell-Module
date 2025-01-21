@@ -182,14 +182,14 @@ function Deploy-Accelerator {
 
     $ProgressPreference = "SilentlyContinue"
 
-    if(-not $skip_requirements_check) {
+    if($skip_requirements_check.IsPresent) {
+        Write-InformationColored "WARNING: Skipping the software requirements check..." -ForegroundColor Yellow -InformationAction Continue
+    } else {
         Write-InformationColored "Checking the software requirements for the Accelerator..." -ForegroundColor Green -InformationAction Continue
         Test-Tooling
-    } else {
-        Write-InformationColored "Skipping the software requirements check..." -ForegroundColor Yellow -InformationAction Continue
     }
 
-    Write-InformationColored "Getting ready to deploy the accelerator with you..." -ForegroundColor Green -InformationAction Continue
+    Write-InformationColored "Getting ready to deploy the accelerator with you..." -ForegroundColor Green -NewLineBefore -InformationAction Continue
 
     if ($PSCmdlet.ShouldProcess("Accelerator setup", "modify")) {
 
