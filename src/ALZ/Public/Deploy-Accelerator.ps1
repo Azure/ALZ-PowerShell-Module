@@ -1,4 +1,4 @@
-function New-ALZEnvironment {
+function Deploy-Accelerator {
     <#
     .SYNOPSIS
     Deploys an accelerator according to the supplied inputs.
@@ -173,6 +173,9 @@ function New-ALZEnvironment {
     )
 
     $ProgressPreference = "SilentlyContinue"
+
+    Write-InformationColored "Checking the software requirements for the Accelerator..." -ForegroundColor Green -InformationAction Continue
+    Test-Tooling
 
     Write-InformationColored "Getting ready to deploy the accelerator with you..." -ForegroundColor Green -InformationAction Continue
 
@@ -366,5 +369,3 @@ function New-ALZEnvironment {
 
     return
 }
-
-New-Alias -Name "Deploy-Accelerator" -Value "New-ALZEnvironment"
