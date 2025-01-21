@@ -169,13 +169,25 @@ function Deploy-Accelerator {
         )]
         [Alias("tj")]
         [Alias("convertTfvarsToJson")]
-        [switch] $convert_tfvars_to_json
+        [switch] $convert_tfvars_to_json,
+
+        [Parameter(
+            Mandatory = $false,
+            HelpMessage = "[OPTIONAL] Determines whether to skip the requirements check. This is not recommended."
+        )]
+        [Alias("sr")]
+        [Alias("skipRequirementsCheck")]
+        [switch] $skip_requirements_check
     )
 
     $ProgressPreference = "SilentlyContinue"
 
-    Write-InformationColored "Checking the software requirements for the Accelerator..." -ForegroundColor Green -InformationAction Continue
-    Test-Tooling
+    if(-not $skip_requirements_check) {
+        Write-InformationColored "Checking the software requirements for the Accelerator..." -ForegroundColor Green -InformationAction Continue
+        Test-Tooling
+    } else {
+        Write-InformationColored "Skipping the software requirements check..." -ForegroundColor Yellow -InformationAction Continue
+    }
 
     Write-InformationColored "Getting ready to deploy the accelerator with you..." -ForegroundColor Green -InformationAction Continue
 
