@@ -32,8 +32,10 @@
     # Description of the functionality provided by this module
     Description       = 'Azure Landing Zones Powershell Module'
 
+    CompatiblePSEditions = 'Core'
+
     # Minimum version of the PowerShell engine required by this module
-    # PowerShellVersion = ''
+    PowerShellVersion = '7.4'
 
     # Name of the PowerShell host required by this module
     # PowerShellHostName = ''
@@ -70,9 +72,8 @@
 
     # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
     FunctionsToExport = @(
-        'New-ALZEnvironment'
-        'Test-ALZRequirement'
-        'Edit-LineEnding'
+        'Test-AcceleratorRequirement',
+        'Deploy-Accelerator'
     )
 
     # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
@@ -82,10 +83,7 @@
     VariablesToExport = '*'
 
     # Aliases to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no aliases to export.
-    AliasesToExport   = @(
-        'Edit-LineEndings'
-        'Deploy-Accelerator'
-    )
+    AliasesToExport   = @()
 
     # DSC resources to export from this module
     # DscResourcesToExport = @()
@@ -140,7 +138,4 @@
 
     # Default prefix for commands exported from this module. Override the default prefix using Import-Module -Prefix.
     # DefaultCommandPrefix = ''
-
 }
-
-

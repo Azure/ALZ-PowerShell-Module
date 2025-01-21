@@ -1,4 +1,4 @@
-function New-ALZEnvironment {
+function Deploy-Accelerator {
     <#
     .SYNOPSIS
     Deploys an accelerator according to the supplied inputs.
@@ -169,10 +169,25 @@ function New-ALZEnvironment {
         )]
         [Alias("tj")]
         [Alias("convertTfvarsToJson")]
-        [switch] $convert_tfvars_to_json
+        [switch] $convert_tfvars_to_json,
+
+        [Parameter(
+            Mandatory = $false,
+            HelpMessage = "[OPTIONAL] Determines whether to skip the requirements check. This is not recommended."
+        )]
+        [Alias("sr")]
+        [Alias("skipRequirementsCheck")]
+        [switch] $skip_requirements_check
     )
 
     $ProgressPreference = "SilentlyContinue"
+
+    if(-not $skip_requirements_check) {
+        Write-InformationColored "Checking the software requirements for the Accelerator..." -ForegroundColor Green -InformationAction Continue
+        Test-Tooling
+    } else {
+        Write-InformationColored "Skipping the software requirements check..." -ForegroundColor Yellow -InformationAction Continue
+    }
 
     Write-InformationColored "Getting ready to deploy the accelerator with you..." -ForegroundColor Green -InformationAction Continue
 
@@ -366,5 +381,3 @@ function New-ALZEnvironment {
 
     return
 }
-
-New-Alias -Name "Deploy-Accelerator" -Value "New-ALZEnvironment"

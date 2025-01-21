@@ -10,13 +10,11 @@
 
 ## Introduction
 
-TLDR: Head straight over to our [Quick Start](https://github.com/Azure/ALZ-PowerShell-Module/wiki/%5BUser-Guide%5D-Quick-Start) to get going now.
-
 This repository contains the PowerShell module and documentation for the Azure landing zones Accelerators for Bicep and Terraform. The accelerators are an opinionated implementation of the Azure Landing Zones Terraform modules, with Azure DevOps or GitHub bootstrapping.
 
 It is designed to be used as a template to enable you to get started quickly deploying ALZ with Bicep or Terraform.
 
-Please refer to our [Wiki](https://github.com/Azure/ALZ-PowerShell-Module/wiki) for detailed features and usage instructions.
+Please refer to our [Docs](https://aka.ms/alz/acc) for detailed features and usage instructions.
 
 ## Quick Start
 
@@ -24,35 +22,18 @@ To get going right now, run these PowerShell steps:
 
 ```pwsh
 Install-Module -Name ALZ
-Deploy-Accelerator
+Deploy-Accelerator -inputs "inputs.yaml"
 ```
 
-## More Examples
+## Software Requirements
 
-Here are more examples with different options:
+You can see the software requirements for the ALZ Accelerators in the [Phase 1 Docs](https://aka.ms/alz/acc/phase1).
 
-### Azure Landing Zone Environment with Bicep and GitHub Actions Workflows
+To check the requirements, run these commands:
 
-```powershell
-Deploy-Accelerator -o <output_directory> -i "bicep" -b "alz_github"
-```
-
-### Azure Landing Zone Environment with Bicep and Azure DevOps Pipelines
-
-```powershell
-Deploy-Accelerator -o <output_directory> -i "bicep" -b "alz_azuredevops"
-```
-
-### Azure Landing Zone Environment with Terraform and GitHub Pipelines
-
-```powershell
-Deploy-Accelerator -o <output_directory> -i "terraform" -b "alz_github"
-```
-
-### Azure Landing Zone Environment with Terraform and Azure DevOps Pipelines
-
-```powershell
-Deploy-Accelerator -o <output_directory> -i "terraform" -b "alz_azuredevops"
+```pwsh
+Install-Module -Name ALZ
+Test-AcceleratorRequirements
 ```
 
 ## Contributing

@@ -25,7 +25,7 @@ module "regions" {
 locals {
   regions = { for region in module.regions.regions_by_name : region.name => {
     display_name = region.display_name
-    zones        = region.zones == null ? [] : region.zones
+    zones        = region.zones == null ? [] : [for zone in region.zones : tostring(zone)]
     }
   }
 }

@@ -12,7 +12,7 @@ Import-Module $PathToManifest -Force
 #-------------------------------------------------------------------------
 
 InModuleScope 'ALZ' {
-    Describe 'New-ALZEnvironment Public Function Tests' -Tag Unit {
+    Describe 'Deploy-Accelerator Public Function Tests' -Tag Unit {
         BeforeAll {
             $WarningPreference = 'SilentlyContinue'
             $ErrorActionPreference = 'SilentlyContinue'
@@ -37,6 +37,8 @@ InModuleScope 'ALZ' {
                         }
                     )
                 }
+
+                Mock -CommandName Test-Tooling
 
                 Mock -CommandName Edit-ALZConfigurationFilesInPlace
 
