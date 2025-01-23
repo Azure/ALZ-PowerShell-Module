@@ -59,17 +59,17 @@ function Test-Tooling {
         $envVarValue = [System.Environment]::GetEnvironmentVariable($envVar)
         if($envVarValue -eq $null -or $envVarValue -eq "" ) {
             $envVarsSet = $false
-            break
+            continue
         }
         $envVarAtLeastOneSet = $true
         $envVarsWithValue += $envVar
         if($envVarValue -notmatch("^(\{){0,1}[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}(\}){0,1}$")) {
             $envVarValid = $false
-            break
+            continue
         }
         if($checkedEnvVars -contains $envVarValue) {
             $envVarUnique = $false
-            break
+            continue
         }
         $checkedEnvVars += $envVarValue
     }
@@ -85,7 +85,7 @@ function Test-Tooling {
 
         if(-not $envVarValid) {
             $checkResults += @{
-                message = "Azure environment variables are set, but are not valid GUIDs."
+                message = "Azure environment variables are set, but are not all valid GUIDs."
                 result  = "Failure"
             }
         }
@@ -104,8 +104,13 @@ function Test-Tooling {
         $hasFailure = $true
     } else {
         if($envVarAtLeastOneSet) {
+            $envVarValidationOutput = ""
+            foreach($envVar in $envVarsWithValue) {
+                $envVarValue = [System.Environment]::GetEnvironmentVariable($envVar)
+                $envVarValidationOutput += " $envVar ($envVarValue)"
+            }
             $checkResults += @{
-                message = "At least one environment variables is set, but the other expected environment variables are not set. This could cause Terraform to fail in unexpected ways. Set environment variables: $($envVarsWithValue -join " ")."
+                message = "At least one environment variable is set, but the other expected environment variables are not set. This could cause Terraform to fail in unexpected ways. Set environment variables:$envVarValidationOutput."
                 result  = "Warning"
             }
         }
