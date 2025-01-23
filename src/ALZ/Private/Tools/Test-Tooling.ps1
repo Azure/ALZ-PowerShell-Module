@@ -41,36 +41,112 @@ function Test-Tooling {
         $hasFailure = $true
     }
 
-    # Check if Azure CLI is installed
-    Write-Verbose "Checking Azure CLI installation"
-    $azCliPath = Get-Command az -ErrorAction SilentlyContinue
-    if ($azCliPath) {
-        $checkResults += @{
-            message = "Azure CLI is installed."
-            result  = "Success"
+    # Check if using Service Principal Auth
+    Write-Verbose "Checking Azure environment variables"
+    $nonAzCliEnvVars = @(
+        "ARM_CLIENT_ID",
+        "ARM_SUBSCRIPTION_ID",
+        "ARM_TENANT_ID"
+    )
+
+    $envVarsSet = $true
+    $envVarValid = $true
+    $envVarUnique = $true
+    $envVarAtLeastOneSet = $false
+    $envVarsWithValue = @()
+    $checkedEnvVars = @()
+    foreach($envVar in $nonAzCliEnvVars) {
+        $envVarValue = [System.Environment]::GetEnvironmentVariable($envVar)
+        if($envVarValue -eq $null -or $envVarValue -eq "" ) {
+            $envVarsSet = $false
+            continue
         }
-    } else {
-        $checkResults += @{
-            message = "Azure CLI is not installed. Follow the instructions here: https://learn.microsoft.com/en-us/cli/azure/install-azure-cli"
-            result  = "Failure"
+        $envVarAtLeastOneSet = $true
+        $envVarsWithValue += $envVar
+        if($envVarValue -notmatch("^(\{){0,1}[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}(\}){0,1}$")) {
+            $envVarValid = $false
+            continue
         }
-        $hasFailure = $true
+        if($checkedEnvVars -contains $envVarValue) {
+            $envVarUnique = $false
+            continue
+        }
+        $checkedEnvVars += $envVarValue
     }
 
-    # Check if Azure CLI is logged in
-    Write-Verbose "Checking Azure CLI login status"
-    $azCliAccount = $(az account show -o json) | ConvertFrom-Json
-    if ($azCliAccount) {
-        $checkResults += @{
-            message = "Azure CLI is logged in. Tenant ID: $($azCliAccount.tenantId), Subscription: $($azCliAccount.name) ($($azCliAccount.id))"
-            result  = "Success"
+    if($envVarsSet) {
+        Write-Verbose "Using Service Principal Authentication, skipping Azure CLI checks"
+        if($envVarValid -and $envVarUnique) {
+            $checkResults += @{
+                message = "Azure environment variables are set and are valid unique GUIDs."
+                result  = "Success"
+            }
+        }
+
+        if(-not $envVarValid) {
+            $checkResults += @{
+                message = "Azure environment variables are set, but are not all valid GUIDs."
+                result  = "Failure"
+            }
+            $hasFailure = $true
+        }
+
+        if (-not $envVarUnique) {
+            $envVarValidationOutput = ""
+            foreach($envVar in $nonAzCliEnvVars) {
+                $envVarValue = [System.Environment]::GetEnvironmentVariable($envVar)
+                $envVarValidationOutput += " $envVar ($envVarValue)"
+            }
+            $checkResults += @{
+                message = "Azure environment variables are set, but are not unique GUIDs. There is at least one duplicate:$envVarValidationOutput."
+                result  = "Failure"
+            }
+            $hasFailure = $true
         }
     } else {
-        $checkResults += @{
-            message = "Azure CLI is not logged in. Please login to Azure CLI using 'az login -t `"00000000-0000-0000-0000-000000000000}`"', replacing the empty GUID with your tenant ID."
-            result  = "Failure"
+        if($envVarAtLeastOneSet) {
+            $envVarValidationOutput = ""
+            foreach($envVar in $envVarsWithValue) {
+                $envVarValue = [System.Environment]::GetEnvironmentVariable($envVar)
+                $envVarValidationOutput += " $envVar ($envVarValue)"
+            }
+            $checkResults += @{
+                message = "At least one environment variable is set, but the other expected environment variables are not set. This could cause Terraform to fail in unexpected ways. Set environment variables:$envVarValidationOutput."
+                result  = "Warning"
+            }
         }
-        $hasFailure = $true
+
+        # Check if Azure CLI is installed
+        Write-Verbose "Checking Azure CLI installation"
+        $azCliPath = Get-Command az -ErrorAction SilentlyContinue
+        if ($azCliPath) {
+            $checkResults += @{
+                message = "Azure CLI is installed."
+                result  = "Success"
+            }
+        } else {
+            $checkResults += @{
+                message = "Azure CLI is not installed. Follow the instructions here: https://learn.microsoft.com/en-us/cli/azure/install-azure-cli"
+                result  = "Failure"
+            }
+            $hasFailure = $true
+        }
+
+        # Check if Azure CLI is logged in
+        Write-Verbose "Checking Azure CLI login status"
+        $azCliAccount = $(az account show -o json) | ConvertFrom-Json
+        if ($azCliAccount) {
+            $checkResults += @{
+                message = "Azure CLI is logged in. Tenant ID: $($azCliAccount.tenantId), Subscription: $($azCliAccount.name) ($($azCliAccount.id))"
+                result  = "Success"
+            }
+        } else {
+            $checkResults += @{
+                message = "Azure CLI is not logged in. Please login to Azure CLI using 'az login -t `"00000000-0000-0000-0000-000000000000}`"', replacing the empty GUID with your tenant ID."
+                result  = "Failure"
+            }
+            $hasFailure = $true
+        }
     }
 
     # Check if latest ALZ module is installed
@@ -96,6 +172,7 @@ function Test-Tooling {
             switch ($_.result) {
                 'Success' { $color = "92"; break }
                 'Failure' { $color = "91"; break }
+                'Warning' { $color = "93"; break }
                 default { $color = "0" }
             }
             $e = [char]27
