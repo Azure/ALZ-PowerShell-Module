@@ -25,6 +25,7 @@ function Invoke-Terraform {
 
     if ($PSCmdlet.ShouldProcess("Apply Terraform", "modify")) {
         # Check and Set Subscription ID
+        $removeSubscriptionId = $false
         if($null -eq $env:ARM_SUBSCRIPTION_ID -or $env:ARM_SUBSCRIPTION_ID -eq "") {
             Write-Verbose "Setting environment variable ARM_SUBSCRIPTION_ID"
             $subscriptionId = $(az account show --query id -o tsv)
@@ -33,6 +34,7 @@ function Invoke-Terraform {
                 return
             }
             $env:ARM_SUBSCRIPTION_ID = $subscriptionId
+            $removeSubscriptionId = $true
             Write-Verbose "Environment variable ARM_SUBSCRIPTION_ID set to $subscriptionId"
         }
 
@@ -142,6 +144,11 @@ function Invoke-Terraform {
             Write-InformationColored "Running Apply Command for $action : $command $arguments" -ForegroundColor Green -NewLineBefore -InformationAction Continue
             & $command $arguments
             $exitCode = $LASTEXITCODE
+        }
+
+        if($removeSubscriptionId) {
+            Write-Verbose "Removing environment variable ARM_SUBSCRIPTION_ID that was set prior to this run"
+            Remove-Item $env:ARM_SUBSCRIPTION_ID = $null
         }
 
         # Stop and display timer
