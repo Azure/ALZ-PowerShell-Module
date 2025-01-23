@@ -88,6 +88,7 @@ function Test-Tooling {
                 message = "Azure environment variables are set, but are not all valid GUIDs."
                 result  = "Failure"
             }
+            $hasFailure = $true
         }
 
         if (-not $envVarUnique) {
@@ -100,8 +101,8 @@ function Test-Tooling {
                 message = "Azure environment variables are set, but are not unique GUIDs. There is at least one duplicate:$envVarValidationOutput."
                 result  = "Failure"
             }
+            $hasFailure = $true
         }
-        $hasFailure = $true
     } else {
         if($envVarAtLeastOneSet) {
             $envVarValidationOutput = ""
