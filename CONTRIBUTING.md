@@ -48,18 +48,18 @@ Example folder structure:
   ┗ 📂acc
       ┣ 📂bicep
       ┃ ┣ 📂config
-      ┃ ┃ ┣ 📜inputs-azuredevops.yaml  # ./docs/wiki/examples/powershell-inputs/inputs-azure-devops-bicep-complete.yaml
-      ┃ ┃ ┣ 📜inputs-github.yaml       # ./docs/wiki/examples/powershell-inputs/inputs-github-bicep-complete.yaml
-      ┃ ┃ ┗ 📜inputs-local.yaml        # ./docs/wiki/examples/powershell-inputs/inputs-local-bicep-complete.yaml
+      ┃ ┃ ┣ 📜inputs-azure-devops.yaml
+      ┃ ┃ ┣ 📜inputs-github.yaml
+      ┃ ┃ ┗ 📜inputs-local.yaml
       ┃ ┗ 📂output
       ┃   ┣ 📂azuredevops
       ┃   ┣ 📂github
       ┃   ┗ 📂local
       ┗ 📂terraform
         ┣ 📂config
-        ┃ ┣ 📜inputs-azuredevops.yaml  # ./docs/wiki/examples/powershell-inputs/inputs-azure-devops-terraform-complete.yaml
-        ┃ ┣ 📜inputs-github.yaml       # ./docs/wiki/examples/powershell-inputs/inputs-github-terraform-complete.yaml
-        ┃ ┗ 📜inputs-local.yaml        # ./docs/wiki/examples/powershell-inputs/inputs-local-terraform-complete.yaml
+        ┃ ┣ 📜inputs-azure-devops.yaml
+        ┃ ┣ 📜inputs-github.yaml
+        ┃ ┗ 📜inputs-local.yaml
         ┗ 📂output
           ┣ 📂azuredevops
           ┣ 📂github
@@ -92,21 +92,15 @@ git clone https://github.com/Azure/ALZ-PowerShell-Module
 git clone https://github.com/Azure/alz-terraform-accelerator
 cd /
 
-$exampleFolder = "$targetFolder/code/ALZ-PowerShell-Module/docs/wiki/examples/powershell-inputs"
+$bootstrapConfigFolderTerraform = "$targetFolder/code/alz-terraform-accelerator/templates/platform_landing_zone/examples/bootstrap"
+Copy-Item -Path "$bootstrapConfigFolderTerraform/inputs-azure-devops.yaml" -Destination "$terraformConfigFolder/inputs-azure-devops.yaml" -Force
+Copy-Item -Path "$bootstrapConfigFolderTerraform/inputs-github.yaml" -Destination "$terraformConfigFolder/inputs-github.yaml" -Force
+Copy-Item -Path "$bootstrapConfigFolderTerraform/inputs-local.yaml" -Destination "$terraformConfigFolder/inputs-local.yaml" -Force
 
-Copy-Item -Path "$exampleFolder/inputs-azure-devops-bicep-complete.yaml" -Destination "$bicepConfigFolder/inputs-azuredevops.yaml" -Force
-Copy-Item -Path "$exampleFolder/inputs-github-bicep-complete.yaml" -Destination "$bicepConfigFolder/inputs-github.yaml" -Force
-Copy-Item -Path "$exampleFolder/inputs-local-bicep-complete.yaml" -Destination "$bicepConfigFolder/inputs-local.yaml" -Force
-Copy-Item -Path "$exampleFolder/inputs-azure-devops-terraform-complete-multi-region.yaml" -Destination "$terraformConfigFolder/inputs-azuredevops.yaml" -Force
-Copy-Item -Path "$exampleFolder/inputs-github-terraform-complete-multi-region.yaml" -Destination "$terraformConfigFolder/inputs-github.yaml" -Force
-Copy-Item -Path "$exampleFolder/inputs-local-terraform-complete-multi-region.yaml" -Destination "$terraformConfigFolder/inputs-local.yaml" -Force
-
-$exampleFolder = "$targetFolder/code/ALZ-PowerShell-Module/docs/wiki/examples/starter-module-config/complete-multi-region"
-
-Copy-Item -Path "$exampleFolder/config-hub-and-spoke-vnet-multi-region.yaml" -Destination "$terraformConfigFolder/config-hub-and-spoke-vnet-multi-region.yaml" -Force
-Copy-Item -Path "$exampleFolder/config-hub-and-spoke-vnet-single-region.yaml" -Destination "$terraformConfigFolder/config-hub-and-spoke-vnet-single-region.yaml" -Force
-Copy-Item -Path "$exampleFolder/config-virtual-wan-multi-region.yaml" -Destination "$terraformConfigFolder/config-virtual-wan-multi-region.yaml" -Force
-Copy-Item -Path "$exampleFolder/config-virtual-wan-single-region.yaml" -Destination "$terraformConfigFolder/config-virtual-wan-single-region.yaml" -Force
+$bootstrapConfigFolderBicep = "$targetFolder/code/ALZ-Bicep/accelerator/examples/bootstrap"
+Copy-Item -Path "$bootstrapConfigFolderBicep/inputs-azure-devop.yaml" -Destination "$bicepConfigFolder/inputs-azure-devops.yaml" -Force
+Copy-Item -Path "$bootstrapConfigFolderBicep/inputs-github.yaml" -Destination "$bicepConfigFolder/inputs-github.yaml" -Force
+Copy-Item -Path "$bootstrapConfigFolderBicep/inputs-local.yaml" -Destination "$bicepConfigFolder/inputs-local.yaml" -Force
 
 ```
 
@@ -132,7 +126,8 @@ Deploy-Accelerator `
     -bootstrapModuleOverrideFolderPath "/$targetFolder/code/accelerator-bootstrap-modules" `
     -starterModuleOverrideFolderPath "/$targetFolder/code/ALZ-Bicep" `
     -output "/$targetFolder/acc/bicep/output/azuredevops" `
-    -inputs "/$targetFolder/acc/bicep/config/inputs-azuredevops.yaml" `
+    -inputs "/$targetFolder/acc/bicep/config/inputs-azure-devops.yaml" `
+    -skipAlzModuleVersionRequirementsCheck `
     -verbose `
     -replaceFiles  # This will replace the files in the output folder with the files in the bootstrap and starter modules, so any updates are taken into account
 
@@ -157,6 +152,7 @@ Deploy-Accelerator `
     -starterModuleOverrideFolderPath "/$targetFolder/code/ALZ-Bicep" `
     -output "/$targetFolder/acc/bicep/output/github" `
     -inputs "/$targetFolder/acc/bicep/config/inputs-github.yaml" `
+    -skipAlzModuleVersionRequirementsCheck `
     -verbose `
     -replaceFiles  # This will replace the files in the output folder with the files in the bootstrap and starter modules, so any updates are taken into account
 
@@ -181,6 +177,7 @@ Deploy-Accelerator `
     -starterModuleOverrideFolderPath "/$targetFolder/code/ALZ-Bicep" `
     -output "/$targetFolder/acc/bicep/output/local" `
     -inputs "/$targetFolder/acc/bicep/config/inputs-local.yaml" `
+    -skipAlzModuleVersionRequirementsCheck `
     -verbose `
     -replaceFiles  # This will replace the files in the output folder with the files in the bootstrap and starter modules, so any updates are taken into account
 
@@ -196,6 +193,7 @@ Run this from the VSCode terminal for the ALZ-PowerShell-Module repository:
 Invoke-Build -File .\src\ALZ.build.ps1
 
 $targetFolder = "dev"
+$bootstrapConfigFolderTerraform = "$targetFolder/code/alz-terraform-accelerator/templates/platform_landing_zone/examples/full-multi-region"
 
 # Uncomment to start fresh rather than relying on the -replaceFiles parameter
 # Remove-Item -Path "/$targetFolder/acc/terraform/output/azuredevops" -Recurse -Force
@@ -204,7 +202,8 @@ Deploy-Accelerator `
     -bootstrapModuleOverrideFolderPath "/$targetFolder/code/accelerator-bootstrap-modules" `
     -starterModuleOverrideFolderPath "/$targetFolder/code/alz-terraform-accelerator/templates" `
     -output "/$targetFolder/acc/terraform/output/azuredevops" `
-    -inputs "/$targetFolder/acc/terraform/config/inputs-azuredevops.yaml", "/$targetFolder/acc/terraform/config/config-hub-and-spoke-vnet-multi-region.yaml" `
+    -inputs "/$targetFolder/acc/terraform/config/inputs-azuredevops.yaml", "/$bootstrapConfigFolderTerraform/hub-and-spoke-vnet.tfvars" `
+    -skipAlzModuleVersionRequirementsCheck `
     -verbose `
     -replaceFiles  # This will replace the files in the output folder with the files in the bootstrap and starter modules, so any updates are taken into account
 
@@ -222,6 +221,7 @@ Run this from the VSCode terminal for the ALZ-PowerShell-Module repository:
 Invoke-Build -File .\src\ALZ.build.ps1
 
 $targetFolder = "dev"
+$bootstrapConfigFolderTerraform = "$targetFolder/code/alz-terraform-accelerator/templates/platform_landing_zone/examples/full-multi-region"
 
 # Uncomment to start fresh rather than relying on the -replaceFiles parameter
 # Remove-Item -Path "/$targetFolder/acc/terraform/output/github" -Recurse -Force
@@ -230,7 +230,8 @@ Deploy-Accelerator `
     -bootstrapModuleOverrideFolderPath "/$targetFolder/code/accelerator-bootstrap-modules" `
     -starterModuleOverrideFolderPath "/$targetFolder/code/alz-terraform-accelerator/templates" `
     -output "/$targetFolder/acc/terraform/output/github" `
-    -inputs "/$targetFolder/acc/terraform/config/inputs-github.yaml", "/$targetFolder/acc/terraform/config/config-hub-and-spoke-vnet-multi-region.yaml" `
+    -inputs "/$targetFolder/acc/terraform/config/inputs-github.yaml", "/$bootstrapConfigFolderTerraform/hub-and-spoke-vnet.tfvars" `
+    -skipAlzModuleVersionRequirementsCheck `
     -verbose `
     -replaceFiles  # This will replace the files in the output folder with the files in the bootstrap and starter modules, so any updates are taken into account
 
@@ -248,6 +249,7 @@ Run this from the VSCode terminal for the ALZ-PowerShell-Module repository:
 Invoke-Build -File .\src\ALZ.build.ps1
 
 $targetFolder = "dev"
+$bootstrapConfigFolderTerraform = "$targetFolder/code/alz-terraform-accelerator/templates/platform_landing_zone/examples/full-multi-region"
 
 # Uncomment to start fresh rather than relying on the -replaceFiles parameter
 # Remove-Item -Path "/$targetFolder/acc/terraform/output/azuredevops" -Recurse -Force
@@ -256,7 +258,8 @@ Deploy-Accelerator `
     -bootstrapModuleOverrideFolderPath "/$targetFolder/code/accelerator-bootstrap-modules" `
     -starterModuleOverrideFolderPath "/$targetFolder/code/alz-terraform-accelerator/templates" `
     -output "/$targetFolder/acc/terraform/output/local" `
-    -inputs "/$targetFolder/acc/terraform/config/inputs-local.yaml", "/$targetFolder/acc/terraform/config/config-hub-and-spoke-vnet-multi-region.yaml" `
+    -inputs "/$targetFolder/acc/terraform/config/inputs-local.yaml", "/$bootstrapConfigFolderTerraform/hub-and-spoke-vnet.tfvars" `
+    -skipAlzModuleVersionRequirementsCheck `
     -verbose `
     -replaceFiles  # This will replace the files in the output folder with the files in the bootstrap and starter modules, so any updates are taken into account
 
