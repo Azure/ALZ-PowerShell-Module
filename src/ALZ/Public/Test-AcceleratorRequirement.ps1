@@ -15,6 +15,13 @@ function Test-AcceleratorRequirement {
     .COMPONENT
         ALZ
     #>
-
-    Test-Tooling
+    param (
+        [Parameter(
+            Mandatory = $false,
+            HelpMessage = "[OPTIONAL] Determines whether to skip the requirements check for the ALZ PowerShell Module version only. This is not recommended."
+        )]
+        [Alias("skipAlzModuleVersionRequirementsCheck")]
+        [switch] $skip_alz_module_version_requirements_check
+    )
+    Test-Tooling -skipAlzModuleVersionCheck:$skip_alz_module_version_requirements_check.IsPresent
 }

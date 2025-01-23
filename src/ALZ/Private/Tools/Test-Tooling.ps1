@@ -1,4 +1,10 @@
 function Test-Tooling {
+    [CmdletBinding(SupportsShouldProcess = $true)]
+    param(
+        [Parameter(Mandatory = $false)]
+        [switch]$skipAlzModuleVersionCheck
+    )
+
     $checkResults = @()
     $hasFailure = $false
 
@@ -149,24 +155,38 @@ function Test-Tooling {
         }
     }
 
-    # Check if latest ALZ module is installed
-    Write-Verbose "Checking ALZ module version"
-    $alzModuleCurrentVersion = Get-InstalledModule -Name ALZ
-    $alzModuleLatestVersion = Find-Module -Name ALZ
-    if ($alzModuleCurrentVersion.Version -lt $alzModuleLatestVersion.Version) {
-        $checkResults += @{
-            message = "ALZ module is not the latest version. Your version: $($alzModuleCurrentVersion.Version), Latest version: $($alzModuleLatestVersion.Version). Please update to the latest version using 'Update-Module ALZ'."
-            result  = "Failure"
-        }
-        $hasFailure = $true
+    if($skipAlzModuleVersionCheck.IsPresent) {
+        Write-Verbose "Skipping ALZ module version check"
     } else {
-        $checkResults += @{
-            message = "ALZ module is the latest version ($($alzModuleCurrentVersion.Version))."
-            result  = "Success"
+        # Check if latest ALZ module is installed
+        Write-Verbose "Checking ALZ module version"
+        $alzModuleCurrentVersion = Get-InstalledModule -Name ALZ -ErrorAction SilentlyContinue
+        if($null -eq $alzModuleCurrentVersion) {
+            $checkResults += @{
+                message = "ALZ module is not correctly installed. Please install the latest version using 'Install-Module ALZ'."
+                result  = "Failure"
+            }
+            $hasFailure = $true
+        }
+        $alzModuleLatestVersion = Find-Module -Name ALZ
+        if ($null -ne $alzModuleCurrentVersion) {
+            if ($alzModuleCurrentVersion.Version -lt $alzModuleLatestVersion.Version) {
+                $checkResults += @{
+                    message = "ALZ module is not the latest version. Your version: $($alzModuleCurrentVersion.Version), Latest version: $($alzModuleLatestVersion.Version). Please update to the latest version using 'Update-Module ALZ'."
+                    result  = "Failure"
+                }
+                $hasFailure = $true
+            } else {
+                $checkResults += @{
+                    message = "ALZ module is the latest version ($($alzModuleCurrentVersion.Version))."
+                    result  = "Success"
+                }
+            }
         }
     }
 
     Write-Verbose "Showing check results"
+    Write-Verbose $(ConvertTo-Json $checkResults -Depth 100)
     $checkResults | ForEach-Object {[PSCustomObject]$_} | Format-Table -Property @{
         Label = "Check Result"; Expression = {
             switch ($_.result) {
