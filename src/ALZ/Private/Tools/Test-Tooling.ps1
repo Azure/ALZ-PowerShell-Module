@@ -41,36 +41,56 @@ function Test-Tooling {
         $hasFailure = $true
     }
 
-    # Check if Azure CLI is installed
-    Write-Verbose "Checking Azure CLI installation"
-    $azCliPath = Get-Command az -ErrorAction SilentlyContinue
-    if ($azCliPath) {
-        $checkResults += @{
-            message = "Azure CLI is installed."
-            result  = "Success"
+    # Check if using Service Principal Auth
+    $nonAzCliEnvVars = @(
+        "ARM_CLIENT_ID",
+        "ARM_SUBSCRIPTION_ID",
+        "ARM_TENANT_ID"
+    )
+
+    $envVarsSet = $true
+    foreach($envVar in $nonAzCliEnvVars) {
+        $envVarValue = [System.Environment]::GetEnvironmentVariable($envVar)
+        if($envVarValue -eq $null -or $envVarValue -eq "") {
+            $envVarsSet = $false
+            break
         }
-    } else {
-        $checkResults += @{
-            message = "Azure CLI is not installed. Follow the instructions here: https://learn.microsoft.com/en-us/cli/azure/install-azure-cli"
-            result  = "Failure"
-        }
-        $hasFailure = $true
     }
 
-    # Check if Azure CLI is logged in
-    Write-Verbose "Checking Azure CLI login status"
-    $azCliAccount = $(az account show -o json) | ConvertFrom-Json
-    if ($azCliAccount) {
-        $checkResults += @{
-            message = "Azure CLI is logged in. Tenant ID: $($azCliAccount.tenantId), Subscription: $($azCliAccount.name) ($($azCliAccount.id))"
-            result  = "Success"
-        }
+    if($envVarsSet) {
+        Write-InformationColored "Using Service Principal Authentication, skipping Azure CLI checks" -ForegroundColor Yellow -NewLineBefore -InformationAction Continue
     } else {
-        $checkResults += @{
-            message = "Azure CLI is not logged in. Please login to Azure CLI using 'az login -t `"00000000-0000-0000-0000-000000000000}`"', replacing the empty GUID with your tenant ID."
-            result  = "Failure"
+        # Check if Azure CLI is installed
+        Write-Verbose "Checking Azure CLI installation"
+        $azCliPath = Get-Command az -ErrorAction SilentlyContinue
+        if ($azCliPath) {
+            $checkResults += @{
+                message = "Azure CLI is installed."
+                result  = "Success"
+            }
+        } else {
+            $checkResults += @{
+                message = "Azure CLI is not installed. Follow the instructions here: https://learn.microsoft.com/en-us/cli/azure/install-azure-cli"
+                result  = "Failure"
+            }
+            $hasFailure = $true
         }
-        $hasFailure = $true
+
+        # Check if Azure CLI is logged in
+        Write-Verbose "Checking Azure CLI login status"
+        $azCliAccount = $(az account show -o json) | ConvertFrom-Json
+        if ($azCliAccount) {
+            $checkResults += @{
+                message = "Azure CLI is logged in. Tenant ID: $($azCliAccount.tenantId), Subscription: $($azCliAccount.name) ($($azCliAccount.id))"
+                result  = "Success"
+            }
+        } else {
+            $checkResults += @{
+                message = "Azure CLI is not logged in. Please login to Azure CLI using 'az login -t `"00000000-0000-0000-0000-000000000000}`"', replacing the empty GUID with your tenant ID."
+                result  = "Failure"
+            }
+            $hasFailure = $true
+        }
     }
 
     # Check if latest ALZ module is installed
