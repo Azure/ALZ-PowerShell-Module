@@ -148,7 +148,7 @@ function Invoke-Terraform {
 
         if($removeSubscriptionId) {
             Write-Verbose "Removing environment variable ARM_SUBSCRIPTION_ID that was set prior to this run"
-            Remove-Item $env:ARM_SUBSCRIPTION_ID = $null
+            $env:ARM_SUBSCRIPTION_ID = $null
         }
 
         # Stop and display timer
