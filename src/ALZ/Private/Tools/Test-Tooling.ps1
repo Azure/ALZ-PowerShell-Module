@@ -166,6 +166,7 @@ function Test-Tooling {
             switch ($_.result) {
                 'Success' { $color = "92"; break }
                 'Failure' { $color = "91"; break }
+                'Warning' { $color = "93"; break }
                 default { $color = "0" }
             }
             $e = [char]27
