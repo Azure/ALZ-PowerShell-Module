@@ -175,9 +175,15 @@ function Deploy-Accelerator {
             Mandatory = $false,
             HelpMessage = "[OPTIONAL] Determines whether to skip the requirements check. This is not recommended."
         )]
-        [Alias("sr")]
         [Alias("skipRequirementsCheck")]
-        [switch] $skip_requirements_check
+        [switch] $skip_requirements_check,
+
+        [Parameter(
+            Mandatory = $false,
+            HelpMessage = "[OPTIONAL] Determines whether to skip the requirements check for the ALZ PowerShell Module version only. This is not recommended."
+        )]
+        [Alias("skipAlzModuleVersionRequirementsCheck")]
+        [switch] $skip_alz_module_version_requirements_check
     )
 
     $ProgressPreference = "SilentlyContinue"
@@ -186,7 +192,7 @@ function Deploy-Accelerator {
         Write-InformationColored "WARNING: Skipping the software requirements check..." -ForegroundColor Yellow -InformationAction Continue
     } else {
         Write-InformationColored "Checking the software requirements for the Accelerator..." -ForegroundColor Green -InformationAction Continue
-        Test-Tooling
+        Test-Tooling -skipAlzModuleVersionCheck:$skip_alz_module_version_requirements_check.IsPresent
     }
 
     Write-InformationColored "Getting ready to deploy the accelerator with you..." -ForegroundColor Green -NewLineBefore -InformationAction Continue
