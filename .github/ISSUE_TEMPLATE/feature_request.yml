@@ -34,12 +34,9 @@ body:
       multiple: false
       options:
         - bicep - complete
-        - terraform - complete_multi_region
+        - terraform - platform_landing_zone
         - terraform - microsoft_cloud_for_sovereignty
         - terraform - microsoft_cloud_for_financial_services
-        - terraform - complete
-        - terraform - hubnetworking
-        - terraform - basic
         - other
         - not relevant
     validations:
