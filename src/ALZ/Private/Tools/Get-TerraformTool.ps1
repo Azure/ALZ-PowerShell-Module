@@ -13,6 +13,8 @@ function Get-TerraformTool {
             throw "Unable to query Terraform version, please check your internet connection and try again..."
         }
         $version = ($versionResponse).Content | ConvertFrom-Json | Select-Object -ExpandProperty current_version
+        $version = $version.TrimStart("v")
+        Write-Verbose "Latest version of Terraform is $version"
     }
 
     Write-Verbose "Required version of Terraform is $version"
