@@ -12,7 +12,7 @@ function Get-TerraformTool {
         if($versionResponse.StatusCode -ne "200") {
             throw "Unable to query Terraform version, please check your internet connection and try again..."
         }
-        $version = ($versionResponse).Content | ConvertFrom-Json | Select-Object -ExpandProperty current_version
+        $version = ($versionResponse).Content | ConvertFrom-Json | Select-Object -ExpandProperty current_version | ForEach-Object { $_ -replace '^v', '' }
     }
 
     Write-Verbose "Required version of Terraform is $version"
