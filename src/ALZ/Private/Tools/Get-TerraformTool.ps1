@@ -7,14 +7,23 @@ function Get-TerraformTool {
         [string]$toolsPath = ".\terraform"
     )
 
+    $release = $null
+
     if($version -eq "latest") {
-        $versionResponse = Invoke-WebRequest -Uri "https://checkpoint-api.hashicorp.com/v1/check/terraform"
+        $versionResponse = Invoke-WebRequest -Uri "https://api.releases.hashicorp.com/v1/releases/terraform?limit=20"
         if($versionResponse.StatusCode -ne "200") {
             throw "Unable to query Terraform version, please check your internet connection and try again..."
         }
-        $version = ($versionResponse).Content | ConvertFrom-Json | Select-Object -ExpandProperty current_version
-        $version = $version.TrimStart("v")
+        $releases = ($versionResponse).Content | ConvertFrom-Json | Where-Object -Property is_prerelease -EQ $false
+        $release = $releases[0]
+        $version = $releases[0].version
         Write-Verbose "Latest version of Terraform is $version"
+    } else {
+        $versionResponse = Invoke-WebRequest -Uri "https://api.releases.hashicorp.com/v1/releases/terraform/$($version)"
+        if($versionResponse.StatusCode -ne "200") {
+            throw "Unable to query Terraform version, please check the supplied version and try again..."
+        }
+        $release = ($versionResponse).Content
     }
 
     Write-Verbose "Required version of Terraform is $version"
@@ -45,7 +54,7 @@ function Get-TerraformTool {
 
     $zipfilePath = "$unzipdir.zip"
 
-    $url = "https://releases.hashicorp.com/terraform/$($version)/terraform_$($version)_$($osArchitecture.osAndArchitecture).zip"
+    $url = $release.builds | Where-Object { $_.arch -eq $osArchitecture.architecture -and $_.os -eq $osArchitecture.os } | Select-Object -First 1 -ExpandProperty url
 
     if(!(Test-Path $toolsPath)) {
         New-Item -ItemType Directory -Path $toolsPath| Out-String | Write-Verbose
