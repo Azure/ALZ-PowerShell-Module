@@ -31,7 +31,7 @@ To check the requirements, run these commands:
 
 ```pwsh
 Install-Module -Name ALZ
-Test-AcceleratorRequirements
+Test-AcceleratorRequirement
 ```
 
 ## Contributing
