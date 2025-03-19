@@ -86,10 +86,17 @@ function Deploy-Accelerator {
 
         [Parameter(
             Mandatory = $false,
-            HelpMessage = "[OPTIONAL] Determines that this run is to destroup the bootstrap. This is used to cleanup experiments. Environment variable: ALZ_destroy. Config file input: destroy."
+            HelpMessage = "[OPTIONAL] Determines that this run is to destroy the bootstrap. This is used to cleanup experiments. Environment variable: ALZ_destroy. Config file input: destroy."
         )]
         [Alias("d")]
         [switch] $destroy,
+
+        [Parameter(
+            Mandatory = $false,
+            HelpMessage = "[OPTIONAL] Determines that this run is to plan the bootstrap rather than apply. Environment variable: ALZ_planOnly. Config file input: planOnly."
+        )]
+        [Alias("p")]
+        [switch] $planOnly,
 
         [Parameter(
             Mandatory = $false,
@@ -375,6 +382,7 @@ function Deploy-Accelerator {
             -starterConfig $starterConfig `
             -autoApprove:$inputConfig.auto_approve.Value `
             -destroy:$inputConfig.destroy.Value `
+            -planOnly:$inputConfig.planOnly.Value `
             -zonesSupport $zonesSupport `
             -writeVerboseLogs:$inputConfig.write_verbose_logs.Value `
             -hclParserToolPath $hclParserToolPath `

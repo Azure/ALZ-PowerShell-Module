@@ -14,6 +14,9 @@ function Invoke-Terraform {
         [switch] $destroy,
 
         [Parameter(Mandatory = $false)]
+        [switch] $planOnly,
+
+        [Parameter(Mandatory = $false)]
         [string] $output = "",
 
         [Parameter(Mandatory = $false)]
@@ -40,6 +43,11 @@ function Invoke-Terraform {
 
         terraform -chdir="$moduleFolderPath" init
         $action = "apply"
+
+        if($planOnly) {
+            $action = "plan"
+        }
+
         if($destroy) {
             $action = "destroy"
         }
@@ -89,7 +97,9 @@ function Invoke-Terraform {
             throw "Terraform plan failed with exit code $exitCode. Please review the error and try again or raise an issue."
         }
 
-        if(!$autoApprove) {
+        if($planOnly) {
+            return
+        } elseif(!$autoApprove) {
             Write-InformationColored "Terraform plan has completed, please review the plan and confirm you wish to continue." -ForegroundColor Yellow -NewLineBefore -InformationAction Continue
             $choices = [System.Management.Automation.Host.ChoiceDescription[]] @("&Yes", "&No")
             $message = "Please confirm you wish to apply the plan."
