@@ -38,6 +38,9 @@ function New-Bootstrap {
         [switch] $destroy,
 
         [Parameter(Mandatory = $false)]
+        [switch] $planOnly,
+
+        [Parameter(Mandatory = $false)]
         [PSCustomObject] $zonesSupport = $null,
 
         [Parameter(Mandatory = $false, HelpMessage = "An extra level of logging that is turned off by default for easier debugging.")]
@@ -273,10 +276,10 @@ function New-Bootstrap {
         Write-InformationColored "Thank you for providing those inputs, we are now initializing and applying Terraform to bootstrap your environment..." -ForegroundColor Green -NewLineBefore -InformationAction Continue
 
         if($autoApprove) {
-            Invoke-Terraform -moduleFolderPath $bootstrapModulePath -autoApprove -destroy:$destroy.IsPresent
+            Invoke-Terraform -moduleFolderPath $bootstrapModulePath -autoApprove -destroy:$destroy.IsPresent -planOnly:$planOnly.IsPresent
         } else {
             Write-InformationColored "Once the plan is complete you will be prompted to confirm the apply." -ForegroundColor Green -NewLineBefore -InformationAction Continue
-            Invoke-Terraform -moduleFolderPath $bootstrapModulePath -destroy:$destroy.IsPresent
+            Invoke-Terraform -moduleFolderPath $bootstrapModulePath -destroy:$destroy.IsPresent -planOnly:$planOnly.IsPresent
         }
 
         Write-InformationColored "Bootstrap has completed successfully! Thanks for using our tool. Head over to Phase 3 in the documentation to continue..." -ForegroundColor Green -NewLineBefore -InformationAction Continue

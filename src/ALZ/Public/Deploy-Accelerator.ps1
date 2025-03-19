@@ -86,10 +86,17 @@ function Deploy-Accelerator {
 
         [Parameter(
             Mandatory = $false,
-            HelpMessage = "[OPTIONAL] Determines that this run is to destroup the bootstrap. This is used to cleanup experiments. Environment variable: ALZ_destroy. Config file input: destroy."
+            HelpMessage = "[OPTIONAL] Determines that this run is to destroy the bootstrap. This is used to cleanup experiments. Environment variable: ALZ_destroy. Config file input: destroy."
         )]
         [Alias("d")]
         [switch] $destroy,
+
+        [Parameter(
+            Mandatory = $false,
+            HelpMessage = "[OPTIONAL] Determines that this run is to plan the bootstrap rather than apply. Environment variable: ALZ_planOnly. Config file input: planOnly."
+        )]
+        [Alias("p")]
+        [switch] $planOnly,
 
         [Parameter(
             Mandatory = $false,
@@ -188,7 +195,7 @@ function Deploy-Accelerator {
 
     $ProgressPreference = "SilentlyContinue"
 
-    if($skip_requirements_check.IsPresent) {
+    if ($skip_requirements_check.IsPresent) {
         Write-InformationColored "WARNING: Skipping the software requirements check..." -ForegroundColor Yellow -InformationAction Continue
     } else {
         Write-InformationColored "Checking the software requirements for the Accelerator..." -ForegroundColor Green -InformationAction Continue
@@ -201,7 +208,7 @@ function Deploy-Accelerator {
 
         # Check and install tools needed
         $toolsPath = Join-Path -Path $output_folder_path -ChildPath ".tools"
-        if($skipInternetChecks) {
+        if ($skipInternetChecks) {
             Write-InformationColored "Skipping Terraform tool check as you used the skipInternetCheck parameter. Please ensure you have the most recent version of Terraform installed" -ForegroundColor Yellow -InformationAction Continue
         } else {
             Write-InformationColored "Checking you have the latest version of Terraform installed..." -ForegroundColor Green -NewLineBefore -InformationAction Continue
@@ -213,7 +220,7 @@ function Deploy-Accelerator {
         $inputConfig = $null
         if ($inputConfigFilePaths.Length -eq 0) {
             $envInputConfigPaths = $env:ALZ_input_config_path
-            if($null -ne $envInputConfigPaths -and $envInputConfigPaths -ne "") {
+            if ($null -ne $envInputConfigPaths -and $envInputConfigPaths -ne "") {
                 $inputConfigFilePaths = $envInputConfigPaths -split ","
             } else {
                 Write-InformationColored "No input configuration file path has been provided. Please provide the path(s) to your configuration file(s)..." -ForegroundColor Yellow -InformationAction Continue
@@ -222,7 +229,7 @@ function Deploy-Accelerator {
         }
 
         # Get the input config from yaml and json files
-        foreach($inputConfigFilePath in $inputConfigFilePaths) {
+        foreach ($inputConfigFilePath in $inputConfigFilePaths) {
             $inputConfig = Get-ALZConfig -configFilePath $inputConfigFilePath -inputConfig $inputConfig -hclParserToolPath $hclParserToolPath
         }
 
@@ -231,13 +238,13 @@ function Deploy-Accelerator {
         $parametersWithValues = @{}
         foreach ($parameterKey in $parameters.Keys) {
             $parameter = $parameters[$parameterKey]
-            if($parameter.IsDynamic) {
+            if ($parameter.IsDynamic) {
                 continue
             }
 
             $parameterValue = Get-Variable -Name $parameterKey -ValueOnly -ErrorAction SilentlyContinue
 
-            if($null -ne $parameterValue) {
+            if ($null -ne $parameterValue) {
                 $parametersWithValues[$parameterKey] = @{
                     type    = $parameters[$parameterKey].ParameterType.Name
                     value   = $parameterValue
@@ -298,7 +305,7 @@ function Deploy-Accelerator {
         $zonesSupport = $null
 
         # Request the bootstrap type if not already specified
-        if($inputConfig.bootstrap_module_name.Value -eq "") {
+        if ($inputConfig.bootstrap_module_name.Value -eq "") {
             $inputConfig.bootstrap_module_name = @{
                 Value  = Request-SpecialInput -type "bootstrap" -bootstrapModules $bootstrapModules
                 Source = "user"
@@ -375,6 +382,7 @@ function Deploy-Accelerator {
             -starterConfig $starterConfig `
             -autoApprove:$inputConfig.auto_approve.Value `
             -destroy:$inputConfig.destroy.Value `
+            -planOnly:$inputConfig.planOnly.Value `
             -zonesSupport $zonesSupport `
             -writeVerboseLogs:$inputConfig.write_verbose_logs.Value `
             -hclParserToolPath $hclParserToolPath `
