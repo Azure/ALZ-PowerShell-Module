@@ -14,13 +14,13 @@ function Convert-BicepConfigToInputConfig {
     if ($PSCmdlet.ShouldProcess("Parse Interface Variables into Config", "modify")) {
 
         $configItems = [PSCustomObject]@{}
-        if($appendToObject -ne $null) {
+        if ($appendToObject -ne $null) {
             $configItems = $appendToObject
         }
 
         Write-Verbose $validators
 
-        foreach($variable in $bicepConfig.inputs.PSObject.Properties) {
+        foreach ($variable in $bicepConfig.inputs.PSObject.Properties) {
             Write-Verbose "Parsing variable $($variable.Name)"
             $description = $variable.Value.description
 
@@ -28,38 +28,38 @@ function Convert-BicepConfigToInputConfig {
             $configItem | Add-Member -NotePropertyName "Source" -NotePropertyValue $variable.Value.source
             $configItem | Add-Member -NotePropertyName "Value" -NotePropertyValue ""
 
-            if($variable.Value.PSObject.Properties.Name -contains "sourceInput") {
+            if ($variable.Value.PSObject.Properties.Name -contains "sourceInput") {
                 $configItem | Add-Member -NotePropertyName "SourceInput" -NotePropertyValue $variable.Value.sourceInput
             }
 
-            if($variable.Value.PSObject.Properties.Name -contains "pattern") {
+            if ($variable.Value.PSObject.Properties.Name -contains "pattern") {
                 $configItem | Add-Member -NotePropertyName "Pattern" -NotePropertyValue $variable.Value.pattern
             }
 
-            if($variable.Value.PSObject.Properties.Name -contains "process") {
+            if ($variable.Value.PSObject.Properties.Name -contains "process") {
                 $configItem | Add-Member -NotePropertyName "Process" -NotePropertyValue $variable.Value.process
             }
 
-            if($variable.Value.PSObject.Properties.Name -contains "default") {
+            if ($variable.Value.PSObject.Properties.Name -contains "default") {
                 $defaultValue = $variable.Value.default
                 $configItem | Add-Member -NotePropertyName "DefaultValue" -NotePropertyValue $defaultValue
             }
 
-            if($variable.Value.PSObject.Properties.Name -contains "validation") {
+            if ($variable.Value.PSObject.Properties.Name -contains "validation") {
                 $validationType = $variable.Value.validation
                 $validator = $validators.PSObject.Properties[$validationType].Value
                 $description = "$description ($($validator.Description))"
                 Write-Verbose "Adding $($variable.Value.validation) validation for $($variable.Name). Validation type: $($validator.Type)"
-                if($validator.Type -eq "AllowedValues"){
+                if ($validator.Type -eq "AllowedValues") {
                     $configItem | Add-Member -NotePropertyName "AllowedValues" -NotePropertyValue $validator.AllowedValues
                 }
-                if($validator.Type -eq "Valid"){
+                if ($validator.Type -eq "Valid") {
                     $configItem | Add-Member -NotePropertyName "Valid" -NotePropertyValue $validator.Valid
                 }
                 $configItem | Add-Member -NotePropertyName "Validator" -NotePropertyValue $validationType
             }
 
-            if($variable.Value.PSObject.Properties.Name -contains "targets") {
+            if ($variable.Value.PSObject.Properties.Name -contains "targets") {
                 $configItem | Add-Member -NotePropertyName "targets" -NotePropertyValue $variable.Value.targets
             }
 

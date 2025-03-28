@@ -17,7 +17,7 @@ function Convert-HCLVariablesToInputConfig {
     if ($PSCmdlet.ShouldProcess("Parse HCL Variables into Config", "modify")) {
         $terraformVariables = & $hclParserToolPath $targetVariableFile | ConvertFrom-Json
 
-        if($terraformVariables.PSObject.Properties.Name -notcontains "variable") {
+        if ($terraformVariables.PSObject.Properties.Name -notcontains "variable") {
             Write-Verbose "No variables found in $targetVariableFile, skipping..."
             return $appendToObject
         }
@@ -25,22 +25,22 @@ function Convert-HCLVariablesToInputConfig {
         Write-Verbose "Variables found in $targetVariableFile, processing..."
 
         $configItems = [PSCustomObject]@{}
-        if($appendToObject -ne $null) {
+        if ($appendToObject -ne $null) {
             $configItems = $appendToObject
         }
 
-        foreach($variable in $terraformVariables.variable.PSObject.Properties) {
-            if($variable.Value[0].PSObject.Properties.Name -contains "description") {
+        foreach ($variable in $terraformVariables.variable.PSObject.Properties) {
+            if ($variable.Value[0].PSObject.Properties.Name -contains "description") {
                 $description = $variable.Value[0].description
                 $validationTypeSplit = $description -split "\|"
 
                 $hasValidation = $false
 
-                if($validationTypeSplit.Length -gt 1) {
+                if ($validationTypeSplit.Length -gt 1) {
                     $description = $validationTypeSplit[0].Trim()
                 }
 
-                if($validationTypeSplit.Length -eq 2) {
+                if ($validationTypeSplit.Length -eq 2) {
                     $splitItem = $validationTypeSplit[1].Trim()
                     $validationType = $splitItem
                     $hasValidation = $true
@@ -51,17 +51,17 @@ function Convert-HCLVariablesToInputConfig {
             $configItem | Add-Member -NotePropertyName "Value" -NotePropertyValue ""
             $configItem | Add-Member -NotePropertyName "Source" -NotePropertyValue "input"
 
-            if($variable.Value[0].PSObject.Properties.Name -contains "default") {
+            if ($variable.Value[0].PSObject.Properties.Name -contains "default") {
                 $configItem | Add-Member -NotePropertyName "DefaultValue" -NotePropertyValue $variable.Value[0].default
             }
 
-            if($hasValidation) {
+            if ($hasValidation) {
                 $validator = $validators.PSObject.Properties[$validationType].Value
                 $description = "$description ($($validator.Description))"
-                if($validator.Type -eq "AllowedValues"){
+                if ($validator.Type -eq "AllowedValues") {
                     $configItem | Add-Member -NotePropertyName "AllowedValues" -NotePropertyValue $validator.AllowedValues
                 }
-                if($validator.Type -eq "Valid"){
+                if ($validator.Type -eq "Valid") {
                     $configItem | Add-Member -NotePropertyName "Valid" -NotePropertyValue $validator.Valid
                 }
                 $configItem | Add-Member -NotePropertyName "Validator" -NotePropertyValue $validationType

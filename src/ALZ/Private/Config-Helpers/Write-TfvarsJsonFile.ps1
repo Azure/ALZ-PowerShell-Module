@@ -13,26 +13,26 @@ function Write-TfvarsJsonFile {
 
     if ($PSCmdlet.ShouldProcess("Download Terraform Tools", "modify")) {
 
-        if(Test-Path $tfvarsFilePath) {
+        if (Test-Path $tfvarsFilePath) {
             Remove-Item -Path $tfvarsFilePath
         }
 
         $jsonObject = [ordered]@{}
 
-        foreach($configurationProperty in $configuration.PSObject.Properties | Sort-Object Name) {
-            if($skipItems -contains $configurationProperty.Name) {
+        foreach ($configurationProperty in $configuration.PSObject.Properties | Sort-Object Name) {
+            if ($skipItems -contains $configurationProperty.Name) {
                 Write-Verbose "Skipping configuration property: $($configurationProperty.Name)"
                 continue
             }
-            
+
             $configurationValue = $configurationProperty.Value.Value
 
-            if($null -ne $configurationValue -and $configurationValue.ToString() -eq "sourced-from-env") {
+            if ($null -ne $configurationValue -and $configurationValue.ToString() -eq "sourced-from-env") {
                 Write-Verbose "Sourced from env var: $($configurationProperty.Name)"
                 continue
             }
 
-            if($configurationProperty.Value.Validator -eq "configuration_file_path") {
+            if ($configurationProperty.Value.Validator -eq "configuration_file_path") {
                 $configurationValue = [System.IO.Path]::GetFileName($configurationValue)
             }
 

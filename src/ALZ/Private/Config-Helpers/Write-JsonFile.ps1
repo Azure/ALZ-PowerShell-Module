@@ -10,7 +10,7 @@ function Write-JsonFile {
 
     if ($PSCmdlet.ShouldProcess("Download Terraform Tools", "modify")) {
 
-        if(Test-Path $jsonFilePath) {
+        if (Test-Path $jsonFilePath) {
             Remove-Item -Path $jsonFilePath
         }
 
@@ -18,7 +18,7 @@ function Write-JsonFile {
 
         foreach ($configKey in $configuration.PsObject.Properties | Sort-Object Name) {
             foreach ($target in $configKey.Value.Targets) {
-                if($target.Destination -eq "Environment") {
+                if ($target.Destination -eq "Environment") {
                     $environmentVariables.$($target.Name) = $configKey.Value.Value
                 }
             }
