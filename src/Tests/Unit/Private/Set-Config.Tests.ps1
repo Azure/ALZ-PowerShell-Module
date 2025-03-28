@@ -22,21 +22,21 @@ InModuleScope 'ALZ' {
 
                 $config = @'
                 {
-                    "parameters":{
-                       "Prefix":{
-                          "Type":"UserInput",
-                          "Description":"The prefix that will be added to all resources created by this deployment. (e.g. 'alz')",
-                          "Targets":[
-                             {
-                                "Name":"parTopLevelManagementGroupPrefix",
-                                "Destination":"Parameters"
-                             }
-                          ],
-                          "DefaultValue":"alz",
-                          "Value":""
-                       }
+                    "parameters": {
+                        "Prefix": {
+                            "Type": "UserInput",
+                            "Description": "The prefix that will be added to all resources created by this deployment. (e.g. 'alz')",
+                            "Targets": [
+                                {
+                                    "Name": "parTopLevelManagementGroupPrefix",
+                                    "Destination": "Parameters"
+                                }
+                            ],
+                            "DefaultValue": "alz",
+                            "Value": ""
+                        }
                     }
-                 }
+                }
 '@ | ConvertFrom-Json
 
                 Set-Config -configurationParameters $config.Parameters
