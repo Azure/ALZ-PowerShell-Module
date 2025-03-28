@@ -42,6 +42,7 @@ jobs:
           # VALIDATE_TERRAFORM_TERRASCAN: true # disabled for now as does not support TF 1.3 optional(type, default)
           VALIDATE_TERRAFORM_TFLINT: true
           VALIDATE_YAML: true
+          VALIDATE_EDITORCONFIG: true
           # VALIDATE_GO: true # Disabled because it down not work :(
           # Additional settings:
           # If a shell script is not executable, the bash-exec
