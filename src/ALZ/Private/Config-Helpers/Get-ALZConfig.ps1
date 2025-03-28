@@ -8,19 +8,19 @@ function Get-ALZConfig {
         [string] $hclParserToolPath = ""
     )
 
-    if(!(Test-Path $configFilePath)) {
+    if (!(Test-Path $configFilePath)) {
         Write-Error "The config file does not exist at $configFilePath"
         throw "The config file does not exist at $configFilePath"
     }
 
-    if($null -eq $inputConfig) {
+    if ($null -eq $inputConfig) {
         $inputConfig = [PSCustomObject]@{}
     }
 
     # Import the config and transform it to a PowerShell object
     $extension = (Get-Item -Path $configFilePath).Extension.ToLower()
     $config = $null
-    if($extension -eq ".yml" -or $extension -eq ".yaml") {
+    if ($extension -eq ".yml" -or $extension -eq ".yaml") {
         if (!(Get-Module -ListAvailable -Name powershell-Yaml)) {
             Write-Host "Installing YAML module"
             Install-Module powershell-Yaml -Force
@@ -33,7 +33,7 @@ function Get-ALZConfig {
             throw $errorMessage
         }
 
-    } elseif($extension -eq ".json") {
+    } elseif ($extension -eq ".json") {
         try {
             $config = [PSCustomObject](Get-Content -Path $configFilePath | ConvertFrom-Json)
         } catch {
@@ -41,7 +41,7 @@ function Get-ALZConfig {
             Write-Error $errorMessage
             throw $errorMessage
         }
-    } elseif($extension -eq ".tfvars") {
+    } elseif ($extension -eq ".tfvars") {
         try {
             $config = [PSCustomObject](& $hclParserToolPath $configFilePath | ConvertFrom-Json)
         } catch {
@@ -55,7 +55,7 @@ function Get-ALZConfig {
 
     Write-Verbose "Config file loaded from $configFilePath with $($config.PSObject.Properties.Name.Count) properties."
 
-    foreach($property in $config.PSObject.Properties) {
+    foreach ($property in $config.PSObject.Properties) {
         $inputConfig | Add-Member -NotePropertyName $property.Name -NotePropertyValue @{
             Value  = $property.Value
             Source = $extension

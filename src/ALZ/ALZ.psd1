@@ -9,33 +9,33 @@
 @{
 
     # Script module or binary module file associated with this manifest.
-    RootModule        = 'ALZ.psm1'
+    RootModule           = 'ALZ.psm1'
 
     # Version number of this module.
-    ModuleVersion     = '0.1.0'
+    ModuleVersion        = '0.1.0'
 
     # Supported PSEditions
     # CompatiblePSEditions = @()
 
     # ID used to uniquely identify this module
-    GUID              = '74a4385f-281e-4776-bd7c-3b6a09d6ba63'
+    GUID                 = '74a4385f-281e-4776-bd7c-3b6a09d6ba63'
 
     # Author of this module
-    Author            = 'Microsoft Corporation'
+    Author               = 'Microsoft Corporation'
 
     # Company or vendor of this module
-    CompanyName       = 'Microsoft Corporation'
+    CompanyName          = 'Microsoft Corporation'
 
     # Copyright statement for this module
-    Copyright         = '(c) Microsoft Corporation. All rights reserved.'
+    Copyright            = '(c) Microsoft Corporation. All rights reserved.'
 
     # Description of the functionality provided by this module
-    Description       = 'Azure Landing Zones Powershell Module'
+    Description          = 'Azure Landing Zones Powershell Module'
 
     CompatiblePSEditions = 'Core'
 
     # Minimum version of the PowerShell engine required by this module
-    PowerShellVersion = '7.4'
+    PowerShellVersion    = '7.4'
 
     # Name of the PowerShell host required by this module
     # PowerShellHostName = ''
@@ -53,7 +53,16 @@
     # ProcessorArchitecture = ''
 
     # Modules that must be imported into the global environment prior to importing this module
-    RequiredModules   = @()
+    RequiredModules      = @(
+        @{
+            ModuleName    = 'Az.Accounts'
+            ModuleVersion = '2.10.4'
+        },
+        @{
+            ModuleName    = 'Az.Resources'
+            ModuleVersion = '6.5.0'
+        }
+    )
 
     # Assemblies that must be loaded prior to importing this module
     # RequiredAssemblies = @()
@@ -71,19 +80,20 @@
     # NestedModules = @()
 
     # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-    FunctionsToExport = @(
+    FunctionsToExport    = @(
         'Test-AcceleratorRequirement',
-        'Deploy-Accelerator'
+        'Deploy-Accelerator',
+        'Invoke-EABillingSPNPermissionsSetup'
     )
 
     # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
-    CmdletsToExport   = @()
+    CmdletsToExport      = @()
 
     # Variables to export from this module
-    VariablesToExport = '*'
+    VariablesToExport    = '*'
 
     # Aliases to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no aliases to export.
-    AliasesToExport   = @()
+    AliasesToExport      = @()
 
     # DSC resources to export from this module
     # DscResourcesToExport = @()
@@ -95,7 +105,7 @@
     # FileList = @()
 
     # Private data to pass to the module specified in RootModule/ModuleToProcess. This may also contain a PSData hashtable with additional module metadata used by PowerShell.
-    PrivateData       = @{
+    PrivateData          = @{
 
         PSData = @{
 
@@ -112,7 +122,7 @@
             LicenseUri                 = 'https://github.com/Azure/ALZ-PowerShell-Module/blob/main/LICENSE'
 
             # A URL to the main website for this project.
-            ProjectUri                 = 'https://github.com/Azure/ALZ-Powershell-Module'
+            ProjectUri                 = 'https://github.com/Azure/ALZ-PowerShell-Module'
 
             # A URL to an icon representing this module.
             IconUri                    = 'https://raw.githubusercontent.com/Azure/ALZ-PowerShell-Module/main/docs/rsz_alzlogo.png'
