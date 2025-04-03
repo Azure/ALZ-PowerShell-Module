@@ -53,16 +53,7 @@
     # ProcessorArchitecture = ''
 
     # Modules that must be imported into the global environment prior to importing this module
-    RequiredModules      = @(
-        @{
-            ModuleName    = 'Az.Accounts'
-            ModuleVersion = '2.10.4'
-        },
-        @{
-            ModuleName    = 'Az.Resources'
-            ModuleVersion = '6.5.0'
-        }
-    )
+    RequiredModules      = @()
 
     # Assemblies that must be loaded prior to importing this module
     # RequiredAssemblies = @()
