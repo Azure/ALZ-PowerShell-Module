@@ -34,6 +34,8 @@ Creates a new SPN, or uses an existing SPN/MI, and assigns it the 'SubscriptionC
 
     # Check for pre-reqs
     #Requires -PSEdition Core
+    #Requires -Modules @{ ModuleName="Az.Accounts"; ModuleVersion="2.10.4" }
+    #Requires -Modules @{ ModuleName="Az.Resources"; ModuleVersion="6.5.0" }
 
     [CmdletBinding(DefaultParameterSetName = "Default")]
     param (
