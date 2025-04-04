@@ -29,15 +29,6 @@ $null = $modulesToInstall.Add(([PSCustomObject]@{
             ModuleName    = 'platyPS'
             ModuleVersion = '0.12.0'
         }))
-# Required for Invoke-EABillingSPNPermissionsSetup to work
-$null = $modulesToInstall.Add(([PSCustomObject]@{
-            ModuleName    = 'Az.Accounts'
-            ModuleVersion = '2.10.4'
-        }))
-$null = $modulesToInstall.Add(([PSCustomObject]@{
-            ModuleName    = 'Az.Resources'
-            ModuleVersion = '6.5.0'
-        }))
 
 'Installing PowerShell Modules'
 foreach ($module in $modulesToInstall) {
