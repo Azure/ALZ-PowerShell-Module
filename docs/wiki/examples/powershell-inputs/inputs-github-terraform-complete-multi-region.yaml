@@ -29,6 +29,10 @@ use_private_networking: true
 allow_storage_access_from_my_ip: false
 apply_approvers: ["<email-address>"]
 create_branch_policies: true
+# GitHub Actions repository access level for private repositories within an organization
+# Valid values: "none", "user", "organization", "enterprise"
+# Set to "organization" to allow workflows to access reusable workflows from other private repos in the same org
+github_actions_repository_access_level: "organization"
 
 # Complete Multi Region Starter Module Specific Variables
 # (Details: https://github.com/Azure/ALZ-PowerShell-Module/wiki/%5BUser-Guide%5D-Starter-Module-Terraform-Complete-Multi-Region)
