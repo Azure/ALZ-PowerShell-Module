@@ -240,7 +240,7 @@ function New-Bootstrap {
                     Write-Verbose "Copying folder $additionalFile to $destination"
                     Copy-Item -Path "$additionalFile/*" -Destination $destination -Recurse -Force
                 } else {
-                    $fileName = [System.IO.Path]::GetFileName($inputConfigFilePath)
+                    $fileName = [System.IO.Path]::GetFileName($additionalFile)
                     $destination = Join-Path -Path $starterRootModuleFolderPath -ChildPath $fileName
                     Write-Verbose "Copying file $additionalFile to $destination"
                     Copy-Item -Path $additionalFile -Destination $destination -Force
