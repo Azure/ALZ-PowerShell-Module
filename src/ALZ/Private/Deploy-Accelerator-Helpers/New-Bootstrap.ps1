@@ -58,7 +58,11 @@ function New-Bootstrap {
 
         [Parameter(Mandatory = $false)]
         [string[]]
-        $starterAdditionalFiles = @()
+        $starterAdditionalFiles = @(),
+
+        [Parameter(Mandatory = $false)]
+        [switch]
+        $generateOnly
     )
 
     if ($PSCmdlet.ShouldProcess("ALZ-Terraform module configuration", "modify")) {
@@ -270,15 +274,25 @@ function New-Bootstrap {
         }
 
         # Running terraform init and apply
-        Write-InformationColored "Thank you for providing those inputs, we are now initializing and applying Terraform to bootstrap your environment..." -ForegroundColor Green -NewLineBefore -InformationAction Continue
-
-        if($autoApprove) {
-            Invoke-Terraform -moduleFolderPath $bootstrapModulePath -autoApprove -destroy:$destroy.IsPresent
+        if ($generateOnly) {
+            Write-InformationColored "Thank you for providing those inputs, we are now generating the Terraform files for your environment..." -ForegroundColor Green -NewLineBefore -InformationAction Continue
         } else {
-            Write-InformationColored "Once the plan is complete you will be prompted to confirm the apply." -ForegroundColor Green -NewLineBefore -InformationAction Continue
-            Invoke-Terraform -moduleFolderPath $bootstrapModulePath -destroy:$destroy.IsPresent
+            Write-InformationColored "Thank you for providing those inputs, we are now initializing and applying Terraform to bootstrap your environment..." -ForegroundColor Green -NewLineBefore -InformationAction Continue
         }
 
-        Write-InformationColored "Bootstrap has completed successfully! Thanks for using our tool. Head over to Phase 3 in the documentation to continue..." -ForegroundColor Green -NewLineBefore -InformationAction Continue
+        if($autoApprove) {
+            Invoke-Terraform -moduleFolderPath $bootstrapModulePath -autoApprove -destroy:$destroy.IsPresent -generateOnly:$generateOnly.IsPresent
+        } else {
+            if (!$generateOnly) {
+                Write-InformationColored "Once the plan is complete you will be prompted to confirm the apply." -ForegroundColor Green -NewLineBefore -InformationAction Continue
+            }
+            Invoke-Terraform -moduleFolderPath $bootstrapModulePath -destroy:$destroy.IsPresent -generateOnly:$generateOnly.IsPresent
+        }
+
+        if ($generateOnly) {
+            Write-InformationColored "Terraform files have been generated successfully! You can now use them with your custom pipeline or terraform state configuration." -ForegroundColor Green -NewLineBefore -InformationAction Continue
+        } else {
+            Write-InformationColored "Bootstrap has completed successfully! Thanks for using our tool. Head over to Phase 3 in the documentation to continue..." -ForegroundColor Green -NewLineBefore -InformationAction Continue
+        }
     }
 }
