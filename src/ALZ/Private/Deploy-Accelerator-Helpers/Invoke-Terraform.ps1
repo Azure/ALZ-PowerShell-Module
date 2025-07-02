@@ -20,10 +20,19 @@ function Invoke-Terraform {
         [string] $outputFilePath = "",
 
         [Parameter(Mandatory = $false)]
-        [switch] $silent
+        [switch] $silent,
+
+        [Parameter(Mandatory = $false)]
+        [switch] $generateOnly
     )
 
     if ($PSCmdlet.ShouldProcess("Apply Terraform", "modify")) {
+        
+        if ($generateOnly) {
+            Write-InformationColored "Generate only mode enabled. Terraform files have been generated but terraform init, plan, and apply have been skipped." -ForegroundColor Green -NewLineBefore -InformationAction Continue
+            return
+        }
+
         # Check and Set Subscription ID
         $removeSubscriptionId = $false
         if ($null -eq $env:ARM_SUBSCRIPTION_ID -or $env:ARM_SUBSCRIPTION_ID -eq "") {

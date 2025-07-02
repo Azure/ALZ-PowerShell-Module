@@ -164,6 +164,13 @@ InModuleScope 'ALZ' {
                 Assert-MockCalled -CommandName New-Bootstrap -Exactly 1
                 Assert-MockCalled -CommandName New-ModuleSetup -Exactly 2
             }
+
+            It 'should call the correct functions for terraform module configuration with generate_only' {
+                Deploy-Accelerator -i "terraform" -b "github" -inputs "example.yml" -generate_only
+                Assert-MockCalled -CommandName Get-BootstrapAndStarterConfig -Exactly 1
+                Assert-MockCalled -CommandName New-Bootstrap -Exactly 1 -ParameterFilter { $generateOnly -eq $true }
+                Assert-MockCalled -CommandName New-ModuleSetup -Exactly 2
+            }
         }
     }
 }

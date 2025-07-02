@@ -183,7 +183,15 @@ function Deploy-Accelerator {
             HelpMessage = "[OPTIONAL] Determines whether to skip the requirements check for the ALZ PowerShell Module version only. This is not recommended."
         )]
         [Alias("skipAlzModuleVersionRequirementsCheck")]
-        [switch] $skip_alz_module_version_requirements_check
+        [switch] $skip_alz_module_version_requirements_check,
+
+        [Parameter(
+            Mandatory = $false,
+            HelpMessage = "[OPTIONAL] Only generate Terraform files without running terraform init, plan, or apply. This is useful for custom tfstate configurations or other pipelines. Environment variable: ALZ_generate_only. Config file input: generate_only."
+        )]
+        [Alias("g")]
+        [Alias("generateOnly")]
+        [switch] $generate_only
     )
 
     $ProgressPreference = "SilentlyContinue"
@@ -380,7 +388,8 @@ function Deploy-Accelerator {
             -hclParserToolPath $hclParserToolPath `
             -convertTfvarsToJson:$inputConfig.convert_tfvars_to_json.Value `
             -inputConfigFilePaths $inputConfigFilePaths `
-            -starterAdditionalFiles $inputConfig.starter_additional_files.Value
+            -starterAdditionalFiles $inputConfig.starter_additional_files.Value `
+            -generateOnly:$inputConfig.generate_only.Value
     }
 
     $ProgressPreference = "Continue"
