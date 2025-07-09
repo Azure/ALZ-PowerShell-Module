@@ -23,6 +23,11 @@ function Invoke-Terraform {
         [switch] $silent
     )
 
+    # Avoid bootstrap Terraform chdir errors if ~ in moduleFolderPath
+    if ($env:HOME -and $env:HOME -ne "" -and $moduleFolderPath -match '^(~)') {
+        $moduleFolderPath = $moduleFolderPath -replace '^(~)', $env:HOME
+    }
+
     if ($PSCmdlet.ShouldProcess("Apply Terraform", "modify")) {
         # Check and Set Subscription ID
         $removeSubscriptionId = $false
