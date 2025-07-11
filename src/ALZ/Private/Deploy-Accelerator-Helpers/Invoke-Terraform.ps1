@@ -23,6 +23,9 @@ function Invoke-Terraform {
         [switch] $silent
     )
 
+    # Resolve to absolute path for `terraform -chdir` switch
+    $moduleFolderPath = (Resolve-Path $moduleFolderPath).Path
+
     if ($PSCmdlet.ShouldProcess("Apply Terraform", "modify")) {
         # Check and Set Subscription ID
         $removeSubscriptionId = $false
