@@ -42,11 +42,13 @@ function Set-Config {
                 continue
             }
 
-            # Look for array config match
+            # Look for collection config match
             if($inputConfigName.EndsWith("]")) {
+                Write-Verbose "Looking for collection input config match for $inputConfigName"
                 $indexSplit = $inputConfigName.Split([char[]]@('[', ']'), [System.StringSplitOptions]::RemoveEmptyEntries)
                 $inputConfigItem = $inputConfig.PsObject.Properties | Where-Object { $_.Name -eq $indexSplit[0] }
                 if($null -ne $inputConfigItem) {
+                    Write-Verbose "Found collection input config match for $inputConfigName"
                     $inputConfigItemValue = $inputConfigItem.Value.Value
                     if(!$inputConfigItemValue.GetType().ImplementedInterfaces.Contains([System.Collections.ICollection])) {
                         Write-Error "Input config item $($inputConfigName) is not an array, but an index was specified."
@@ -54,9 +56,11 @@ function Set-Config {
                     }
 
                     $indexString = $indexSplit[1].Replace("`"", "").Replace("'", "")
+                    Write-Verbose "Using index $indexString for input config item $inputConfigName"
 
                     if($indexString -as [int]) {
                         # Handle integer index for arrays
+                        Write-Verbose "Handling integer index for array"
                         $index = [int]$indexString
                         if($inputConfigItemValue.Length -le $index) {
                             Write-Verbose "Input config item $($inputConfigName) does not have an index of $index."
@@ -79,6 +83,7 @@ function Set-Config {
                         }
                     } else {
                         # Handle string index for maps
+                        Write-Verbose "Handling string index for map"
                         if($inputConfigItemValue.ContainsKey($indexString)) {
                             $inputConfigItemIndexValue = $inputConfigItemValue[$indexString]
                             if($null -ne $inputConfigItemIndexValue) {
