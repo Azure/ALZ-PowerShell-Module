@@ -50,7 +50,10 @@ function Set-Config {
                 if($null -ne $inputConfigItem) {
                     Write-Verbose "Found collection input config match for $inputConfigName"
                     $inputConfigItemValue = $inputConfigItem.Value.Value
-                    if(!$inputConfigItemValue.GetType().ImplementedInterfaces.Contains([System.Collections.ICollection])) {
+                    Write-Verbose "Input config item value type: $($inputConfigItemValue.GetType().FullName)"
+                    $interfaces = $inputConfigItemValue.GetType().ImplementedInterfaces
+                    Write-Verbose "Input config item interfaces: $interfaces"
+                    if(!$interfaces.Contains([System.Collections.ICollection])) {
                         Write-Error "Input config item $($inputConfigName) is not an array, but an index was specified."
                         throw "Input config item $($inputConfigName) is not an array, but an index was specified."
                     }
