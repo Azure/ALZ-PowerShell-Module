@@ -50,13 +50,8 @@ function Set-Config {
                 if($null -ne $inputConfigItem) {
                     Write-Verbose "Found collection input config match for $inputConfigName"
                     $inputConfigItemValue = $inputConfigItem.Value.Value
-                    Write-Verbose "Input config item value type: $($inputConfigItemValue.GetType().FullName)"
-                    $interfaces = $inputConfigItemValue.GetType().ImplementedInterfaces
-                    Write-Verbose "Input config item interfaces: $interfaces"
-                    if(!$interfaces.Contains([System.Collections.ICollection])) {
-                        Write-Error "Input config item $($inputConfigName) is not an array, but an index was specified."
-                        throw "Input config item $($inputConfigName) is not an array, but an index was specified."
-                    }
+                    $inputConfigItemValueType = $inputConfigItemValue.GetType().FullName
+                    Write-Verbose "Input config item value type: $inputConfigItemValueType"
 
                     $indexString = $indexSplit[1].Replace("`"", "").Replace("'", "")
                     Write-Verbose "Using index $indexString for input config item $inputConfigName"
@@ -64,6 +59,12 @@ function Set-Config {
                     if([int]::TryParse($indexString, [ref]$null)) {
                         # Handle integer index for arrays
                         Write-Verbose "Handling integer index for array"
+
+                        if(!$inputConfigItemValueType.EndsWith("[]")) {
+                            Write-Error "Input config item $($inputConfigName) is not an array, but an index was specified."
+                            throw "Input config item $($inputConfigName) is not an array, but an index was specified."
+                        }
+
                         $index = [int]$indexString
                         if($inputConfigItemValue.Length -le $index) {
                             Write-Verbose "Input config item $($inputConfigName) does not have an index of $index."
@@ -87,8 +88,15 @@ function Set-Config {
                     } else {
                         # Handle string index for maps
                         Write-Verbose "Handling string index for map"
-                        if($inputConfigItemValue.ContainsKey($indexString)) {
-                            $inputConfigItemIndexValue = $inputConfigItemValue[$indexString]
+
+                        if(!$inputConfigItemValueType.EndsWith("PSCustomObject")) {
+                            Write-Error "Input config item $($inputConfigName) is not a map, but a key was specified."
+                            throw "Input config item $($inputConfigName) is not a map, but a key was specified."
+                        }
+
+                        $mapItem = $inputConfigItemValue.PsObject.Properties | Where-Object { $_.Name -eq $indexString }
+                        if($null -ne $mapItem) {
+                            $inputConfigItemIndexValue = $mapItem.Value
                             if($null -ne $inputConfigItemIndexValue) {
                                 $configurationValue.Value.Value = $inputConfigItemIndexValue
                                 continue
