@@ -58,7 +58,7 @@ function Set-Config {
                     $indexString = $indexSplit[1].Replace("`"", "").Replace("'", "")
                     Write-Verbose "Using index $indexString for input config item $inputConfigName"
 
-                    if($indexString -as [int]) {
+                    if([int]::TryParse($indexString, [ref]$null)) {
                         # Handle integer index for arrays
                         Write-Verbose "Handling integer index for array"
                         $index = [int]$indexString
