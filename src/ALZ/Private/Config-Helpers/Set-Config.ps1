@@ -42,34 +42,73 @@ function Set-Config {
                 continue
             }
 
-            # Look for array config match
+            # Look for collection config match
             if($inputConfigName.EndsWith("]")) {
+                Write-Verbose "Looking for collection input config match for $inputConfigName"
                 $indexSplit = $inputConfigName.Split([char[]]@('[', ']'), [System.StringSplitOptions]::RemoveEmptyEntries)
                 $inputConfigItem = $inputConfig.PsObject.Properties | Where-Object { $_.Name -eq $indexSplit[0] }
                 if($null -ne $inputConfigItem) {
+                    Write-Verbose "Found collection input config match for $inputConfigName"
                     $inputConfigItemValue = $inputConfigItem.Value.Value
-                    if(!$inputConfigItemValue.GetType().ImplementedInterfaces.Contains([System.Collections.ICollection])) {
-                        Write-Error "Input config item $($inputConfigName) is not an array, but an index was specified."
-                        throw "Input config item $($inputConfigName) is not an array, but an index was specified."
-                    }
-                    $index = [int]$indexSplit[1]
-                    if($inputConfigItemValue.Length -le $index) {
-                        Write-Verbose "Input config item $($inputConfigName) does not have an index of $index."
-                        if($index -eq 0) {
-                            Write-Error "At least one value is required for input config item $($inputConfigName)."
-                            throw "At least one value is required for input config item $($inputConfigName)."
+                    $inputConfigItemValueType = $inputConfigItemValue.GetType().FullName
+                    Write-Verbose "Input config item value type: $inputConfigItemValueType"
+
+                    $indexString = $indexSplit[1].Replace("`"", "").Replace("'", "")
+                    Write-Verbose "Using index $indexString for input config item $inputConfigName"
+
+                    if([int]::TryParse($indexString, [ref]$null)) {
+                        # Handle integer index for arrays
+                        Write-Verbose "Handling integer index for array"
+
+                        if(!$inputConfigItemValueType.EndsWith("[]")) {
+                            Write-Error "Input config item $($inputConfigName) is not an array, but an index was specified."
+                            throw "Input config item $($inputConfigName) is not an array, but an index was specified."
                         }
-                    } else {
-                        $inputConfigItemIndexValue = $inputConfigItemValue[$index]
-                        if($null -ne $inputConfigItemIndexValue) {
-                            $configurationValue.Value.Value = $inputConfigItemIndexValue
-                            continue
-                        } else {
-                            Write-Verbose "Input config item $($inputConfigName) with index $index is null."
+
+                        $index = [int]$indexString
+                        if($inputConfigItemValue.Length -le $index) {
+                            Write-Verbose "Input config item $($inputConfigName) does not have an index of $index."
                             if($index -eq 0) {
                                 Write-Error "At least one value is required for input config item $($inputConfigName)."
                                 throw "At least one value is required for input config item $($inputConfigName)."
                             }
+                        } else {
+                            $inputConfigItemIndexValue = $inputConfigItemValue[$index]
+                            if($null -ne $inputConfigItemIndexValue) {
+                                $configurationValue.Value.Value = $inputConfigItemIndexValue
+                                continue
+                            } else {
+                                Write-Verbose "Input config item $($inputConfigName) with index $index is null."
+                                if($index -eq 0) {
+                                    Write-Error "At least one value is required for input config item $($inputConfigName)."
+                                    throw "At least one value is required for input config item $($inputConfigName)."
+                                }
+                            }
+                        }
+                    } else {
+                        # Handle string index for maps
+                        Write-Verbose "Handling string index for map"
+
+                        if(!$inputConfigItemValueType.EndsWith("PSCustomObject")) {
+                            Write-Error "Input config item $($inputConfigName) is not a map, but a key was specified."
+                            throw "Input config item $($inputConfigName) is not a map, but a key was specified."
+                        }
+
+                        $mapItem = $inputConfigItemValue.PsObject.Properties | Where-Object { $_.Name -eq $indexString }
+                        if($null -ne $mapItem) {
+                            $inputConfigItemIndexValue = $mapItem.Value
+                            if($null -ne $inputConfigItemIndexValue) {
+                                $configurationValue.Value.Value = $inputConfigItemIndexValue
+                                continue
+                            } else {
+                                Write-Verbose "Input config item $($inputConfigName) with index $indexString is null."
+                                Write-Error "At least one value is required for input config item $($inputConfigName)."
+                                throw "At least one value is required for input config item $($inputConfigName)."
+                            }
+                        } else {
+                            Write-Verbose "Input config item $($inputConfigName) does not have an index of $indexString."
+                            Write-Error "At least one value is required for input config item $($inputConfigName)."
+                            throw "At least one value is required for input config item $($inputConfigName)."
                         }
                     }
                 } else {
