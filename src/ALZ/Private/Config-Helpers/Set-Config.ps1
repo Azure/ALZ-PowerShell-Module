@@ -60,7 +60,7 @@ function Set-Config {
                         # Handle integer index for arrays
                         Write-Verbose "Handling integer index for array"
 
-                        if(!$inputConfigItemValueType.EndsWith("[]")) {
+                        if(!$inputConfigItemValueType.EndsWith("[]") -and !$inputConfigItemValueType.StartsWith("System.Collections.Generic.List")) {
                             Write-Error "Input config item $($inputConfigName) is not an array, but an index was specified."
                             throw "Input config item $($inputConfigName) is not an array, but an index was specified."
                         }
