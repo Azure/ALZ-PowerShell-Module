@@ -51,7 +51,12 @@ function Set-Config {
                     Write-Verbose "Found collection input config match for $inputConfigName"
                     $inputConfigItemValue = $inputConfigItem.Value.Value
                     $inputConfigItemValueType = $inputConfigItemValue.GetType().FullName
-                    Write-Verbose "Input config item value type: $inputConfigItemValueType"
+                    Write-Verbose "Input config item value type pre-standardization: $inputConfigItemValueType"
+
+                    # Convert to standard type
+                    $inputConfigItemValue = $inputConfigItemValue | ConvertTo-Json | ConvertFrom-Json
+                    $inputConfigItemValueType = $inputConfigItemValue.GetType().FullName
+                    Write-Verbose "Input config item value type post-standardization: $inputConfigItemValueType"
 
                     $indexString = $indexSplit[1].Replace("`"", "").Replace("'", "")
                     Write-Verbose "Using index $indexString for input config item $inputConfigName"
@@ -92,9 +97,6 @@ function Set-Config {
                     } else {
                         # Handle string index for maps
                         Write-Verbose "Handling string index for map"
-
-                        # Convert to PSCustomObject
-                        $inputConfigItemValue = $inputConfigItemValue | ConvertTo-Json | ConvertFrom-Json
 
                         try{
                             $mapItem = $inputConfigItemValue.PsObject.Properties | Where-Object { $_.Name -eq $indexString }
