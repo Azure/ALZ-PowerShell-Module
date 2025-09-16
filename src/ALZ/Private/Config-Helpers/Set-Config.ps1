@@ -51,7 +51,12 @@ function Set-Config {
                     Write-Verbose "Found collection input config match for $inputConfigName"
                     $inputConfigItemValue = $inputConfigItem.Value.Value
                     $inputConfigItemValueType = $inputConfigItemValue.GetType().FullName
-                    Write-Verbose "Input config item value type: $inputConfigItemValueType"
+                    Write-Verbose "Input config item value type pre-standardization: $inputConfigItemValueType"
+
+                    # Convert to standard type
+                    $inputConfigItemValue = $inputConfigItemValue | ConvertTo-Json | ConvertFrom-Json
+                    $inputConfigItemValueType = $inputConfigItemValue.GetType().FullName
+                    Write-Verbose "Input config item value type post-standardization: $inputConfigItemValueType"
 
                     $indexString = $indexSplit[1].Replace("`"", "").Replace("'", "")
                     Write-Verbose "Using index $indexString for input config item $inputConfigName"
@@ -59,11 +64,6 @@ function Set-Config {
                     if([int]::TryParse($indexString, [ref]$null)) {
                         # Handle integer index for arrays
                         Write-Verbose "Handling integer index for array"
-
-                        if(!$inputConfigItemValueType.EndsWith("[]") -and !$inputConfigItemValueType.StartsWith("System.Collections.Generic.List")) {
-                            Write-Error "Input config item $($inputConfigName) is not an array, but an index was specified."
-                            throw "Input config item $($inputConfigName) is not an array, but an index was specified."
-                        }
 
                         $index = [int]$indexString
                         if($inputConfigItemValue.Length -le $index) {
@@ -73,7 +73,16 @@ function Set-Config {
                                 throw "At least one value is required for input config item $($inputConfigName)."
                             }
                         } else {
-                            $inputConfigItemIndexValue = $inputConfigItemValue[$index]
+                            try{
+                                $inputConfigItemIndexValue = $inputConfigItemValue[$index]
+                            } catch {
+                                Write-Verbose "Error accessing index $index for input config item $($inputConfigName): $_"
+                                if($index -eq 0) {
+                                    Write-Error "At least one value is required for input config item $($inputConfigName)."
+                                    throw "At least one value is required for input config item $($inputConfigName)."
+                                }
+                            }
+
                             if($null -ne $inputConfigItemIndexValue) {
                                 $configurationValue.Value.Value = $inputConfigItemIndexValue
                                 continue
@@ -89,12 +98,13 @@ function Set-Config {
                         # Handle string index for maps
                         Write-Verbose "Handling string index for map"
 
-                        if(!$inputConfigItemValueType.EndsWith("PSCustomObject")) {
-                            Write-Error "Input config item $($inputConfigName) is not a map, but a key was specified."
-                            throw "Input config item $($inputConfigName) is not a map, but a key was specified."
+                        try{
+                            $mapItem = $inputConfigItemValue.PsObject.Properties | Where-Object { $_.Name -eq $indexString }
+                        } catch {
+                            Write-Verbose "Error accessing map item $indexString for input config item $($inputConfigName): $_"
+                            Write-Error "At least one value is required for input config item $($inputConfigName)."
+                            throw "At least one value is required for input config item $($inputConfigName)."
                         }
-
-                        $mapItem = $inputConfigItemValue.PsObject.Properties | Where-Object { $_.Name -eq $indexString }
                         if($null -ne $mapItem) {
                             $inputConfigItemIndexValue = $mapItem.Value
                             if($null -ne $inputConfigItemIndexValue) {
