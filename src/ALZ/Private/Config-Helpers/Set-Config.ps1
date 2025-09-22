@@ -65,6 +65,12 @@ function Set-Config {
                         # Handle integer index for arrays
                         Write-Verbose "Handling integer index for array"
 
+                        # Ensure single value array is treated as array
+                        if(!$inputConfigItemValueType.EndsWith("]")) {
+                            Write-Verbose "Converting single value to array for input config item $($inputConfigName)."
+                            $inputConfigItemValue = @($inputConfigItemValue)
+                        }
+
                         $index = [int]$indexString
                         if($inputConfigItemValue.Length -le $index) {
                             Write-Verbose "Input config item $($inputConfigName) does not have an index of $index."
