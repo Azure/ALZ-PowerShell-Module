@@ -54,9 +54,12 @@ function Set-Config {
                     Write-Verbose "Input config item value type pre-standardization: $inputConfigItemValueType"
 
                     # Convert to standard type
-                    $inputConfigItemValue = $inputConfigItemValue | ConvertTo-Json | ConvertFrom-Json
+                    $inputConfigItemValueJson = ConvertTo-Json -InputObject $inputConfigItemValue -Depth 100
+                    Write-Verbose "Input config item value pre-standardization: $inputConfigItemValueJson"
+                    $inputConfigItemValue = ConvertFrom-Json -InputObject $inputConfigItemValueJson -Depth 100 -NoEnumerate
                     $inputConfigItemValueType = $inputConfigItemValue.GetType().FullName
                     Write-Verbose "Input config item value type post-standardization: $inputConfigItemValueType"
+                    Write-Verbose "Input config item value post-standardization: $(ConvertTo-Json $inputConfigItemValue -Depth 100)"
 
                     $indexString = $indexSplit[1].Replace("`"", "").Replace("'", "")
                     Write-Verbose "Using index $indexString for input config item $inputConfigName"
