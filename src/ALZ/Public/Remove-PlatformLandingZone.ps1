@@ -322,16 +322,29 @@ function Remove-PlatformLandingZone {
             }
         }
 
+        $subscription = @{
+            Id = "b857908d-3f5c-4477-91c1-0fbd08df4e88"
+            Name = "tester"
+        }
+
+
         Write-Host "Checking for Microsoft Defender for Cloud Plans to reset in subscription: $($subscription.Name) (ID: $($subscription.Id))"
         $defenderPlans = (az security pricing list --subscription $subscription.Id) | ConvertFrom-Json
 
-        $defenderPlans | Where-Object { -not $_.deprecated } | ForEach-Object -Parallel {
+        $defenderPlans.value | Where-Object { -not $_.deprecated } | ForEach-Object -Parallel {
+            $subscription = $using:subscription
             if ($_.pricingTier -ne "Free") {
                 Write-Host "Resetting Microsoft Defender for Cloud Plan to Free for plan: $($_.name) in subscription: $($subscription.Name) (ID: $($subscription.Id))"
-                az security pricing create --name $_.name --tier "Free" --subscription $subscription.Id
+                $result = (az security pricing create --name $_.name --tier "Free" --subscription $subscription.Id 2>&1)
+                if ($result -like "*must be 'Standard'*") {
+                    Write-Host "Resetting Microsoft Defender for Cloud Plan to Standard as Free is not supported for plan: $($_.name) in subscription: $($subscription.Name) (ID: $($subscription.Id))"
+                    $result = az security pricing create --name $_.name --tier "Standard" --subscription $subscription.Id
+                }
+                Write-Host "Microsoft Defender for Cloud Plan reset for plan: $($_.name) in subscription: $($subscription.Name) (ID: $($subscription.Id))"
             } else {
                 Write-Host "Microsoft Defender for Cloud Plan is already set to Free for plan: $($_.name) in subscription: $($subscription.Name) (ID: $($subscription.Id)), skipping."
             }
+        } -ThrottleLimit $using:throttleLimit
 
     } -ThrottleLimit $throttleLimit
 
