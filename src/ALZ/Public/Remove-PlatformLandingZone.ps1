@@ -5,16 +5,16 @@ function Remove-PlatformLandingZone {
 
     .DESCRIPTION
         The Remove-PlatformLandingZone function performs a comprehensive cleanup of Azure Landing Zone platform resources.
-        It recursively deletes management groups, removes subscriptions from management groups, and deletes all resource
+        It can delete management group hierarchies, remove subscriptions from management groups, and delete all resource
         groups within the affected subscriptions. This function is primarily designed for testing and cleanup scenarios.
 
         The function operates in the following sequence:
-        1. Validates provided subscriptions (if any) exist in Azure
-        2. Processes each specified management group, recursively discovering child management groups
-        3. Removes subscriptions from management groups (starting from the deepest level)
-        4. Discovers subscriptions from management groups (if not explicitly provided)
-        5. Deletes management groups in reverse depth order (children before parents)
-        6. Requests confirmation before deleting resource groups (unless bypassed)
+        1. Validates provided management groups and subscriptions (if any) exist in Azure
+        2. Prompts for confirmation (unless bypassed or in plan mode)
+        3. Processes each specified management group, recursively discovering child management groups
+        4. Removes subscriptions from management groups and optionally moves them to a target management group
+        5. Discovers subscriptions from management groups (if not explicitly provided)
+        6. Deletes management groups in reverse depth order (children before parents)
         7. Deletes all resource groups in the discovered/specified subscriptions (excluding retention patterns)
         8. Resets Microsoft Defender for Cloud plans to Free tier
 
@@ -23,10 +23,22 @@ function Remove-PlatformLandingZone {
         Use with extreme caution and ensure you have appropriate backups and authorization before executing.
 
     .PARAMETER managementGroups
-        An array of management group IDs or names to process. The function will delete these management groups and
-        all their child management groups recursively. Subscriptions under these management groups will also be
-        discovered (unless subscriptions are explicitly provided via the -subscriptions parameter).
-        This parameter is mandatory.
+        An array of management group IDs or names to process. By default, the function deletes child management groups
+        one level below these target groups (not the target groups themselves). Use -deleteTargetManagementGroups to
+        delete the target groups as well. Subscriptions under these management groups will be discovered unless
+        subscriptions are explicitly provided via the -subscriptions parameter.
+
+    .PARAMETER deleteTargetManagementGroups
+        A switch parameter that causes the target management groups specified in -managementGroups to be deleted along
+        with all their children. By default, only management groups one level below the targets are deleted, preserving
+        the target management groups themselves.
+        Default: $false (preserve target management groups)
+
+    .PARAMETER subscriptionsTargetManagementGroup
+        The management group ID or name where subscriptions should be moved after being removed from their current
+        management groups. If not specified, subscriptions are removed from management groups without being reassigned.
+        This is useful for maintaining subscription organization during cleanup operations.
+        Default: $null (subscriptions are not reassigned)
 
     .PARAMETER subscriptions
         An optional array of subscription IDs or names to process for resource group deletion. If provided, the
@@ -42,10 +54,16 @@ function Remove-PlatformLandingZone {
         Default: @("VisualStudioOnline-") - Retains Azure DevOps billing resource groups
 
     .PARAMETER bypassConfirmation
-        A switch parameter that bypasses the interactive confirmation prompts before deleting resource groups.
-        When specified, the function will proceed with resource group deletion without asking for user confirmation.
-        WARNING: Use this parameter with extreme caution as it eliminates safety checks.
+        A switch parameter that bypasses the interactive confirmation prompts. When specified, the function waits
+        for the duration specified in -bypassConfirmationTimeoutSeconds before proceeding, allowing time to cancel.
+        During this timeout, pressing any key will cancel the operation.
+        WARNING: Use this parameter with extreme caution as it reduces safety checks.
         Default: $false (confirmation required)
+
+    .PARAMETER bypassConfirmationTimeoutSeconds
+        The number of seconds to wait before proceeding when -bypassConfirmation is used. During this timeout,
+        pressing any key will cancel the operation. This provides a safety window to prevent accidental deletions.
+        Default: 30 seconds
 
     .PARAMETER throttleLimit
         The maximum number of parallel operations to execute simultaneously. This controls the degree of parallelism
@@ -53,37 +71,67 @@ function Remove-PlatformLandingZone {
         API throttling risk and resource consumption.
         Default: 11
 
+    .PARAMETER planMode
+        A switch parameter that enables "dry run" mode. When specified, the function displays what actions would be
+        taken without actually making any changes. This is useful for validating the scope of operations before
+        executing the actual cleanup.
+        Default: $false (execute actual deletions)
+
     .EXAMPLE
         Remove-PlatformLandingZone -managementGroups @("alz-platform", "alz-landingzones")
 
-        Removes the specified management groups and all their children, discovers subscriptions from those management
-        groups, prompts for confirmation, then deletes all resource groups in the discovered subscriptions (except
-        those matching retention patterns).
+        Removes all child management groups one level below "alz-platform" and "alz-landingzones", discovers
+        subscriptions from those management groups, prompts for confirmation, then deletes all resource groups
+        in the discovered subscriptions (except those matching retention patterns).
+
+    .EXAMPLE
+        Remove-PlatformLandingZone -managementGroups @("alz-test") -deleteTargetManagementGroups
+
+        Deletes the "alz-test" management group itself along with all its children, rather than just deleting
+        one level below it.
 
     .EXAMPLE
         Remove-PlatformLandingZone -managementGroups @("mg-dev") -subscriptions @("Sub-Dev-001", "Sub-Dev-002")
 
-        Removes the "mg-dev" management group and deletes resource groups only from the two explicitly specified
-        subscriptions. No additional subscriptions will be discovered from the management group.
+        Processes the "mg-dev" management group hierarchy and deletes resource groups only from the two explicitly
+        specified subscriptions. No additional subscriptions will be discovered from the management group.
 
     .EXAMPLE
-        Remove-PlatformLandingZone -managementGroups @("alz-test") -bypassConfirmation
+        Remove-PlatformLandingZone -managementGroups @("alz-test") -subscriptionsTargetManagementGroup "mg-tenant-root"
 
-        Removes the management group and deletes all resource groups without prompting for confirmation.
-        USE WITH EXTREME CAUTION!
+        Removes child management groups and moves all discovered subscriptions to the "mg-tenant-root" management
+        group instead of leaving them orphaned.
+
+    .EXAMPLE
+        Remove-PlatformLandingZone -managementGroups @("alz-dev") -planMode
+
+        Runs in plan mode (dry run) to show what would be deleted without making any actual changes. Useful for
+        validating the scope before executing.
+
+    .EXAMPLE
+        Remove-PlatformLandingZone -managementGroups @("alz-test") -bypassConfirmation -bypassConfirmationTimeoutSeconds 60
+
+        Bypasses interactive confirmation prompts but waits 60 seconds before proceeding, allowing time to cancel
+        by pressing any key. USE WITH EXTREME CAUTION!
 
     .EXAMPLE
         Remove-PlatformLandingZone -managementGroups @("alz-prod") -resourceGroupsToRetainNamePatterns @("VisualStudioOnline-", "RG-Critical-", "NetworkWatcherRG")
 
-        Removes the management group but retains resource groups matching any of the specified patterns. This example
-        preserves Azure DevOps billing resources, critical resource groups, and Network Watcher resource groups.
+        Removes management group hierarchy but retains resource groups matching any of the specified patterns.
+        This example preserves Azure DevOps billing resources, critical resource groups, and Network Watcher resource groups.
 
     .EXAMPLE
         $subs = @("12345678-1234-1234-1234-123456789012", "87654321-4321-4321-4321-210987654321")
         Remove-PlatformLandingZone -managementGroups @("alz-test") -subscriptions $subs -throttleLimit 5
 
-        Removes the management group and processes only the specified subscriptions (by GUID) with reduced parallelism
-        to minimize API throttling.
+        Processes the management group hierarchy and only the specified subscriptions (by GUID) with reduced
+        parallelism to minimize API throttling.
+
+    .EXAMPLE
+        Remove-PlatformLandingZone -subscriptions @("Sub-Test-001")
+
+        Skips management group processing entirely and only deletes resource groups from the specified subscription.
+        This is useful when you want to clean subscriptions without touching the management group structure.
 
     .NOTES
         This function uses Azure CLI commands and requires:
@@ -93,6 +141,8 @@ function Remove-PlatformLandingZone {
           * Management Group Contributor or Owner at the management group scope
           * Contributor or Owner at the subscription scope for resource group deletions
           * Security Admin for resetting Microsoft Defender for Cloud plans
+
+        The function supports PowerShell's ShouldProcess pattern and respects -WhatIf and -Confirm parameters.
 
         The function uses parallel processing with ForEach-Object -Parallel to improve performance when handling
         multiple management groups, subscriptions, and resource groups. The default throttle limit is 11.
@@ -104,9 +154,19 @@ function Remove-PlatformLandingZone {
         The function automatically resets Microsoft Defender for Cloud plans to the Free tier for all processed
         subscriptions. Plans that don't support the Free tier will be set to Standard tier instead.
 
+        Management group deletion behavior:
+        - By default: Deletes management groups one level below the specified targets
+        - With -deleteTargetManagementGroups: Deletes the target management groups and all their children
+
         Subscription discovery behavior:
         - If -subscriptions is provided: Only those subscriptions are processed; no discovery occurs
         - If -subscriptions is empty: Subscriptions are discovered from management groups during cleanup
+        - If -subscriptionsTargetManagementGroup is specified: Subscriptions are moved to that management group
+
+        Plan mode behavior:
+        - All Azure CLI commands are displayed but not executed
+        - Useful for validating scope and understanding impact before actual execution
+        - Combine with -bypassConfirmation for fully automated dry runs
 
     .LINK
         https://learn.microsoft.com/azure/cloud-adoption-framework/ready/landing-zone/
@@ -120,12 +180,14 @@ function Remove-PlatformLandingZone {
     [CmdletBinding(SupportsShouldProcess = $true)]
     param (
         [string[]]$managementGroups,
-        [string]$subscriptionTargetManagementGroup = $null,
+        [switch]$deleteTargetManagementGroups,
+        [string]$subscriptionsTargetManagementGroup = $null,
         [string[]]$subscriptions = @(),
         [string[]]$resourceGroupsToRetainNamePatterns = @(
             "VisualStudioOnline-" # By default retain Visual Studio Online resource groups created for Azure DevOps billing purposes
         ),
         [switch]$bypassConfirmation,
+        [int]$bypassConfirmationTimeoutSeconds = 30,
         [int]$throttleLimit = 11,
         [switch]$planMode
     )
@@ -134,16 +196,45 @@ function Remove-PlatformLandingZone {
         param (
             [string]$Message,
             [string]$Level = "INFO",
-            [System.ConsoleColor]$Color = [System.ConsoleColor]::Yellow,
-            [switch]$NoNewLine
+            [System.ConsoleColor]$Color = [System.ConsoleColor]::Blue,
+            [switch]$NoNewLine,
+            [switch]$Overwrite,
+            [switch]$IsError,
+            [switch]$IsWarning,
+            [switch]$IsSuccess
         )
+
+        $isDefaultColor = $Color -eq [System.ConsoleColor]::Blue
+
+        if($IsError) {
+            $Level = "ERROR"
+        } elseif ($IsWarning) {
+            $Level = "WARNING"
+        } elseif ($IsSuccess) {
+            $Level = "SUCCESS"
+        }
+
+        if($isDefaultColor) {
+            if($Level -eq "ERROR") {
+                $Color = [System.ConsoleColor]::Red
+            } elseif ($Level -eq "WARNING") {
+                $Color = [System.ConsoleColor]::Yellow
+            } elseif ($Level -eq "SUCCESS") {
+                $Color = [System.ConsoleColor]::Green
+            }
+        }
 
         $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
         $prefix = ""
-        if (-not $NoNewLine) {
-            $Prefix = [System.Environment]::NewLine
+
+        if ($Overwrite) {
+            $prefix = "`r"
+        } else {
+            if (-not $NoNewLine) {
+                $prefix = [System.Environment]::NewLine
+            }
         }
-        Write-Host "$Prefix[$timestamp] [$Level] $Message" -ForegroundColor $Color
+        Write-Host "$prefix[$timestamp] [$Level] $Message" -ForegroundColor $Color -NoNewline:$Overwrite.IsPresent
     }
 
     function Get-ManagementGroupChildrenRecursive {
@@ -198,65 +289,111 @@ function Remove-PlatformLandingZone {
             [string]$finalConfirmationText = "YES I CONFIRM"
         )
 
-        Write-ToConsoleLog "$message" -Color DarkMagenta -Level "WARNING"
-        Write-ToConsoleLog "If you wish to proceed, type '$initialConfirmationText' to confirm." -Color DarkMagenta -Level "WARNING"
+        Write-ToConsoleLog "$message" -IsWarning
+        Write-ToConsoleLog "If you wish to proceed, type '$initialConfirmationText' to confirm." -IsWarning
         $confirmation = Read-Host "Enter the confirmation text"
         if ($confirmation -ne $initialConfirmationText) {
-            Write-ToConsoleLog "Confirmation not received. Exiting without making any changes." -Color Red -Level "ERROR"
+            Write-ToConsoleLog "Confirmation not received. Exiting without making any changes." -IsError
             return $false
         }
-        Write-ToConsoleLog "Initial confirmation received."
-        Write-ToConsoleLog "WARNING: This operation is permanent cannot be reversed!" -Color Magenta -Level "WARNING"
-        Write-ToConsoleLog "Are you sure you want to proceed? Type '$finalConfirmationText' to perform the highly destructive operation..." -Color Magenta  -Level "WARNING"
+        Write-ToConsoleLog "Initial confirmation received." -IsSuccess
+        Write-ToConsoleLog "WARNING: This operation is permanent cannot be reversed!" -IsWarning
+        Write-ToConsoleLog "Are you sure you want to proceed? Type '$finalConfirmationText' to perform the highly destructive operation..." -IsWarning
         $confirmation = Read-Host "Enter the final confirmation text"
         if ($confirmation -ne $finalConfirmationText) {
-            Write-ToConsoleLog "Final confirmation not received. Exiting without making any changes." -Color Red -Level "ERROR"
+            Write-ToConsoleLog "Final confirmation not received. Exiting without making any changes." -IsError
             return $false
         }
-        Write-ToConsoleLog "Final confirmation received. Proceeding with destructive operation..."
+        Write-ToConsoleLog "Final confirmation received. Proceeding with destructive operation..." -IsSuccess
         return $true
     }
 
-
-
     if ($PSCmdlet.ShouldProcess("Delete Management Groups and Clean Subscriptions", "delete")) {
+
+        if($bypassConfirmation) {
+            Write-ToConsoleLog "Bypass confirmation enabled, proceeding without prompts..." -IsWarning
+            Write-ToConsoleLog "This is a highly destructive operation that will permanently delete Azure resources!" -IsWarning
+            Write-ToConsoleLog "We are waiting $bypassConfirmationTimeoutSeconds seconds to allow for cancellation. Press any key to cancel..." -IsWarning
+
+            $keyPressed = $false
+            $secondsRunning = 0
+
+            while((-not $keyPressed) -and ($secondsRunning -lt $bypassConfirmationTimeoutSeconds)){
+                $keyPressed = [Console]::KeyAvailable
+                Write-ToConsoleLog ("Waiting for: $($bypassConfirmationTimeoutSeconds-$secondsRunning) seconds. Press any key to cancel...") -IsWarning -Overwrite
+                Start-Sleep -Seconds 1
+                $secondsRunning++
+            }
+
+            if($keyPressed) {
+                Write-ToConsoleLog "Cancellation key pressed, exiting without making any changes..." -IsError
+                return
+            }
+        }
+
+        Write-ToConsoleLog "Thanks for providing the inputs, getting started..." -IsSuccess
 
         $managementGroupsProvided = $managementGroups.Count -gt 0
         $subscriptionsProvided = $subscriptions.Count -gt 0
 
         if(-not $subscriptionsProvided -and -not $managementGroupsProvided) {
-            Write-ToConsoleLog "No management groups or subscriptions provided, nothing to do. Exiting..." -Color Green
+            Write-ToConsoleLog "No management groups or subscriptions provided, nothing to do. Exiting..." -IsError
             return
         }
 
         if(-not $managementGroupsProvided) {
-            Write-ToConsoleLog "No management groups provided, skipping..."
+            Write-ToConsoleLog "No management groups provided, skipping..." -IsWarning
         }
 
         $subscriptionsFound = [System.Collections.Concurrent.ConcurrentBag[hashtable]]::new()
 
         if($managementGroupsProvided) {
             $managementGroupsFound = @()
-            foreach($managementGroup in $managementGroups) {
-                $managementGroup = (az account management-group show --name $managementGroup) | ConvertFrom-Json
 
-                if($null -eq $managementGroup) {
-                    Write-ToConsoleLog "Management group not found: $managementGroup" -Color DarkYellow -Level "WARNING"
+            if($subscriptionsTargetManagementGroup) {
+                Write-ToConsoleLog "Validating target management group for subscriptions: $subscriptionsTargetManagementGroup"
+
+                $managementGroupObject = (az account management-group show --name $subscriptionsTargetManagementGroup) | ConvertFrom-Json
+                if($null -eq $managementGroupObject) {
+                    Write-ToConsoleLog "Target management group for subscriptions not found: $subscriptionsTargetManagementGroup" -IsError
+                    return
+                }
+
+                Write-ToConsoleLog "Subscriptions removed from management groups will be moved to target management group: $($managementGroupObject.name) ($($managementGroupObject.displayName))"
+            }
+
+            Write-ToConsoleLog "Validating provided management groups..."
+            foreach($managementGroup in $managementGroups) {
+                $managementGroupObject = (az account management-group show --name $managementGroup) | ConvertFrom-Json
+
+                if($null -eq $managementGroupObject) {
+                    Write-ToConsoleLog "Management group not found: $managementGroup" -IsWarning
                     continue
                 }
 
                 $managementGroupsFound += @{
-                    Name        = $managementGroup.name
-                    DisplayName = $managementGroup.displayName
+                    Name        = $managementGroupObject.name
+                    DisplayName = $managementGroupObject.displayName
                 }
             }
 
+            if($managementGroupsFound.Count -eq 0) {
+                Write-ToConsoleLog "No valid management groups found from the provided list, exiting..." -IsError
+                return
+            }
+
             if(-not $bypassConfirmation) {
-                Write-ToConsoleLog "The following Management Groups will be processed for removal:" -Color DarkBlue
-                $managementGroupsFound | ForEach-Object { Write-ToConsoleLog "Management Group: $($_.Name) ($($_.DisplayName))" -Color Blue -NoNewLine }
+                Write-ToConsoleLog "The following Management Groups will be processed for removal:"
+                $managementGroupsFound | ForEach-Object { Write-ToConsoleLog "Management Group: $($_.Name) ($($_.DisplayName))" -NoNewLine }
+                $warningMessage = "ALL THE MANAGEMENT GROUP STRUCTURES ONE LEVEL BELOW THE LISTED MANAGEMENT GROUPS WILL BE PERMANENTLY DELETED"
+                $confirmationText = "I CONFIRM I UNDERSTAND ALL THE MANAGEMENT GROUP STRUCTURES ONE LEVEL BELOW THE LISTED MANAGEMENT GROUPS WILL BE PERMANENTLY DELETED"
+                if($deleteTargetManagementGroups) {
+                    $warningMessage = "ALL THE LISTED MANAGEMENTS GROUPS AND THEIR CHILDREN WILL BE PERMANENTLY DELETED"
+                    $confirmationText = "I CONFIRM I UNDERSTAND ALL THE MANAGEMENT GROUPS AND THEIR CHILDREN WILL BE PERMANENTLY DELETED"
+                }
                 $continue = Invoke-PromptForConfirmation `
-                    -message "ALL THE CHILD MANAGEMENT GROUPS OF THE LISTED MANAGEMENTS GROUPS AND THEIR CHILDREN WILL BE PERMANENTLY DELETED" `
-                    -initialConfirmationText "I CONFIRM I UNDERSTAND ALL THE CHILD MANAGEMENT GROUPS AND THEIR CHILDREN WILL BE PERMANENTLY DELETED"
+                    -message $warningMessage `
+                    -initialConfirmationText $confirmationText
                 if(-not $continue) {
                     Write-ToConsoleLog "Exiting..."
                     return
@@ -267,14 +404,15 @@ function Remove-PlatformLandingZone {
             $funcWriteToConsoleLog = ${function:Write-ToConsoleLog}.ToString()
 
             if(-not $subscriptionsProvided) {
-                Write-ToConsoleLog "No subscriptions provided, they will be discovered from the target management group hierarchy..." -Color Yellow
+                Write-ToConsoleLog "No subscriptions provided, they will be discovered from the target management group hierarchy..."
             }
 
             if($managementGroupsFound.Count -ne 0) {
                 $managementGroupsFound | ForEach-Object -Parallel {
                     $subscriptionsProvided = $using:subscriptionsProvided
                     $subscriptionsFound = $using:subscriptionsFound
-                    $subscriptionTargetManagementGroup = $using:subscriptionTargetManagementGroup
+                    $subscriptionsTargetManagementGroup = $using:subscriptionsTargetManagementGroup
+                    $deleteTargetManagementGroups = $using:deleteTargetManagementGroups
                     $funcWriteToConsoleLog = $using:funcWriteToConsoleLog
                     ${function:Write-ToConsoleLog} = $funcWriteToConsoleLog
 
@@ -288,9 +426,11 @@ function Remove-PlatformLandingZone {
 
                     $managementGroupsToDelete = @{}
 
-                    if($hasChildren) {
+                    $targetManagementGroups = $deleteTargetManagementGroups ? @($topLevelManagementGroup) : @($topLevelManagementGroup.children)
+
+                    if($hasChildren -or $deleteTargetManagementGroups) {
                         ${function:Get-ManagementGroupChildrenRecursive} = $using:funcGetManagementGroupChildrenRecursive
-                        $managementGroupsToDelete = Get-ManagementGroupChildrenRecursive -managementGroups @($topLevelManagementGroup.children)
+                        $managementGroupsToDelete = Get-ManagementGroupChildrenRecursive -managementGroups @($targetManagementGroups)
                     } else {
                         Write-ToConsoleLog "Management group has no children: $managementGroupId ($managementGroupDisplayName)" -NoNewLine
                     }
@@ -307,7 +447,7 @@ function Remove-PlatformLandingZone {
 
                         $managementGroups | ForEach-Object -Parallel {
                             $subscriptionsFound = $using:subscriptionsFound
-                            $subscriptionTargetManagementGroup = $using:subscriptionTargetManagementGroup
+                            $subscriptionsTargetManagementGroup = $using:subscriptionsTargetManagementGroup
                             $funcWriteToConsoleLog = $using:funcWriteToConsoleLog
                             ${function:Write-ToConsoleLog} = $funcWriteToConsoleLog
 
@@ -325,18 +465,18 @@ function Remove-PlatformLandingZone {
                                         )
                                     }
 
-                                    if($subscriptionTargetManagementGroup) {
-                                        Write-ToConsoleLog "Moving subscription to target management group: $($subscriptionTargetManagementGroup), subscription: $($subscription.displayName)" -NoNewLine
+                                    if($subscriptionsTargetManagementGroup) {
+                                        Write-ToConsoleLog "Moving subscription to target management group: $($subscriptionsTargetManagementGroup), subscription: $($subscription.displayName)" -NoNewLine
                                         if($using:planMode) {
-                                            Write-ToConsoleLog "(Plan Mode) Would run: az account management-group subscription add --name $($subscriptionTargetManagementGroup) --subscription $($subscription.name)" -NoNewLine -Color Gray
+                                            Write-ToConsoleLog "(Plan Mode) Would run: az account management-group subscription add --name $($subscriptionsTargetManagementGroup) --subscription $($subscription.name)" -NoNewLine -Color Gray
                                         } else {
-                                            az account management-group subscription add --name $subscriptionTargetManagementGroup --subscription $subscription.name
+                                            az account management-group subscription add --name $subscriptionsTargetManagementGroup --subscription $subscription.name | Out-Null
                                         }
                                     } else {
                                         if($using:planMode) {
                                             Write-ToConsoleLog "(Plan Mode) Would run: az account management-group subscription remove --name $_ --subscription $($subscription.name)" -NoNewLine -Color Gray
                                         } else {
-                                            az account management-group subscription remove --name $_ --subscription $subscription.name
+                                            az account management-group subscription remove --name $_ --subscription $subscription.name | Out-Null
                                         }
                                     }
                                 }
@@ -348,7 +488,7 @@ function Remove-PlatformLandingZone {
                             if($using:planMode) {
                                 Write-ToConsoleLog "(Plan Mode) Would run: az account management-group delete --name $_" -NoNewline -Color Gray
                             } else {
-                                az account management-group delete --name $_
+                                az account management-group delete --name $_ | Out-Null
                             }
                         } -ThrottleLimit $using:throttleLimit
                     }
@@ -358,29 +498,29 @@ function Remove-PlatformLandingZone {
 
         if($subscriptionsProvided) {
             Write-ToConsoleLog "Checking the provided subscriptions exist..."
-        }
 
-        foreach($subscription in $subscriptions) {
-            $subscriptionObject = @{
-                Id   = Test-IsGuid -StringGuid $subscription ? $subscription : (az account list --all --query "[?name=='$subscription'].id" -o tsv)
-                Name = Test-IsGuid -StringGuid $subscription ? (az account list --all --query "[?id=='$subscription'].name" -o tsv) : $subscription
+            foreach($subscription in $subscriptions) {
+                $subscriptionObject = @{
+                    Id   = Test-IsGuid -StringGuid $subscription ? $subscription : (az account list --all --query "[?name=='$subscription'].id" -o tsv)
+                    Name = Test-IsGuid -StringGuid $subscription ? (az account list --all --query "[?id=='$subscription'].name" -o tsv) : $subscription
+                }
+                if(-not $subscriptionObject.Id -or -not $subscriptionObject.Name) {
+                    Write-ToConsoleLog "Subscription not found, skipping: $($subscription.Name) (ID: $($subscription.Id))" -IsWarning
+                    continue
+                }
+                $subscriptionsFound.Add($subscriptionObject)
             }
-            if(-not $subscriptionObject.Id -or -not $subscriptionObject.Name) {
-                Write-ToConsoleLog "Subscription not found, skipping: $($subscription.Name) (ID: $($subscription.Id))" -Color DarkYellow -Level "WARNING"
-                continue
-            }
-            $subscriptionsFound.Add($subscriptionObject)
         }
 
         $subscriptionsFinal = $subscriptionsFound.ToArray() | Sort-Object -Property name -Unique
 
         if($subscriptionsFinal.Count -eq 0) {
-            Write-ToConsoleLog "No subscriptions provided or found, skipping resource group deletion..."
+            Write-ToConsoleLog "No subscriptions provided or found, skipping resource group deletion..." -IsWarning
             return
         } else {
             if(-not $bypassConfirmation) {
-                Write-ToConsoleLog "The following Subscriptions were provided or discovered during management group cleanup:" -Color DarkBlue
-                $subscriptionsFinal | ForEach-Object { Write-ToConsoleLog "Name: $($_.Name), ID: $($_.Id)" -Color DarkBlue -NoNewline }
+                Write-ToConsoleLog "The following Subscriptions were provided or discovered during management group cleanup:"
+                $subscriptionsFinal | ForEach-Object { Write-ToConsoleLog "Name: $($_.Name), ID: $($_.Id)" -NoNewline }
                 $continue = Invoke-PromptForConfirmation `
                     -message "ALL RESOURCE GROUPS IN THE LISTED SUBSCRIPTIONS WILL BE PERMANENTLY DELETED UNLESS THEY MATCH RETENTION PATTERNS" `
                     -initialConfirmationText "I CONFIRM I UNDERSTAND ALL SELECTED RESOURCE GROUPS IN THE NAMED SUBSCRIPTIONS WILL BE PERMANENTLY DELETED"
@@ -498,12 +638,12 @@ function Remove-PlatformLandingZone {
                     }
                     Write-ToConsoleLog "Microsoft Defender for Cloud Plan reset for plan: $($_.name) in subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
                 } else {
-                    Write-ToConsoleLog "Microsoft Defender for Cloud Plan is already set to Free for plan: $($_.name) in subscription: $($subscription.Name) (ID: $($subscription.Id)), skipping."-NoNewLine
+                    Write-ToConsoleLog "Microsoft Defender for Cloud Plan is already set to Free for plan: $($_.name) in subscription: $($subscription.Name) (ID: $($subscription.Id)), skipping." -NoNewLine
                 }
             } -ThrottleLimit $using:throttleLimit
 
         } -ThrottleLimit $throttleLimit
 
-        Write-ToConsoleLog "Cleanup completed." -Color Green
+        Write-ToConsoleLog "Cleanup completed." -IsSuccess
     }
 }
