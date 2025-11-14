@@ -69,7 +69,7 @@ function Remove-PlatformLandingZone {
         The maximum number of parallel operations to execute simultaneously. This controls the degree of parallelism
         when processing management groups and resource groups. Higher values may improve performance but increase
         API throttling risk and resource consumption.
-        Default: 11
+        Default: 11 "These go to eleven."
 
     .PARAMETER planMode
         A switch parameter that enables "dry run" mode. When specified, the function displays what actions would be
