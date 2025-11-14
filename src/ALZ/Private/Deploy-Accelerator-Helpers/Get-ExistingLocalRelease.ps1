@@ -11,7 +11,7 @@ function Get-ExistingLocalRelease {
     $path = ""
     $checkPath = Join-Path $targetDirectory $targetFolder
     $checkFolders = Get-ChildItem -Path $checkPath -Directory
-    if($null -ne $checkFolders) {
+    if ($null -ne $checkFolders) {
         $checkFolders = $checkFolders | Sort-Object { $_.Name } -Descending
         $mostRecentCheckFolder = $checkFolders[0]
 

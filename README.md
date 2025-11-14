@@ -6,8 +6,6 @@
 ![GitHub closed pull requests](https://img.shields.io/github/issues-pr-closed/Azure/ALZ-PowerShell-Module)
 ![GitHub contributors](https://img.shields.io/github/contributors/Azure/ALZ-PowerShell-Module)
 
-![Logo](./docs/wiki/media/Logo.png)
-
 ## Introduction
 
 This repository contains the PowerShell module and documentation for the Azure landing zones Accelerators for Bicep and Terraform. The accelerators are an opinionated implementation of the Azure Landing Zones modules, with Azure DevOps or GitHub bootstrapping.
@@ -41,7 +39,7 @@ To check the requirements, run these commands:
 
 ```pwsh
 Install-Module -Name ALZ
-Test-AcceleratorRequirements
+Test-AcceleratorRequirement
 ```
 
 ## Contributing

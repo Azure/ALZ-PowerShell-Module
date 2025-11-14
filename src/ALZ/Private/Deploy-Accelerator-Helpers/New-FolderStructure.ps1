@@ -29,22 +29,22 @@ function New-FolderStructure {
     if ($PSCmdlet.ShouldProcess("ALZ-Terraform module configuration", "modify")) {
         Write-Verbose "Downloading modules to $targetDirectory"
 
-        if(!($release.StartsWith("v")) -and ($release -ne "latest")) {
+        if (!($release.StartsWith("v")) -and ($release -ne "latest")) {
             $release = "v$release"
         }
 
         $releaseTag = ""
         $path = ""
 
-        if($overrideSourceDirectoryPath -ne "") {
+        if ($overrideSourceDirectoryPath -ne "") {
             $releaseTag = "local"
             $path = Join-Path $targetDirectory $targetFolder $releaseTag
 
-            if((Test-Path $path) -and !$replaceFiles) {
+            if ((Test-Path $path) -and !$replaceFiles) {
                 Write-Verbose "Folder $path already exists, so not copying files."
             } else {
                 Write-InformationColored "Copying files from $overrideSourceDirectoryPath to $path" -ForegroundColor Green -InformationAction Continue
-                if(!(Test-Path $path)) {
+                if (!(Test-Path $path)) {
                     New-Item -Path $path -ItemType "Directory"
                 }
                 Copy-Item -Path "$overrideSourceDirectoryPath/$sourceFolder/*" -Destination "$path" -Recurse -Force | Out-String | Write-Verbose
