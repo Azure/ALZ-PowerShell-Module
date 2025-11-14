@@ -138,9 +138,9 @@ function Remove-PlatformLandingZone {
         - Azure CLI to be installed and available in the system path
         - User to be authenticated to Azure (az login)
         - Appropriate RBAC permissions:
-          * Management Group Contributor or Owner at the management group scope
-          * Contributor or Owner at the subscription scope for resource group deletions
-          * Security Admin for resetting Microsoft Defender for Cloud plans
+            * Management Group Contributor or Owner at the management group scope
+            * Contributor or Owner at the subscription scope for resource group deletions
+            * Security Admin for resetting Microsoft Defender for Cloud plans
 
         The function supports PowerShell's ShouldProcess pattern and respects -WhatIf and -Confirm parameters.
 
