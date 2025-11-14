@@ -82,8 +82,8 @@ function New-Bootstrap {
         $starterRootModuleFolderPath = ""
         $starterFoldersToRetain = @()
 
-        if($hasStarter) {
-            if($inputConfig.starter_module_name.Value -eq "") {
+        if ($hasStarter) {
+            if ($inputConfig.starter_module_name.Value -eq "") {
                 $inputConfig.starter_module_name = @{
                     Value  = Request-SpecialInput -type "starter" -starterConfig $starterConfig
                     Source = "user"
@@ -97,12 +97,12 @@ function New-Bootstrap {
             $starterRootModuleFolderPath = $starterModulePath
             Write-Verbose "Starter Module Path: $starterModulePath"
 
-            if($chosenStarterConfig.PSObject.Properties.Name -contains "additional_retained_folders") {
+            if ($chosenStarterConfig.PSObject.Properties.Name -contains "additional_retained_folders") {
                 $starterFoldersToRetain = $chosenStarterConfig.additional_retained_folders
                 Write-Verbose "Starter Additional folders to retain: $($starterFoldersToRetain -join ",")"
             }
 
-            if($chosenStarterConfig.PSObject.Properties.Name -contains "root_module_folder") {
+            if ($chosenStarterConfig.PSObject.Properties.Name -contains "root_module_folder") {
                 $starterRootModuleFolder = $chosenStarterConfig.root_module_folder
 
                 # Retain the root module folder
@@ -127,23 +127,23 @@ function New-Bootstrap {
 
         Write-Verbose "Getting the bootstrap configuration..."
         $terraformFiles = Get-ChildItem -Path $bootstrapModulePath -Filter "*.tf" -File
-        foreach($terraformFile in $terraformFiles) {
+        foreach ($terraformFile in $terraformFiles) {
             $bootstrapParameters = Convert-HCLVariablesToInputConfig -targetVariableFile $terraformFile.FullName -hclParserToolPath $hclParserToolPath -validators $validationConfig -appendToObject $bootstrapParameters
         }
 
         # Getting the configuration for the starter module user input
-        $starterParameters  = [PSCustomObject]@{}
+        $starterParameters = [PSCustomObject]@{}
 
-        if($hasStarter) {
+        if ($hasStarter) {
             Write-Verbose "Getting the starter configuration..."
-            if($iac -eq "terraform") {
+            if ($iac -eq "terraform") {
                 $terraformFiles = Get-ChildItem -Path $starterRootModuleFolderPath -Filter "*.tf" -File
-                foreach($terraformFile in $terraformFiles) {
+                foreach ($terraformFile in $terraformFiles) {
                     $starterParameters = Convert-HCLVariablesToInputConfig -targetVariableFile $terraformFile.FullName -hclParserToolPath $hclParserToolPath -validators $validationConfig -appendToObject $starterParameters
                 }
             }
 
-            if($iac -eq "bicep") {
+            if ($iac -in @("bicep", "bicep-avm")) {
                 $starterParameters = Convert-BicepConfigToInputConfig -bicepConfig $starterConfig.starter_modules.Value.$($inputConfig.starter_module_name.Value) -validators $validationConfig
             }
         }
@@ -158,7 +158,7 @@ function New-Bootstrap {
             Source = "calculated"
         }
 
-        if($inputConfig.PSObject.Properties.Name -contains "starter_location" -and $inputConfig.PSObject.Properties.Name -notcontains "starter_locations") {
+        if ($inputConfig.PSObject.Properties.Name -contains "starter_location" -and $inputConfig.PSObject.Properties.Name -notcontains "starter_locations") {
             Write-Verbose "Converting starter_location $($inputConfig.starter_location.Value) to starter_locations..."
             $inputConfig | Add-Member -NotePropertyName "starter_locations" -NotePropertyValue @{
                 Value  = @($inputConfig.starter_location.Value)
@@ -166,9 +166,9 @@ function New-Bootstrap {
             }
         }
 
-        if($inputConfig.PSObject.Properties.Name -contains "starter_locations") {
+        if ($inputConfig.PSObject.Properties.Name -contains "starter_locations") {
             $availabilityZonesStarter = @()
-            foreach($region in $inputConfig.starter_locations.Value) {
+            foreach ($region in $inputConfig.starter_locations.Value) {
                 $availabilityZonesStarter += , @(Get-AvailabilityZonesSupport -region $region -zonesSupport $zonesSupport)
             }
             $inputConfig | Add-Member -NotePropertyName "availability_zones_starter" -NotePropertyValue @{
@@ -203,12 +203,12 @@ function New-Bootstrap {
         # Write the tfvars file for the bootstrap and starter module
         Write-TfvarsJsonFile -tfvarsFilePath $bootstrapTfvarsPath -configuration $bootstrapConfiguration
 
-        if($iac -eq "terraform") {
-            if($starterFoldersToRetain.Length -gt 0) {
+        if ($iac -eq "terraform") {
+            if ($starterFoldersToRetain.Length -gt 0) {
                 Write-Verbose "Removing unwanted folders from the starter module..."
                 $folders = Get-ChildItem -Path $starterModulePath -Directory
-                foreach($folder in $folders) {
-                    if($starterFoldersToRetain -notcontains $folder.Name) {
+                foreach ($folder in $folders) {
+                    if ($starterFoldersToRetain -notcontains $folder.Name) {
                         Write-Verbose "Removing folder: $($folder.FullName)"
                         Remove-Item -Path $folder.FullName -Recurse -Force
                     } else {
@@ -218,12 +218,12 @@ function New-Bootstrap {
                 }
             }
             Remove-TerraformMetaFileSet -path $starterModulePath -writeVerboseLogs:$writeVerboseLogs.IsPresent
-            if($convertTfvarsToJson) {
+            if ($convertTfvarsToJson) {
                 Write-TfvarsJsonFile -tfvarsFilePath $starterTfvarsPath -configuration $starterConfiguration
             } else {
                 $inputsFromTfvars = $inputConfig.PSObject.Properties | Where-Object { $_.Value.Source -eq ".tfvars" } | Select-Object -ExpandProperty Name
                 Write-TfvarsJsonFile -tfvarsFilePath $starterTfvarsPath -configuration $starterConfiguration -skipItems $inputsFromTfvars
-                foreach($inputConfigFilePath in $inputConfigFilePaths | Where-Object { $_ -like "*.tfvars" }) {
+                foreach ($inputConfigFilePath in $inputConfigFilePaths | Where-Object { $_ -like "*.tfvars" }) {
                     $fileName = [System.IO.Path]::GetFileName($inputConfigFilePath)
                     $fileName = $fileName.Replace(".tfvars", ".auto.tfvars")
                     $destination = Join-Path -Path $starterRootModuleFolderPath -ChildPath $fileName
@@ -233,8 +233,8 @@ function New-Bootstrap {
             }
 
             # Copy additional files
-            foreach($additionalFile in $starterAdditionalFiles) {
-                if(Test-Path $additionalFile -PathType Container) {
+            foreach ($additionalFile in $starterAdditionalFiles) {
+                if (Test-Path $additionalFile -PathType Container) {
                     $folderName = ([System.IO.DirectoryInfo]::new($additionalFile)).Name
                     $destination = Join-Path -Path $starterRootModuleFolderPath -ChildPath $folderName
                     Write-Verbose "Copying folder $additionalFile to $destination"
@@ -248,23 +248,39 @@ function New-Bootstrap {
             }
         }
 
-        if($iac -eq "bicep") {
-            Copy-ParametersFileCollection -starterPath $starterModulePath -configFiles $starterConfig.starter_modules.Value.$($inputConfig.starter_module_name.Value).deployment_files
+        if ($iac -in @("bicep", "bicep-avm")) {
+            $starterModuleDefinition = $starterConfig.starter_modules.Value.$($inputConfig.starter_module_name.Value)
+            Copy-ParametersFileCollection -starterPath $starterModulePath -configFiles $starterModuleDefinition.deployment_files
             Set-ComputedConfiguration -configuration $starterConfiguration
             Edit-ALZConfigurationFilesInPlace -alzEnvironmentDestination $starterModulePath -configuration $starterConfiguration
-            Write-JsonFile -jsonFilePath $starterBicepVarsPath -configuration $starterConfiguration
+            if ($iac -eq "bicep-avm") {
+                $bicepAvmEnvConfiguration = Get-BicepAvmEnvironmentConfiguration -inputConfig $inputConfig
+                $combinedConfiguration = [PSCustomObject]@{}
+
+                foreach ($property in $starterConfiguration.PSObject.Properties) {
+                    $combinedConfiguration | Add-Member -NotePropertyName $property.Name -NotePropertyValue $property.Value
+                }
+
+                foreach ($property in $bicepAvmEnvConfiguration.PSObject.Properties) {
+                    $combinedConfiguration | Add-Member -NotePropertyName $property.Name -NotePropertyValue $property.Value -Force
+                }
+
+                Write-JsonFile -jsonFilePath $starterBicepVarsPath -configuration $combinedConfiguration
+            } else {
+                Write-JsonFile -jsonFilePath $starterBicepVarsPath -configuration $starterConfiguration
+            }
 
             # Remove unrequired files
-            $foldersOrFilesToRetain = $starterConfig.starter_modules.Value.$($inputConfig.starter_module_name.Value).folders_or_files_to_retain
+            $foldersOrFilesToRetain = $starterModuleDefinition.folders_or_files_to_retain
             $foldersOrFilesToRetain += "parameters.json"
             $foldersOrFilesToRetain += "config"
             $foldersOrFilesToRetain += "starter-cache.json"
 
-            foreach($deployment_file in $starterConfig.starter_modules.Value.$($inputConfig.starter_module_name.Value).deployment_files) {
+            foreach ($deployment_file in $starterModuleDefinition.deployment_files) {
                 $foldersOrFilesToRetain += $deployment_file.templateParametersSourceFilePath
             }
 
-            $subFoldersOrFilesToRemove = $starterConfig.starter_modules.Value.$($inputConfig.starter_module_name.Value).subfolders_or_files_to_remove
+            $subFoldersOrFilesToRemove = $starterModuleDefinition.subfolders_or_files_to_remove
 
             Remove-UnrequiredFileSet -path $starterModulePath -foldersOrFilesToRetain $foldersOrFilesToRetain -subFoldersOrFilesToRemove $subFoldersOrFilesToRemove -writeVerboseLogs:$writeVerboseLogs.IsPresent
         }
@@ -272,7 +288,7 @@ function New-Bootstrap {
         # Running terraform init and apply
         Write-InformationColored "Thank you for providing those inputs, we are now initializing and applying Terraform to bootstrap your environment..." -ForegroundColor Green -NewLineBefore -InformationAction Continue
 
-        if($autoApprove) {
+        if ($autoApprove) {
             Invoke-Terraform -moduleFolderPath $bootstrapModulePath -autoApprove -destroy:$destroy.IsPresent
         } else {
             Write-InformationColored "Once the plan is complete you will be prompted to confirm the apply." -ForegroundColor Green -NewLineBefore -InformationAction Continue

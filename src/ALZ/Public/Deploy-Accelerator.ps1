@@ -22,7 +22,7 @@ function Deploy-Accelerator {
 
         [Parameter(
             Mandatory = $false,
-            HelpMessage = "[REQUIRED] The infrastructure as code type to target. Supported options are 'bicep', 'terrform' or 'local'. Environment variable: ALZ_iac_type. Config file input: iac_type.")]
+            HelpMessage = "[REQUIRED] The infrastructure as code type to target. Supported options are 'bicep', 'bicep-avm', 'terraform' or 'local'. Environment variable: ALZ_iac_type. Config file input: iac_type.")]
         [Alias("i")]
         [Alias("iac")]
         [string] $iac_type = "",
@@ -188,7 +188,7 @@ function Deploy-Accelerator {
 
     $ProgressPreference = "SilentlyContinue"
 
-    if($skip_requirements_check.IsPresent) {
+    if ($skip_requirements_check.IsPresent) {
         Write-InformationColored "WARNING: Skipping the software requirements check..." -ForegroundColor Yellow -InformationAction Continue
     } else {
         Write-InformationColored "Checking the software requirements for the Accelerator..." -ForegroundColor Green -InformationAction Continue
@@ -201,7 +201,7 @@ function Deploy-Accelerator {
 
         # Check and install tools needed
         $toolsPath = Join-Path -Path $output_folder_path -ChildPath ".tools"
-        if($skipInternetChecks) {
+        if ($skipInternetChecks) {
             Write-InformationColored "Skipping Terraform tool check as you used the skipInternetCheck parameter. Please ensure you have the most recent version of Terraform installed" -ForegroundColor Yellow -InformationAction Continue
         } else {
             Write-InformationColored "Checking you have the latest version of Terraform installed..." -ForegroundColor Green -NewLineBefore -InformationAction Continue
@@ -213,7 +213,7 @@ function Deploy-Accelerator {
         $inputConfig = $null
         if ($inputConfigFilePaths.Length -eq 0) {
             $envInputConfigPaths = $env:ALZ_input_config_path
-            if($null -ne $envInputConfigPaths -and $envInputConfigPaths -ne "") {
+            if ($null -ne $envInputConfigPaths -and $envInputConfigPaths -ne "") {
                 $inputConfigFilePaths = $envInputConfigPaths -split ","
             } else {
                 Write-InformationColored "No input configuration file path has been provided. Please provide the path(s) to your configuration file(s)..." -ForegroundColor Yellow -InformationAction Continue
@@ -222,7 +222,7 @@ function Deploy-Accelerator {
         }
 
         # Get the input config from yaml and json files
-        foreach($inputConfigFilePath in $inputConfigFilePaths) {
+        foreach ($inputConfigFilePath in $inputConfigFilePaths) {
             $inputConfig = Get-ALZConfig -configFilePath $inputConfigFilePath -inputConfig $inputConfig -hclParserToolPath $hclParserToolPath
         }
 
@@ -231,13 +231,13 @@ function Deploy-Accelerator {
         $parametersWithValues = @{}
         foreach ($parameterKey in $parameters.Keys) {
             $parameter = $parameters[$parameterKey]
-            if($parameter.IsDynamic) {
+            if ($parameter.IsDynamic) {
                 continue
             }
 
             $parameterValue = Get-Variable -Name $parameterKey -ValueOnly -ErrorAction SilentlyContinue
 
-            if($null -ne $parameterValue) {
+            if ($null -ne $parameterValue) {
                 $parametersWithValues[$parameterKey] = @{
                     type    = $parameters[$parameterKey].ParameterType.Name
                     value   = $parameterValue
@@ -255,7 +255,7 @@ function Deploy-Accelerator {
             }
         }
 
-        if ($inputConfig.iac_type.Value -eq "bicep") {
+        if ($inputConfig.iac_type.Value -eq "bicep" -or $inputConfig.iac_type.Value -eq "bicep-classic") {
             Write-InformationColored "Although you have selected Bicep, the Accelerator leverages the Terraform tool to bootstrap your Version Control System and Azure. This is will not impact your choice of Bicep post this initial bootstrap. Please refer to our documentation for further details..." -ForegroundColor Yellow -InformationAction Continue
         }
 
