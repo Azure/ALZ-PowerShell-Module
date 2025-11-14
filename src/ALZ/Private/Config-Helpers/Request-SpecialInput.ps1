@@ -19,7 +19,8 @@ function Request-SpecialInput {
         $typeDescription = ""
 
         if($type -eq "iac") {
-            $options += @{ key = "bicep"; name = "Bicep"; description = "Bicep" }
+            $options += @{ key = "bicep-avm"; name = "Bicep AVM"; description = "Bicep (New Framework)" }
+            $options += @{ key = "bicep"; name = "Bicep Classic"; description = "Bicep (Classic Framework)" }
             $options += @{ key = "terraform"; name = "Terraform"; description = "Terraform" }
             $typeDescription = "Infrastructure as Code (IaC) language"
         }
