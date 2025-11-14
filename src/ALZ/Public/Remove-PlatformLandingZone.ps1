@@ -120,6 +120,7 @@ function Remove-PlatformLandingZone {
     [CmdletBinding(SupportsShouldProcess = $true)]
     param (
         [string[]]$managementGroups,
+        [string]$subscriptionTargetManagementGroup = $null,
         [string[]]$subscriptions = @(),
         [string[]]$resourceGroupsToRetainNamePatterns = @(
             "VisualStudioOnline-" # By default retain Visual Studio Online resource groups created for Azure DevOps billing purposes
@@ -129,12 +130,30 @@ function Remove-PlatformLandingZone {
         [switch]$planMode
     )
 
+    function Write-ToConsoleLog {
+        param (
+            [string]$Message,
+            [string]$Level = "INFO",
+            [System.ConsoleColor]$Color = [System.ConsoleColor]::Yellow,
+            [switch]$NoNewLine
+        )
+
+        $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+        $prefix = ""
+        if (-not $NoNewLine) {
+            $Prefix = [System.Environment]::NewLine
+        }
+        Write-Host "$Prefix[$timestamp] [$Level] $Message" -ForegroundColor $Color
+    }
+
     function Get-ManagementGroupChildrenRecursive {
         param (
             [object[]]$managementGroups,
             [int]$depth = 0,
             [hashtable]$managementGroupsFound = @{}
         )
+
+        $managementGroups = $managementGroups | Where-Object { $_.type -eq "Microsoft.Management/managementGroups" }
 
         foreach($managementGroup in $managementGroups) {
             if(!$managementGroupsFound.ContainsKey($depth)) {
@@ -146,13 +165,13 @@ function Remove-PlatformLandingZone {
             $children = $managementGroup.children | Where-Object { $_.type -eq "Microsoft.Management/managementGroups" }
 
             if ($children -and $children.Count -gt 0) {
-                Write-Host "Management group has children: $($managementGroup.name)"
+                Write-ToConsoleLog "Management group has children: $($managementGroup.name)" -NoNewLine
                 if(!$managementGroupsFound.ContainsKey($depth + 1)) {
                     $managementGroupsFound[$depth + 1] = @()
                 }
                 Get-ManagementGroupChildrenRecursive -managementGroups $children -depth ($depth + 1) -managementGroupsFound $managementGroupsFound
             } else {
-                Write-Host "Management group has no children: $($managementGroup.name)"
+                Write-ToConsoleLog "Management group has no children: $($managementGroup.name)" -NoNewLine
             }
         }
 
@@ -179,34 +198,167 @@ function Remove-PlatformLandingZone {
             [string]$finalConfirmationText = "YES I CONFIRM"
         )
 
-        Write-Host "WARNING: $message" -ForegroundColor Red
-        Write-Host "If you wish to proceed, type '$initialConfirmationText' to confirm." -ForegroundColor Red
+        Write-ToConsoleLog "$message" -Color DarkMagenta -Level "WARNING"
+        Write-ToConsoleLog "If you wish to proceed, type '$initialConfirmationText' to confirm." -Color DarkMagenta -Level "WARNING"
         $confirmation = Read-Host "Enter the confirmation text"
         if ($confirmation -ne $initialConfirmationText) {
-            Write-Host "Confirmation not received. Exiting without making any changes."
+            Write-ToConsoleLog "Confirmation not received. Exiting without making any changes." -Color Red -Level "ERROR"
             return $false
         }
-        Write-Host "WARNING: This operation is permanent cannot be reversed!" -ForegroundColor Red
-        Write-Host "Are you sure you want to proceed? Type '$finalConfirmationText' to perform the highly destructive operation..." -ForegroundColor Red
+        Write-ToConsoleLog "Initial confirmation received."
+        Write-ToConsoleLog "WARNING: This operation is permanent cannot be reversed!" -Color Magenta -Level "WARNING"
+        Write-ToConsoleLog "Are you sure you want to proceed? Type '$finalConfirmationText' to perform the highly destructive operation..." -Color Magenta  -Level "WARNING"
         $confirmation = Read-Host "Enter the final confirmation text"
         if ($confirmation -ne $finalConfirmationText) {
-            Write-Host "Final confirmation not received. Exiting without making any changes."
+            Write-ToConsoleLog "Final confirmation not received. Exiting without making any changes." -Color Red -Level "ERROR"
             return $false
         }
-        Write-Host "Final confirmation received. Proceeding with destructive operation..." -ForegroundColor Green
+        Write-ToConsoleLog "Final confirmation received. Proceeding with destructive operation..."
         return $true
     }
 
+
+
     if ($PSCmdlet.ShouldProcess("Delete Management Groups and Clean Subscriptions", "delete")) {
-        $funcDef = ${function:Get-ManagementGroupChildrenRecursive}.ToString()
+
+        $managementGroupsProvided = $managementGroups.Count -gt 0
         $subscriptionsProvided = $subscriptions.Count -gt 0
-        if($subscriptionsProvided) {
-            Write-Host "Subscriptions have been provided, checking they exist. We will not discover additional subscriptions from management groups..." -ForegroundColor Yellow
-        } else {
-            Write-Host "No subscriptions provided, discovering subscriptions from management groups..." -ForegroundColor Yellow
+
+        if(-not $subscriptionsProvided -and -not $managementGroupsProvided) {
+            Write-ToConsoleLog "No management groups or subscriptions provided, nothing to do. Exiting..." -Color Green
+            return
+        }
+
+        if(-not $managementGroupsProvided) {
+            Write-ToConsoleLog "No management groups provided, skipping..."
         }
 
         $subscriptionsFound = [System.Collections.Concurrent.ConcurrentBag[hashtable]]::new()
+
+        if($managementGroupsProvided) {
+            $managementGroupsFound = @()
+            foreach($managementGroup in $managementGroups) {
+                $managementGroup = (az account management-group show --name $managementGroup) | ConvertFrom-Json
+
+                if($null -eq $managementGroup) {
+                    Write-ToConsoleLog "Management group not found: $managementGroup" -Color DarkYellow -Level "WARNING"
+                    continue
+                }
+
+                $managementGroupsFound += @{
+                    Name        = $managementGroup.name
+                    DisplayName = $managementGroup.displayName
+                }
+            }
+
+            if(-not $bypassConfirmation) {
+                Write-ToConsoleLog "The following Management Groups will be processed for removal:" -Color DarkBlue
+                $managementGroupsFound | ForEach-Object { Write-ToConsoleLog "Management Group: $($_.Name) ($($_.DisplayName))" -Color Blue -NoNewLine }
+                $continue = Invoke-PromptForConfirmation `
+                    -message "ALL THE CHILD MANAGEMENT GROUPS OF THE LISTED MANAGEMENTS GROUPS AND THEIR CHILDREN WILL BE PERMANENTLY DELETED" `
+                    -initialConfirmationText "I CONFIRM I UNDERSTAND ALL THE CHILD MANAGEMENT GROUPS AND THEIR CHILDREN WILL BE PERMANENTLY DELETED"
+                if(-not $continue) {
+                    Write-ToConsoleLog "Exiting..."
+                    return
+                }
+            }
+
+            $funcGetManagementGroupChildrenRecursive = ${function:Get-ManagementGroupChildrenRecursive}.ToString()
+            $funcWriteToConsoleLog = ${function:Write-ToConsoleLog}.ToString()
+
+            if(-not $subscriptionsProvided) {
+                Write-ToConsoleLog "No subscriptions provided, they will be discovered from the target management group hierarchy..." -Color Yellow
+            }
+
+            if($managementGroupsFound.Count -ne 0) {
+                $managementGroupsFound | ForEach-Object -Parallel {
+                    $subscriptionsProvided = $using:subscriptionsProvided
+                    $subscriptionsFound = $using:subscriptionsFound
+                    $subscriptionTargetManagementGroup = $using:subscriptionTargetManagementGroup
+                    $funcWriteToConsoleLog = $using:funcWriteToConsoleLog
+                    ${function:Write-ToConsoleLog} = $funcWriteToConsoleLog
+
+                    $managementGroupId = $_.Name
+                    $managementGroupDisplayName = $_.DisplayName
+
+                    Write-ToConsoleLog "Finding management group: $managementGroupId ($managementGroupDisplayName)" -NoNewLine
+                    $topLevelManagementGroup = (az account management-group show --name $managementGroupId --expand --recurse) | ConvertFrom-Json
+
+                    $hasChildren = $topLevelManagementGroup.children -and $topLevelManagementGroup.children.Count -gt 0
+
+                    $managementGroupsToDelete = @{}
+
+                    if($hasChildren) {
+                        ${function:Get-ManagementGroupChildrenRecursive} = $using:funcGetManagementGroupChildrenRecursive
+                        $managementGroupsToDelete = Get-ManagementGroupChildrenRecursive -managementGroups @($topLevelManagementGroup.children)
+                    } else {
+                        Write-ToConsoleLog "Management group has no children: $managementGroupId ($managementGroupDisplayName)" -NoNewLine
+                    }
+
+                    $reverseKeys = $managementGroupsToDelete.Keys | Sort-Object -Descending
+
+                    $throttleLimit = $using:throttleLimit
+                    $planMode = $using:planMode
+
+                    foreach($depth in $reverseKeys) {
+                        $managementGroups = $managementGroupsToDelete[$depth]
+
+                        Write-ToConsoleLog "Deleting management groups at depth: $depth" -NoNewLine
+
+                        $managementGroups | ForEach-Object -Parallel {
+                            $subscriptionsFound = $using:subscriptionsFound
+                            $subscriptionTargetManagementGroup = $using:subscriptionTargetManagementGroup
+                            $funcWriteToConsoleLog = $using:funcWriteToConsoleLog
+                            ${function:Write-ToConsoleLog} = $funcWriteToConsoleLog
+
+                            $subscriptions = (az account management-group subscription show-sub-under-mg --name $_) | ConvertFrom-Json
+                            if ($subscriptions.Count -gt 0) {
+                                Write-ToConsoleLog "Management group has subscriptions: $_" -NoNewLine
+                                foreach ($subscription in $subscriptions) {
+                                    Write-ToConsoleLog "Removing subscription from management group: $_, subscription: $($subscription.displayName)" -NoNewLine
+                                    if(-not $subscriptionsProvided) {
+                                        $subscriptionsFound.Add(
+                                            @{
+                                                Id   = $subscription.name
+                                                Name = $subscription.displayName
+                                            }
+                                        )
+                                    }
+
+                                    if($subscriptionTargetManagementGroup) {
+                                        Write-ToConsoleLog "Moving subscription to target management group: $($subscriptionTargetManagementGroup), subscription: $($subscription.displayName)" -NoNewLine
+                                        if($using:planMode) {
+                                            Write-ToConsoleLog "(Plan Mode) Would run: az account management-group subscription add --name $($subscriptionTargetManagementGroup) --subscription $($subscription.name)" -NoNewLine -Color Gray
+                                        } else {
+                                            az account management-group subscription add --name $subscriptionTargetManagementGroup --subscription $subscription.name
+                                        }
+                                    } else {
+                                        if($using:planMode) {
+                                            Write-ToConsoleLog "(Plan Mode) Would run: az account management-group subscription remove --name $_ --subscription $($subscription.name)" -NoNewLine -Color Gray
+                                        } else {
+                                            az account management-group subscription remove --name $_ --subscription $subscription.name
+                                        }
+                                    }
+                                }
+                            } else {
+                                Write-ToConsoleLog "Management group has no subscriptions: $_" -NoNewline
+                            }
+
+                            Write-ToConsoleLog "Deleting management group: $_" -NoNewline
+                            if($using:planMode) {
+                                Write-ToConsoleLog "(Plan Mode) Would run: az account management-group delete --name $_" -NoNewline -Color Gray
+                            } else {
+                                az account management-group delete --name $_
+                            }
+                        } -ThrottleLimit $using:throttleLimit
+                    }
+                } -ThrottleLimit $throttleLimit
+            }
+        }
+
+        if($subscriptionsProvided) {
+            Write-ToConsoleLog "Checking the provided subscriptions exist..."
+        }
 
         foreach($subscription in $subscriptions) {
             $subscriptionObject = @{
@@ -214,130 +366,46 @@ function Remove-PlatformLandingZone {
                 Name = Test-IsGuid -StringGuid $subscription ? (az account list --all --query "[?id=='$subscription'].name" -o tsv) : $subscription
             }
             if(-not $subscriptionObject.Id -or -not $subscriptionObject.Name) {
-                Write-Host "Subscription not found, skipping: $($subscription.Name) (ID: $($subscription.Id))" -ForegroundColor DarkBlue
+                Write-ToConsoleLog "Subscription not found, skipping: $($subscription.Name) (ID: $($subscription.Id))" -Color DarkYellow -Level "WARNING"
                 continue
             }
             $subscriptionsFound.Add($subscriptionObject)
         }
 
-        if($managementGroups.Count -eq 0) {
-            Write-Host "No management groups provided, skipping..." -ForegroundColor Yellow
-        } else {
-            if(-not $bypassConfirmation) {
-                Write-Host ""
-                Write-Host "The following Management Groups will be processed for removal:" -ForegroundColor DarkBlue
-                $managementGroups | ForEach-Object { Write-Host "Management Group: $_" -ForegroundColor DarkBlue }
-                Write-Host ""
-                $continue = Invoke-PromptForConfirmation `
-                    -message "ALL THE NAMED MANAGEMENT GROUPS AND THEIR CHILDREN WILL BE PERMANENTLY DELETED" `
-                    -initialConfirmationText "I CONFIRM I UNDERSTAND ALL THE NAMED MANAGEMENT GROUPS AND THEIR CHILDREN WILL BE PERMANENTLY DELETED"
-                if(-not $continue) {
-                    Write-Host "Exiting..."
-                    return
-                }
-            }
-        }
-
-        if($managementGroups.Count -ne 0) {
-            $managementGroups | ForEach-Object -Parallel {
-                $subscriptionsProvided = $using:subscriptionsProvided
-                $subscriptionsFound = $using:subscriptionsFound
-
-                $managementGroupId = $_
-
-                Write-Host "Finding management group: $managementGroupId"
-                $topLevelManagementGroup = (az account management-group show --name $managementGroupId --expand --recurse) | ConvertFrom-Json
-
-                $hasChildren = $topLevelManagementGroup.children -and $topLevelManagementGroup.children.Count -gt 0
-
-                $managementGroupsToDelete = @{}
-
-                if($hasChildren) {
-                    ${function:Get-ManagementGroupChildrenRecursive} = $using:funcDef
-                    $managementGroupsToDelete = Get-ManagementGroupChildrenRecursive -managementGroups @($topLevelManagementGroup.children)
-                } else {
-                    Write-Host "Management group has no children: $managementGroupId"
-                }
-
-                $reverseKeys = $managementGroupsToDelete.Keys | Sort-Object -Descending
-
-                $throttleLimit = $using:throttleLimit
-                $planMode = $using:planMode
-
-                foreach($depth in $reverseKeys) {
-                    $managementGroups = $managementGroupsToDelete[$depth]
-
-                    Write-Host "Deleting management groups at depth: $depth"
-
-                    $managementGroups | ForEach-Object -Parallel {
-                        $subscriptionsFound = $using:subscriptionsFound
-                        $subscriptions = (az account management-group subscription show-sub-under-mg --name $_) | ConvertFrom-Json
-                        if ($subscriptions.Count -gt 0) {
-                            Write-Host "Management group has subscriptions: $_"
-                            foreach ($subscription in $subscriptions) {
-                                Write-Host "Removing subscription from management group: $_, subscription: $($subscription.displayName)"
-                                if(-not $subscriptionsProvided) {
-                                    $subscriptionsFound.Add(
-                                        @{
-                                            Id   = $subscription.name
-                                            Name = $subscription.displayName
-                                        }
-                                    )
-                                }
-                                if($using:planMode) {
-                                    Write-Host "(Plan Mode) Would run: az account management-group subscription remove --name $_ --subscription $($subscription.name)"
-                                } else {
-                                    az account management-group subscription remove --name $_ --subscription $subscription.name
-                                }
-                            }
-                        } else {
-                            Write-Host "Management group has no subscriptions: $_"
-                        }
-
-                        Write-Host "Deleting management group: $_"
-                        if($using:planMode) {
-                            Write-Host "(Plan Mode) Would run: az account management-group delete --name $_"
-                        } else {
-                            az account management-group delete --name $_
-                        }
-                    } -ThrottleLimit $using:throttleLimit
-                }
-            } -ThrottleLimit $throttleLimit
-        }
-
         $subscriptionsFinal = $subscriptionsFound.ToArray() | Sort-Object -Property name -Unique
 
         if($subscriptionsFinal.Count -eq 0) {
-            Write-Host "No subscriptions provided or found, skipping resource group deletion..." -ForegroundColor Yellow
+            Write-ToConsoleLog "No subscriptions provided or found, skipping resource group deletion..."
             return
         } else {
             if(-not $bypassConfirmation) {
-                Write-Host ""
-                Write-Host "The following Subscriptions were provided or discovered during management group cleanup:" -ForegroundColor DarkBlue
-                $subscriptionsFinal | ForEach-Object { Write-Host "Name: $($_.Name), ID: $($_.Id)" -ForegroundColor DarkBlue }
-                Write-Host ""
+                Write-ToConsoleLog "The following Subscriptions were provided or discovered during management group cleanup:" -Color DarkBlue
+                $subscriptionsFinal | ForEach-Object { Write-ToConsoleLog "Name: $($_.Name), ID: $($_.Id)" -Color DarkBlue -NoNewline }
                 $continue = Invoke-PromptForConfirmation `
-                    -message "ALL RESOURCE GROUPS IN THE NAMED SUBSCRIPTIONS WILL BE PERMANENTLY DELETED UNLESS THEY MATCH RETENTION PATTERNS" `
+                    -message "ALL RESOURCE GROUPS IN THE LISTED SUBSCRIPTIONS WILL BE PERMANENTLY DELETED UNLESS THEY MATCH RETENTION PATTERNS" `
                     -initialConfirmationText "I CONFIRM I UNDERSTAND ALL SELECTED RESOURCE GROUPS IN THE NAMED SUBSCRIPTIONS WILL BE PERMANENTLY DELETED"
                 if(-not $continue) {
-                    Write-Host "Exiting..."
+                    Write-ToConsoleLog "Exiting..."
                     return
                 }
             }
         }
 
         $subscriptionsFinal | ForEach-Object -Parallel {
+            $funcWriteToConsoleLog = $using:funcWriteToConsoleLog
+            ${function:Write-ToConsoleLog} = $funcWriteToConsoleLog
+
             $subscription = $_
-            Write-Host "Finding resource groups for subscription: $($subscription.Name) (ID: $($subscription.Id))"
+            Write-ToConsoleLog "Finding resource groups for subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewline
 
             $resourceGroups = (az group list --subscription $subscription.Id) | ConvertFrom-Json
 
             if ($resourceGroups.Count -eq 0) {
-                Write-Host "No resource groups found for subscription: $($subscription.Name) (ID: $($subscription.Id)), skipping."
+                Write-ToConsoleLog "No resource groups found for subscription: $($subscription.Name) (ID: $($subscription.Id)), skipping." -NoNewline
                 continue
             }
 
-            Write-Host "Found resource groups for subscription: $($subscription.Name) (ID: $($subscription.Id)), count: $($resourceGroups.Count)"
+            Write-ToConsoleLog "Found resource groups for subscription: $($subscription.Name) (ID: $($subscription.Id)), count: $($resourceGroups.Count)" -NoNewline
 
             $resourceGroupsToDelete = @()
             $resourceGroupsToRetainNamePatterns = $using:resourceGroupsToRetainNamePatterns
@@ -347,7 +415,7 @@ function Remove-PlatformLandingZone {
 
                 foreach ($pattern in $resourceGroupsToRetainNamePatterns) {
                     if ($resourceGroup.name -match $pattern) {
-                        Write-Host "Retaining resource group as it matches the pattern '$pattern': $($resourceGroup.name) in subscription: $($subscription.Name) (ID: $($subscription.Id))" -ForegroundColor Yellow
+                        Write-ToConsoleLog "Retaining resource group as it matches the pattern '$pattern': $($resourceGroup.name) in subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
                         $foundMatch = $true
                         break
                     }
@@ -372,66 +440,70 @@ function Remove-PlatformLandingZone {
                 $shouldRetry = $false
                 $resourceGroupsToRetry = [System.Collections.Concurrent.ConcurrentBag[hashtable]]::new()
                 $resourceGroupsToDelete | ForEach-Object -Parallel {
+                    $funcWriteToConsoleLog = $using:funcWriteToConsoleLog
+                    ${function:Write-ToConsoleLog} = $funcWriteToConsoleLog
                     $resourceGroupName = $_.ResourceGroupName
                     $subscription = $_.Subscription
 
-                    Write-Host "Deleting resource group for subscription: $($subscription.Name) (ID: $($subscription.Id)), resource group: $($ResourceGroupName)"
+                    Write-ToConsoleLog "Deleting resource group for subscription: $($subscription.Name) (ID: $($subscription.Id)), resource group: $($ResourceGroupName)" -NoNewLine
                     $result = $null
                     if($using:planMode) {
-                        Write-Host "(Plan Mode) Would run: az group delete --name $ResourceGroupName --subscription $($subscription.Id) --yes"
+                        Write-ToConsoleLog "(Plan Mode) Would run: az group delete --name $ResourceGroupName --subscription $($subscription.Id) --yes" -NoNewLine -Color Gray
                     } else {
                         $result = az group delete --name $ResourceGroupName --subscription $subscription.Id --yes 2>&1
                     }
 
                     if (!$result) {
-                        Write-Host "Deleted resource group for subscription: $($subscription.Name) (ID: $($subscription.Id)), resource group: $($ResourceGroupName)"
+                        Write-ToConsoleLog "Deleted resource group for subscription: $($subscription.Name) (ID: $($subscription.Id)), resource group: $($ResourceGroupName)" -NoNewLine
                     } else {
-                        Write-Host "Delete resource group failed for subscription: $($subscription.Name) (ID: $($subscription.Id)), resource group: $($ResourceGroupName)"
-                        Write-Host "It will be retried once the other resource groups in the subscription have reported their status."
-                        Write-Verbose "$result"
+                        Write-ToConsoleLog "Delete resource group failed for subscription: $($subscription.Name) (ID: $($subscription.Id)), resource group: $($ResourceGroupName)" -NoNewLine
+                        Write-ToConsoleLog "It will be retried once the other resource groups in the subscription have reported their status." -NoNewLine
                         $retries = $using:resourceGroupsToRetry
                         $retries.Add($_)
                     }
                 } -ThrottleLimit $using:throttleLimit
 
                 if($resourceGroupsToRetry.Count -gt 0) {
-                    Write-Host "Some resource groups failed to delete and will be retried in subscription: $($subscription.Name) (ID: $($subscription.Id))"
+                    Write-ToConsoleLog "Some resource groups failed to delete and will be retried in subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
                     $shouldRetry = $true
                     $resourceGroupsToDelete = $resourceGroupsToRetry.ToArray()
                 } else {
-                    Write-Host "All resource groups deleted successfully in subscription: $($subscription.Name) (ID: $($subscription.Id))."
+                    Write-ToConsoleLog "All resource groups deleted successfully in subscription: $($subscription.Name) (ID: $($subscription.Id))." -NoNewLine
                 }
             }
 
-            Write-Host "Checking for Microsoft Defender for Cloud Plans to reset in subscription: $($subscription.Name) (ID: $($subscription.Id))"
+            Write-ToConsoleLog "Checking for Microsoft Defender for Cloud Plans to reset in subscription: $($subscription.Name) (ID: $($subscription.Id))"
             $defenderPlans = (az security pricing list --subscription $subscription.Id) | ConvertFrom-Json
 
             $defenderPlans.value | Where-Object { -not $_.deprecated } | ForEach-Object -Parallel {
                 $subscription = $using:subscription
+                $funcWriteToConsoleLog = $using:funcWriteToConsoleLog
+                ${function:Write-ToConsoleLog} = $funcWriteToConsoleLog
+
                 if ($_.pricingTier -ne "Free") {
-                    Write-Host "Resetting Microsoft Defender for Cloud Plan to Free for plan: $($_.name) in subscription: $($subscription.Name) (ID: $($subscription.Id))"
+                    Write-ToConsoleLog "Resetting Microsoft Defender for Cloud Plan to Free for plan: $($_.name) in subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
                     $result = $null
                     if($using:planMode) {
-                        Write-Host "(Plan Mode) Would run: az security pricing create --name $($_.name) --tier `"Free`" --subscription $($subscription.Id)"
+                        Write-ToConsoleLog "(Plan Mode) Would run: az security pricing create --name $($_.name) --tier `"Free`" --subscription $($subscription.Id)" -NoNewLine -Color Gray
                     } else {
                         $result = (az security pricing create --name $_.name --tier "Free" --subscription $subscription.Id 2>&1)
                     }
                     if ($result -like "*must be 'Standard'*") {
-                        Write-Host "Resetting Microsoft Defender for Cloud Plan to Standard as Free is not supported for plan: $($_.name) in subscription: $($subscription.Name) (ID: $($subscription.Id))"
+                        Write-ToConsoleLog "Resetting Microsoft Defender for Cloud Plan to Standard as Free is not supported for plan: $($_.name) in subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
                         if($using:planMode) {
-                            Write-Host "(Plan Mode) Would run: az security pricing create --name $($_.name) --tier `"Standard`" --subscription $($subscription.Id)"
+                            Write-ToConsoleLog "(Plan Mode) Would run: az security pricing create --name $($_.name) --tier `"Standard`" --subscription $($subscription.Id)" -NoNewLine -Color Gray
                         } else {
                             $result = az security pricing create --name $_.name --tier "Standard" --subscription $subscription.Id
                         }
                     }
-                    Write-Host "Microsoft Defender for Cloud Plan reset for plan: $($_.name) in subscription: $($subscription.Name) (ID: $($subscription.Id))"
+                    Write-ToConsoleLog "Microsoft Defender for Cloud Plan reset for plan: $($_.name) in subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
                 } else {
-                    Write-Host "Microsoft Defender for Cloud Plan is already set to Free for plan: $($_.name) in subscription: $($subscription.Name) (ID: $($subscription.Id)), skipping."
+                    Write-ToConsoleLog "Microsoft Defender for Cloud Plan is already set to Free for plan: $($_.name) in subscription: $($subscription.Name) (ID: $($subscription.Id)), skipping."-NoNewLine
                 }
             } -ThrottleLimit $using:throttleLimit
 
         } -ThrottleLimit $throttleLimit
 
-        Write-Host "Cleanup completed."
+        Write-ToConsoleLog "Cleanup completed." -Color Green
     }
 }
