@@ -1,0 +1,12 @@
+root = true
+
+[*]
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+[*.{ps1,psm1,psd1}]
+indent_style = space
+indent_size = 4
+
+

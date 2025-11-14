@@ -255,8 +255,8 @@ function Deploy-Accelerator {
             }
         }
 
-        if ($inputConfig.iac_type.Value -eq "bicep" -or $inputConfig.iac_type.Value -eq "bicep-classic") {
-            Write-InformationColored "Although you have selected Bicep, the Accelerator leverages the Terraform tool to bootstrap your Version Control System and Azure. This is will not impact your choice of Bicep post this initial bootstrap. Please refer to our documentation for further details..." -ForegroundColor Yellow -InformationAction Continue
+        if ($inputConfig.iac_type.Value -eq "bicep") {
+            Write-InformationColored "Although you have selected Bicep, the Accelerator leverages the Terraform tool to bootstrap your Version Control System and Azure. This will not impact your choice of Bicep post this initial bootstrap. Please refer to our documentation for further details..." -ForegroundColor Yellow -InformationAction Continue
         }
 
         Write-Verbose "Initial Input config: $(ConvertTo-Json $inputConfig -Depth 100)"

@@ -9,7 +9,7 @@ function Write-InformationColored {
         [switch]$NewLineBefore
     )
 
-    if($NewLineBefore) {
+    if ($NewLineBefore) {
         $MessageData = "$([Environment]::NewLine)$MessageData"
     }
 

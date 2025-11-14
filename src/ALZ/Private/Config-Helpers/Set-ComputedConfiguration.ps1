@@ -14,7 +14,7 @@ function Set-ComputedConfiguration {
 
             if ($configKey.Value.Value -is [array]) {
                 $formattedValues = @()
-                foreach($formatString in $configKey.Value.Value) {
+                foreach ($formatString in $configKey.Value.Value) {
                     $formattedValues += Format-TokenizedConfigurationString -tokenizedString $formatString -configuration $configuration
                 }
 

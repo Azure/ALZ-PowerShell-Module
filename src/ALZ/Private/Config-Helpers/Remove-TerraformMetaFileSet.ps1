@@ -18,8 +18,8 @@ function Remove-TerraformMetaFileSet {
         [switch]$writeVerboseLogs
     )
 
-    if($PSCmdlet.ShouldProcess("Remove files", "modify")) {
-        if($terraformFilesOrFoldersToRemove.Length -eq 0 ) {
+    if ($PSCmdlet.ShouldProcess("Remove files", "modify")) {
+        if ($terraformFilesOrFoldersToRemove.Length -eq 0 ) {
             Write-Verbose "No folders or files specified, so not removing aything from $path"
             return
         }
@@ -27,8 +27,8 @@ function Remove-TerraformMetaFileSet {
         $filesAndFolders = Get-ChildItem -Path $path -Force
 
         foreach ($fileOrFolder in $filesAndFolders) {
-            if($terraformFilesOrFoldersToRemove -contains $fileOrFolder.Name) {
-                if($writeVerboseLogs) {
+            if ($terraformFilesOrFoldersToRemove -contains $fileOrFolder.Name) {
+                if ($writeVerboseLogs) {
                     Write-Verbose "Exact Match - Removing: $($fileOrFolder.FullName)"
                 }
                 Remove-Item -Path $fileOrFolder.FullName -Force -Recurse | Out-Null
