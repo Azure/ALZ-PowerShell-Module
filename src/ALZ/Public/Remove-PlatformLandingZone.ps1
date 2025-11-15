@@ -15,8 +15,12 @@ function Remove-PlatformLandingZone {
         4. Removes subscriptions from management groups and optionally moves them to a target management group
         5. Discovers subscriptions from management groups (if not explicitly provided)
         6. Deletes management groups in reverse depth order (children before parents)
-        7. Deletes all resource groups in the discovered/specified subscriptions (excluding retention patterns)
-        8. Resets Microsoft Defender for Cloud plans to Free tier
+        7. Deletes management group-level deployments from target management groups (if not being deleted)
+        8. Deletes orphaned role assignments from target management groups (if not being deleted)
+        9. Deletes all resource groups in the discovered/specified subscriptions (excluding retention patterns)
+        10. Resets Microsoft Defender for Cloud plans to Free tier
+        11. Deletes all subscription-level deployments
+        12. Deletes orphaned role assignments from subscriptions
 
         CRITICAL WARNING: This is a highly destructive operation that will permanently delete Azure resources.
         By default, ALL resource groups in the subscriptions will be deleted unless they match retention patterns.
@@ -77,6 +81,18 @@ function Remove-PlatformLandingZone {
         executing the actual cleanup.
         Default: $false (execute actual deletions)
 
+    .PARAMETER skipDefenderPlanReset
+        A switch parameter that skips the Microsoft Defender for Cloud plan reset operation. When specified, the
+        function will not attempt to reset Defender plans to Free tier. This is useful when you want to preserve
+        existing Defender configurations or when you don't have the necessary permissions.
+        Default: $false (reset Defender plans)
+
+    .PARAMETER skipDeploymentDeletion
+        A switch parameter that skips deployment deletion operations at both the management group and subscription
+        levels. When specified, the function will not delete deployment history records from management groups or
+        subscriptions. This is useful when you want to preserve deployment records for audit or compliance purposes.
+        Default: $false (delete deployments)
+
     .EXAMPLE
         Remove-PlatformLandingZone -managementGroups @("alz-platform", "alz-landingzones")
 
@@ -132,6 +148,12 @@ function Remove-PlatformLandingZone {
 
         Skips management group processing entirely and only deletes resource groups from the specified subscription.
         This is useful when you want to clean subscriptions without touching the management group structure.
+
+    .EXAMPLE
+        Remove-PlatformLandingZone -managementGroups @("alz-test") -skipDefenderPlanReset -skipDeploymentDeletion
+
+        Removes management groups and resource groups but skips resetting Microsoft Defender plans and deleting
+        deployment history. Useful for faster cleanup when Defender configuration and audit trails should be preserved.
 
     .NOTES
         This function uses Azure CLI commands and requires:
@@ -189,7 +211,9 @@ function Remove-PlatformLandingZone {
         [switch]$bypassConfirmation,
         [int]$bypassConfirmationTimeoutSeconds = 30,
         [int]$throttleLimit = 11,
-        [switch]$planMode
+        [switch]$planMode,
+        [switch]$skipDefenderPlanReset,
+        [switch]$skipDeploymentDeletion
     )
 
     function Write-ToConsoleLog {
@@ -310,6 +334,8 @@ function Remove-PlatformLandingZone {
 
     if ($PSCmdlet.ShouldProcess("Delete Management Groups and Clean Subscriptions", "delete")) {
 
+        $funcWriteToConsoleLog = ${function:Write-ToConsoleLog}.ToString()
+
         if($bypassConfirmation) {
             Write-ToConsoleLog "Bypass confirmation enabled, proceeding without prompts..." -IsWarning
             Write-ToConsoleLog "This is a highly destructive operation that will permanently delete Azure resources!" -IsWarning
@@ -401,7 +427,6 @@ function Remove-PlatformLandingZone {
             }
 
             $funcGetManagementGroupChildrenRecursive = ${function:Get-ManagementGroupChildrenRecursive}.ToString()
-            $funcWriteToConsoleLog = ${function:Write-ToConsoleLog}.ToString()
 
             if(-not $subscriptionsProvided) {
                 Write-ToConsoleLog "No subscriptions provided, they will be discovered from the target management group hierarchy..."
@@ -494,6 +519,104 @@ function Remove-PlatformLandingZone {
                     }
                 } -ThrottleLimit $throttleLimit
             }
+
+            # Delete deployments from target management groups that are not being deleted
+            if($managementGroupsFound.Count -ne 0 -and -not $skipDeploymentDeletion) {
+                $managementGroupsFound | ForEach-Object -Parallel {
+                    $managementGroupId = $_.Name
+                    $managementGroupDisplayName = $_.DisplayName
+                    $deleteTargetManagementGroups = $using:deleteTargetManagementGroups
+                    $funcWriteToConsoleLog = $using:funcWriteToConsoleLog
+                    ${function:Write-ToConsoleLog} = $funcWriteToConsoleLog
+
+                    # Only delete deployments if this management group is not being deleted
+                    if(-not $deleteTargetManagementGroups) {
+                        Write-ToConsoleLog "Checking for management group level deployments to delete in management group: $managementGroupId ($managementGroupDisplayName)" -NoNewLine
+                        $deployments = (az deployment mg list --management-group-id $managementGroupId --query "[].name" -o json) | ConvertFrom-Json
+
+                        if ($deployments -and $deployments.Count -gt 0) {
+                            Write-ToConsoleLog "Found $($deployments.Count) deployment(s) in management group: $managementGroupId ($managementGroupDisplayName)" -NoNewLine
+
+                            $deployments | ForEach-Object -Parallel {
+                                $deploymentName = $_
+                                $managementGroupId = $using:managementGroupId
+                                $managementGroupDisplayName = $using:managementGroupDisplayName
+                                $funcWriteToConsoleLog = $using:funcWriteToConsoleLog
+                                ${function:Write-ToConsoleLog} = $funcWriteToConsoleLog
+
+                                Write-ToConsoleLog "Deleting deployment: $deploymentName from management group: $managementGroupId ($managementGroupDisplayName)" -NoNewLine
+                                $result = $null
+                                if($using:planMode) {
+                                    Write-ToConsoleLog "(Plan Mode) Would run: az deployment mg delete --management-group-id $managementGroupId --name $deploymentName" -NoNewLine -Color Gray
+                                } else {
+                                    $result = az deployment mg delete --management-group-id $managementGroupId --name $deploymentName 2>&1
+                                }
+
+                                if (!$result) {
+                                    Write-ToConsoleLog "Deleted deployment: $deploymentName from management group: $managementGroupId ($managementGroupDisplayName)" -NoNewLine
+                                } else {
+                                    Write-ToConsoleLog "Failed to delete deployment: $deploymentName from management group: $managementGroupId ($managementGroupDisplayName)" -IsWarning -NoNewLine
+                                }
+                            } -ThrottleLimit $using:throttleLimit
+
+                            Write-ToConsoleLog "All deployments processed in management group: $managementGroupId ($managementGroupDisplayName)" -NoNewLine
+                        } else {
+                            Write-ToConsoleLog "No deployments found in management group: $managementGroupId ($managementGroupDisplayName), skipping." -NoNewLine
+                        }
+                    } else {
+                        Write-ToConsoleLog "Skipping deployment deletion for management group: $managementGroupId ($managementGroupDisplayName) as it is being deleted" -NoNewLine
+                    }
+                } -ThrottleLimit $throttleLimit
+            }
+
+            # Delete orphaned role assignments from target management groups that are not being deleted
+            if($managementGroupsFound.Count -ne 0) {
+                $managementGroupsFound | ForEach-Object -Parallel {
+                    $managementGroupId = $_.Name
+                    $managementGroupDisplayName = $_.DisplayName
+                    $deleteTargetManagementGroups = $using:deleteTargetManagementGroups
+                    $funcWriteToConsoleLog = $using:funcWriteToConsoleLog
+                    ${function:Write-ToConsoleLog} = $funcWriteToConsoleLog
+
+                    # Only delete role assignments if this management group is not being deleted
+                    if(-not $deleteTargetManagementGroups) {
+                        Write-ToConsoleLog "Checking for orphaned role assignments to delete in management group: $managementGroupId ($managementGroupDisplayName)" -NoNewLine
+                        $roleAssignments = (az role assignment list --scope "/providers/Microsoft.Management/managementGroups/$managementGroupId" --query "[?principalName==''].{id:id,principalId:principalId,roleDefinitionName:roleDefinitionName}" -o json) | ConvertFrom-Json
+
+                        if ($roleAssignments -and $roleAssignments.Count -gt 0) {
+                            Write-ToConsoleLog "Found $($roleAssignments.Count) orphaned role assignment(s) in management group: $managementGroupId ($managementGroupDisplayName)" -NoNewLine
+
+                            $roleAssignments | ForEach-Object -Parallel {
+                                $roleAssignment = $_
+                                $managementGroupId = $using:managementGroupId
+                                $managementGroupDisplayName = $using:managementGroupDisplayName
+                                $funcWriteToConsoleLog = $using:funcWriteToConsoleLog
+                                ${function:Write-ToConsoleLog} = $funcWriteToConsoleLog
+
+                                Write-ToConsoleLog "Deleting orphaned role assignment: $($roleAssignment.roleDefinitionName) for principal: $($roleAssignment.principalId) from management group: $managementGroupId ($managementGroupDisplayName)" -NoNewLine
+                                $result = $null
+                                if($using:planMode) {
+                                    Write-ToConsoleLog "(Plan Mode) Would run: az role assignment delete --ids $($roleAssignment.id)" -NoNewLine -Color Gray
+                                } else {
+                                    $result = az role assignment delete --ids $roleAssignment.id 2>&1
+                                }
+
+                                if (!$result) {
+                                    Write-ToConsoleLog "Deleted orphaned role assignment: $($roleAssignment.roleDefinitionName) from management group: $managementGroupId ($managementGroupDisplayName)" -NoNewLine
+                                } else {
+                                    Write-ToConsoleLog "Failed to delete orphaned role assignment: $($roleAssignment.roleDefinitionName) from management group: $managementGroupId ($managementGroupDisplayName)" -IsWarning -NoNewLine
+                                }
+                            } -ThrottleLimit $using:throttleLimit
+
+                            Write-ToConsoleLog "All orphaned role assignments processed in management group: $managementGroupId ($managementGroupDisplayName)" -NoNewLine
+                        } else {
+                            Write-ToConsoleLog "No orphaned role assignments found in management group: $managementGroupId ($managementGroupDisplayName), skipping." -NoNewLine
+                        }
+                    } else {
+                        Write-ToConsoleLog "Skipping orphaned role assignment deletion for management group: $managementGroupId ($managementGroupDisplayName) as it is being deleted" -NoNewLine
+                    }
+                } -ThrottleLimit $throttleLimit
+            }
         }
 
         if($subscriptionsProvided) {
@@ -501,8 +624,8 @@ function Remove-PlatformLandingZone {
 
             foreach($subscription in $subscriptions) {
                 $subscriptionObject = @{
-                    Id   = Test-IsGuid -StringGuid $subscription ? $subscription : (az account list --all --query "[?name=='$subscription'].id" -o tsv)
-                    Name = Test-IsGuid -StringGuid $subscription ? (az account list --all --query "[?id=='$subscription'].name" -o tsv) : $subscription
+                    Id   = (Test-IsGuid -StringGuid $subscription) ? $subscription : (az account list --all --query "[?name=='$subscription'].id" -o tsv)
+                    Name = (Test-IsGuid -StringGuid $subscription) ? (az account list --all --query "[?id=='$subscription'].name" -o tsv) : $subscription
                 }
                 if(-not $subscriptionObject.Id -or -not $subscriptionObject.Name) {
                     Write-ToConsoleLog "Subscription not found, skipping: $($subscription.Name) (ID: $($subscription.Id))" -IsWarning
@@ -612,35 +735,107 @@ function Remove-PlatformLandingZone {
                 }
             }
 
-            Write-ToConsoleLog "Checking for Microsoft Defender for Cloud Plans to reset in subscription: $($subscription.Name) (ID: $($subscription.Id))"
-            $defenderPlans = (az security pricing list --subscription $subscription.Id) | ConvertFrom-Json
+            if(-not $using:skipDefenderPlanReset) {
+                Write-ToConsoleLog "Checking for Microsoft Defender for Cloud Plans to reset in subscription: $($subscription.Name) (ID: $($subscription.Id))"
+                $defenderPlans = (az security pricing list --subscription $subscription.Id) | ConvertFrom-Json
 
-            $defenderPlans.value | Where-Object { -not $_.deprecated } | ForEach-Object -Parallel {
-                $subscription = $using:subscription
-                $funcWriteToConsoleLog = $using:funcWriteToConsoleLog
-                ${function:Write-ToConsoleLog} = $funcWriteToConsoleLog
+                $defenderPlans.value | Where-Object { -not $_.deprecated } | ForEach-Object -Parallel {
+                    $subscription = $using:subscription
+                    $funcWriteToConsoleLog = $using:funcWriteToConsoleLog
+                    ${function:Write-ToConsoleLog} = $funcWriteToConsoleLog
 
-                if ($_.pricingTier -ne "Free") {
-                    Write-ToConsoleLog "Resetting Microsoft Defender for Cloud Plan to Free for plan: $($_.name) in subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
+                    if ($_.pricingTier -ne "Free") {
+                        Write-ToConsoleLog "Resetting Microsoft Defender for Cloud Plan to Free for plan: $($_.name) in subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
+                        $result = $null
+                        if($using:planMode) {
+                            Write-ToConsoleLog "(Plan Mode) Would run: az security pricing create --name $($_.name) --tier `"Free`" --subscription $($subscription.Id)" -NoNewLine -Color Gray
+                        } else {
+                            $result = (az security pricing create --name $_.name --tier "Free" --subscription $subscription.Id 2>&1)
+                        }
+                        if ($result -like "*must be 'Standard'*") {
+                            Write-ToConsoleLog "Resetting Microsoft Defender for Cloud Plan to Standard as Free is not supported for plan: $($_.name) in subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
+                            if($using:planMode) {
+                                Write-ToConsoleLog "(Plan Mode) Would run: az security pricing create --name $($_.name) --tier `"Standard`" --subscription $($subscription.Id)" -NoNewLine -Color Gray
+                            } else {
+                                $result = az security pricing create --name $_.name --tier "Standard" --subscription $subscription.Id
+                            }
+                        }
+                        Write-ToConsoleLog "Microsoft Defender for Cloud Plan reset for plan: $($_.name) in subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
+                    } else {
+                        Write-ToConsoleLog "Microsoft Defender for Cloud Plan is already set to Free for plan: $($_.name) in subscription: $($subscription.Name) (ID: $($subscription.Id)), skipping." -NoNewLine
+                    }
+                } -ThrottleLimit $using:throttleLimit
+            } else {
+                Write-ToConsoleLog "Skipping Microsoft Defender for Cloud Plans reset in subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
+            }
+
+            if(-not $using:skipDeploymentDeletion) {
+                Write-ToConsoleLog "Checking for subscription level deployments to delete in subscription: $($subscription.Name) (ID: $($subscription.Id))"
+                $deployments = (az deployment sub list --subscription $subscription.Id --query "[].name" -o json) | ConvertFrom-Json
+
+                if ($deployments -and $deployments.Count -gt 0) {
+                    Write-ToConsoleLog "Found $($deployments.Count) deployment(s) in subscription: $($subscription.Name) (ID: $($subscription.Id))"
+
+                    $deployments | ForEach-Object -Parallel {
+                        $deploymentName = $_
+                        $subscription = $using:subscription
+                        $funcWriteToConsoleLog = $using:funcWriteToConsoleLog
+                        ${function:Write-ToConsoleLog} = $funcWriteToConsoleLog
+
+                        Write-ToConsoleLog "Deleting deployment: $deploymentName in subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
+                        $result = $null
+                        if($using:planMode) {
+                            Write-ToConsoleLog "(Plan Mode) Would run: az deployment sub delete --name $deploymentName --subscription $($subscription.Id)" -NoNewLine -Color Gray
+                        } else {
+                            $result = az deployment sub delete --name $deploymentName --subscription $subscription.Id 2>&1
+                        }
+
+                        if (!$result) {
+                            Write-ToConsoleLog "Deleted deployment: $deploymentName in subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
+                        } else {
+                            Write-ToConsoleLog "Failed to delete deployment: $deploymentName in subscription: $($subscription.Name) (ID: $($subscription.Id))" -IsWarning -NoNewLine
+                        }
+                    } -ThrottleLimit $using:throttleLimit
+
+                    Write-ToConsoleLog "All deployments processed in subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
+                } else {
+                    Write-ToConsoleLog "No deployments found in subscription: $($subscription.Name) (ID: $($subscription.Id)), skipping." -NoNewLine
+                }
+            } else {
+                Write-ToConsoleLog "Skipping subscription level deployment deletion in subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
+            }
+
+            Write-ToConsoleLog "Checking for orphaned role assignments to delete in subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
+            $roleAssignments = (az role assignment list --subscription $subscription.Id --query "[?principalName==''].{id:id,principalId:principalId,roleDefinitionName:roleDefinitionName}" -o json) | ConvertFrom-Json
+
+            if ($roleAssignments -and $roleAssignments.Count -gt 0) {
+                Write-ToConsoleLog "Found $($roleAssignments.Count) orphaned role assignment(s) in subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
+
+                $roleAssignments | ForEach-Object -Parallel {
+                    $roleAssignment = $_
+                    $subscription = $using:subscription
+                    $funcWriteToConsoleLog = $using:funcWriteToConsoleLog
+                    ${function:Write-ToConsoleLog} = $funcWriteToConsoleLog
+
+                    Write-ToConsoleLog "Deleting orphaned role assignment: $($roleAssignment.roleDefinitionName) for principal: $($roleAssignment.principalId) from subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
                     $result = $null
                     if($using:planMode) {
-                        Write-ToConsoleLog "(Plan Mode) Would run: az security pricing create --name $($_.name) --tier `"Free`" --subscription $($subscription.Id)" -NoNewLine -Color Gray
+                        Write-ToConsoleLog "(Plan Mode) Would run: az role assignment delete --ids $($roleAssignment.id)" -NoNewLine -Color Gray
                     } else {
-                        $result = (az security pricing create --name $_.name --tier "Free" --subscription $subscription.Id 2>&1)
+                        $result = az role assignment delete --ids $roleAssignment.id 2>&1
                     }
-                    if ($result -like "*must be 'Standard'*") {
-                        Write-ToConsoleLog "Resetting Microsoft Defender for Cloud Plan to Standard as Free is not supported for plan: $($_.name) in subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
-                        if($using:planMode) {
-                            Write-ToConsoleLog "(Plan Mode) Would run: az security pricing create --name $($_.name) --tier `"Standard`" --subscription $($subscription.Id)" -NoNewLine -Color Gray
-                        } else {
-                            $result = az security pricing create --name $_.name --tier "Standard" --subscription $subscription.Id
-                        }
+
+                    if (!$result) {
+                        Write-ToConsoleLog "Deleted orphaned role assignment: $($roleAssignment.roleDefinitionName) from subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
+                    } else {
+                        Write-ToConsoleLog "Failed to delete orphaned role assignment: $($roleAssignment.roleDefinitionName) from subscription: $($subscription.Name) (ID: $($subscription.Id))" -IsWarning -NoNewLine
                     }
-                    Write-ToConsoleLog "Microsoft Defender for Cloud Plan reset for plan: $($_.name) in subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
-                } else {
-                    Write-ToConsoleLog "Microsoft Defender for Cloud Plan is already set to Free for plan: $($_.name) in subscription: $($subscription.Name) (ID: $($subscription.Id)), skipping." -NoNewLine
-                }
-            } -ThrottleLimit $using:throttleLimit
+                } -ThrottleLimit $using:throttleLimit
+
+                Write-ToConsoleLog "All orphaned role assignments processed in subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
+            } else {
+                Write-ToConsoleLog "No orphaned role assignments found in subscription: $($subscription.Name) (ID: $($subscription.Id)), skipping." -NoNewLine
+            }
 
         } -ThrottleLimit $throttleLimit
 
