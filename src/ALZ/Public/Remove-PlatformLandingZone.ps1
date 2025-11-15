@@ -717,7 +717,7 @@ function Remove-PlatformLandingZone {
             }
 
             # Delete deployments from target management groups that are not being deleted
-            if($managementGroupsFound.Count -ne 0 -and -not $SkipDeploymentDeletion) {
+            if($managementGroupsFound.Count -ne 0 -and -not $SkipDeploymentDeletion -and -not $DeleteTargetManagementGroups) {
                 $managementGroupsFound | ForEach-Object -Parallel {
                     $managementGroupId = $_.Name
                     $managementGroupDisplayName = $_.DisplayName
@@ -727,22 +727,20 @@ function Remove-PlatformLandingZone {
                     $funcRemoveDeploymentsForScope = $using:funcRemoveDeploymentsForScope
                     ${function:Remove-DeploymentsForScope} = $funcRemoveDeploymentsForScope
 
-                    # Only delete deployments if this management group is not being deleted
-                    if(-not $deleteTargetManagementGroups) {
-                        Remove-DeploymentsForScope `
-                            -ScopeType "management group" `
-                            -ScopeNameForLogs "$managementGroupId ($managementGroupDisplayName)" `
-                            -ScopeId $managementGroupId `
-                            -ThrottleLimit $using:ThrottleLimit `
-                            -PlanMode:$using:PlanMode
-                    } else {
-                        Write-ToConsoleLog "Skipping deployment deletion for management group: $managementGroupId ($managementGroupDisplayName) as it is being deleted" -NoNewLine
-                    }
+                    Remove-DeploymentsForScope `
+                        -ScopeType "management group" `
+                        -ScopeNameForLogs "$managementGroupId ($managementGroupDisplayName)" `
+                        -ScopeId $managementGroupId `
+                        -ThrottleLimit $using:ThrottleLimit `
+                        -PlanMode:$using:PlanMode
+
                 } -ThrottleLimit $ThrottleLimit
+            } else {
+                Write-ToConsoleLog "Skipping deployment deletion for management groups" -NoNewLine
             }
 
             # Delete orphaned role assignments from target management groups that are not being deleted
-            if($managementGroupsFound.Count -ne 0 -and -not $SkipOrphanedRoleAssignmentDeletion) {
+            if($managementGroupsFound.Count -ne 0 -and -not $SkipOrphanedRoleAssignmentDeletion -and -not $DeleteTargetManagementGroups) {
                 $managementGroupsFound | ForEach-Object -Parallel {
                     $managementGroupId = $_.Name
                     $managementGroupDisplayName = $_.DisplayName
@@ -752,20 +750,16 @@ function Remove-PlatformLandingZone {
                     $funcRemoveOrphanedRoleAssignmentsForScope = $using:funcRemoveOrphanedRoleAssignmentsForScope
                     ${function:Remove-OrphanedRoleAssignmentsForScope} = $funcRemoveOrphanedRoleAssignmentsForScope
 
-                    # Only delete role assignments if this management group is not being deleted
-                    if(-not $deleteTargetManagementGroups) {
-                        Remove-OrphanedRoleAssignmentsForScope `
-                            -ScopeType "management group" `
-                            -ScopeNameForLogs "$managementGroupId ($managementGroupDisplayName)" `
-                            -ScopeId $managementGroupId `
-                            -ThrottleLimit $using:ThrottleLimit `
-                            -PlanMode:$using:PlanMode
-                    } else {
-                        Write-ToConsoleLog "Skipping orphaned role assignment deletion for management group: $managementGroupId ($managementGroupDisplayName) as it is being deleted" -NoNewLine
-                    }
+                    Remove-OrphanedRoleAssignmentsForScope `
+                        -ScopeType "management group" `
+                        -ScopeNameForLogs "$managementGroupId ($managementGroupDisplayName)" `
+                        -ScopeId $managementGroupId `
+                        -ThrottleLimit $using:ThrottleLimit `
+                        -PlanMode:$using:PlanMode
+
                 } -ThrottleLimit $ThrottleLimit
-            } elseif($managementGroupsFound.Count -ne 0) {
-                Write-ToConsoleLog "Skipping orphaned role assignment deletion for all management groups as requested" -NoNewLine
+            } else {
+                Write-ToConsoleLog "Skipping orphaned role assignment deletion for management groups" -NoNewLine
             }
         }
 
