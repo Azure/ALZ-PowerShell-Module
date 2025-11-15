@@ -93,6 +93,12 @@ function Remove-PlatformLandingZone {
         subscriptions. This is useful when you want to preserve deployment records for audit or compliance purposes.
         Default: $false (delete deployments)
 
+    .PARAMETER skipOrphanedRoleAssignmentDeletion
+        A switch parameter that skips orphaned role assignment deletion operations at both the management group and
+        subscription levels. When specified, the function will not delete role assignments where the principal no
+        longer exists. This is useful when you want to preserve role assignment records or lack the necessary permissions.
+        Default: $false (delete orphaned role assignments)
+
     .EXAMPLE
         Remove-PlatformLandingZone -managementGroups @("alz-platform", "alz-landingzones")
 
@@ -155,6 +161,12 @@ function Remove-PlatformLandingZone {
         Removes management groups and resource groups but skips resetting Microsoft Defender plans and deleting
         deployment history. Useful for faster cleanup when Defender configuration and audit trails should be preserved.
 
+    .EXAMPLE
+        Remove-PlatformLandingZone -subscriptions @("Sub-Test-001") -skipOrphanedRoleAssignmentDeletion
+
+        Cleans up the subscription but skips orphaned role assignment deletion. Useful when you want to preserve
+        role assignments for review or lack the necessary permissions to delete them.
+
     .NOTES
         This function uses Azure CLI commands and requires:
         - Azure CLI to be installed and available in the system path
@@ -213,7 +225,8 @@ function Remove-PlatformLandingZone {
         [int]$throttleLimit = 11,
         [switch]$planMode,
         [switch]$skipDefenderPlanReset,
-        [switch]$skipDeploymentDeletion
+        [switch]$skipDeploymentDeletion,
+        [switch]$skipOrphanedRoleAssignmentDeletion
     )
 
     function Write-ToConsoleLog {
@@ -570,7 +583,7 @@ function Remove-PlatformLandingZone {
             }
 
             # Delete orphaned role assignments from target management groups that are not being deleted
-            if($managementGroupsFound.Count -ne 0) {
+            if($managementGroupsFound.Count -ne 0 -and -not $skipOrphanedRoleAssignmentDeletion) {
                 $managementGroupsFound | ForEach-Object -Parallel {
                     $managementGroupId = $_.Name
                     $managementGroupDisplayName = $_.DisplayName
@@ -616,6 +629,8 @@ function Remove-PlatformLandingZone {
                         Write-ToConsoleLog "Skipping orphaned role assignment deletion for management group: $managementGroupId ($managementGroupDisplayName) as it is being deleted" -NoNewLine
                     }
                 } -ThrottleLimit $throttleLimit
+            } elseif($managementGroupsFound.Count -ne 0) {
+                Write-ToConsoleLog "Skipping orphaned role assignment deletion for all management groups as requested" -NoNewLine
             }
         }
 
@@ -805,36 +820,40 @@ function Remove-PlatformLandingZone {
                 Write-ToConsoleLog "Skipping subscription level deployment deletion in subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
             }
 
-            Write-ToConsoleLog "Checking for orphaned role assignments to delete in subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
-            $roleAssignments = (az role assignment list --subscription $subscription.Id --query "[?principalName==''].{id:id,principalId:principalId,roleDefinitionName:roleDefinitionName}" -o json) | ConvertFrom-Json
+            if(-not $using:skipOrphanedRoleAssignmentDeletion) {
+                Write-ToConsoleLog "Checking for orphaned role assignments to delete in subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
+                $roleAssignments = (az role assignment list --subscription $subscription.Id --query "[?principalName==''].{id:id,principalId:principalId,roleDefinitionName:roleDefinitionName}" -o json) | ConvertFrom-Json
 
-            if ($roleAssignments -and $roleAssignments.Count -gt 0) {
-                Write-ToConsoleLog "Found $($roleAssignments.Count) orphaned role assignment(s) in subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
+                if ($roleAssignments -and $roleAssignments.Count -gt 0) {
+                    Write-ToConsoleLog "Found $($roleAssignments.Count) orphaned role assignment(s) in subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
 
-                $roleAssignments | ForEach-Object -Parallel {
-                    $roleAssignment = $_
-                    $subscription = $using:subscription
-                    $funcWriteToConsoleLog = $using:funcWriteToConsoleLog
-                    ${function:Write-ToConsoleLog} = $funcWriteToConsoleLog
+                    $roleAssignments | ForEach-Object -Parallel {
+                        $roleAssignment = $_
+                        $subscription = $using:subscription
+                        $funcWriteToConsoleLog = $using:funcWriteToConsoleLog
+                        ${function:Write-ToConsoleLog} = $funcWriteToConsoleLog
 
-                    Write-ToConsoleLog "Deleting orphaned role assignment: $($roleAssignment.roleDefinitionName) for principal: $($roleAssignment.principalId) from subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
-                    $result = $null
-                    if($using:planMode) {
-                        Write-ToConsoleLog "(Plan Mode) Would run: az role assignment delete --ids $($roleAssignment.id)" -NoNewLine -Color Gray
-                    } else {
-                        $result = az role assignment delete --ids $roleAssignment.id 2>&1
-                    }
+                        Write-ToConsoleLog "Deleting orphaned role assignment: $($roleAssignment.roleDefinitionName) for principal: $($roleAssignment.principalId) from subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
+                        $result = $null
+                        if($using:planMode) {
+                            Write-ToConsoleLog "(Plan Mode) Would run: az role assignment delete --ids $($roleAssignment.id)" -NoNewLine -Color Gray
+                        } else {
+                            $result = az role assignment delete --ids $roleAssignment.id 2>&1
+                        }
 
-                    if (!$result) {
-                        Write-ToConsoleLog "Deleted orphaned role assignment: $($roleAssignment.roleDefinitionName) from subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
-                    } else {
-                        Write-ToConsoleLog "Failed to delete orphaned role assignment: $($roleAssignment.roleDefinitionName) from subscription: $($subscription.Name) (ID: $($subscription.Id))" -IsWarning -NoNewLine
-                    }
-                } -ThrottleLimit $using:throttleLimit
+                        if (!$result) {
+                            Write-ToConsoleLog "Deleted orphaned role assignment: $($roleAssignment.roleDefinitionName) from subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
+                        } else {
+                            Write-ToConsoleLog "Failed to delete orphaned role assignment: $($roleAssignment.roleDefinitionName) from subscription: $($subscription.Name) (ID: $($subscription.Id))" -IsWarning -NoNewLine
+                        }
+                    } -ThrottleLimit $using:throttleLimit
 
-                Write-ToConsoleLog "All orphaned role assignments processed in subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
+                    Write-ToConsoleLog "All orphaned role assignments processed in subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
+                } else {
+                    Write-ToConsoleLog "No orphaned role assignments found in subscription: $($subscription.Name) (ID: $($subscription.Id)), skipping." -NoNewLine
+                }
             } else {
-                Write-ToConsoleLog "No orphaned role assignments found in subscription: $($subscription.Name) (ID: $($subscription.Id)), skipping." -NoNewLine
+                Write-ToConsoleLog "Skipping orphaned role assignment deletion in subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
             }
 
         } -ThrottleLimit $throttleLimit
