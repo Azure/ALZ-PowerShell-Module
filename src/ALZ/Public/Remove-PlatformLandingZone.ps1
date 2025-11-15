@@ -274,6 +274,68 @@ function Remove-PlatformLandingZone {
         Write-Host "$prefix[$timestamp] [$Level] $Message" -ForegroundColor $Color -NoNewline:$Overwrite.IsPresent
     }
 
+    function Test-RequiredTooling {
+        Write-ToConsoleLog "Checking the software requirements for the Accelerator..."
+
+        $checkResults = @()
+        $hasFailure = $false
+
+        # Check if Azure CLI is installed
+        Write-Verbose "Checking Azure CLI installation"
+        $azCliPath = Get-Command az -ErrorAction SilentlyContinue
+        if ($azCliPath) {
+            $checkResults += @{
+                message = "Azure CLI is installed."
+                result  = "Success"
+            }
+        } else {
+            $checkResults += @{
+                message = "Azure CLI is not installed. Follow the instructions here: https://learn.microsoft.com/en-us/cli/azure/install-azure-cli"
+                result  = "Failure"
+            }
+            $hasFailure = $true
+        }
+
+        # Check if Azure CLI is logged in
+        Write-Verbose "Checking Azure CLI login status"
+        $azCliAccount = $(az account show -o json) | ConvertFrom-Json
+        if ($azCliAccount) {
+            $checkResults += @{
+                message = "Azure CLI is logged in. Tenant ID: $($azCliAccount.tenantId), Subscription: $($azCliAccount.name) ($($azCliAccount.id))"
+                result  = "Success"
+            }
+        } else {
+            $checkResults += @{
+                message = "Azure CLI is not logged in. Please login to Azure CLI using 'az login -t `"00000000-0000-0000-0000-000000000000}`"', replacing the empty GUID with your tenant ID."
+                result  = "Failure"
+            }
+            $hasFailure = $true
+        }
+
+        Write-Verbose "Showing check results"
+        Write-Verbose $(ConvertTo-Json $checkResults -Depth 100)
+        $checkResults | ForEach-Object {[PSCustomObject]$_} | Format-Table -Property @{
+            Label = "Check Result"; Expression = {
+                switch ($_.result) {
+                    'Success' { $color = "92"; break }
+                    'Failure' { $color = "91"; break }
+                    'Warning' { $color = "93"; break }
+                    default { $color = "0" }
+                }
+                $e = [char]27
+                "$e[${color}m$($_.result)${e}[0m"
+            }
+        }, @{ Label = "Check Details"; Expression = {$_.message} }  -AutoSize -Wrap
+
+        if($hasFailure) {
+            Write-ToConsoleLog "Software requirements have no been met, please review and install the missing software." -IsError
+            Write-ToConsoleLog "Cannot continue with Deployment..." -IsError
+            throw "Software requirements have no been met, please review and install the missing software."
+        }
+
+        Write-ToConsoleLog "All software requirements have been met." -IsSuccess
+    }
+
     function Get-ManagementGroupChildrenRecursive {
         param (
             [object[]]$ManagementGroups,
@@ -396,10 +458,79 @@ function Remove-PlatformLandingZone {
         }
     }
 
+    function Remove-DeploymentsForScope {
+        [CmdletBinding(SupportsShouldProcess = $true)]
+        param (
+            [string]$ScopeType,
+            [string]$ScopeNameForLogs,
+            [string]$ScopeId,
+            [int]$ThrottleLimit,
+            [switch]$PlanMode
+        )
+
+        if(-not $PSCmdlet.ShouldProcess("Delete Deployments", "delete")) {
+            return
+        }
+
+        $funcWriteToConsoleLog = ${function:Write-ToConsoleLog}.ToString()
+        $isSubscriptionScope = $ScopeType -eq "subscription"
+
+        Write-ToConsoleLog "Checking for deployments to delete in $($ScopeType): $ScopeNameForLogs" -NoNewLine
+
+        $deployments = @()
+        if ($isSubscriptionScope) {
+            $deployments = (az deployment sub list --subscription $ScopeId --query "[].name" -o json) | ConvertFrom-Json
+        } else {
+            $deployments = (az deployment mg list --management-group-id $ScopeId --query "[].name" -o json) | ConvertFrom-Json
+        }
+
+        if ($deployments -and $deployments.Count -gt 0) {
+            Write-ToConsoleLog "Found $($deployments.Count) deployment(s) in $($ScopeType): $scopeNameForLogs" -NoNewLine
+
+            $deployments | ForEach-Object -Parallel {
+                $deploymentName = $_
+                $scopeId = $using:ScopeId
+                $scopeNameForLogs = $using:ScopeNameForLogs
+                $funcWriteToConsoleLog = $using:funcWriteToConsoleLog
+                ${function:Write-ToConsoleLog} = $funcWriteToConsoleLog
+
+                Write-ToConsoleLog "Deleting deployment: $deploymentName from $($scopeType): $scopeNameForLogs" -NoNewLine
+                $result = $null
+                if($isSubscriptionScope) {
+                    if($using:PlanMode) {
+                        Write-ToConsoleLog "(Plan Mode) Would run: az deployment sub delete --subscription $scopeId --name $deploymentName" -NoNewLine -Color Gray
+                    } else {
+                        $result = az deployment sub delete --subscription $scopeId --name $deploymentName 2>&1
+                    }
+                } else {
+                    if($using:PlanMode) {
+                        Write-ToConsoleLog "(Plan Mode) Would run: az deployment mg delete --management-group-id $scopeId --name $deploymentName" -NoNewLine -Color Gray
+                    } else {
+                        $result = az deployment mg delete --management-group-id $scopeId --name $deploymentName 2>&1
+                    }
+                }
+
+                if (!$result) {
+                    Write-ToConsoleLog "Deleted deployment: $deploymentName from $($scopeType): $scopeNameForLogs" -NoNewLine
+                } else {
+                    Write-ToConsoleLog "Failed to delete deployment: $deploymentName from $($scopeType): $scopeNameForLogs" -IsWarning -NoNewLine
+                }
+            } -ThrottleLimit $using:ThrottleLimit
+
+            Write-ToConsoleLog "All deployments processed in $($scopeType): $scopeNameForLogs" -NoNewLine
+        } else {
+            Write-ToConsoleLog "No deployments found in $($scopeType): $scopeNameForLogs, skipping." -NoNewLine
+        }
+    }
+
+    # Main execution starts here
     if ($PSCmdlet.ShouldProcess("Delete Management Groups and Clean Subscriptions", "delete")) {
+
+        Test-RequiredTooling
 
         $funcWriteToConsoleLog = ${function:Write-ToConsoleLog}.ToString()
         $funcRemoveOrphanedRoleAssignmentsForScope = ${function:Remove-OrphanedRoleAssignmentsForScope}.ToString()
+        $funcRemoveDeploymentsForScope = ${function:Remove-DeploymentsForScope}.ToString()
 
         if($BypassConfirmation) {
             Write-ToConsoleLog "Bypass confirmation enabled, proceeding without prompts..." -IsWarning
@@ -593,41 +724,17 @@ function Remove-PlatformLandingZone {
                     $deleteTargetManagementGroups = $using:DeleteTargetManagementGroups
                     $funcWriteToConsoleLog = $using:funcWriteToConsoleLog
                     ${function:Write-ToConsoleLog} = $funcWriteToConsoleLog
+                    $funcRemoveDeploymentsForScope = $using:funcRemoveDeploymentsForScope
+                    ${function:Remove-DeploymentsForScope} = $funcRemoveDeploymentsForScope
 
                     # Only delete deployments if this management group is not being deleted
                     if(-not $deleteTargetManagementGroups) {
-                        Write-ToConsoleLog "Checking for management group level deployments to delete in management group: $managementGroupId ($managementGroupDisplayName)" -NoNewLine
-                        $deployments = (az deployment mg list --management-group-id $managementGroupId --query "[].name" -o json) | ConvertFrom-Json
-
-                        if ($deployments -and $deployments.Count -gt 0) {
-                            Write-ToConsoleLog "Found $($deployments.Count) deployment(s) in management group: $managementGroupId ($managementGroupDisplayName)" -NoNewLine
-
-                            $deployments | ForEach-Object -Parallel {
-                                $deploymentName = $_
-                                $managementGroupId = $using:managementGroupId
-                                $managementGroupDisplayName = $using:managementGroupDisplayName
-                                $funcWriteToConsoleLog = $using:funcWriteToConsoleLog
-                                ${function:Write-ToConsoleLog} = $funcWriteToConsoleLog
-
-                                Write-ToConsoleLog "Deleting deployment: $deploymentName from management group: $managementGroupId ($managementGroupDisplayName)" -NoNewLine
-                                $result = $null
-                                if($using:PlanMode) {
-                                    Write-ToConsoleLog "(Plan Mode) Would run: az deployment mg delete --management-group-id $managementGroupId --name $deploymentName" -NoNewLine -Color Gray
-                                } else {
-                                    $result = az deployment mg delete --management-group-id $managementGroupId --name $deploymentName 2>&1
-                                }
-
-                                if (!$result) {
-                                    Write-ToConsoleLog "Deleted deployment: $deploymentName from management group: $managementGroupId ($managementGroupDisplayName)" -NoNewLine
-                                } else {
-                                    Write-ToConsoleLog "Failed to delete deployment: $deploymentName from management group: $managementGroupId ($managementGroupDisplayName)" -IsWarning -NoNewLine
-                                }
-                            } -ThrottleLimit $using:ThrottleLimit
-
-                            Write-ToConsoleLog "All deployments processed in management group: $managementGroupId ($managementGroupDisplayName)" -NoNewLine
-                        } else {
-                            Write-ToConsoleLog "No deployments found in management group: $managementGroupId ($managementGroupDisplayName), skipping." -NoNewLine
-                        }
+                        Remove-DeploymentsForScope `
+                            -ScopeType "management group" `
+                            -ScopeNameForLogs "$managementGroupId ($managementGroupDisplayName)" `
+                            -ScopeId $managementGroupId `
+                            -ThrottleLimit $using:ThrottleLimit `
+                            -PlanMode:$using:PlanMode
                     } else {
                         Write-ToConsoleLog "Skipping deployment deletion for management group: $managementGroupId ($managementGroupDisplayName) as it is being deleted" -NoNewLine
                     }
@@ -702,6 +809,8 @@ function Remove-PlatformLandingZone {
             ${function:Write-ToConsoleLog} = $funcWriteToConsoleLog
             $funcRemoveOrphanedRoleAssignmentsForScope = $using:funcRemoveOrphanedRoleAssignmentsForScope
             ${function:Remove-OrphanedRoleAssignmentsForScope} = $funcRemoveOrphanedRoleAssignmentsForScope
+            $funcRemoveDeploymentsForScope = $using:funcRemoveDeploymentsForScope
+            ${function:Remove-DeploymentsForScope} = $funcRemoveDeploymentsForScope
 
             $subscription = $_
             Write-ToConsoleLog "Finding resource groups for subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewline
@@ -815,37 +924,12 @@ function Remove-PlatformLandingZone {
             }
 
             if(-not $using:SkipDeploymentDeletion) {
-                Write-ToConsoleLog "Checking for subscription level deployments to delete in subscription: $($subscription.Name) (ID: $($subscription.Id))"
-                $deployments = (az deployment sub list --subscription $subscription.Id --query "[].name" -o json) | ConvertFrom-Json
-
-                if ($deployments -and $deployments.Count -gt 0) {
-                    Write-ToConsoleLog "Found $($deployments.Count) deployment(s) in subscription: $($subscription.Name) (ID: $($subscription.Id))"
-
-                    $deployments | ForEach-Object -Parallel {
-                        $deploymentName = $_
-                        $subscription = $using:subscription
-                        $funcWriteToConsoleLog = $using:funcWriteToConsoleLog
-                        ${function:Write-ToConsoleLog} = $funcWriteToConsoleLog
-
-                        Write-ToConsoleLog "Deleting deployment: $deploymentName in subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
-                        $result = $null
-                        if($using:PlanMode) {
-                            Write-ToConsoleLog "(Plan Mode) Would run: az deployment sub delete --name $deploymentName --subscription $($subscription.Id)" -NoNewLine -Color Gray
-                        } else {
-                            $result = az deployment sub delete --name $deploymentName --subscription $subscription.Id 2>&1
-                        }
-
-                        if (!$result) {
-                            Write-ToConsoleLog "Deleted deployment: $deploymentName in subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
-                        } else {
-                            Write-ToConsoleLog "Failed to delete deployment: $deploymentName in subscription: $($subscription.Name) (ID: $($subscription.Id))" -IsWarning -NoNewLine
-                        }
-                    } -ThrottleLimit $using:ThrottleLimit
-
-                    Write-ToConsoleLog "All deployments processed in subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
-                } else {
-                    Write-ToConsoleLog "No deployments found in subscription: $($subscription.Name) (ID: $($subscription.Id)), skipping." -NoNewLine
-                }
+                Remove-DeploymentsForScope `
+                    -ScopeType "subscription" `
+                    -ScopeNameForLogs "$($subscription.Name) (ID: $($subscription.Id))" `
+                    -ScopeId $subscription.Id `
+                    -ThrottleLimit $using:ThrottleLimit `
+                    -PlanMode:$using:PlanMode
             } else {
                 Write-ToConsoleLog "Skipping subscription level deployment deletion in subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
             }
