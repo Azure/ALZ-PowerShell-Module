@@ -1023,6 +1023,8 @@ function Remove-PlatformLandingZone {
                 $funcRemoveDeploymentsForScope = $using:funcRemoveDeploymentsForScope
                 ${function:Remove-DeploymentsForScope} = $funcRemoveDeploymentsForScope
                 $TempLogFileForPlan = $using:TempLogFileForPlan
+                $throttleLimit = $using:ThrottleLimit
+                $planMode = $using:PlanMode
 
                 $subscription = $_
                 Write-ToConsoleLog "Finding resource groups for subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewline
@@ -1059,9 +1061,6 @@ function Remove-PlatformLandingZone {
                     }
 
                     $shouldRetry = $true
-
-                    $throttleLimit = $using:ThrottleLimit
-                    $planMode = $using:PlanMode
 
                     while($shouldRetry) {
                         $shouldRetry = $false
