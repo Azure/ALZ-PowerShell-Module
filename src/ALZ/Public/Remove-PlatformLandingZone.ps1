@@ -1031,76 +1031,75 @@ function Remove-PlatformLandingZone {
 
                 if ($resourceGroups.Count -eq 0) {
                     Write-ToConsoleLog "No resource groups found for subscription: $($subscription.Name) (ID: $($subscription.Id)), skipping." -NoNewline
-                    continue
-                }
+                } else {
+                    Write-ToConsoleLog "Found resource groups for subscription: $($subscription.Name) (ID: $($subscription.Id)), count: $($resourceGroups.Count)" -NoNewline
 
-                Write-ToConsoleLog "Found resource groups for subscription: $($subscription.Name) (ID: $($subscription.Id)), count: $($resourceGroups.Count)" -NoNewline
+                    $resourceGroupsToDelete = @()
+                    $resourceGroupsToRetainNamePatterns = $using:ResourceGroupsToRetainNamePatterns
 
-                $resourceGroupsToDelete = @()
-                $resourceGroupsToRetainNamePatterns = $using:ResourceGroupsToRetainNamePatterns
+                    foreach ($resourceGroup in $resourceGroups) {
+                        $foundMatch = $false
 
-                foreach ($resourceGroup in $resourceGroups) {
-                    $foundMatch = $false
+                        foreach ($pattern in $resourceGroupsToRetainNamePatterns) {
+                            if ($resourceGroup.name -match $pattern) {
+                                Write-ToConsoleLog "Retaining resource group as it matches the pattern '$pattern': $($resourceGroup.name) in subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
+                                $foundMatch = $true
+                                break
+                            }
+                        }
 
-                    foreach ($pattern in $resourceGroupsToRetainNamePatterns) {
-                        if ($resourceGroup.name -match $pattern) {
-                            Write-ToConsoleLog "Retaining resource group as it matches the pattern '$pattern': $($resourceGroup.name) in subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
-                            $foundMatch = $true
-                            break
+                        if($foundMatch) {
+                            continue
+                        }
+
+                        $resourceGroupsToDelete += @{
+                            ResourceGroupName = $resourceGroup.name
+                            Subscription      = $subscription
                         }
                     }
 
-                    if($foundMatch) {
-                        continue
-                    }
+                    $shouldRetry = $true
 
-                    $resourceGroupsToDelete += @{
-                        ResourceGroupName = $resourceGroup.name
-                        Subscription      = $subscription
-                    }
-                }
+                    $throttleLimit = $using:ThrottleLimit
+                    $planMode = $using:PlanMode
 
-                $shouldRetry = $true
+                    while($shouldRetry) {
+                        $shouldRetry = $false
+                        $resourceGroupsToRetry = [System.Collections.Concurrent.ConcurrentBag[hashtable]]::new()
+                        $resourceGroupsToDelete | ForEach-Object -Parallel {
+                            $funcWriteToConsoleLog = $using:funcWriteToConsoleLog
+                            ${function:Write-ToConsoleLog} = $funcWriteToConsoleLog
+                            $resourceGroupName = $_.ResourceGroupName
+                            $subscription = $_.Subscription
 
-                $throttleLimit = $using:ThrottleLimit
-                $planMode = $using:PlanMode
+                            Write-ToConsoleLog "Deleting resource group for subscription: $($subscription.Name) (ID: $($subscription.Id)), resource group: $($ResourceGroupName)" -NoNewLine
+                            $result = $null
+                            if($using:PlanMode) {
+                                Write-ToConsoleLog `
+                                    "Deleting resource group for subscription: $($subscription.Name) (ID: $($subscription.Id)), resource group: $($ResourceGroupName)", `
+                                    "Would run: az group delete --name $ResourceGroupName --subscription $($subscription.Id) --yes" `
+                                    -IsPlan -LogFilePath $using:TempLogFileForPlan
+                            } else {
+                                $result = az group delete --name $ResourceGroupName --subscription $subscription.Id --yes 2>&1
+                            }
 
-                while($shouldRetry) {
-                    $shouldRetry = $false
-                    $resourceGroupsToRetry = [System.Collections.Concurrent.ConcurrentBag[hashtable]]::new()
-                    $resourceGroupsToDelete | ForEach-Object -Parallel {
-                        $funcWriteToConsoleLog = $using:funcWriteToConsoleLog
-                        ${function:Write-ToConsoleLog} = $funcWriteToConsoleLog
-                        $resourceGroupName = $_.ResourceGroupName
-                        $subscription = $_.Subscription
+                            if (!$result) {
+                                Write-ToConsoleLog "Deleted resource group for subscription: $($subscription.Name) (ID: $($subscription.Id)), resource group: $($ResourceGroupName)" -NoNewLine
+                            } else {
+                                Write-ToConsoleLog "Delete resource group failed for subscription: $($subscription.Name) (ID: $($subscription.Id)), resource group: $($ResourceGroupName)" -NoNewLine
+                                Write-ToConsoleLog "It will be retried once the other resource groups in the subscription have reported their status." -NoNewLine
+                                $retries = $using:resourceGroupsToRetry
+                                $retries.Add($_)
+                            }
+                        } -ThrottleLimit $using:ThrottleLimit
 
-                        Write-ToConsoleLog "Deleting resource group for subscription: $($subscription.Name) (ID: $($subscription.Id)), resource group: $($ResourceGroupName)" -NoNewLine
-                        $result = $null
-                        if($using:PlanMode) {
-                            Write-ToConsoleLog `
-                                "Deleting resource group for subscription: $($subscription.Name) (ID: $($subscription.Id)), resource group: $($ResourceGroupName)", `
-                                "Would run: az group delete --name $ResourceGroupName --subscription $($subscription.Id) --yes" `
-                                -IsPlan -LogFilePath $using:TempLogFileForPlan
+                        if($resourceGroupsToRetry.Count -gt 0) {
+                            Write-ToConsoleLog "Some resource groups failed to delete and will be retried in subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
+                            $shouldRetry = $true
+                            $resourceGroupsToDelete = $resourceGroupsToRetry.ToArray()
                         } else {
-                            $result = az group delete --name $ResourceGroupName --subscription $subscription.Id --yes 2>&1
+                            Write-ToConsoleLog "All resource groups deleted successfully in subscription: $($subscription.Name) (ID: $($subscription.Id))." -NoNewLine
                         }
-
-                        if (!$result) {
-                            Write-ToConsoleLog "Deleted resource group for subscription: $($subscription.Name) (ID: $($subscription.Id)), resource group: $($ResourceGroupName)" -NoNewLine
-                        } else {
-                            Write-ToConsoleLog "Delete resource group failed for subscription: $($subscription.Name) (ID: $($subscription.Id)), resource group: $($ResourceGroupName)" -NoNewLine
-                            Write-ToConsoleLog "It will be retried once the other resource groups in the subscription have reported their status." -NoNewLine
-                            $retries = $using:resourceGroupsToRetry
-                            $retries.Add($_)
-                        }
-                    } -ThrottleLimit $using:ThrottleLimit
-
-                    if($resourceGroupsToRetry.Count -gt 0) {
-                        Write-ToConsoleLog "Some resource groups failed to delete and will be retried in subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
-                        $shouldRetry = $true
-                        $resourceGroupsToDelete = $resourceGroupsToRetry.ToArray()
-                    } else {
-                        Write-ToConsoleLog "All resource groups deleted successfully in subscription: $($subscription.Name) (ID: $($subscription.Id))." -NoNewLine
                     }
                 }
 
