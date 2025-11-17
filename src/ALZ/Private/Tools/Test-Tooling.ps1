@@ -160,7 +160,8 @@ function Test-Tooling {
     } else {
         # Check if latest ALZ module is installed
         Write-Verbose "Checking ALZ module version"
-        $alzModuleCurrentVersion = Get-InstalledModule -Name ALZ -ErrorAction SilentlyContinue
+        $alzModuleCurrentVersion = Get-InstalledPSResource -Name ALZ | Select-Object -Property Name, Version
+
         if($null -eq $alzModuleCurrentVersion) {
             $checkResults += @{
                 message = "ALZ module is not correctly installed. Please install the latest version using 'Install-Module ALZ'."
@@ -168,7 +169,7 @@ function Test-Tooling {
             }
             $hasFailure = $true
         }
-        $alzModuleLatestVersion = Find-Module -Name ALZ
+        $alzModuleLatestVersion = Find-PSResource -Name ALZ
         if ($null -ne $alzModuleCurrentVersion) {
             if ($alzModuleCurrentVersion.Version -lt $alzModuleLatestVersion.Version) {
                 $checkResults += @{
