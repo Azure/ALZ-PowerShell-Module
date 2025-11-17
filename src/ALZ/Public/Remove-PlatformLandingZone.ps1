@@ -432,7 +432,7 @@ function Remove-PlatformLandingZone {
             return $false
         }
         Write-ToConsoleLog "Initial confirmation received." -IsSuccess
-        Write-ToConsoleLog "WARNING: This operation is permanent cannot be reversed!" -IsWarning
+        Write-ToConsoleLog "This operation is permanent and cannot be reversed!" -IsWarning
         Write-ToConsoleLog "Are you sure you want to proceed? Type '$FinalConfirmationText' to perform the highly destructive operation..." -IsWarning
         $confirmation = Read-Host "Enter the final confirmation text"
         if ($confirmation -ne $FinalConfirmationText) {
