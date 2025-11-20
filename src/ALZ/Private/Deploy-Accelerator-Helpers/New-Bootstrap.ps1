@@ -248,7 +248,7 @@ function New-Bootstrap {
             }
         }
 
-        if($iac -eq "bicep") {
+        if ($iac -eq "bicep" -or $iac -eq "bicep-avm") {
             Copy-ParametersFileCollection -starterPath $starterModulePath -configFiles $starterConfig.starter_modules.Value.$($inputConfig.starter_module_name.Value).deployment_files
             Set-ComputedConfiguration -configuration $starterConfiguration
             Edit-ALZConfigurationFilesInPlace -alzEnvironmentDestination $starterModulePath -configuration $starterConfiguration
@@ -258,9 +258,10 @@ function New-Bootstrap {
             $foldersOrFilesToRetain = $starterConfig.starter_modules.Value.$($inputConfig.starter_module_name.Value).folders_or_files_to_retain
             $foldersOrFilesToRetain += "parameters.json"
             $foldersOrFilesToRetain += "config"
+            $foldersOrFilesToRetain += ".config"
             $foldersOrFilesToRetain += "starter-cache.json"
 
-            foreach($deployment_file in $starterConfig.starter_modules.Value.$($inputConfig.starter_module_name.Value).deployment_files) {
+            foreach ($deployment_file in $starterConfig.starter_modules.Value.$($inputConfig.starter_module_name.Value).deployment_files) {
                 $foldersOrFilesToRetain += $deployment_file.templateParametersSourceFilePath
             }
 
