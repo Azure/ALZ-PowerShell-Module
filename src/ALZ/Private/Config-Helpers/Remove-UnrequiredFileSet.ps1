@@ -24,6 +24,10 @@ function Remove-UnrequiredFileSet {
             $fileRelativePath = $file.FullName.Replace($path, "").Replace("\", "/").TrimStart("/")
             $folderRelativePath = $file.Directory.FullName.Replace($path, "").Replace("\", "/").TrimStart("/")
             foreach ($folderOrFileToRetain in $foldersOrFilesToRetain) {
+                # Skip null or empty values
+                if ([string]::IsNullOrWhiteSpace($folderOrFileToRetain)) {
+                    continue
+                }
                 # If we have an exact match of the file name and path, always retain it.
                 if ($folderOrFileToRetain.TrimStart("./") -eq $fileRelativePath) {
                     if ($writeVerboseLogs) {
