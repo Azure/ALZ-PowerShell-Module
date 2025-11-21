@@ -39,18 +39,18 @@ function Get-TerraformTool {
         }
     }
 
+    $osArchitecture = Get-OSArchitecture
+
     $unzipdir = Join-Path -Path $toolsPath -ChildPath "terraform_$version"
     if (Test-Path $unzipdir) {
         Write-Verbose "Terraform $version already installed, adding to Path."
-        if($os -eq "windows") {
+        if($osArchitecture.os -eq "windows") {
             $env:PATH = "$($unzipdir);$env:PATH"
         } else {
             $env:PATH = "$($unzipdir):$env:PATH"
         }
         return
     }
-
-    $osArchitecture = Get-OSArchitecture
 
     $zipfilePath = "$unzipdir.zip"
 
