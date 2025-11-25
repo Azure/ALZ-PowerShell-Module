@@ -132,10 +132,9 @@ Grant-SubscriptionCreatorRole -servicePrincipalObjectId "bd42568a-7dd8-489b-bbbb
             "principalTenantId" = $tenantId
         }
     }
-    $roleAssignmentPayloadJson = $roleAssignmentHashTable | ConvertTo-Json -Depth 100 -Compress
-    $roleAssignmentPayloadJson = $roleAssignmentPayloadJson -replace '"', '\"'
+    $roleAssignmentPayloadJson = $roleAssignmentHashTable | ConvertTo-Json -Depth 100
 
-    $grantRbac = $(az rest --method PUT --url "$managementApiPrefix$($billingResourceID)/billingRoleAssignments/$($roleAssignmentName)?api-version=2024-04-01" --body $roleAssignmentPayloadJson) | ConvertFrom-Json
+    $grantRbac = $(az rest --method PUT --url "$managementApiPrefix$($billingResourceID)/billingRoleAssignments/$($roleAssignmentName)?api-version=2024-04-01" --body "$roleAssignmentPayloadJson") | ConvertFrom-Json
 
     if ($null -eq $grantRbac) {
         $errorMessage = "The 'SubscriptionCreator' role could not be granted to the service principal. Please check the error message above and try again."
