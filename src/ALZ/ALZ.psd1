@@ -30,7 +30,17 @@
     Copyright            = '(c) Microsoft Corporation. All rights reserved.'
 
     # Description of the functionality provided by this module
-    Description          = 'Azure Landing Zones Powershell Module'
+    Description          = @'
+Azure Landing Zones Powershell Module
+
+This module provides cmdlets to help deploy and manage Azure Landing Zones (ALZ) in your Azure environment.
+
+Included Cmdlets:
+- Test-AcceleratorRequirement: Tests if the current environment meets the requirements for deploying ALZ.
+- Deploy-Accelerator: Deploys the Azure Landing Zone accelerator to your Azure subscription.
+- Grant-SubscriptionCreatorRole: Grants the Subscription Creator role to a specified user or service principal.
+- Remove-PlatformLandingZone: Removes the deployed Azure Landing Zone from your Azure subscription
+'@
 
     CompatiblePSEditions = 'Core'
 
@@ -74,7 +84,8 @@
     FunctionsToExport    = @(
         'Test-AcceleratorRequirement',
         'Deploy-Accelerator',
-        'Grant-SubscriptionCreatorRole'
+        'Grant-SubscriptionCreatorRole',
+        'Remove-PlatformLandingZone'
     )
 
     # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
