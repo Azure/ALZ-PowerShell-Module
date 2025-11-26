@@ -8,9 +8,6 @@ function New-Bootstrap {
         [PSCustomObject] $bootstrapDetails,
 
         [Parameter(Mandatory = $false)]
-        [PSCustomObject] $validationConfig,
-
-        [Parameter(Mandatory = $false)]
         [PSCustomObject] $inputConfig,
 
         [Parameter(Mandatory = $false)]
@@ -84,10 +81,8 @@ function New-Bootstrap {
 
         if ($hasStarter) {
             if ($inputConfig.starter_module_name.Value -eq "") {
-                $inputConfig.starter_module_name = @{
-                    Value  = Request-SpecialInput -type "starter" -starterConfig $starterConfig
-                    Source = "user"
-                }
+                Write-InformationColored "No starter module has been specified. Please supply the starter module you wish to deploy..." -ForegroundColor Red -InformationAction Continue
+                throw "No starter module has been specified. Please supply the starter module you wish to deploy..."
             }
 
             $chosenStarterConfig = $starterConfig.starter_modules.Value.$($inputConfig.starter_module_name.Value)
@@ -128,7 +123,7 @@ function New-Bootstrap {
         Write-Verbose "Getting the bootstrap configuration..."
         $terraformFiles = Get-ChildItem -Path $bootstrapModulePath -Filter "*.tf" -File
         foreach ($terraformFile in $terraformFiles) {
-            $bootstrapParameters = Convert-HCLVariablesToInputConfig -targetVariableFile $terraformFile.FullName -hclParserToolPath $hclParserToolPath -validators $validationConfig -appendToObject $bootstrapParameters
+            $bootstrapParameters = Convert-HCLVariablesToInputConfig -targetVariableFile $terraformFile.FullName -hclParserToolPath $hclParserToolPath -appendToObject $bootstrapParameters
         }
 
         # Getting the configuration for the starter module user input
@@ -139,12 +134,12 @@ function New-Bootstrap {
             if ($iac -eq "terraform") {
                 $terraformFiles = Get-ChildItem -Path $starterRootModuleFolderPath -Filter "*.tf" -File
                 foreach ($terraformFile in $terraformFiles) {
-                    $starterParameters = Convert-HCLVariablesToInputConfig -targetVariableFile $terraformFile.FullName -hclParserToolPath $hclParserToolPath -validators $validationConfig -appendToObject $starterParameters
+                    $starterParameters = Convert-HCLVariablesToInputConfig -targetVariableFile $terraformFile.FullName -hclParserToolPath $hclParserToolPath -appendToObject $starterParameters
                 }
             }
 
-            if ($iac -in @("bicep", "bicep-avm")) {
-                $starterParameters = Convert-BicepConfigToInputConfig -bicepConfig $starterConfig.starter_modules.Value.$($inputConfig.starter_module_name.Value) -validators $validationConfig
+            if ($iac -like "bicep*") {
+                $starterParameters = Convert-BicepConfigToInputConfig -bicepConfig $starterConfig.starter_modules.Value.$($inputConfig.starter_module_name.Value)
             }
         }
 
@@ -248,7 +243,7 @@ function New-Bootstrap {
             }
         }
 
-        if ($iac -eq "bicep" -or $iac -eq "bicep-avm") {
+        if ($iac -like "bicep*") {
             Copy-ParametersFileCollection -starterPath $starterModulePath -configFiles $starterConfig.starter_modules.Value.$($inputConfig.starter_module_name.Value).deployment_files
             Set-ComputedConfiguration -configuration $starterConfiguration
             Edit-ALZConfigurationFilesInPlace -alzEnvironmentDestination $starterModulePath -configuration $starterConfiguration

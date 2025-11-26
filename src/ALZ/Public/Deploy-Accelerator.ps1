@@ -22,7 +22,7 @@ function Deploy-Accelerator {
 
         [Parameter(
             Mandatory = $false,
-            HelpMessage = "[REQUIRED] The infrastructure as code type to target. Supported options are 'bicep', 'bicep-avm', 'terraform' or 'local'. Environment variable: ALZ_iac_type. Config file input: iac_type.")]
+            HelpMessage = "[REQUIRED] The infrastructure as code type to target. Supported options are 'bicep', 'bicep-classic', 'terraform' or 'local'. Environment variable: ALZ_iac_type. Config file input: iac_type.")]
         [Alias("i")]
         [Alias("iac")]
         [string] $iac_type = "",
@@ -216,8 +216,8 @@ function Deploy-Accelerator {
             if ($null -ne $envInputConfigPaths -and $envInputConfigPaths -ne "") {
                 $inputConfigFilePaths = $envInputConfigPaths -split ","
             } else {
-                Write-InformationColored "No input configuration file path has been provided. Please provide the path(s) to your configuration file(s)..." -ForegroundColor Yellow -InformationAction Continue
-                $inputConfigFilePaths = @(Request-SpecialInput -type "inputConfigFilePath")
+                Write-InformationColored "No input configuration file path has been provided. Please provide the path(s) to your configuration file(s)..." -ForegroundColor Red -InformationAction Continue
+                throw "No input configuration file path has been provided. Please provide the path(s) to your configuration file(s)..."
             }
         }
 
@@ -247,15 +247,13 @@ function Deploy-Accelerator {
         }
         $inputConfig = Convert-ParametersToInputConfig -inputConfig $inputConfig -parameters $parametersWithValues
 
-        # Get the IAC type if not specified
+        # Throw if IAC type is not specified
         if ($inputConfig.iac_type.Value -eq "") {
-            $inputConfig.iac_type = @{
-                Value  = Request-SpecialInput -type "iac"
-                Source = "user"
-            }
+            Write-InformationColored "No Infrastructure as Code type has been specified. Please supply the IAC type you wish to deploy..." -ForegroundColor Red -InformationAction Continue
+            throw"No Infrastructure as Code type has been specified. Please supply the IAC type you wish to deploy..."
         }
 
-        if ($inputConfig.iac_type.Value -eq "bicep") {
+        if ($inputConfig.iac_type.Value -like "bicep*") {
             Write-InformationColored "Although you have selected Bicep, the Accelerator leverages the Terraform tool to bootstrap your Version Control System and Azure. This will not impact your choice of Bicep post this initial bootstrap. Please refer to our documentation for further details..." -ForegroundColor Yellow -InformationAction Continue
         }
 
@@ -288,21 +286,18 @@ function Deploy-Accelerator {
 
         # Setup the variables for bootstrap and starter modules
         $hasStarterModule = $false
-        $starterModuleUrl = $bicepLegacyUrl
+        $starterModuleUrl = ""
         $starterModuleSourceFolder = "."
         $starterReleaseArtifactName = ""
         $starterConfigFilePath = ""
 
         $bootstrapDetails = $null
-        $validationConfig = $null
         $zonesSupport = $null
 
         # Request the bootstrap type if not already specified
         if($inputConfig.bootstrap_module_name.Value -eq "") {
-            $inputConfig.bootstrap_module_name = @{
-                Value  = Request-SpecialInput -type "bootstrap" -bootstrapModules $bootstrapModules
-                Source = "user"
-            }
+            Write-InformationColored "No bootstrap module has been specified. Please supply the bootstrap module you wish to deploy..." -ForegroundColor Red -InformationAction Continue
+            throw "No bootstrap module has been specified. Please supply the bootstrap module you wish to deploy..."
         }
 
         $bootstrapAndStarterConfig = Get-BootstrapAndStarterConfig `
@@ -318,7 +313,6 @@ function Deploy-Accelerator {
         $starterModuleSourceFolder = $bootstrapAndStarterConfig.starterModuleSourceFolder
         $starterReleaseArtifactName = $bootstrapAndStarterConfig.starterReleaseArtifactName
         $starterConfigFilePath = $bootstrapAndStarterConfig.starterConfigFilePath
-        $validationConfig = $bootstrapAndStarterConfig.validationConfig
         $zonesSupport = $bootstrapAndStarterConfig.zonesSupport
 
         # Download the starter modules
@@ -365,7 +359,6 @@ function Deploy-Accelerator {
         New-Bootstrap `
             -iac $inputConfig.iac_type.Value `
             -bootstrapDetails $bootstrapDetails `
-            -validationConfig $validationConfig `
             -inputConfig $inputConfig `
             -bootstrapTargetPath $bootstrapTargetPath `
             -bootstrapRelease $bootstrapReleaseTag `

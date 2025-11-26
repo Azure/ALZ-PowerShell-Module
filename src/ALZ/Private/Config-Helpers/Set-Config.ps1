@@ -143,8 +143,6 @@ function Set-Config {
                 continue
             }
 
-            # TODO: Add validation here...
-
             # Use the default value if no input config is supplied
             if($configurationValue.Value.PSObject.Properties.Name -match "DefaultValue") {
                 Write-Verbose "Input not supplied, so using default value of $($configurationValue.Value.DefaultValue) for $($configurationValue.Name)"

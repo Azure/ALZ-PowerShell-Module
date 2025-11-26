@@ -22,22 +22,18 @@ function Get-BootstrapAndStarterConfig {
         $starterConfigFilePath = ""
 
         $bootstrapDetails = $null
-        $validationConfig = $null
         $zonesSupport = $null
 
-        # Get the bootstap configuration
+        # Get the bootstrap configuration
         $bootstrapConfigFullPath = Join-Path $bootstrapPath $bootstrapConfigPath
         Write-Verbose "Bootstrap config path $bootstrapConfigFullPath"
         $bootstrapConfig = Get-ALZConfig -configFilePath $bootstrapConfigFullPath
-        $validationConfig = $bootstrapConfig.validators.Value
 
         # Get the supported regions and availability zones
         Write-Verbose "Getting Supported Regions and Availability Zones with Terraform"
         $regionsAndZones = Get-AzureRegionData -toolsPath $toolsPath
         Write-Verbose "Supported Regions: $($regionsAndZones.supportedRegions)"
         $zonesSupport = $regionsAndZones.zonesSupport
-        $azureLocationValidator = $validationConfig.PSObject.Properties["azure_location"].Value
-        $azureLocationValidator.AllowedValues.Values = $regionsAndZones.supportedRegions
 
         # Get the available bootstrap modules
         $bootstrapModules = $bootstrapConfig.bootstrap_modules.Value
@@ -76,7 +72,6 @@ function Get-BootstrapAndStarterConfig {
             starterModuleSourceFolder  = $starterModuleSourceFolder
             starterReleaseArtifactName = $starterReleaseArtifactName
             starterConfigFilePath      = $starterConfigFilePath
-            validationConfig           = $validationConfig
             zonesSupport               = $zonesSupport
         }
     }

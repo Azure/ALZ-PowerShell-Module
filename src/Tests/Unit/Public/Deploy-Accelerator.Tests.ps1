@@ -130,13 +130,6 @@ InModuleScope 'ALZ' {
                 Mock -CommandName Get-BootstrapAndStarterConfig -MockWith {
                     @{
                         "hasStarterModule" = $true
-                        "validationConfig" = @{
-                            "azure_location" = @{
-                                "AllowedValues" = @{
-                                    "Values" = @( "uksouth", "ukwest" )
-                                }
-                            }
-                        }
                     }
                 }
 

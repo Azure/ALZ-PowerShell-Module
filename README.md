@@ -15,8 +15,8 @@ This repository contains the PowerShell module and documentation for the Azure l
 The accelerators support multiple Infrastructure as Code approaches:
 
 - **terraform**: Terraform-based Azure Landing Zones
-- **bicep**: Bicep-based Azure Landing Zones using the traditional [ALZ-Bicep](https://github.com/Azure/ALZ-Bicep) framework
-- **bicep-avm**: Bicep-based Azure Landing Zones using the new [alz-bicep-accelerator](https://github.com/Azure/alz-bicep-accelerator) framework built on Azure Verified Modules
+- **bicep**: Bicep-based Azure Landing Zones using the new [alz-bicep-accelerator](https://github.com/Azure/alz-bicep-accelerator) framework built on Azure Verified Modules
+- **bicep-classic**: Bicep-based Azure Landing Zones using the classic [ALZ-Bicep](https://github.com/Azure/ALZ-Bicep) framework
 
 It is designed to be used as a template to enable you to get started quickly deploying ALZ with any of these approaches.
 
