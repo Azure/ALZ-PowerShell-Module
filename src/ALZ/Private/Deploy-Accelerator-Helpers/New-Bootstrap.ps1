@@ -55,7 +55,11 @@ function New-Bootstrap {
 
         [Parameter(Mandatory = $false)]
         [string[]]
-        $starterAdditionalFiles = @()
+        $starterAdditionalFiles = @(),
+
+        [Parameter(Mandatory = $false)]
+        [switch]
+        $cleanBootstrapFolder
     )
 
     if ($PSCmdlet.ShouldProcess("ALZ-Terraform module configuration", "modify")) {
@@ -63,6 +67,10 @@ function New-Bootstrap {
         $bootstrapPath = Join-Path $bootstrapTargetPath $bootstrapRelease
         $starterPath = Join-Path $starterTargetPath $starterRelease
         $bootstrapModulePath = Join-Path -Path $bootstrapPath -ChildPath $bootstrapDetails.Value.location
+        if($cleanBootstrapFolder.IsPresent) {
+            Write-Verbose "Cleaning bootstrap folder of Terraform meta files as requested..."
+            Remove-TerraformMetaFileSet -path $bootstrapModulePath -writeVerboseLogs:$writeVerboseLogs.IsPresent
+        }
 
         Write-Verbose "Bootstrap Module Path: $bootstrapModulePath"
 
@@ -244,7 +252,9 @@ function New-Bootstrap {
         }
 
         if ($iac -like "bicep*") {
-            Copy-ParametersFileCollection -starterPath $starterModulePath -configFiles $starterConfig.starter_modules.Value.$($inputConfig.starter_module_name.Value).deployment_files
+            if($iac -ne "bicep") {
+                Copy-ParametersFileCollection -starterPath $starterModulePath -configFiles $starterConfig.starter_modules.Value.$($inputConfig.starter_module_name.Value).deployment_files
+            }
             Set-ComputedConfiguration -configuration $starterConfiguration
             Edit-ALZConfigurationFilesInPlace -alzEnvironmentDestination $starterModulePath -configuration $starterConfiguration
             Write-JsonFile -jsonFilePath $starterBicepVarsPath -configuration $starterConfiguration

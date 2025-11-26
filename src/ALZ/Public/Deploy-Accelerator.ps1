@@ -183,7 +183,13 @@ function Deploy-Accelerator {
             HelpMessage = "[OPTIONAL] Determines whether to skip the requirements check for the ALZ PowerShell Module version only. This is not recommended."
         )]
         [Alias("skipAlzModuleVersionRequirementsCheck")]
-        [switch] $skip_alz_module_version_requirements_check
+        [switch] $skip_alz_module_version_requirements_check,
+
+        [Parameter(
+            Mandatory = $false,
+            HelpMessage = "[OPTIONAL] Determines whether Clean the bootstrap folder of Terraform meta files. Only use for development purposes."
+        )]
+        [switch] $cleanBootstrapFolder
     )
 
     $ProgressPreference = "SilentlyContinue"
@@ -377,7 +383,8 @@ function Deploy-Accelerator {
             -hclParserToolPath $hclParserToolPath `
             -convertTfvarsToJson:$inputConfig.convert_tfvars_to_json.Value `
             -inputConfigFilePaths $inputConfigFilePaths `
-            -starterAdditionalFiles $inputConfig.starter_additional_files.Value
+            -starterAdditionalFiles $inputConfig.starter_additional_files.Value `
+            -cleanBootstrapFolder:$cleanBootstrapFolder.IsPresent
     }
 
     $ProgressPreference = "Continue"
