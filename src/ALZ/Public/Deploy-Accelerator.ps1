@@ -339,17 +339,21 @@ function Deploy-Accelerator {
         }
 
         # Set computed interface inputs
+        $inputConfig | Add-Member -MemberType NoteProperty -Name "bicep_config_file_path" -Value @{
+            Value  = $starterConfigFilePath
+            Source = "calculated"
+        }
         $inputConfig | Add-Member -MemberType NoteProperty -Name "on_demand_folder_repository" -Value @{
             Value  = $starterModuleUrl
-            Source = "calaculated"
+            Source = "calculated"
         }
         $inputConfig | Add-Member -MemberType NoteProperty -Name "on_demand_folder_artifact_name" -Value @{
             Value  = $starterReleaseArtifactName
-            Source = "calaculated"
+            Source = "calculated"
         }
         $inputConfig | Add-Member -MemberType NoteProperty -Name "release_version" -Value @{
             Value  = ($starterReleaseTag -eq "local" ? $inputConfig.starter_module_version.Value : $starterReleaseTag)
-            Source = "calaculated"
+            Source = "calculated"
         }
 
         # Run the bootstrap
