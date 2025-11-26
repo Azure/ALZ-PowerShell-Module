@@ -13,6 +13,7 @@ function Get-StarterConfig {
         $starterConfigFullPath = Join-Path $starterPath $starterConfigPath
         Write-Verbose "Starter config path $starterConfigFullPath"
         $starterConfig = Get-ALZConfig -configFilePath $starterConfigFullPath
+        Write-Verbose "Starter configuration loaded."
 
         return $starterConfig
     }
