@@ -69,7 +69,12 @@ function New-Bootstrap {
         $bootstrapModulePath = Join-Path -Path $bootstrapPath -ChildPath $bootstrapDetails.Value.location
         if($cleanBootstrapFolder.IsPresent) {
             Write-Verbose "Cleaning bootstrap folder of Terraform meta files as requested..."
-            Remove-TerraformMetaFileSet -path $bootstrapModulePath -writeVerboseLogs:$writeVerboseLogs.IsPresent
+            Remove-TerraformMetaFileSet -path $bootstrapModulePath -writeVerboseLogs:$writeVerboseLogs.IsPresent -terraformFilesOrFoldersToRemove @(
+                "terraform.tfstate.backup",
+                ".terraform",
+                "terraform.tfvars",
+                ".terraform.lock.hcl"
+            )
         }
 
         Write-Verbose "Bootstrap Module Path: $bootstrapModulePath"
