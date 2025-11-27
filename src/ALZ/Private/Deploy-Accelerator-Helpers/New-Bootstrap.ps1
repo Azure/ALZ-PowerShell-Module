@@ -114,7 +114,7 @@ function New-Bootstrap {
                 # Add the root module folder to bootstrap input config
                 $inputConfig | Add-Member -NotePropertyName "root_module_folder_relative_path" -NotePropertyValue @{
                     Value  = $starterRootModuleFolder
-                    Source = "caluated"
+                    Source = "calculated"
                 }
 
                 # Set the starter root module folder full path
