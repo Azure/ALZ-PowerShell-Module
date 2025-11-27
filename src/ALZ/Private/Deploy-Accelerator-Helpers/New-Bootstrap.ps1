@@ -264,7 +264,6 @@ function New-Bootstrap {
             $foldersOrFilesToRetain += "parameters.json"
             $foldersOrFilesToRetain += "config"
             $foldersOrFilesToRetain += ".config"
-            $foldersOrFilesToRetain += "starter-cache.json"
 
             foreach ($deployment_file in $starterConfig.starter_modules.Value.$($inputConfig.starter_module_name.Value).deployment_files) {
                 $foldersOrFilesToRetain += $deployment_file.templateParametersSourceFilePath
