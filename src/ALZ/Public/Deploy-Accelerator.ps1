@@ -22,7 +22,7 @@ function Deploy-Accelerator {
 
         [Parameter(
             Mandatory = $false,
-            HelpMessage = "[REQUIRED] The infrastructure as code type to target. Supported options are 'bicep', 'terrform' or 'local'. Environment variable: ALZ_iac_type. Config file input: iac_type.")]
+            HelpMessage = "[REQUIRED] The infrastructure as code type to target. Supported options are 'bicep', 'bicep-classic', 'terraform' or 'local'. Environment variable: ALZ_iac_type. Config file input: iac_type.")]
         [Alias("i")]
         [Alias("iac")]
         [string] $iac_type = "",
@@ -183,12 +183,18 @@ function Deploy-Accelerator {
             HelpMessage = "[OPTIONAL] Determines whether to skip the requirements check for the ALZ PowerShell Module version only. This is not recommended."
         )]
         [Alias("skipAlzModuleVersionRequirementsCheck")]
-        [switch] $skip_alz_module_version_requirements_check
+        [switch] $skip_alz_module_version_requirements_check,
+
+        [Parameter(
+            Mandatory = $false,
+            HelpMessage = "[OPTIONAL] Determines whether Clean the bootstrap folder of Terraform meta files. Only use for development purposes."
+        )]
+        [switch] $cleanBootstrapFolder
     )
 
     $ProgressPreference = "SilentlyContinue"
 
-    if($skip_requirements_check.IsPresent) {
+    if ($skip_requirements_check.IsPresent) {
         Write-InformationColored "WARNING: Skipping the software requirements check..." -ForegroundColor Yellow -InformationAction Continue
     } else {
         Write-InformationColored "Checking the software requirements for the Accelerator..." -ForegroundColor Green -InformationAction Continue
@@ -201,7 +207,7 @@ function Deploy-Accelerator {
 
         # Check and install tools needed
         $toolsPath = Join-Path -Path $output_folder_path -ChildPath ".tools"
-        if($skipInternetChecks) {
+        if ($skipInternetChecks) {
             Write-InformationColored "Skipping Terraform tool check as you used the skipInternetCheck parameter. Please ensure you have the most recent version of Terraform installed" -ForegroundColor Yellow -InformationAction Continue
         } else {
             Write-InformationColored "Checking you have the latest version of Terraform installed..." -ForegroundColor Green -NewLineBefore -InformationAction Continue
@@ -213,16 +219,16 @@ function Deploy-Accelerator {
         $inputConfig = $null
         if ($inputConfigFilePaths.Length -eq 0) {
             $envInputConfigPaths = $env:ALZ_input_config_path
-            if($null -ne $envInputConfigPaths -and $envInputConfigPaths -ne "") {
+            if ($null -ne $envInputConfigPaths -and $envInputConfigPaths -ne "") {
                 $inputConfigFilePaths = $envInputConfigPaths -split ","
             } else {
-                Write-InformationColored "No input configuration file path has been provided. Please provide the path(s) to your configuration file(s)..." -ForegroundColor Yellow -InformationAction Continue
-                $inputConfigFilePaths = @(Request-SpecialInput -type "inputConfigFilePath")
+                Write-InformationColored "No input configuration file path has been provided. Please provide the path(s) to your configuration file(s)..." -ForegroundColor Red -InformationAction Continue
+                throw "No input configuration file path has been provided. Please provide the path(s) to your configuration file(s)..."
             }
         }
 
         # Get the input config from yaml and json files
-        foreach($inputConfigFilePath in $inputConfigFilePaths) {
+        foreach ($inputConfigFilePath in $inputConfigFilePaths) {
             $inputConfig = Get-ALZConfig -configFilePath $inputConfigFilePath -inputConfig $inputConfig -hclParserToolPath $hclParserToolPath
         }
 
@@ -231,13 +237,13 @@ function Deploy-Accelerator {
         $parametersWithValues = @{}
         foreach ($parameterKey in $parameters.Keys) {
             $parameter = $parameters[$parameterKey]
-            if($parameter.IsDynamic) {
+            if ($parameter.IsDynamic) {
                 continue
             }
 
             $parameterValue = Get-Variable -Name $parameterKey -ValueOnly -ErrorAction SilentlyContinue
 
-            if($null -ne $parameterValue) {
+            if ($null -ne $parameterValue) {
                 $parametersWithValues[$parameterKey] = @{
                     type    = $parameters[$parameterKey].ParameterType.Name
                     value   = $parameterValue
@@ -247,15 +253,13 @@ function Deploy-Accelerator {
         }
         $inputConfig = Convert-ParametersToInputConfig -inputConfig $inputConfig -parameters $parametersWithValues
 
-        # Get the IAC type if not specified
+        # Throw if IAC type is not specified
         if ($inputConfig.iac_type.Value -eq "") {
-            $inputConfig.iac_type = @{
-                Value  = Request-SpecialInput -type "iac"
-                Source = "user"
-            }
+            Write-InformationColored "No Infrastructure as Code type has been specified. Please supply the IAC type you wish to deploy..." -ForegroundColor Red -InformationAction Continue
+            throw"No Infrastructure as Code type has been specified. Please supply the IAC type you wish to deploy..."
         }
 
-        if ($inputConfig.iac_type.Value -eq "bicep") {
+        if ($inputConfig.iac_type.Value -like "bicep*") {
             Write-InformationColored "Although you have selected Bicep, the Accelerator leverages the Terraform tool to bootstrap your Version Control System and Azure. This will not impact your choice of Bicep post this initial bootstrap. Please refer to our documentation for further details..." -ForegroundColor Yellow -InformationAction Continue
         }
 
@@ -288,21 +292,18 @@ function Deploy-Accelerator {
 
         # Setup the variables for bootstrap and starter modules
         $hasStarterModule = $false
-        $starterModuleUrl = $bicepLegacyUrl
+        $starterModuleUrl = ""
         $starterModuleSourceFolder = "."
         $starterReleaseArtifactName = ""
         $starterConfigFilePath = ""
 
         $bootstrapDetails = $null
-        $validationConfig = $null
         $zonesSupport = $null
 
         # Request the bootstrap type if not already specified
         if($inputConfig.bootstrap_module_name.Value -eq "") {
-            $inputConfig.bootstrap_module_name = @{
-                Value  = Request-SpecialInput -type "bootstrap" -bootstrapModules $bootstrapModules
-                Source = "user"
-            }
+            Write-InformationColored "No bootstrap module has been specified. Please supply the bootstrap module you wish to deploy..." -ForegroundColor Red -InformationAction Continue
+            throw "No bootstrap module has been specified. Please supply the bootstrap module you wish to deploy..."
         }
 
         $bootstrapAndStarterConfig = Get-BootstrapAndStarterConfig `
@@ -318,7 +319,6 @@ function Deploy-Accelerator {
         $starterModuleSourceFolder = $bootstrapAndStarterConfig.starterModuleSourceFolder
         $starterReleaseArtifactName = $bootstrapAndStarterConfig.starterReleaseArtifactName
         $starterConfigFilePath = $bootstrapAndStarterConfig.starterConfigFilePath
-        $validationConfig = $bootstrapAndStarterConfig.validationConfig
         $zonesSupport = $bootstrapAndStarterConfig.zonesSupport
 
         # Download the starter modules
@@ -345,17 +345,21 @@ function Deploy-Accelerator {
         }
 
         # Set computed interface inputs
+        $inputConfig | Add-Member -MemberType NoteProperty -Name "bicep_config_file_path" -Value @{
+            Value  = $starterConfigFilePath
+            Source = "calculated"
+        }
         $inputConfig | Add-Member -MemberType NoteProperty -Name "on_demand_folder_repository" -Value @{
             Value  = $starterModuleUrl
-            Source = "calaculated"
+            Source = "calculated"
         }
         $inputConfig | Add-Member -MemberType NoteProperty -Name "on_demand_folder_artifact_name" -Value @{
             Value  = $starterReleaseArtifactName
-            Source = "calaculated"
+            Source = "calculated"
         }
         $inputConfig | Add-Member -MemberType NoteProperty -Name "release_version" -Value @{
             Value  = ($starterReleaseTag -eq "local" ? $inputConfig.starter_module_version.Value : $starterReleaseTag)
-            Source = "calaculated"
+            Source = "calculated"
         }
 
         # Run the bootstrap
@@ -365,7 +369,6 @@ function Deploy-Accelerator {
         New-Bootstrap `
             -iac $inputConfig.iac_type.Value `
             -bootstrapDetails $bootstrapDetails `
-            -validationConfig $validationConfig `
             -inputConfig $inputConfig `
             -bootstrapTargetPath $bootstrapTargetPath `
             -bootstrapRelease $bootstrapReleaseTag `
@@ -380,7 +383,8 @@ function Deploy-Accelerator {
             -hclParserToolPath $hclParserToolPath `
             -convertTfvarsToJson:$inputConfig.convert_tfvars_to_json.Value `
             -inputConfigFilePaths $inputConfigFilePaths `
-            -starterAdditionalFiles $inputConfig.starter_additional_files.Value
+            -starterAdditionalFiles $inputConfig.starter_additional_files.Value `
+            -cleanBootstrapFolder:$cleanBootstrapFolder.IsPresent
     }
 
     $ProgressPreference = "Continue"

@@ -8,9 +8,6 @@ function Convert-HCLVariablesToInputConfig {
         [string] $hclParserToolPath,
 
         [Parameter(Mandatory = $false)]
-        [PSCustomObject]$validators,
-
-        [Parameter(Mandatory = $false)]
         [PSCustomObject]$appendToObject = $null
     )
 
@@ -32,19 +29,6 @@ function Convert-HCLVariablesToInputConfig {
         foreach ($variable in $terraformVariables.variable.PSObject.Properties) {
             if ($variable.Value[0].PSObject.Properties.Name -contains "description") {
                 $description = $variable.Value[0].description
-                $validationTypeSplit = $description -split "\|"
-
-                $hasValidation = $false
-
-                if ($validationTypeSplit.Length -gt 1) {
-                    $description = $validationTypeSplit[0].Trim()
-                }
-
-                if ($validationTypeSplit.Length -eq 2) {
-                    $splitItem = $validationTypeSplit[1].Trim()
-                    $validationType = $splitItem
-                    $hasValidation = $true
-                }
             }
 
             $configItem = [PSCustomObject]@{}
@@ -53,18 +37,6 @@ function Convert-HCLVariablesToInputConfig {
 
             if ($variable.Value[0].PSObject.Properties.Name -contains "default") {
                 $configItem | Add-Member -NotePropertyName "DefaultValue" -NotePropertyValue $variable.Value[0].default
-            }
-
-            if ($hasValidation) {
-                $validator = $validators.PSObject.Properties[$validationType].Value
-                $description = "$description ($($validator.Description))"
-                if ($validator.Type -eq "AllowedValues") {
-                    $configItem | Add-Member -NotePropertyName "AllowedValues" -NotePropertyValue $validator.AllowedValues
-                }
-                if ($validator.Type -eq "Valid") {
-                    $configItem | Add-Member -NotePropertyName "Valid" -NotePropertyValue $validator.Valid
-                }
-                $configItem | Add-Member -NotePropertyName "Validator" -NotePropertyValue $validationType
             }
 
             $configItem | Add-Member -NotePropertyName "Description" -NotePropertyValue $description

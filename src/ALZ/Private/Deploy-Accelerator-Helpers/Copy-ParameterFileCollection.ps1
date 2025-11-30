@@ -17,6 +17,7 @@ function Copy-ParametersFileCollection {
                 if (-not (Test-Path $destinationFolder)) {
                     New-Item -ItemType Directory -Path $destinationFolder -Force | Out-String | Write-Verbose
                 }
+                Write-Verbose "Copying parameter file from $sourcePath to $destinationPath"
                 Copy-Item -Path $sourcePath -Destination $destinationPath -Recurse -Force | Out-String | Write-Verbose
             }
         } else {

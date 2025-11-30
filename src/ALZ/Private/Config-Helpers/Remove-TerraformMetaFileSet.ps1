@@ -19,8 +19,10 @@ function Remove-TerraformMetaFileSet {
     )
 
     if ($PSCmdlet.ShouldProcess("Remove files", "modify")) {
+        Write-Verbose "Removing Terraform meta files and folders from $path"
+
         if ($terraformFilesOrFoldersToRemove.Length -eq 0 ) {
-            Write-Verbose "No folders or files specified, so not removing aything from $path"
+            Write-Verbose "No folders or files specified, so not removing anything from $path"
             return
         }
 
