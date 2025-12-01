@@ -93,14 +93,21 @@ function New-Bootstrap {
         $starterFoldersToRetain = @()
 
         if ($hasStarter) {
-            if ($inputConfig.starter_module_name.Value -eq "") {
+            if (!$inputConfig.starter_module_name.Value) {
                 Write-InformationColored "No starter module has been specified. Please supply the starter module you wish to deploy..." -ForegroundColor Red -InformationAction Continue
                 throw "No starter module has been specified. Please supply the starter module you wish to deploy..."
             }
 
-            $chosenStarterConfig = $starterConfig.starter_modules.Value.$($inputConfig.starter_module_name.Value)
+            $starter_module_name = $inputConfig.starter_module_name.Value.Trim()
 
-            Write-Verbose "Selected Starter: $($inputConfig.starter_module_name.Value))"
+            $chosenStarterConfig = $starterConfig.starter_modules.Value.$($starter_module_name)
+
+            if($null -eq $chosenStarterConfig ) {
+                Write-InformationColored "The starter module name '$($starter_module_name)' does not exist in the starter configuration. Please check your input and try again." -ForegroundColor Red -InformationAction Continue
+                throw "The starter module name '$($starter_module_name)' does not exist in the starter configuration. Please check your input and try again."
+            }
+
+            Write-Verbose "Selected Starter: $starter_module_name"
             $starterModulePath = (Resolve-Path (Join-Path -Path $starterPath -ChildPath $chosenStarterConfig.location)).Path
             $starterRootModuleFolderPath = $starterModulePath
             Write-Verbose "Starter Module Path: $starterModulePath"
