@@ -93,7 +93,7 @@ function New-Bootstrap {
         $starterFoldersToRetain = @()
 
         if ($hasStarter) {
-            if ($inputConfig.starter_module_name.Value -eq "") {
+            if (!$inputConfig.starter_module_name.Value) {
                 Write-InformationColored "No starter module has been specified. Please supply the starter module you wish to deploy..." -ForegroundColor Red -InformationAction Continue
                 throw "No starter module has been specified. Please supply the starter module you wish to deploy..."
             }

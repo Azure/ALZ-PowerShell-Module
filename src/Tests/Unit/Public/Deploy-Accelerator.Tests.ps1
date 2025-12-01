@@ -45,7 +45,19 @@ InModuleScope 'ALZ' {
                 Mock -CommandName Copy-Item -MockWith { }
 
                 Mock -CommandName Get-ALZConfig -MockWith {
-                    @{
+                    [PSCustomObject]@{
+                        "iac_type" = @{
+                            Value = "bicep"
+                            Source = "yaml"
+                        }
+                        "bootstrap_module_name" = @{
+                            Value = "platform_landing_zone"
+                            Source = "yaml"
+                        }
+                        "starter_module_name" = @{
+                            Value = "alz_github"
+                            Source = "yaml"
+                        }
                         "module_url"   = "test"
                         "version"      = "v1.0.0"
                         "deployment_files" = @(
@@ -146,13 +158,13 @@ InModuleScope 'ALZ' {
             }
 
             It 'should call the correct functions for bicep module configuration' {
-                Deploy-Accelerator -i "bicep" -b "github" -inputs "example.yml"
+                Deploy-Accelerator -inputs "example.yml"
                 Assert-MockCalled -CommandName Get-BootstrapAndStarterConfig -Exactly 1
                 Assert-MockCalled -CommandName New-ModuleSetup -Exactly 2
             }
 
             It 'should call the correct functions for terraform module configuration' {
-                Deploy-Accelerator -i "terraform" -b "github" -inputs "example.yml"
+                Deploy-Accelerator -inputs "example.yml"
                 Assert-MockCalled -CommandName Get-BootstrapAndStarterConfig -Exactly 1
                 Assert-MockCalled -CommandName New-Bootstrap -Exactly 1
                 Assert-MockCalled -CommandName New-ModuleSetup -Exactly 2

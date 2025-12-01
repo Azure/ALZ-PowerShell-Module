@@ -231,12 +231,12 @@ function Deploy-Accelerator {
         $inputConfig = Convert-ParametersToInputConfig -inputConfig $inputConfig -parameters $parametersWithValues
 
         # Throw if IAC type is not specified
-        if ($inputConfig.iac_type.Value -eq "") {
+        if (!$inputConfig.iac_type.Value) {
             Write-InformationColored "No Infrastructure as Code type has been specified. Please supply the IAC type you wish to deploy..." -ForegroundColor Red -InformationAction Continue
-            throw"No Infrastructure as Code type has been specified. Please supply the IAC type you wish to deploy..."
+            throw "No Infrastructure as Code type has been specified. Please supply the IAC type you wish to deploy..."
         }
 
-        if ($inputConfig.iac_type.Value -like "bicep*") {
+        if ($inputConfig.iac_type.Value.ToString() -like "bicep*") {
             Write-InformationColored "Although you have selected Bicep, the Accelerator leverages the Terraform tool to bootstrap your Version Control System and Azure. This will not impact your choice of Bicep post this initial bootstrap. Please refer to our documentation for further details..." -ForegroundColor Yellow -InformationAction Continue
         }
 
@@ -278,7 +278,7 @@ function Deploy-Accelerator {
         $zonesSupport = $null
 
         # Request the bootstrap type if not already specified
-        if($inputConfig.bootstrap_module_name.Value -eq "") {
+        if(!$inputConfig.bootstrap_module_name.Value) {
             Write-InformationColored "No bootstrap module has been specified. Please supply the bootstrap module you wish to deploy..." -ForegroundColor Red -InformationAction Continue
             throw "No bootstrap module has been specified. Please supply the bootstrap module you wish to deploy..."
         }
