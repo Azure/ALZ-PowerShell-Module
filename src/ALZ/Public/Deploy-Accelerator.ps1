@@ -22,29 +22,6 @@ function Deploy-Accelerator {
 
         [Parameter(
             Mandatory = $false,
-            HelpMessage = "[REQUIRED] The infrastructure as code type to target. Supported options are 'bicep', 'bicep-classic', 'terraform' or 'local'. Environment variable: ALZ_iac_type. Config file input: iac_type.")]
-        [Alias("i")]
-        [Alias("iac")]
-        [string] $iac_type = "",
-
-        [Parameter(
-            Mandatory = $false,
-            HelpMessage = "[REQUIRED] The bootstrap module to deploy. Environment variable: ALZ_bootstrap_module_name. Config file input: bootstrap_module_name."
-        )]
-        [Alias("b")]
-        [Alias("bootstrap")]
-        [string] $bootstrap_module_name = "",
-
-        [Parameter(
-            Mandatory = $false,
-            HelpMessage = "[REQUIRED] The starter module to deploy. Environment variable: ALZ_starter_module_name. Config file input: starter_module_name."
-        )]
-        [Alias("s")]
-        [Alias("starter")]
-        [string] $starter_module_name = "",
-
-        [Parameter(
-            Mandatory = $false,
             HelpMessage = "[OPTIONAL] The additional files or folders to be copied directly to the starter module root folder. Environment variable: ALZ_starter_additional_files. Config file input: starter_additional_files."
         )]
         [Alias("saf")]
@@ -306,9 +283,11 @@ function Deploy-Accelerator {
             throw "No bootstrap module has been specified. Please supply the bootstrap module you wish to deploy..."
         }
 
+        $bootstrap_module_name = $inputConfig.bootstrap_module_name.Value.Trim()
+
         $bootstrapAndStarterConfig = Get-BootstrapAndStarterConfig `
             -iac $inputConfig.iac_type.Value `
-            -bootstrap $inputConfig.bootstrap_module_name.Value `
+            -bootstrap $bootstrap_module_name `
             -bootstrapPath $bootstrapPath `
             -bootstrapConfigPath $inputConfig.bootstrap_config_path.Value `
             -toolsPath $toolsPath
