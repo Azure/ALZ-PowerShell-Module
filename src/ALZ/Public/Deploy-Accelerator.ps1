@@ -340,6 +340,10 @@ function Deploy-Accelerator {
             Value  = ($starterReleaseTag -eq "local" ? $inputConfig.starter_module_version.Value : $starterReleaseTag)
             Source = "calculated"
         }
+        $inputConfig | Add-Member -MemberType NoteProperty -Name "time_stamp" -Value @{
+            Value  = (Get-Date).ToString("yyyy-MM-dd-HH-mm-ss")
+            Source = "calculated"
+        }
 
         # Run the bootstrap
         $bootstrapTargetPath = Join-Path $inputConfig.output_folder_path.Value $bootstrapTargetFolder
