@@ -2,7 +2,9 @@ function Test-Tooling {
     [CmdletBinding(SupportsShouldProcess = $true)]
     param(
         [Parameter(Mandatory = $false)]
-        [switch]$skipAlzModuleVersionCheck
+        [switch]$skipAlzModuleVersionCheck,
+        [Parameter(Mandatory = $false)]
+        [switch]$checkYamlModule
     )
 
     $checkResults = @()
@@ -183,6 +185,24 @@ function Test-Tooling {
                     result  = "Success"
                 }
             }
+        }
+    }
+
+    # Check if powershell-yaml module is installed (only when YAML files are being used)
+    if ($checkYamlModule.IsPresent) {
+        Write-Verbose "Checking powershell-yaml module installation"
+        $yamlModule = Get-Module -ListAvailable -Name powershell-yaml
+        if ($yamlModule) {
+            $checkResults += @{
+                message = "powershell-yaml module is installed (version $($yamlModule.Version))."
+                result  = "Success"
+            }
+        } else {
+            $checkResults += @{
+                message = "powershell-yaml module is not installed. Please install it using 'Install-Module powershell-yaml -Force'."
+                result  = "Failure"
+            }
+            $hasFailure = $true
         }
     }
 
