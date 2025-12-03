@@ -106,6 +106,22 @@ function Remove-PlatformLandingZone {
         This is useful when you want to preserve custom role definitions or lack the necessary permissions to delete them.
         Default: $false (delete custom role definitions)
 
+    .PARAMETER ManagementGroupsToDeleteNamePatterns
+        An array of wildcard patterns for management group names that should be deleted. Only management groups at the
+        first level below the target management groups matching any of these patterns will be deleted. If the array is
+        empty, all child management groups will be deleted (default behavior). Each pattern is evaluated using a -like
+        expression with wildcards at the start and end (e.g., a pattern of "landingzone" will match management groups
+        containing "landingzone" anywhere in their name).
+        Default: Empty array (delete all child management groups)
+
+    .PARAMETER RoleDefinitionsToDeleteNamePatterns
+        An array of wildcard patterns for custom role definition names that should be deleted. Only role definitions
+        matching any of these patterns will be deleted during the custom role definition cleanup process. If the array
+        is empty, all custom role definitions will be deleted (default behavior). Each pattern is evaluated using a
+        -like expression with wildcards at the start and end (e.g., a pattern of "Custom" will match role definitions
+        containing "Custom" anywhere in their name).
+        Default: Empty array (delete all custom role definitions)
+
     .EXAMPLE
         Remove-PlatformLandingZone -ManagementGroups @("alz-platform", "alz-landingzones")
 
@@ -180,6 +196,18 @@ function Remove-PlatformLandingZone {
         Removes management groups and resource groups but skips custom role definition deletion. Useful when you want
         to preserve custom role definitions or lack the necessary permissions to delete them.
 
+    .EXAMPLE
+        Remove-PlatformLandingZone -ManagementGroups @("alz-root") -ManagementGroupsToDeleteNamePatterns @("landingzone", "sandbox")
+
+        Removes only child management groups with names containing "landingzone" or "sandbox", preserving all other
+        child management groups. This is useful when you want to selectively clean up specific management group branches.
+
+    .EXAMPLE
+        Remove-PlatformLandingZone -ManagementGroups @("alz-test") -RoleDefinitionsToDeleteNamePatterns @("Test-Role", "Temporary")
+
+        Removes management groups and resource groups but only deletes custom role definitions with names containing
+        "Test-Role" or "Temporary". Useful when you want to clean up specific custom roles while preserving others.
+
     .NOTES
         This function uses Azure CLI commands and requires:
         - Azure CLI to be installed and available in the system path
@@ -240,7 +268,9 @@ function Remove-PlatformLandingZone {
         [switch]$SkipDefenderPlanReset,
         [switch]$SkipDeploymentDeletion,
         [switch]$SkipOrphanedRoleAssignmentDeletion,
-        [switch]$SkipCustomRoleDefinitionDeletion
+        [switch]$SkipCustomRoleDefinitionDeletion,
+        [string[]]$ManagementGroupsToDeleteNamePatterns = @(),
+        [string[]]$RoleDefinitionsToDeleteNamePatterns = @()
     )
 
     function Write-ToConsoleLog {
@@ -376,10 +406,32 @@ function Remove-PlatformLandingZone {
         param (
             [object[]]$ManagementGroups,
             [int]$Depth = 0,
-            [hashtable]$ManagementGroupsFound = @{}
+            [hashtable]$ManagementGroupsFound = @{},
+            [string[]]$ManagementGroupsToDeleteNamePatterns = @()
         )
 
         $ManagementGroups = $ManagementGroups | Where-Object { $_.type -eq "Microsoft.Management/managementGroups" }
+
+        # Filter management groups at depth 0 (first level children) if patterns are specified
+        if ($Depth -eq 0 -and $ManagementGroupsToDeleteNamePatterns.Count -gt 0) {
+            $filteredManagementGroups = @()
+            foreach($mg in $ManagementGroups) {
+                $shouldDelete = $false
+                foreach($pattern in $ManagementGroupsToDeleteNamePatterns) {
+                    if($mg.name -like "*$pattern*" -or $mg.displayName -like "*$pattern*") {
+                        Write-ToConsoleLog "Including management group for deletion due to pattern match '$pattern': $($mg.name) ($($mg.displayName))" -NoNewLine
+                        $shouldDelete = $true
+                        break
+                    }
+                }
+                if($shouldDelete) {
+                    $filteredManagementGroups += $mg
+                } else {
+                    Write-ToConsoleLog "Skipping management group (no pattern match): $($mg.name) ($($mg.displayName))" -NoNewLine
+                }
+            }
+            $ManagementGroups = $filteredManagementGroups
+        }
 
         foreach($managementGroup in $ManagementGroups) {
             if(!$ManagementGroupsFound.ContainsKey($Depth)) {
@@ -395,7 +447,7 @@ function Remove-PlatformLandingZone {
                 if(!$ManagementGroupsFound.ContainsKey($Depth + 1)) {
                     $ManagementGroupsFound[$Depth + 1] = @()
                 }
-                Get-ManagementGroupChildrenRecursive -ManagementGroups $children -Depth ($Depth + 1) -ManagementGroupsFound $ManagementGroupsFound
+                Get-ManagementGroupChildrenRecursive -ManagementGroups $children -Depth ($Depth + 1) -ManagementGroupsFound $ManagementGroupsFound -ManagementGroupsToDeleteNamePatterns $ManagementGroupsToDeleteNamePatterns
             } else {
                 Write-ToConsoleLog "Management group has no children: $($managementGroup.name)" -NoNewLine
             }
@@ -575,10 +627,10 @@ function Remove-PlatformLandingZone {
         param (
             [string]$ManagementGroupId,
             [string]$ManagementGroupDisplayName,
-            [array]$Subscriptions,
             [int]$ThrottleLimit,
             [switch]$PlanMode,
-            [string]$TempLogFileForPlan
+            [string]$TempLogFileForPlan,
+            [string[]]$RoleDefinitionsToDeleteNamePatterns = @()
         )
 
         if(-not $PSCmdlet.ShouldProcess("Delete Custom Role Definitions", "delete")) {
@@ -596,6 +648,27 @@ function Remove-PlatformLandingZone {
             $_.assignableScopes -contains "/providers/Microsoft.Management/managementGroups/$ManagementGroupId"
         }
 
+        # Filter role definitions to only include those matching deletion patterns
+        if ($RoleDefinitionsToDeleteNamePatterns -and $RoleDefinitionsToDeleteNamePatterns.Count -gt 0) {
+            $filteredRoleDefinitions = @()
+            foreach($roleDef in $customRoleDefinitions) {
+                $shouldDelete = $false
+                foreach($pattern in $RoleDefinitionsToDeleteNamePatterns) {
+                    if($roleDef.roleName -like "*$pattern*") {
+                        Write-ToConsoleLog "Including custom role definition for deletion due to pattern match '$pattern': $($roleDef.roleName) (ID: $($roleDef.name))" -NoNewLine
+                        $shouldDelete = $true
+                        break
+                    }
+                }
+                if($shouldDelete) {
+                    $filteredRoleDefinitions += $roleDef
+                } else {
+                    Write-ToConsoleLog "Skipping custom role definition (no pattern match): $($roleDef.roleName) (ID: $($roleDef.name))" -NoNewLine
+                }
+            }
+            $customRoleDefinitions = $filteredRoleDefinitions
+        }
+
         if (-not $customRoleDefinitions -or $customRoleDefinitions.Count -eq 0) {
             Write-ToConsoleLog "No custom role definitions found on management group: $ManagementGroupId ($ManagementGroupDisplayName), skipping." -NoNewLine
             return
@@ -603,85 +676,41 @@ function Remove-PlatformLandingZone {
 
         Write-ToConsoleLog "Found $($customRoleDefinitions.Count) custom role definition(s) on management group: $ManagementGroupId ($ManagementGroupDisplayName)" -NoNewLine
 
-        # For each custom role definition, find and delete all assignments first
+        # For each custom role definition, find and delete all assignments using Resource Graph, then delete the definition
         foreach ($roleDefinition in $customRoleDefinitions) {
             Write-ToConsoleLog "Processing custom role definition: $($roleDefinition.roleName) (ID: $($roleDefinition.name))" -NoNewLine
 
-            # Find all role assignments for this custom role on the management group
-            Write-ToConsoleLog "Checking for role assignments of custom role '$($roleDefinition.roleName)' on management group: $ManagementGroupId ($ManagementGroupDisplayName)" -NoNewLine
-            $mgRoleAssignments = (az role assignment list --role $roleDefinition.roleName --scope "/providers/Microsoft.Management/managementGroups/$ManagementGroupId" --query "[].{id:id,principalName:principalName,principalId:principalId}" -o json) | ConvertFrom-Json
+            # Use Resource Graph to find all role assignments for this custom role definition across all scopes
+            $resourceGraphQuery = "authorizationresources | where type == 'microsoft.authorization/roleassignments' | where properties.roleDefinitionId == '/providers/Microsoft.Authorization/RoleDefinitions/$($roleDefinition.name)' | project id, name, properties"
+            $roleAssignments = (az graph query -q $resourceGraphQuery --query "data" -o json) | ConvertFrom-Json
 
-            if ($mgRoleAssignments -and $mgRoleAssignments.Count -gt 0) {
-                Write-ToConsoleLog "Found $($mgRoleAssignments.Count) role assignment(s) of custom role '$($roleDefinition.roleName)' on management group: $ManagementGroupId ($ManagementGroupDisplayName)" -NoNewLine
+            if ($roleAssignments -and $roleAssignments.Count -gt 0) {
+                Write-ToConsoleLog "Found $($roleAssignments.Count) role assignment(s) for custom role '$($roleDefinition.roleName)'" -NoNewLine
 
-                $mgRoleAssignments | ForEach-Object -Parallel {
+                $roleAssignments | ForEach-Object -Parallel {
                     $assignment = $_
                     $roleDefinitionName = $using:roleDefinition.roleName
-                    $managementGroupId = $using:ManagementGroupId
-                    $managementGroupDisplayName = $using:ManagementGroupDisplayName
                     $funcWriteToConsoleLog = $using:funcWriteToConsoleLog
                     ${function:Write-ToConsoleLog} = $funcWriteToConsoleLog
 
-                    Write-ToConsoleLog "Deleting role assignment of custom role '$roleDefinitionName' for principal: $($assignment.principalName) ($($assignment.principalId)) from management group: $managementGroupId ($managementGroupDisplayName)" -NoNewLine
+                    Write-ToConsoleLog "Deleting role assignment '$($assignment.name)' of custom role '$roleDefinitionName' for principal: $($assignment.properties.principalId)" -NoNewLine
 
                     if($using:PlanMode) {
                         Write-ToConsoleLog `
-                            "Deleting role assignment of custom role '$roleDefinitionName' for principal: $($assignment.principalName) ($($assignment.principalId)) from management group: $managementGroupId ($managementGroupDisplayName)", `
+                            "Deleting role assignment '$($assignment.name)' of custom role '$roleDefinitionName' for principal: $($assignment.properties.principalId)", `
                             "Would run: az role assignment delete --ids $($assignment.id)" `
                             -IsPlan -LogFilePath $using:TempLogFileForPlan
                     } else {
                         $result = az role assignment delete --ids $assignment.id 2>&1
                         if (!$result) {
-                            Write-ToConsoleLog "Deleted role assignment of custom role '$roleDefinitionName' from management group: $managementGroupId ($managementGroupDisplayName)" -NoNewLine
+                            Write-ToConsoleLog "Deleted role assignment '$($assignment.name)' of custom role '$roleDefinitionName'" -NoNewLine
                         } else {
-                            Write-ToConsoleLog "Failed to delete role assignment of custom role '$roleDefinitionName' from management group: $managementGroupId ($managementGroupDisplayName)" -IsWarning -NoNewLine
+                            Write-ToConsoleLog "Failed to delete role assignment '$($assignment.name)' of custom role '$roleDefinitionName'" -IsWarning -NoNewLine
                         }
                     }
                 } -ThrottleLimit $using:ThrottleLimit
             } else {
-                Write-ToConsoleLog "No role assignments found for custom role '$($roleDefinition.roleName)' on management group: $ManagementGroupId ($ManagementGroupDisplayName)" -NoNewLine
-            }
-
-            # Find all role assignments for this custom role on subscriptions under the management group
-            if ($Subscriptions -and $Subscriptions.Count -gt 0) {
-                Write-ToConsoleLog "Checking for role assignments of custom role '$($roleDefinition.roleName)' on subscriptions under management group: $ManagementGroupId ($ManagementGroupDisplayName)" -NoNewLine
-
-                $Subscriptions | ForEach-Object -Parallel {
-                    $subscription = $_
-                    $roleDefinition = $using:roleDefinition
-                    $managementGroupId = $using:ManagementGroupId
-                    $managementGroupDisplayName = $using:ManagementGroupDisplayName
-                    $funcWriteToConsoleLog = $using:funcWriteToConsoleLog
-                    ${function:Write-ToConsoleLog} = $funcWriteToConsoleLog
-
-                    Write-ToConsoleLog "Checking for role assignments of custom role '$($roleDefinition.roleName)' on subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
-
-                    $subRoleAssignments = (az role assignment list --role $roleDefinition.roleName --subscription $subscription.Id --query "[].{id:id,principalName:principalName,principalId:principalId}" -o json) | ConvertFrom-Json
-
-                    if ($subRoleAssignments -and $subRoleAssignments.Count -gt 0) {
-                        Write-ToConsoleLog "Found $($subRoleAssignments.Count) role assignment(s) of custom role '$($roleDefinition.roleName)' on subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
-
-                        foreach ($assignment in $subRoleAssignments) {
-                            Write-ToConsoleLog "Deleting role assignment of custom role '$($roleDefinition.roleName)' for principal: $($assignment.principalName) ($($assignment.principalId)) from subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
-
-                            if($using:PlanMode) {
-                                Write-ToConsoleLog `
-                                    "Deleting role assignment of custom role '$($roleDefinition.roleName)' for principal: $($assignment.principalName) ($($assignment.principalId)) from subscription: $($subscription.Name) (ID: $($subscription.Id))", `
-                                    "Would run: az role assignment delete --ids $($assignment.id)" `
-                                    -IsPlan -LogFilePath $using:TempLogFileForPlan
-                            } else {
-                                $result = az role assignment delete --ids $assignment.id 2>&1
-                                if (!$result) {
-                                    Write-ToConsoleLog "Deleted role assignment of custom role '$($roleDefinition.roleName)' from subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
-                                } else {
-                                    Write-ToConsoleLog "Failed to delete role assignment of custom role '$($roleDefinition.roleName)' from subscription: $($subscription.Name) (ID: $($subscription.Id))" -IsWarning -NoNewLine
-                                }
-                            }
-                        }
-                    } else {
-                        Write-ToConsoleLog "No role assignments found for custom role '$($roleDefinition.roleName)' on subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
-                    }
-                } -ThrottleLimit $using:ThrottleLimit
+                Write-ToConsoleLog "No role assignments found for custom role '$($roleDefinition.roleName)'" -NoNewLine
             }
 
             # Now delete the custom role definition itself
@@ -691,7 +720,7 @@ function Remove-PlatformLandingZone {
                 Write-ToConsoleLog `
                     "Deleting custom role definition: $($roleDefinition.roleName) (ID: $($roleDefinition.name))", `
                     "Would run: az role definition delete --name $($roleDefinition.name) --scope `"/providers/Microsoft.Management/managementGroups/$ManagementGroupId`"" `
-                    -IsPlan -LogFilePath $using:TempLogFileForPlan
+                    -IsPlan -LogFilePath $TempLogFileForPlan
             } else {
                 $result = az role definition delete --name $roleDefinition.name --scope "/providers/Microsoft.Management/managementGroups/$ManagementGroupId" 2>&1
                 if (!$result) {
@@ -841,7 +870,8 @@ function Remove-PlatformLandingZone {
 
                     if($hasChildren -or $deleteTargetManagementGroups) {
                         ${function:Get-ManagementGroupChildrenRecursive} = $using:funcGetManagementGroupChildrenRecursive
-                        $managementGroupsToDelete = Get-ManagementGroupChildrenRecursive -ManagementGroups @($targetManagementGroups)
+                        $patternsToUse = $deleteTargetManagementGroups ? @() : $using:ManagementGroupsToDeleteNamePatterns
+                        $managementGroupsToDelete = Get-ManagementGroupChildrenRecursive -ManagementGroups @($targetManagementGroups) -ManagementGroupsToDeleteNamePatterns $patternsToUse
                     } else {
                         Write-ToConsoleLog "Management group has no children: $managementGroupId ($managementGroupDisplayName)" -NoNewLine
                     }
@@ -1182,10 +1212,10 @@ function Remove-PlatformLandingZone {
                 Remove-CustomRoleDefinitionsForScope `
                     -ManagementGroupId $managementGroupId `
                     -ManagementGroupDisplayName $managementGroupDisplayName `
-                    -Subscriptions $using:subscriptionsFinal `
                     -ThrottleLimit $using:ThrottleLimit `
                     -PlanMode:$using:PlanMode `
-                    -TempLogFileForPlan $using:TempLogFileForPlan
+                    -TempLogFileForPlan $using:TempLogFileForPlan `
+                    -RoleDefinitionsToDeleteNamePatterns $using:RoleDefinitionsToDeleteNamePatterns
 
             } -ThrottleLimit $ThrottleLimit
         } else {
