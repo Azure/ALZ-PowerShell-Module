@@ -175,22 +175,34 @@ function Deploy-Accelerator {
     $hasYamlFiles = $false
     if ($inputConfigFilePaths.Length -gt 0) {
         foreach ($path in $inputConfigFilePaths) {
-            $extension = [System.IO.Path]::GetExtension($path).ToLower()
-            if ($extension -eq ".yml" -or $extension -eq ".yaml") {
-                $hasYamlFiles = $true
-                break
+            if ($null -ne $path -and $path.Trim() -ne "") {
+                try {
+                    $extension = [System.IO.Path]::GetExtension($path).ToLower()
+                    if ($extension -eq ".yml" -or $extension -eq ".yaml") {
+                        $hasYamlFiles = $true
+                        break
+                    }
+                } catch {
+                    # Ignore invalid paths - they will be caught later during config file validation
+                    continue
+                }
             }
         }
     } else {
         # Check environment variable if no paths provided
         $envInputConfigPaths = $env:ALZ_input_config_path
         if ($null -ne $envInputConfigPaths -and $envInputConfigPaths -ne "") {
-            $envPaths = $envInputConfigPaths -split ","
+            $envPaths = $envInputConfigPaths -split "," | Where-Object { $_ -and $_.Trim() }
             foreach ($path in $envPaths) {
-                $extension = [System.IO.Path]::GetExtension($path).ToLower()
-                if ($extension -eq ".yml" -or $extension -eq ".yaml") {
-                    $hasYamlFiles = $true
-                    break
+                try {
+                    $extension = [System.IO.Path]::GetExtension($path).ToLower()
+                    if ($extension -eq ".yml" -or $extension -eq ".yaml") {
+                        $hasYamlFiles = $true
+                        break
+                    }
+                } catch {
+                    # Ignore invalid paths - they will be caught later during config file validation
+                    continue
                 }
             }
         }
