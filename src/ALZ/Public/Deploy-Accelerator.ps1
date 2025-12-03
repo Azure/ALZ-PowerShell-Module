@@ -171,11 +171,36 @@ function Deploy-Accelerator {
 
     $ProgressPreference = "SilentlyContinue"
 
+    # Determine if any input files are YAML to check for powershell-yaml module
+    $hasYamlFiles = $false
+    if ($inputConfigFilePaths.Length -gt 0) {
+        foreach ($path in $inputConfigFilePaths) {
+            $extension = [System.IO.Path]::GetExtension($path).ToLower()
+            if ($extension -eq ".yml" -or $extension -eq ".yaml") {
+                $hasYamlFiles = $true
+                break
+            }
+        }
+    } else {
+        # Check environment variable if no paths provided
+        $envInputConfigPaths = $env:ALZ_input_config_path
+        if ($null -ne $envInputConfigPaths -and $envInputConfigPaths -ne "") {
+            $envPaths = $envInputConfigPaths -split ","
+            foreach ($path in $envPaths) {
+                $extension = [System.IO.Path]::GetExtension($path).ToLower()
+                if ($extension -eq ".yml" -or $extension -eq ".yaml") {
+                    $hasYamlFiles = $true
+                    break
+                }
+            }
+        }
+    }
+
     if ($skip_requirements_check.IsPresent) {
         Write-InformationColored "WARNING: Skipping the software requirements check..." -ForegroundColor Yellow -InformationAction Continue
     } else {
         Write-InformationColored "Checking the software requirements for the Accelerator..." -ForegroundColor Green -InformationAction Continue
-        Test-Tooling -skipAlzModuleVersionCheck:$skip_alz_module_version_requirements_check.IsPresent
+        Test-Tooling -skipAlzModuleVersionCheck:$skip_alz_module_version_requirements_check.IsPresent -checkYamlModule:$hasYamlFiles
     }
 
     Write-InformationColored "Getting ready to deploy the accelerator with you..." -ForegroundColor Green -NewLineBefore -InformationAction Continue
