@@ -174,7 +174,7 @@ function Deploy-Accelerator {
     # Determine if any input files are YAML to check for powershell-yaml module
     $hasYamlFiles = $false
     $pathsToCheck = @()
-    
+
     if ($inputConfigFilePaths.Length -gt 0) {
         $pathsToCheck = $inputConfigFilePaths
     } else {
