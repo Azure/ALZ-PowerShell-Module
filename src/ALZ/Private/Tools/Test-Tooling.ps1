@@ -186,6 +186,22 @@ function Test-Tooling {
         }
     }
 
+    # Check if powershell-yaml module is installed
+    Write-Verbose "Checking powershell-yaml module installation"
+    $yamlModule = Get-Module -ListAvailable -Name powershell-yaml
+    if ($yamlModule) {
+        $checkResults += @{
+            message = "powershell-yaml module is installed (version $($yamlModule.Version))."
+            result  = "Success"
+        }
+    } else {
+        $checkResults += @{
+            message = "powershell-yaml module is not installed. Please install it using 'Install-Module powershell-yaml -Force'."
+            result  = "Failure"
+        }
+        $hasFailure = $true
+    }
+
     Write-Verbose "Showing check results"
     Write-Verbose $(ConvertTo-Json $checkResults -Depth 100)
     $checkResults | ForEach-Object {[PSCustomObject]$_} | Format-Table -Property @{
