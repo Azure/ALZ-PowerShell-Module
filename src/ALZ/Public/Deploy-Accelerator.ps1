@@ -173,37 +173,29 @@ function Deploy-Accelerator {
 
     # Determine if any input files are YAML to check for powershell-yaml module
     $hasYamlFiles = $false
+    $pathsToCheck = @()
+    
     if ($inputConfigFilePaths.Length -gt 0) {
-        foreach ($path in $inputConfigFilePaths) {
-            if ($null -ne $path -and $path.Trim() -ne "") {
-                try {
-                    $extension = [System.IO.Path]::GetExtension($path).ToLower()
-                    if ($extension -eq ".yml" -or $extension -eq ".yaml") {
-                        $hasYamlFiles = $true
-                        break
-                    }
-                } catch {
-                    # Ignore invalid paths - they will be caught later during config file validation
-                    continue
-                }
-            }
-        }
+        $pathsToCheck = $inputConfigFilePaths
     } else {
         # Check environment variable if no paths provided
         $envInputConfigPaths = $env:ALZ_input_config_path
         if ($null -ne $envInputConfigPaths -and $envInputConfigPaths -ne "") {
-            $envPaths = $envInputConfigPaths -split "," | Where-Object { $_ -and $_.Trim() }
-            foreach ($path in $envPaths) {
-                try {
-                    $extension = [System.IO.Path]::GetExtension($path).ToLower()
-                    if ($extension -eq ".yml" -or $extension -eq ".yaml") {
-                        $hasYamlFiles = $true
-                        break
-                    }
-                } catch {
-                    # Ignore invalid paths - they will be caught later during config file validation
-                    continue
+            $pathsToCheck = $envInputConfigPaths -split "," | Where-Object { $_ -and $_.Trim() }
+        }
+    }
+
+    foreach ($path in $pathsToCheck) {
+        if ($null -ne $path -and $path.Trim() -ne "") {
+            try {
+                $extension = [System.IO.Path]::GetExtension($path).ToLower()
+                if ($extension -eq ".yml" -or $extension -eq ".yaml") {
+                    $hasYamlFiles = $true
+                    break
                 }
+            } catch {
+                # Ignore invalid paths - they will be caught later during config file validation
+                continue
             }
         }
     }
