@@ -94,6 +94,12 @@ function Remove-PlatformLandingZone {
         subscriptions. This is useful when you want to preserve deployment records for audit or compliance purposes.
         Default: $false (delete deployments)
 
+    .PARAMETER SkipDeploymentStackDeletion
+        A switch parameter that skips deployment stack deletion operations at both the management group and subscription
+        levels. When specified, the function will not delete deployment stacks from management groups or subscriptions.
+        This is useful when you want to preserve deployment stacks or lack the necessary permissions to delete them.
+        Default: $false (delete deployment stacks)
+
     .PARAMETER SkipOrphanedRoleAssignmentDeletion
         A switch parameter that skips orphaned role assignment deletion operations at both the management group and
         subscription levels. When specified, the function will not delete role assignments where the principal no
@@ -185,6 +191,12 @@ function Remove-PlatformLandingZone {
         deployment history. Useful for faster cleanup when Defender configuration and audit trails should be preserved.
 
     .EXAMPLE
+        Remove-PlatformLandingZone -ManagementGroups @("alz-test") -SkipDeploymentStackDeletion
+
+        Removes management groups and resource groups but skips deleting deployment stacks. Useful when you want to
+        preserve deployment stacks for managed resource cleanup or lack the necessary permissions to delete them.
+
+    .EXAMPLE
         Remove-PlatformLandingZone -Subscriptions @("Sub-Test-001") -SkipOrphanedRoleAssignmentDeletion
 
         Cleans up the subscription but skips orphaned role assignment deletion. Useful when you want to preserve
@@ -267,6 +279,7 @@ function Remove-PlatformLandingZone {
         [switch]$PlanMode,
         [switch]$SkipDefenderPlanReset,
         [switch]$SkipDeploymentDeletion,
+        [switch]$SkipDeploymentStackDeletion,
         [switch]$SkipOrphanedRoleAssignmentDeletion,
         [switch]$SkipCustomRoleDefinitionDeletion,
         [string[]]$ManagementGroupsToDeleteNamePatterns = @(),
@@ -558,7 +571,9 @@ function Remove-PlatformLandingZone {
             [string]$ScopeId,
             [int]$ThrottleLimit,
             [switch]$PlanMode,
-            [string]$TempLogFileForPlan
+            [string]$TempLogFileForPlan,
+            [switch]$SkipDeploymentStackDeletion,
+            [switch]$SkipDeploymentDeletion
         )
 
         if(-not $PSCmdlet.ShouldProcess("Delete Deployments", "delete")) {
@@ -568,57 +583,122 @@ function Remove-PlatformLandingZone {
         $funcWriteToConsoleLog = ${function:Write-ToConsoleLog}.ToString()
         $isSubscriptionScope = $ScopeType -eq "subscription"
 
-        Write-ToConsoleLog "Checking for deployments to delete in $($ScopeType): $ScopeNameForLogs" -NoNewLine
+        # Delete deployment stacks first (before regular deployments)
+        if(-not $SkipDeploymentStackDeletion) {
+            Write-ToConsoleLog "Checking for deployment stacks to delete in $($ScopeType): $ScopeNameForLogs" -NoNewLine
 
-        $deployments = @()
-        if ($isSubscriptionScope) {
-            $deployments = (az deployment sub list --subscription $ScopeId --query "[].name" -o json) | ConvertFrom-Json
+            $deploymentStacks = @()
+            if ($isSubscriptionScope) {
+                $deploymentStacks = (az stack sub list --subscription $ScopeId --query "[].{name:name,id:id}" -o json 2>$null) | ConvertFrom-Json
+            } else {
+                $deploymentStacks = (az stack mg list --management-group-id $ScopeId --query "[].{name:name,id:id}" -o json 2>$null) | ConvertFrom-Json
+            }
+
+            if ($deploymentStacks -and $deploymentStacks.Count -gt 0) {
+                Write-ToConsoleLog "Found $($deploymentStacks.Count) deployment stack(s) in $($ScopeType): $ScopeNameForLogs" -NoNewLine
+
+                $deploymentStacks | ForEach-Object -Parallel {
+                    $deploymentStack = $_
+                    $scopeId = $using:ScopeId
+                    $scopeNameForLogs = $using:ScopeNameForLogs
+                    $scopeType = $using:ScopeType
+                    $funcWriteToConsoleLog = $using:funcWriteToConsoleLog
+                    ${function:Write-ToConsoleLog} = $funcWriteToConsoleLog
+                    $isSubscriptionScope = $using:isSubscriptionScope
+
+                    Write-ToConsoleLog "Deleting deployment stack: $($deploymentStack.name) from $($scopeType): $scopeNameForLogs" -NoNewLine
+                    $result = $null
+                    if($isSubscriptionScope) {
+                        if($using:PlanMode) {
+                            Write-ToConsoleLog `
+                                "Deleting deployment stack: $($deploymentStack.name) from $($scopeType): $scopeNameForLogs", `
+                                "Would run: az stack sub delete --subscription $scopeId --name $($deploymentStack.name) --aou detachAll --yes" `
+                                -IsPlan -LogFilePath $using:TempLogFileForPlan
+                        } else {
+                            $result = az stack sub delete --subscription $scopeId --name $deploymentStack.name --aou detachAll --yes 2>&1
+                        }
+                    } else {
+                        if($using:PlanMode) {
+                            Write-ToConsoleLog `
+                                "Deleting deployment stack: $($deploymentStack.name) from $($scopeType): $scopeNameForLogs", `
+                                "Would run: az stack mg delete --management-group-id $scopeId --name $($deploymentStack.name) --aou detachAll --yes" `
+                                -IsPlan -LogFilePath $using:TempLogFileForPlan
+                        } else {
+                            $result = az stack mg delete --management-group-id $scopeId --name $deploymentStack.name --aou detachAll --yes 2>&1
+                        }
+                    }
+
+                    if (!$result) {
+                        Write-ToConsoleLog "Deleted deployment stack: $($deploymentStack.name) from $($scopeType): $scopeNameForLogs" -NoNewLine
+                    } else {
+                        Write-ToConsoleLog "Failed to delete deployment stack: $($deploymentStack.name) from $($scopeType): $scopeNameForLogs" -IsWarning -NoNewLine
+                    }
+                } -ThrottleLimit $ThrottleLimit
+
+                Write-ToConsoleLog "All deployment stacks processed in $($ScopeType): $ScopeNameForLogs" -NoNewLine
+            } else {
+                Write-ToConsoleLog "No deployment stacks found in $($ScopeType): $ScopeNameForLogs, skipping." -NoNewLine
+            }
         } else {
-            $deployments = (az deployment mg list --management-group-id $ScopeId --query "[].name" -o json) | ConvertFrom-Json
+            Write-ToConsoleLog "Skipping deployment stack deletion in $($ScopeType): $ScopeNameForLogs" -NoNewLine
         }
 
-        if ($deployments -and $deployments.Count -gt 0) {
-            Write-ToConsoleLog "Found $($deployments.Count) deployment(s) in $($ScopeType): $scopeNameForLogs" -NoNewLine
+        if(-not $SkipDeploymentDeletion) {
+            Write-ToConsoleLog "Checking for deployments to delete in $($ScopeType): $ScopeNameForLogs" -NoNewLine
 
-            $deployments | ForEach-Object -Parallel {
-                $deploymentName = $_
-                $scopeId = $using:ScopeId
-                $scopeNameForLogs = $using:ScopeNameForLogs
-                $funcWriteToConsoleLog = $using:funcWriteToConsoleLog
-                ${function:Write-ToConsoleLog} = $funcWriteToConsoleLog
+            $deployments = @()
+            if ($isSubscriptionScope) {
+                $deployments = (az deployment sub list --subscription $ScopeId --query "[].name" -o json) | ConvertFrom-Json
+            } else {
+                $deployments = (az deployment mg list --management-group-id $ScopeId --query "[].name" -o json) | ConvertFrom-Json
+            }
 
-                Write-ToConsoleLog "Deleting deployment: $deploymentName from $($scopeType): $scopeNameForLogs" -NoNewLine
-                $result = $null
-                if($isSubscriptionScope) {
-                    if($using:PlanMode) {
-                        Write-ToConsoleLog `
-                            "Deleting deployment: $deploymentName from $($scopeType): $scopeNameForLogs", `
-                            "Would run: az deployment sub delete --subscription $scopeId --name $deploymentName" `
-                            -IsPlan -LogFilePath $using:TempLogFileForPlan
+            if ($deployments -and $deployments.Count -gt 0) {
+                Write-ToConsoleLog "Found $($deployments.Count) deployment(s) in $($ScopeType): $scopeNameForLogs" -NoNewLine
+
+                $deployments | ForEach-Object -Parallel {
+                    $deploymentName = $_
+                    $scopeId = $using:ScopeId
+                    $scopeNameForLogs = $using:ScopeNameForLogs
+                    $funcWriteToConsoleLog = $using:funcWriteToConsoleLog
+                    ${function:Write-ToConsoleLog} = $funcWriteToConsoleLog
+                    $isSubscriptionScope = $using:isSubscriptionScope
+
+                    Write-ToConsoleLog "Deleting deployment: $deploymentName from $($scopeType): $scopeNameForLogs" -NoNewLine
+                    $result = $null
+                    if($isSubscriptionScope) {
+                        if($using:PlanMode) {
+                            Write-ToConsoleLog `
+                                "Deleting deployment: $deploymentName from $($scopeType): $scopeNameForLogs", `
+                                "Would run: az deployment sub delete --subscription $scopeId --name $deploymentName" `
+                                -IsPlan -LogFilePath $using:TempLogFileForPlan
+                        } else {
+                            $result = az deployment sub delete --subscription $scopeId --name $deploymentName 2>&1
+                        }
                     } else {
-                        $result = az deployment sub delete --subscription $scopeId --name $deploymentName 2>&1
+                        if($using:PlanMode) {
+                            Write-ToConsoleLog `
+                                "Deleting deployment: $deploymentName from $($scopeType): $scopeNameForLogs", `
+                                "Would run: az deployment mg delete --management-group-id $scopeId --name $deploymentName" `
+                                -IsPlan -LogFilePath $using:TempLogFileForPlan
+                        } else {
+                            $result = az deployment mg delete --management-group-id $scopeId --name $deploymentName 2>&1
+                        }
                     }
-                } else {
-                    if($using:PlanMode) {
-                        Write-ToConsoleLog `
-                            "Deleting deployment: $deploymentName from $($scopeType): $scopeNameForLogs", `
-                            "Would run: az deployment mg delete --management-group-id $scopeId --name $deploymentName" `
-                            -IsPlan -LogFilePath $using:TempLogFileForPlan
+
+                    if (!$result) {
+                        Write-ToConsoleLog "Deleted deployment: $deploymentName from $($scopeType): $scopeNameForLogs" -NoNewLine
                     } else {
-                        $result = az deployment mg delete --management-group-id $scopeId --name $deploymentName 2>&1
+                        Write-ToConsoleLog "Failed to delete deployment: $deploymentName from $($scopeType): $scopeNameForLogs" -IsWarning -NoNewLine
                     }
-                }
+                } -ThrottleLimit $ThrottleLimit
 
-                if (!$result) {
-                    Write-ToConsoleLog "Deleted deployment: $deploymentName from $($scopeType): $scopeNameForLogs" -NoNewLine
-                } else {
-                    Write-ToConsoleLog "Failed to delete deployment: $deploymentName from $($scopeType): $scopeNameForLogs" -IsWarning -NoNewLine
-                }
-            } -ThrottleLimit $using:ThrottleLimit
-
-            Write-ToConsoleLog "All deployments processed in $($scopeType): $scopeNameForLogs" -NoNewLine
+                Write-ToConsoleLog "All deployments processed in $($scopeType): $scopeNameForLogs" -NoNewLine
+            } else {
+                Write-ToConsoleLog "No deployments found in $($scopeType): $scopeNameForLogs, skipping." -NoNewLine
+            }
         } else {
-            Write-ToConsoleLog "No deployments found in $($scopeType): $scopeNameForLogs, skipping." -NoNewLine
+            Write-ToConsoleLog "Skipping deployment deletion in $($ScopeType): $ScopeNameForLogs" -NoNewLine
         }
     }
 
@@ -961,8 +1041,8 @@ function Remove-PlatformLandingZone {
                 } -ThrottleLimit $ThrottleLimit
             }
 
-            # Delete deployments from target management groups that are not being deleted
-            if($managementGroupsFound.Count -ne 0 -and -not $SkipDeploymentDeletion -and -not $DeleteTargetManagementGroups) {
+            # Delete deployments and deployment stacks from target management groups that are not being deleted
+            if($managementGroupsFound.Count -ne 0 -and (-not $SkipDeploymentDeletion -or -not $SkipDeploymentStackDeletion) -and -not $DeleteTargetManagementGroups) {
                 $managementGroupsFound | ForEach-Object -Parallel {
                     $managementGroupId = $_.Name
                     $managementGroupDisplayName = $_.DisplayName
@@ -978,11 +1058,13 @@ function Remove-PlatformLandingZone {
                         -ScopeId $managementGroupId `
                         -ThrottleLimit $using:ThrottleLimit `
                         -PlanMode:$using:PlanMode `
-                        -TempLogFileForPlan $using:TempLogFileForPlan
+                        -TempLogFileForPlan $using:TempLogFileForPlan `
+                        -SkipDeploymentStackDeletion:$using:SkipDeploymentStackDeletion `
+                        -SkipDeploymentDeletion:$using:SkipDeploymentDeletion
 
                 } -ThrottleLimit $ThrottleLimit
             } else {
-                Write-ToConsoleLog "Skipping deployment deletion for management groups" -NoNewLine
+                Write-ToConsoleLog "Skipping deployment and deployment stack deletion for management groups" -NoNewLine
             }
 
             # Delete orphaned role assignments from target management groups that are not being deleted
@@ -1172,16 +1254,18 @@ function Remove-PlatformLandingZone {
                     Write-ToConsoleLog "Skipping Microsoft Defender for Cloud Plans reset in subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
                 }
 
-                if(-not $using:SkipDeploymentDeletion) {
+                if(-not $using:SkipDeploymentDeletion -or -not $using:SkipDeploymentStackDeletion) {
                     Remove-DeploymentsForScope `
                         -ScopeType "subscription" `
                         -ScopeNameForLogs "$($subscription.Name) (ID: $($subscription.Id))" `
                         -ScopeId $subscription.Id `
                         -ThrottleLimit $using:ThrottleLimit `
                         -PlanMode:$using:PlanMode `
-                        -TempLogFileForPlan $using:TempLogFileForPlan
+                        -TempLogFileForPlan $using:TempLogFileForPlan `
+                        -SkipDeploymentStackDeletion:$using:SkipDeploymentStackDeletion `
+                        -SkipDeploymentDeletion:$using:SkipDeploymentDeletion
                 } else {
-                    Write-ToConsoleLog "Skipping subscription level deployment deletion in subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
+                    Write-ToConsoleLog "Skipping subscription level deployment and deployment stack deletion in subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
                 }
 
                 if(-not $using:SkipOrphanedRoleAssignmentDeletion) {
