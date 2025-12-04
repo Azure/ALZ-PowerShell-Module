@@ -682,7 +682,7 @@ function Remove-PlatformLandingZone {
 
             # Use Resource Graph to find all role assignments for this custom role definition across all scopes
             $resourceGraphQuery = "authorizationresources | where type == 'microsoft.authorization/roleassignments' | where properties.roleDefinitionId == '/providers/Microsoft.Authorization/RoleDefinitions/$($roleDefinition.name)' | project id, name, properties"
-            $roleAssignments = (az graph query -q $resourceGraphQuery --query "data" -o json) | ConvertFrom-Json
+            $roleAssignments = (az graph query -q $resourceGraphQuery --query "data" --management-groups $ManagementGroupId -o json) | ConvertFrom-Json
 
             if ($roleAssignments -and $roleAssignments.Count -gt 0) {
                 Write-ToConsoleLog "Found $($roleAssignments.Count) role assignment(s) for custom role '$($roleDefinition.roleName)'" -NoNewLine
