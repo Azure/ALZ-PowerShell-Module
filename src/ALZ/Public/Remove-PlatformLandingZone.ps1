@@ -128,6 +128,14 @@ function Remove-PlatformLandingZone {
         containing "Custom" anywhere in their name).
         Default: Empty array (delete all custom role definitions)
 
+    .PARAMETER DeploymentStacksToDeleteNamePatterns
+        An array of wildcard patterns for deployment stack names that should be deleted. Only deployment stacks
+        matching any of these patterns will be deleted during the deployment stack cleanup process. If the array
+        is empty, all deployment stacks will be deleted (default behavior). Each pattern is evaluated using a
+        -like expression with wildcards at the start and end (e.g., a pattern of "alz" will match deployment stacks
+        containing "alz" anywhere in their name).
+        Default: Empty array (delete all deployment stacks)
+
     .EXAMPLE
         Remove-PlatformLandingZone -ManagementGroups @("alz-platform", "alz-landingzones")
 
@@ -220,6 +228,12 @@ function Remove-PlatformLandingZone {
         Removes management groups and resource groups but only deletes custom role definitions with names containing
         "Test-Role" or "Temporary". Useful when you want to clean up specific custom roles while preserving others.
 
+    .EXAMPLE
+        Remove-PlatformLandingZone -ManagementGroups @("alz-test") -DeploymentStacksToDeleteNamePatterns @("alz-", "test-")
+
+        Removes management groups and resource groups but only deletes deployment stacks with names containing
+        "alz-" or "test-". Useful when you want to clean up specific deployment stacks while preserving others.
+
     .NOTES
         This function uses Azure CLI commands and requires:
         - Azure CLI to be installed and available in the system path
@@ -283,7 +297,8 @@ function Remove-PlatformLandingZone {
         [switch]$SkipOrphanedRoleAssignmentDeletion,
         [switch]$SkipCustomRoleDefinitionDeletion,
         [string[]]$ManagementGroupsToDeleteNamePatterns = @(),
-        [string[]]$RoleDefinitionsToDeleteNamePatterns = @()
+        [string[]]$RoleDefinitionsToDeleteNamePatterns = @(),
+        [string[]]$DeploymentStacksToDeleteNamePatterns = @()
     )
 
     function Write-ToConsoleLog {
@@ -573,7 +588,8 @@ function Remove-PlatformLandingZone {
             [switch]$PlanMode,
             [string]$TempLogFileForPlan,
             [switch]$SkipDeploymentStackDeletion,
-            [switch]$SkipDeploymentDeletion
+            [switch]$SkipDeploymentDeletion,
+            [string[]]$DeploymentStacksToDeleteNamePatterns = @()
         )
 
         if(-not $PSCmdlet.ShouldProcess("Delete Deployments", "delete")) {
@@ -592,6 +608,27 @@ function Remove-PlatformLandingZone {
                 $deploymentStacks = (az stack sub list --subscription $ScopeId --query "[].{name:name,id:id}" -o json 2>$null) | ConvertFrom-Json
             } else {
                 $deploymentStacks = (az stack mg list --management-group-id $ScopeId --query "[].{name:name,id:id}" -o json 2>$null) | ConvertFrom-Json
+            }
+
+            # Filter deployment stacks to only include those matching deletion patterns
+            if ($DeploymentStacksToDeleteNamePatterns -and $DeploymentStacksToDeleteNamePatterns.Count -gt 0) {
+                $filteredDeploymentStacks = @()
+                foreach($stack in $deploymentStacks) {
+                    $shouldDelete = $false
+                    foreach($pattern in $DeploymentStacksToDeleteNamePatterns) {
+                        if($stack.name -like "*$pattern*") {
+                            Write-ToConsoleLog "Including deployment stack for deletion due to pattern match '$pattern': $($stack.name)" -NoNewLine
+                            $shouldDelete = $true
+                            break
+                        }
+                    }
+                    if($shouldDelete) {
+                        $filteredDeploymentStacks += $stack
+                    } else {
+                        Write-ToConsoleLog "Skipping deployment stack (no pattern match): $($stack.name)" -NoNewLine
+                    }
+                }
+                $deploymentStacks = $filteredDeploymentStacks
             }
 
             if ($deploymentStacks -and $deploymentStacks.Count -gt 0) {
@@ -1060,7 +1097,8 @@ function Remove-PlatformLandingZone {
                         -PlanMode:$using:PlanMode `
                         -TempLogFileForPlan $using:TempLogFileForPlan `
                         -SkipDeploymentStackDeletion:$using:SkipDeploymentStackDeletion `
-                        -SkipDeploymentDeletion:$using:SkipDeploymentDeletion
+                        -SkipDeploymentDeletion:$using:SkipDeploymentDeletion `
+                        -DeploymentStacksToDeleteNamePatterns $using:DeploymentStacksToDeleteNamePatterns
 
                 } -ThrottleLimit $ThrottleLimit
             } else {
@@ -1263,7 +1301,8 @@ function Remove-PlatformLandingZone {
                         -PlanMode:$using:PlanMode `
                         -TempLogFileForPlan $using:TempLogFileForPlan `
                         -SkipDeploymentStackDeletion:$using:SkipDeploymentStackDeletion `
-                        -SkipDeploymentDeletion:$using:SkipDeploymentDeletion
+                        -SkipDeploymentDeletion:$using:SkipDeploymentDeletion `
+                        -DeploymentStacksToDeleteNamePatterns $using:DeploymentStacksToDeleteNamePatterns
                 } else {
                     Write-ToConsoleLog "Skipping subscription level deployment and deployment stack deletion in subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
                 }
