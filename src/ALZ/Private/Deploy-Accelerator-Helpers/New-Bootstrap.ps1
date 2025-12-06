@@ -222,8 +222,10 @@ function New-Bootstrap {
         $tfVarsFileName = "terraform.tfvars.json"
         $bootstrapTfvarsPath = Join-Path -Path $bootstrapModulePath -ChildPath $tfVarsFileName
         $starterTfvarsPath = Join-Path -Path $starterRootModuleFolderPath -ChildPath "terraform.tfvars.json"
-        $starterBicepVarsPath = Join-Path -Path $starterModulePath -ChildPath "parameters.json"
-        $starterBicepAllVarsPath = Join-Path -Path $starterModulePath -ChildPath "parameters.all.json"
+        $starterBicepVarsFileName = "parameters.json"
+        $starterBicepAllVarsFileName = "template-parameters.json"
+        $starterBicepVarsPath = Join-Path -Path $starterModulePath -ChildPath $starterBicepVarsFileName
+        $starterBicepAllVarsPath = Join-Path -Path $starterModulePath -ChildPath $starterBicepAllVarsFileName
 
         # Write the tfvars file for the bootstrap and starter module
         Write-TfvarsJsonFile -tfvarsFilePath $bootstrapTfvarsPath -configuration $bootstrapConfiguration
@@ -284,8 +286,8 @@ function New-Bootstrap {
 
             # Remove unrequired files
             $foldersOrFilesToRetain = $starterConfig.starter_modules.Value.$($inputConfig.starter_module_name.Value).folders_or_files_to_retain
-            $foldersOrFilesToRetain += "parameters.json"
-            $foldersOrFilesToRetain += "parameters.all.json"
+            $foldersOrFilesToRetain += $starterBicepVarsFileName
+            $foldersOrFilesToRetain += $starterBicepAllVarsFileName
             $foldersOrFilesToRetain += "config"
             $foldersOrFilesToRetain += ".config"
 
