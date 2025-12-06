@@ -41,6 +41,13 @@ function Convert-HCLVariablesToInputConfig {
 
             $configItem | Add-Member -NotePropertyName "Description" -NotePropertyValue $description
 
+            $sensitive = $false
+            if ($variable.Value[0].PSObject.Properties.Name -contains "sensitive" -and $variable.Value[0].sensitive -eq $true) {
+                $sensitive = $true
+                Write-Verbose "Marking variable $($variable.Name) as sensitive..."
+            }
+            $configItem | Add-Member -NotePropertyName "Sensitive" -NotePropertyValue $sensitive
+
             Write-Verbose "Adding variable $($variable.Name) to the configuration..."
             $configItems | Add-Member -NotePropertyName $variable.Name -NotePropertyValue $configItem
         }

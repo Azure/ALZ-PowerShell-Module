@@ -354,24 +354,29 @@ function Deploy-Accelerator {
 
         # Set computed interface inputs
         $inputConfig | Add-Member -MemberType NoteProperty -Name "bicep_config_file_path" -Value @{
-            Value  = $starterConfigFilePath
-            Source = "calculated"
+            Value     = $starterConfigFilePath
+            Source    = "calculated"
+            Sensitive = $false
         }
         $inputConfig | Add-Member -MemberType NoteProperty -Name "on_demand_folder_repository" -Value @{
-            Value  = $starterModuleUrl
-            Source = "calculated"
+            Value     = $starterModuleUrl
+            Source    = "calculated"
+            Sensitive = $false
         }
         $inputConfig | Add-Member -MemberType NoteProperty -Name "on_demand_folder_artifact_name" -Value @{
-            Value  = $starterReleaseArtifactName
-            Source = "calculated"
+            Value     = $starterReleaseArtifactName
+            Source    = "calculated"
+            Sensitive = $false
         }
         $inputConfig | Add-Member -MemberType NoteProperty -Name "release_version" -Value @{
-            Value  = ($starterReleaseTag -eq "local" ? $inputConfig.starter_module_version.Value : $starterReleaseTag)
-            Source = "calculated"
+            Value     = ($starterReleaseTag -eq "local" ? $inputConfig.starter_module_version.Value : $starterReleaseTag)
+            Source    = "calculated"
+            Sensitive = $false
         }
         $inputConfig | Add-Member -MemberType NoteProperty -Name "time_stamp" -Value @{
-            Value  = (Get-Date).ToString("yyyy-MM-dd-HH-mm-ss")
-            Source = "calculated"
+            Value     = (Get-Date).ToString("yyyy-MM-dd-HH-mm-ss")
+            Source    = "calculated"
+            Sensitive = $false
         }
 
         # Run the bootstrap
