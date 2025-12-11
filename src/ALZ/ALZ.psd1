@@ -40,6 +40,7 @@ Included Cmdlets:
 - Deploy-Accelerator: Deploys the Azure Landing Zone accelerator to your Azure subscription.
 - Grant-SubscriptionCreatorRole: Grants the Subscription Creator role to a specified user or service principal.
 - Remove-PlatformLandingZone: Removes the deployed Azure Landing Zone from your Azure subscription
+- New-AcceleratorFolderStructure: Creates a new folder structure for the Azure Landing Zone accelerator with necessary configuration files.
 '@
 
     CompatiblePSEditions = 'Core'
@@ -85,7 +86,8 @@ Included Cmdlets:
         'Test-AcceleratorRequirement',
         'Deploy-Accelerator',
         'Grant-SubscriptionCreatorRole',
-        'Remove-PlatformLandingZone'
+        'Remove-PlatformLandingZone',
+        'New-AcceleratorFolderStructure'
     )
 
     # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.

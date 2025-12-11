@@ -34,9 +34,6 @@ function New-Bootstrap {
         [Parameter(Mandatory = $false)]
         [switch] $destroy,
 
-        [Parameter(Mandatory = $false)]
-        [PSCustomObject] $zonesSupport = $null,
-
         [Parameter(Mandatory = $false, HelpMessage = "An extra level of logging that is turned off by default for easier debugging.")]
         [switch]
         $writeVerboseLogs,
@@ -172,22 +169,14 @@ function New-Bootstrap {
             Source    = "calculated"
             Sensitive = $false
         }
-        $inputConfig | Add-Member -NotePropertyName "availability_zones_bootstrap" -NotePropertyValue @{
-            Value     = @(Get-AvailabilityZonesSupport -region $inputConfig.bootstrap_location.Value -zonesSupport $zonesSupport)
-            Source    = "calculated"
-            Sensitive = $false
-        }
 
-        if ($inputConfig.PSObject.Properties.Name -contains "starter_location" -and $inputConfig.PSObject.Properties.Name -notcontains "starter_locations") {
-            Write-Verbose "Converting starter_location $($inputConfig.starter_location.Value) to starter_locations..."
-            $inputConfig | Add-Member -NotePropertyName "starter_locations" -NotePropertyValue @{
-                Value     = @($inputConfig.starter_location.Value)
-                Source    = "calculated"
-                Sensitive = $false
-            }
-        }
+        if ($iac -eq "bicep-classic" -and $inputConfig.PSObject.Properties.Name -contains "starter_locations") {
+            # Get the supported regions and availability zones
+            Write-Verbose "Getting Supported Regions and Availability Zones with Terraform"
+            $regionsAndZones = Get-AzureRegionData -toolsPath $toolsPath
+            Write-Verbose "Supported Regions: $($regionsAndZones.supportedRegions)"
+            $zonesSupport = $regionsAndZones.zonesSupport
 
-        if ($inputConfig.PSObject.Properties.Name -contains "starter_locations") {
             $availabilityZonesStarter = @()
             foreach ($region in $inputConfig.starter_locations.Value) {
                 $availabilityZonesStarter += , @(Get-AvailabilityZonesSupport -region $region -zonesSupport $zonesSupport)
