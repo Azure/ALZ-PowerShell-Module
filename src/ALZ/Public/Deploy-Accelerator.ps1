@@ -216,7 +216,6 @@ function Deploy-Accelerator {
         if($output_folder_path.StartsWith("~/" )) {
             $output_folder_path = Join-Path $HOME $output_folder_path.Replace("~/", "")
         }
-        $output_folder_path = (Resolve-Path -Path $output_folder_path).Path
         Write-Verbose "Using output folder path: $output_folder_path"
 
         # Check and install tools needed
@@ -246,7 +245,6 @@ function Deploy-Accelerator {
             if($inputConfigFilePath.StartsWith("~/" )) {
                 $inputConfigFilePath = Join-Path $HOME $inputConfigFilePath.Replace("~/", "")
             }
-            $inputConfigFilePath = (Resolve-Path -Path $inputConfigFilePath).Path
             Write-Verbose "Loading input config from file: $inputConfigFilePath"
             $inputConfig = Get-ALZConfig -configFilePath $inputConfigFilePath -inputConfig $inputConfig -hclParserToolPath $hclParserToolPath
         }
@@ -408,7 +406,6 @@ function Deploy-Accelerator {
             if($additionalFile.StartsWith("~/" )) {
                 $additionalFile = Join-Path $HOME $additionalFile.Replace("~/", "")
             }
-            $additionalFile = (Resolve-Path -Path $additionalFile).Path
             $starterAdditionalFiles += $additionalFile
         }
         $inputConfig.starter_additional_files.Value = $starterAdditionalFiles
