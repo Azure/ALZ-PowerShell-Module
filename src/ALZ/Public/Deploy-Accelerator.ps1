@@ -212,10 +212,12 @@ function Deploy-Accelerator {
     if ($PSCmdlet.ShouldProcess("Accelerator setup", "modify")) {
 
         # Normalize output folder path
+        Write-Verbose "Normalizing: $output_folder_path"
         if($output_folder_path.StartsWith("~/" )) {
             $output_folder_path = Join-Path $HOME $output_folder_path.Replace("~/", "")
         }
         $output_folder_path = (Resolve-Path -Path $output_folder_path).Path
+        Write-Verbose "Using output folder path: $output_folder_path"
 
         # Check and install tools needed
         $toolsPath = Join-Path -Path $output_folder_path -ChildPath ".tools"
