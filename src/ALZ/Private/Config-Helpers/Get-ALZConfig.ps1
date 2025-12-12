@@ -57,8 +57,9 @@ function Get-ALZConfig {
 
     foreach ($property in $config.PSObject.Properties) {
         $inputConfig | Add-Member -NotePropertyName $property.Name -NotePropertyValue @{
-            Value  = $property.Value
-            Source = $extension
+            Value     = $property.Value
+            Source    = $extension
+            Sensitive = $false
         }
     }
 

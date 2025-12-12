@@ -34,9 +34,6 @@ function New-Bootstrap {
         [Parameter(Mandatory = $false)]
         [switch] $destroy,
 
-        [Parameter(Mandatory = $false)]
-        [PSCustomObject] $zonesSupport = $null,
-
         [Parameter(Mandatory = $false, HelpMessage = "An extra level of logging that is turned off by default for easier debugging.")]
         [switch]
         $writeVerboseLogs,
@@ -125,8 +122,9 @@ function New-Bootstrap {
 
                 # Add the root module folder to bootstrap input config
                 $inputConfig | Add-Member -NotePropertyName "root_module_folder_relative_path" -NotePropertyValue @{
-                    Value  = $starterRootModuleFolder
-                    Source = "calculated"
+                    Value     = $starterRootModuleFolder
+                    Source    = "calculated"
+                    Sensitive = $false
                 }
 
                 # Set the starter root module folder full path
@@ -145,6 +143,8 @@ function New-Bootstrap {
         foreach ($terraformFile in $terraformFiles) {
             $bootstrapParameters = Convert-HCLVariablesToInputConfig -targetVariableFile $terraformFile.FullName -hclParserToolPath $hclParserToolPath -appendToObject $bootstrapParameters
         }
+
+        Write-Verbose "Bootstrap Parameters before setting config: $(ConvertTo-Json $bootstrapParameters -Depth 100)"
 
         # Getting the configuration for the starter module user input
         $starterParameters = [PSCustomObject]@{}
@@ -165,30 +165,26 @@ function New-Bootstrap {
 
         # Set computed inputs
         $inputConfig | Add-Member -NotePropertyName "module_folder_path" -NotePropertyValue @{
-            Value  = $starterModulePath
-            Source = "calculated"
-        }
-        $inputConfig | Add-Member -NotePropertyName "availability_zones_bootstrap" -NotePropertyValue @{
-            Value  = @(Get-AvailabilityZonesSupport -region $inputConfig.bootstrap_location.Value -zonesSupport $zonesSupport)
-            Source = "calculated"
+            Value     = $starterModulePath
+            Source    = "calculated"
+            Sensitive = $false
         }
 
-        if ($inputConfig.PSObject.Properties.Name -contains "starter_location" -and $inputConfig.PSObject.Properties.Name -notcontains "starter_locations") {
-            Write-Verbose "Converting starter_location $($inputConfig.starter_location.Value) to starter_locations..."
-            $inputConfig | Add-Member -NotePropertyName "starter_locations" -NotePropertyValue @{
-                Value  = @($inputConfig.starter_location.Value)
-                Source = "calculated"
-            }
-        }
+        if ($iac -eq "bicep-classic" -and $inputConfig.PSObject.Properties.Name -contains "starter_locations") {
+            # Get the supported regions and availability zones
+            Write-Verbose "Getting Supported Regions and Availability Zones with Terraform"
+            $regionsAndZones = Get-AzureRegionData -toolsPath $toolsPath
+            Write-Verbose "Supported Regions: $($regionsAndZones.supportedRegions)"
+            $zonesSupport = $regionsAndZones.zonesSupport
 
-        if ($inputConfig.PSObject.Properties.Name -contains "starter_locations") {
             $availabilityZonesStarter = @()
             foreach ($region in $inputConfig.starter_locations.Value) {
                 $availabilityZonesStarter += , @(Get-AvailabilityZonesSupport -region $region -zonesSupport $zonesSupport)
             }
             $inputConfig | Add-Member -NotePropertyName "availability_zones_starter" -NotePropertyValue @{
-                Value  = $availabilityZonesStarter
-                Source = "calculated"
+                Value     = $availabilityZonesStarter
+                Source    = "calculated"
+                Sensitive = $false
             }
         }
 
@@ -200,6 +196,8 @@ function New-Bootstrap {
             -configurationParameters $bootstrapParameters `
             -inputConfig $inputConfig
 
+        Write-Verbose "Final Bootstrap Parameters: $(ConvertTo-Json $bootstrapConfiguration -Depth 100)"
+
         # Getting the input for the starter module
         Write-Verbose "Setting the configuration for the starter module..."
         $starterConfiguration = Set-Config `
@@ -207,13 +205,16 @@ function New-Bootstrap {
             -inputConfig $inputConfig `
             -copyEnvVarToConfig
 
-        Write-Verbose "Final Starter Parameters: $(ConvertTo-Json $starterParameters -Depth 100)"
+        Write-Verbose "Final Starter Parameters: $(ConvertTo-Json $starterConfiguration -Depth 100)"
 
         # Creating the tfvars files for the bootstrap and starter module
         $tfVarsFileName = "terraform.tfvars.json"
         $bootstrapTfvarsPath = Join-Path -Path $bootstrapModulePath -ChildPath $tfVarsFileName
         $starterTfvarsPath = Join-Path -Path $starterRootModuleFolderPath -ChildPath "terraform.tfvars.json"
-        $starterBicepVarsPath = Join-Path -Path $starterModulePath -ChildPath "parameters.json"
+        $starterBicepVarsFileName = "parameters.json"
+        $starterBicepAllVarsFileName = "template-parameters.json"
+        $starterBicepVarsPath = Join-Path -Path $starterModulePath -ChildPath $starterBicepVarsFileName
+        $starterBicepAllVarsPath = Join-Path -Path $starterModulePath -ChildPath $starterBicepAllVarsFileName
 
         # Write the tfvars file for the bootstrap and starter module
         Write-TfvarsJsonFile -tfvarsFilePath $bootstrapTfvarsPath -configuration $bootstrapConfiguration
@@ -270,10 +271,12 @@ function New-Bootstrap {
             Set-ComputedConfiguration -configuration $starterConfiguration
             Edit-ALZConfigurationFilesInPlace -alzEnvironmentDestination $starterModulePath -configuration $starterConfiguration
             Write-JsonFile -jsonFilePath $starterBicepVarsPath -configuration $starterConfiguration
+            Write-JsonFile -jsonFilePath $starterBicepAllVarsPath -configuration @($inputConfig, $starterConfiguration, $bootstrapConfiguration) -all
 
             # Remove unrequired files
             $foldersOrFilesToRetain = $starterConfig.starter_modules.Value.$($inputConfig.starter_module_name.Value).folders_or_files_to_retain
-            $foldersOrFilesToRetain += "parameters.json"
+            $foldersOrFilesToRetain += $starterBicepVarsFileName
+            $foldersOrFilesToRetain += $starterBicepAllVarsFileName
             $foldersOrFilesToRetain += "config"
             $foldersOrFilesToRetain += ".config"
 

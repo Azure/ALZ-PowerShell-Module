@@ -15,8 +15,9 @@ function Convert-ParametersToInputConfig {
                 Write-Verbose "Alias $parameterAlias exists in input config, renaming..."
                 $configItem = $inputConfig.PSObject.Properties | Where-Object { $_.Name -eq $parameterAlias }
                 $inputConfig | Add-Member -NotePropertyName $parameterKey -NotePropertyValue @{
-                    Value  = $configItem.Value.Value
-                    Source = $configItem.Value.Source
+                    Value     = $configItem.Value.Value
+                    Source    = $configItem.Value.Source
+                    Sensitive = $configItem.Value.Sensitive
                 }
                 $inputConfig.PSObject.Properties.Remove($configItem.Name)
                 continue
@@ -38,8 +39,9 @@ function Convert-ParametersToInputConfig {
             }
             Write-Verbose "Adding parameter $parameterKey with value $variableValue"
             $inputConfig | Add-Member -NotePropertyName $parameterKey -NotePropertyValue @{
-                Value  = $variableValue
-                Source = "parameter"
+                Value     = $variableValue
+                Source    = "parameter"
+                Sensitive = $false
             }
         }
     }

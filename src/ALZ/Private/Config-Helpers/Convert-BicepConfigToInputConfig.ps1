@@ -44,6 +44,8 @@ function Convert-BicepConfigToInputConfig {
                 $configItem | Add-Member -NotePropertyName "targets" -NotePropertyValue $variable.Value.targets
             }
 
+            $configItem | Add-Member -NotePropertyName "Sensitive" -NotePropertyValue $false
+
             $configItem | Add-Member -NotePropertyName "Description" -NotePropertyValue $description
             $configItems | Add-Member -NotePropertyName $variable.Name -NotePropertyValue $configItem
         }

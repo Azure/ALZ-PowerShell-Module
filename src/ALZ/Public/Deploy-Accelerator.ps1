@@ -211,6 +211,13 @@ function Deploy-Accelerator {
 
     if ($PSCmdlet.ShouldProcess("Accelerator setup", "modify")) {
 
+        # Normalize output folder path
+        Write-Verbose "Normalizing: $output_folder_path"
+        if($output_folder_path.StartsWith("~/" )) {
+            $output_folder_path = Join-Path $HOME $output_folder_path.Replace("~/", "")
+        }
+        Write-Verbose "Using output folder path: $output_folder_path"
+
         # Check and install tools needed
         $toolsPath = Join-Path -Path $output_folder_path -ChildPath ".tools"
         if ($skipInternetChecks) {
@@ -235,6 +242,10 @@ function Deploy-Accelerator {
 
         # Get the input config from yaml and json files
         foreach ($inputConfigFilePath in $inputConfigFilePaths) {
+            if($inputConfigFilePath.StartsWith("~/" )) {
+                $inputConfigFilePath = Join-Path $HOME $inputConfigFilePath.Replace("~/", "")
+            }
+            Write-Verbose "Loading input config from file: $inputConfigFilePath"
             $inputConfig = Get-ALZConfig -configFilePath $inputConfigFilePath -inputConfig $inputConfig -hclParserToolPath $hclParserToolPath
         }
 
@@ -259,6 +270,8 @@ function Deploy-Accelerator {
         }
         $inputConfig = Convert-ParametersToInputConfig -inputConfig $inputConfig -parameters $parametersWithValues
 
+        Write-Verbose "Initial Input config: $(ConvertTo-Json $inputConfig -Depth 100)"
+
         # Throw if IAC type is not specified
         if (!$inputConfig.iac_type.Value) {
             Write-InformationColored "No Infrastructure as Code type has been specified. Please supply the IAC type you wish to deploy..." -ForegroundColor Red -InformationAction Continue
@@ -269,14 +282,16 @@ function Deploy-Accelerator {
             Write-InformationColored "Although you have selected Bicep, the Accelerator leverages the Terraform tool to bootstrap your Version Control System and Azure. This will not impact your choice of Bicep post this initial bootstrap. Please refer to our documentation for further details..." -ForegroundColor Yellow -InformationAction Continue
         }
 
-        Write-Verbose "Initial Input config: $(ConvertTo-Json $inputConfig -Depth 100)"
-
         # Download the bootstrap modules
         $bootstrapReleaseTag = ""
         $bootstrapPath = ""
         $bootstrapTargetFolder = "bootstrap"
 
         Write-InformationColored "Checking and Downloading the bootstrap module..." -ForegroundColor Green -NewLineBefore -InformationAction Continue
+
+        if($inputConfig.bootstrap_module_override_folder_path.Value.StartsWith("~/" )) {
+            $inputConfig.bootstrap_module_override_folder_path.Value = Join-Path $HOME $inputConfig.bootstrap_module_override_folder_path.Value.Replace("~/", "")
+        }
 
         $versionAndPath = New-ModuleSetup `
             -targetDirectory $inputConfig.output_folder_path.Value `
@@ -304,7 +319,6 @@ function Deploy-Accelerator {
         $starterConfigFilePath = ""
 
         $bootstrapDetails = $null
-        $zonesSupport = $null
 
         # Request the bootstrap type if not already specified
         if(!$inputConfig.bootstrap_module_name.Value) {
@@ -327,7 +341,6 @@ function Deploy-Accelerator {
         $starterModuleSourceFolder = $bootstrapAndStarterConfig.starterModuleSourceFolder
         $starterReleaseArtifactName = $bootstrapAndStarterConfig.starterReleaseArtifactName
         $starterConfigFilePath = $bootstrapAndStarterConfig.starterConfigFilePath
-        $zonesSupport = $bootstrapAndStarterConfig.zonesSupport
 
         # Download the starter modules
         $starterReleaseTag = ""
@@ -335,6 +348,10 @@ function Deploy-Accelerator {
 
         if ($hasStarterModule) {
             Write-InformationColored "Checking and downloading the starter module..." -ForegroundColor Green -NewLineBefore -InformationAction Continue
+
+            if($inputConfig.starter_module_override_folder_path.Value.StartsWith("~/" )) {
+                $inputConfig.starter_module_override_folder_path.Value = Join-Path $HOME $inputConfig.starter_module_override_folder_path.Value.Replace("~/", "")
+            }
 
             $versionAndPath = New-ModuleSetup `
                 -targetDirectory $inputConfig.output_folder_path.Value `
@@ -354,29 +371,44 @@ function Deploy-Accelerator {
 
         # Set computed interface inputs
         $inputConfig | Add-Member -MemberType NoteProperty -Name "bicep_config_file_path" -Value @{
-            Value  = $starterConfigFilePath
-            Source = "calculated"
+            Value     = $starterConfigFilePath
+            Source    = "calculated"
+            Sensitive = $false
         }
         $inputConfig | Add-Member -MemberType NoteProperty -Name "on_demand_folder_repository" -Value @{
-            Value  = $starterModuleUrl
-            Source = "calculated"
+            Value     = $starterModuleUrl
+            Source    = "calculated"
+            Sensitive = $false
         }
         $inputConfig | Add-Member -MemberType NoteProperty -Name "on_demand_folder_artifact_name" -Value @{
-            Value  = $starterReleaseArtifactName
-            Source = "calculated"
+            Value     = $starterReleaseArtifactName
+            Source    = "calculated"
+            Sensitive = $false
         }
         $inputConfig | Add-Member -MemberType NoteProperty -Name "release_version" -Value @{
-            Value  = ($starterReleaseTag -eq "local" ? $inputConfig.starter_module_version.Value : $starterReleaseTag)
-            Source = "calculated"
+            Value     = ($starterReleaseTag -eq "local" ? $inputConfig.starter_module_version.Value : $starterReleaseTag)
+            Source    = "calculated"
+            Sensitive = $false
         }
         $inputConfig | Add-Member -MemberType NoteProperty -Name "time_stamp" -Value @{
-            Value  = (Get-Date).ToString("yyyy-MM-dd-HH-mm-ss")
-            Source = "calculated"
+            Value     = (Get-Date).ToString("yyyy-MM-dd-HH-mm-ss")
+            Source    = "calculated"
+            Sensitive = $false
         }
 
         # Run the bootstrap
         $bootstrapTargetPath = Join-Path $inputConfig.output_folder_path.Value $bootstrapTargetFolder
         $starterTargetPath = Join-Path $inputConfig.output_folder_path.Value $starterFolder
+
+        # Normalize starter additional files input
+        $starterAdditionalFiles = @()
+        foreach ($additionalFile in $inputConfig.starter_additional_files.Value) {
+            if($additionalFile.StartsWith("~/" )) {
+                $additionalFile = Join-Path $HOME $additionalFile.Replace("~/", "")
+            }
+            $starterAdditionalFiles += $additionalFile
+        }
+        $inputConfig.starter_additional_files.Value = $starterAdditionalFiles
 
         New-Bootstrap `
             -iac $inputConfig.iac_type.Value `
@@ -390,7 +422,6 @@ function Deploy-Accelerator {
             -starterConfig $starterConfig `
             -autoApprove:$inputConfig.auto_approve.Value `
             -destroy:$inputConfig.destroy.Value `
-            -zonesSupport $zonesSupport `
             -writeVerboseLogs:$inputConfig.write_verbose_logs.Value `
             -hclParserToolPath $hclParserToolPath `
             -convertTfvarsToJson:$inputConfig.convert_tfvars_to_json.Value `
