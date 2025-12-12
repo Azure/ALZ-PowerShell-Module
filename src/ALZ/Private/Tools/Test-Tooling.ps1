@@ -210,14 +210,13 @@ function Test-Tooling {
                     message = "powershell-yaml module was not installed, but has been successfully installed (version $((Get-InstalledPSResource -Name powershell-yaml).Version))."
                     result  = "Success"
                 }
-                continue
             } else {
                 $checkResults += @{
                     message = "powershell-yaml module is not installed. Please install it using 'Install-PSResource powershell-yaml'."
                     result  = "Failure"
                 }
+                $hasFailure = $true
             }
-            $hasFailure = $true
         }
     }
 
