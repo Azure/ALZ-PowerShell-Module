@@ -175,7 +175,7 @@ function Test-Tooling {
         if ($null -ne $alzModuleCurrentVersion) {
             if ($alzModuleCurrentVersion.Version -lt $alzModuleLatestVersion.Version) {
                 $checkResults += @{
-                    message = "ALZ module is not the latest version. Your version: $($alzModuleCurrentVersion.Version), Latest version: $($alzModuleLatestVersion.Version). Please update to the latest version using 'Update-Module ALZ'."
+                    message = "ALZ module is not the latest version. Your version: $($alzModuleCurrentVersion.Version), Latest version: $($alzModuleLatestVersion.Version). Please update to the latest version using 'Update-PSResource -Name ALZ'."
                     result  = "Failure"
                 }
                 $hasFailure = $true
@@ -191,16 +191,31 @@ function Test-Tooling {
     # Check if powershell-yaml module is installed (only when YAML files are being used)
     if ($checkYamlModule.IsPresent) {
         Write-Verbose "Checking powershell-yaml module installation"
-        $yamlModule = Get-Module -ListAvailable -Name powershell-yaml
+        $yamlModule = Get-InstalledPSResource -Name powershell-yaml 2> $null
         if ($yamlModule) {
             $checkResults += @{
                 message = "powershell-yaml module is installed (version $($yamlModule.Version))."
                 result  = "Success"
             }
         } else {
-            $checkResults += @{
-                message = "powershell-yaml module is not installed. Please install it using 'Install-Module powershell-yaml -Force'."
-                result  = "Failure"
+            $installSuccessful = $false
+            try {
+                Install-PSResource powershell-yaml -TrustRepository
+                $installSuccessful = $true
+            } catch {
+                Write-Verbose "Failed to install powershell-yaml module"
+            }
+            if($installSuccessful) {
+                $checkResults += @{
+                    message = "powershell-yaml module was not installed, but has been successfully installed (version $((Get-InstalledPSResource -Name powershell-yaml).Version))."
+                    result  = "Success"
+                }
+                continue
+            } else {
+                $checkResults += @{
+                    message = "powershell-yaml module is not installed. Please install it using 'Install-PSResource powershell-yaml'."
+                    result  = "Failure"
+                }
             }
             $hasFailure = $true
         }

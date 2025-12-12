@@ -21,10 +21,6 @@ function Get-ALZConfig {
     $extension = (Get-Item -Path $configFilePath).Extension.ToLower()
     $config = $null
     if ($extension -eq ".yml" -or $extension -eq ".yaml") {
-        if (!(Get-Module -ListAvailable -Name powershell-Yaml)) {
-            Write-Host "Installing YAML module"
-            Install-Module powershell-Yaml -Force
-        }
         try {
             $config = [PSCustomObject](Get-Content -Path $configFilePath | ConvertFrom-Yaml -Ordered)
         } catch {
