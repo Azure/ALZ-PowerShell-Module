@@ -863,6 +863,8 @@ function Remove-PlatformLandingZone {
 
         Test-RequiredTooling
 
+        Write-ToConsoleLog "This cmdlet uses preview features of the Azure CLI. By continuing, you agree to install preview extensions." -IsWarning
+
         $TempLogFileForPlan = ""
         if($PlanMode) {
             Write-ToConsoleLog "Plan Mode enabled, no changes will be made. All actions will be logged as what would be performed." -IsWarning
