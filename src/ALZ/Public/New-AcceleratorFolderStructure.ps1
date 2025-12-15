@@ -23,7 +23,7 @@ function New-AcceleratorFolderStructure {
         [string] $targetFolderPath = "~/accelerator",
         [Parameter(
             Mandatory = $false,
-            HelpMessage = "[OPTIONAL] Forece recreate of the target folder if it already exists"
+            HelpMessage = "[OPTIONAL] Force recreate of the target folder if it already exists"
         )]
         [switch] $force
     )
@@ -96,12 +96,8 @@ function New-AcceleratorFolderStructure {
         # Clone the repo and copy the bootstrap and starter configuration files
         $repo = $repos[$iacType]
         Write-Host "Cloning repo $($repo.repoName)"
-        git clone -n --depth=1 --filter=tree:0 "https://github.com/Azure/$($repo.repoName)" "$tempFolderPath" | Write-Verbose | Out-Null
+        git clone --depth=1 "https://github.com/Azure/$($repo.repoName)" "$tempFolderPath" | Write-Verbose | Out-Null
         Set-Location $tempFolderPath
-
-        Write-Host "Checking out folder $($repo.folderToClone)"
-        git sparse-checkout set --no-cone $repo.folderToClone | Write-Verbose | Out-Null
-        git checkout | Write-Verbose | Out-Null
 
         Set-Location $currentPath
         $exampleFolderPath = "$($repo.folderToClone)/$($repo.exampleFolderPath)"
@@ -124,23 +120,23 @@ function New-AcceleratorFolderStructure {
         # Copy the platform landing zone configuration files based on scenario number or specific file path
         if ($repo.hasScenarios) {
             $scenarios = @{
-                1 = "full-multi-region/hub-and-spoke-vnet"
-                2 = "full-multi-region/virtual-wan"
-                3 = "full-multi-region-nva/hub-and-spoke-vnet"
-                4 = "full-multi-region-nva/virtual-wan"
-                5 = "management-only/management"
-                6 = "full-single-region/hub-and-spoke-vnet"
-                7 = "full-single-region/virtual-wan"
-                8 = "full-single-region-nva/hub-and-spoke-vnet"
-                9 = "full-single-region-nva/virtual-wan"
+                1 = "full-multi-region/hub-and-spoke-vnet.tfvars"
+                2 = "full-multi-region/virtual-wan.tfvars"
+                3 = "full-multi-region-nva/hub-and-spoke-vnet.tfvars"
+                4 = "full-multi-region-nva/virtual-wan.tfvars"
+                5 = "management-only/management.tfvars"
+                6 = "full-single-region/hub-and-spoke-vnet.tfvars"
+                7 = "full-single-region/virtual-wan.tfvars"
+                8 = "full-single-region-nva/hub-and-spoke-vnet.tfvars"
+                9 = "full-single-region-nva/virtual-wan.tfvars"
             }
 
             Write-Host "Copying platform landing zone configuration file for scenario $scenarioNumber to $($targetFolderPath)/config/platform-landing-zone.tfvars"
-            Copy-Item -Path "$tempFolderPath/templates/platform_landing_zone/examples/$($scenarios[$scenarioNumber]).tfvars" -Destination "$targetFolderPath/config/platform-landing-zone.tfvars" -Force | Write-Verbose | Out-Null
+            Copy-Item -Path "$tempFolderPath/$exampleFolderPath/$($scenarios[$scenarioNumber])" -Destination "$targetFolderPath/config/platform-landing-zone.tfvars" -Force | Write-Verbose | Out-Null
 
         } elseif ($repo.platformLandingZoneFilePath -ne "") {
             Write-Host "Copying platform landing zone configuration file to $($targetFolderPath)/config/platform-landing-zone.yaml"
-            Copy-Item -Path "$tempFolderPath/$($repo.platformLandingZoneFilePath)" -Destination "$targetFolderPath/config/platform-landing-zone.yaml" -Force | Write-Verbose | Out-Null
+            Copy-Item -Path "$tempFolderPath/$exampleFolderPath/$($repo.platformLandingZoneFilePath)" -Destination "$targetFolderPath/config/platform-landing-zone.yaml" -Force | Write-Verbose | Out-Null
         }
 
         Remove-Item -Path $tempFolderPath -Recurse -Force | Write-Verbose | Out-Null
