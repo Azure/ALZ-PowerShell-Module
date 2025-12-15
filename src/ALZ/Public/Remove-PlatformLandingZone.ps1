@@ -369,7 +369,7 @@ function Remove-PlatformLandingZone {
     }
 
     function Test-RequiredTooling {
-        Write-ToConsoleLog "Checking the software requirements for the Accelerator..."
+        Write-ToConsoleLog "Checking the software requirements..."
 
         $checkResults = @()
         $hasFailure = $false
@@ -795,6 +795,13 @@ function Remove-PlatformLandingZone {
 
         # For each custom role definition, find and delete all assignments using Resource Graph, then delete the definition
         foreach ($roleDefinition in $customRoleDefinitions) {
+            $graphExtension = az extension show --name resource-graph 2>$null
+            if (-not $graphExtension) {
+                Write-ToConsoleLog "Installing Azure Resource Graph extension for role assignment queries..." -NoNewLine -IsWarning
+                az config set extension.dynamic_install_allow_preview=true 2>$null
+                az extension add --name resource-graph 2>$null
+            }
+
             Write-ToConsoleLog "Processing custom role definition: $($roleDefinition.roleName) (ID: $($roleDefinition.name))" -NoNewLine
 
             # Use Resource Graph to find all role assignments for this custom role definition across all scopes
