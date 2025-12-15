@@ -23,7 +23,7 @@ function New-AcceleratorFolderStructure {
         [string] $targetFolderPath = "~/accelerator",
         [Parameter(
             Mandatory = $false,
-            HelpMessage = "[OPTIONAL] Forece recreate of the target folder if it already exists"
+            HelpMessage = "[OPTIONAL] Force recreate of the target folder if it already exists"
         )]
         [switch] $force
     )
