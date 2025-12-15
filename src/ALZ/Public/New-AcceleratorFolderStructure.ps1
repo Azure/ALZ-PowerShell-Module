@@ -139,6 +139,6 @@ function New-AcceleratorFolderStructure {
             Copy-Item -Path "$tempFolderPath/$exampleFolderPath/$($repo.platformLandingZoneFilePath)" -Destination "$targetFolderPath/config/platform-landing-zone.yaml" -Force | Write-Verbose | Out-Null
         }
 
-        # Remove-Item -Path $tempFolderPath -Recurse -Force | Write-Verbose | Out-Null
+        Remove-Item -Path $tempFolderPath -Recurse -Force | Write-Verbose | Out-Null
     }
 }
