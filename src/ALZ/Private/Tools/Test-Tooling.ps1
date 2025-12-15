@@ -166,7 +166,7 @@ function Test-Tooling {
 
         if($null -eq $alzModuleCurrentVersion) {
             $checkResults += @{
-                message = "ALZ module is not correctly installed. Please install the latest version using 'Install-Module ALZ'."
+                message = "ALZ module is not correctly installed. Please install the latest version using 'Install-PSResource -Name ALZ'."
                 result  = "Failure"
             }
             $hasFailure = $true
