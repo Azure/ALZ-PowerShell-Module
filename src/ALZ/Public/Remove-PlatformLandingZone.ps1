@@ -52,6 +52,14 @@ function Remove-PlatformLandingZone {
         being processed. Accepts both subscription IDs (GUIDs) and subscription names.
         Default: Empty array (discover from management groups)
 
+    .PARAMETER AdditionalSubscriptions
+        An optional array of additional subscription IDs or names to include in the cleanup process. These subscriptions
+        will be merged with the subscriptions that are either discovered from management groups or explicitly provided
+        via the -Subscriptions parameter. This is useful for cleaning up bootstrap subscriptions or other subscriptions
+        that may sit outside the management group hierarchy being processed. Accepts both subscription IDs (GUIDs)
+        and subscription names.
+        Default: Empty array (no additional subscriptions)
+
     .PARAMETER ResourceGroupsToRetainNamePatterns
         An array of regex patterns for resource group names that should be retained (not deleted). Resource groups
         matching any of these patterns will be skipped during the deletion process. This is useful for preserving
@@ -135,6 +143,20 @@ function Remove-PlatformLandingZone {
         -like expression with wildcards at the start and end (e.g., a pattern of "alz" will match deployment stacks
         containing "alz" anywhere in their name).
         Default: Empty array (delete all deployment stacks)
+
+    .EXAMPLE
+        Remove-PlatformLandingZone -ManagementGroups @("alz-test") -AdditionalSubscriptions @("Bootstrap-Sub-001")
+
+        Processes the "alz-test" management group hierarchy, discovers subscriptions from the management groups,
+        and also includes the "Bootstrap-Sub-001" subscription in the cleanup process. This is useful when the
+        bootstrap subscription sits outside the management group hierarchy being processed.
+
+    .EXAMPLE
+        Remove-PlatformLandingZone -ManagementGroups @("alz-test") -Subscriptions @("Sub-Test-001") -AdditionalSubscriptions @("12345678-1234-1234-1234-123456789012")
+
+        Processes the "alz-test" management group hierarchy and cleans up both the explicitly provided subscription
+        "Sub-Test-001" and the additional subscription specified by GUID. The additional subscriptions are merged
+        with the provided subscriptions for resource group deletion.
 
     .EXAMPLE
         Remove-PlatformLandingZone -ManagementGroups @("alz-platform", "alz-landingzones")
@@ -284,6 +306,7 @@ function Remove-PlatformLandingZone {
         [switch]$DeleteTargetManagementGroups,
         [string]$SubscriptionsTargetManagementGroup = $null,
         [string[]]$Subscriptions = @(),
+        [string[]]$AdditionalSubscriptions = @(),
         [string[]]$ResourceGroupsToRetainNamePatterns = @(
             "VisualStudioOnline-" # By default retain Visual Studio Online resource groups created for Azure DevOps billing purposes
         ),
@@ -1151,6 +1174,24 @@ function Remove-PlatformLandingZone {
                     Write-ToConsoleLog "Subscription not found, skipping: $($subscription.Name) (ID: $($subscription.Id))" -IsWarning
                     continue
                 }
+                $subscriptionsFound.Add($subscriptionObject)
+            }
+        }
+
+        # Add additional subscriptions to the discovered/supplied subscriptions
+        if($AdditionalSubscriptions.Count -gt 0) {
+            Write-ToConsoleLog "Processing additional subscriptions to merge with discovered/supplied subscriptions..."
+
+            foreach($subscription in $AdditionalSubscriptions) {
+                $subscriptionObject = @{
+                    Id   = (Test-IsGuid -StringGuid $subscription) ? $subscription : (az account list --all --query "[?name=='$subscription'].id" -o tsv)
+                    Name = (Test-IsGuid -StringGuid $subscription) ? (az account list --all --query "[?id=='$subscription'].name" -o tsv) : $subscription
+                }
+                if(-not $subscriptionObject.Id -or -not $subscriptionObject.Name) {
+                    Write-ToConsoleLog "Additional subscription not found, skipping: $subscription" -IsWarning
+                    continue
+                }
+                Write-ToConsoleLog "Adding additional subscription: $($subscriptionObject.Name) (ID: $($subscriptionObject.Id))" -NoNewLine
                 $subscriptionsFound.Add($subscriptionObject)
             }
         }
