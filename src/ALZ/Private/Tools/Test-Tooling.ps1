@@ -4,7 +4,9 @@ function Test-Tooling {
         [Parameter(Mandatory = $false)]
         [switch]$skipAlzModuleVersionCheck,
         [Parameter(Mandatory = $false)]
-        [switch]$checkYamlModule
+        [switch]$checkYamlModule,
+        [Parameter(Mandatory = $false)]
+        [switch]$skipYamlModuleInstall
     )
 
     $checkResults = @()
@@ -212,6 +214,13 @@ function Test-Tooling {
                 message = "powershell-yaml module is installed (version $($yamlModule.Version))."
                 result  = "Success"
             }
+        } elseif ($skipYamlModuleInstall.IsPresent) {
+            Write-Verbose "powershell-yaml module is not installed, skipping installation attempt"
+            $checkResults += @{
+                message = "powershell-yaml module is not installed. Please install it using 'Install-PSResource powershell-yaml -Scope $currentScope'."
+                result  = "Failure"
+            }
+            $hasFailure = $true
         } else {
             Write-Verbose "powershell-yaml module is not installed, attempting installation"
             $installResult = Install-PSResource powershell-yaml -TrustRepository -Scope $currentScope 2>&1

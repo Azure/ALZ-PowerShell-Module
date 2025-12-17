@@ -164,6 +164,13 @@ function Deploy-Accelerator {
 
         [Parameter(
             Mandatory = $false,
+            HelpMessage = "[OPTIONAL] Determines whether to skip attempting to install the powershell-yaml module if it is not installed."
+        )]
+        [Alias("skipYamlModuleInstall")]
+        [switch] $skip_yaml_module_install,
+
+        [Parameter(
+            Mandatory = $false,
             HelpMessage = "[OPTIONAL] Determines whether Clean the bootstrap folder of Terraform meta files. Only use for development purposes."
         )]
         [switch] $cleanBootstrapFolder
@@ -204,7 +211,7 @@ function Deploy-Accelerator {
         Write-InformationColored "WARNING: Skipping the software requirements check..." -ForegroundColor Yellow -InformationAction Continue
     } else {
         Write-InformationColored "Checking the software requirements for the Accelerator..." -ForegroundColor Green -InformationAction Continue
-        Test-Tooling -skipAlzModuleVersionCheck:$skip_alz_module_version_requirements_check.IsPresent -checkYamlModule:$hasYamlFiles
+        Test-Tooling -skipAlzModuleVersionCheck:$skip_alz_module_version_requirements_check.IsPresent -checkYamlModule:$hasYamlFiles -skipYamlModuleInstall:$skip_yaml_module_install.IsPresent
     }
 
     Write-InformationColored "Getting ready to deploy the accelerator with you..." -ForegroundColor Green -NewLineBefore -InformationAction Continue
