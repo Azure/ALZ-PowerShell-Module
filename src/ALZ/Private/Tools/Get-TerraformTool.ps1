@@ -39,44 +39,42 @@ function Get-TerraformTool {
         }
     }
 
+    $osArchitecture = Get-OSArchitecture
+    Write-Verbose "Detected OS: $($osArchitecture.os), Architecture: $($osArchitecture.architecture)"
+
     $unzipdir = Join-Path -Path $toolsPath -ChildPath "terraform_$version"
+
     if (Test-Path $unzipdir) {
         Write-Verbose "Terraform $version already installed, adding to Path."
-        if($os -eq "windows") {
-            $env:PATH = "$($unzipdir);$env:PATH"
-        } else {
-            $env:PATH = "$($unzipdir):$env:PATH"
+    } else {
+        $zipfilePath = "$unzipdir.zip"
+
+        $url = $release.builds | Where-Object { $_.arch -eq $osArchitecture.architecture -and $_.os -eq $osArchitecture.os } | Select-Object -First 1 -ExpandProperty url
+
+        if(!(Test-Path $toolsPath)) {
+            New-Item -ItemType Directory -Path $toolsPath| Out-String | Write-Verbose
         }
-        return
-    }
 
-    $osArchitecture = Get-OSArchitecture
+        Invoke-WebRequest -Uri $url -OutFile "$zipfilePath" | Out-String | Write-Verbose
 
-    $zipfilePath = "$unzipdir.zip"
+        Expand-Archive -Path $zipfilePath -DestinationPath $unzipdir
 
-    $url = $release.builds | Where-Object { $_.arch -eq $osArchitecture.architecture -and $_.os -eq $osArchitecture.os } | Select-Object -First 1 -ExpandProperty url
+        $toolFileName = "terraform"
 
-    if(!(Test-Path $toolsPath)) {
-        New-Item -ItemType Directory -Path $toolsPath| Out-String | Write-Verbose
-    }
-
-    Invoke-WebRequest -Uri $url -OutFile "$zipfilePath" | Out-String | Write-Verbose
-
-    Expand-Archive -Path $zipfilePath -DestinationPath $unzipdir
-
-    $toolFileName = "terraform"
-
-    if($osArchitecture.os -eq "windows") {
-        $toolFileName = "$($toolFileName).exe"
-    }
-
-    $toolFilePath = Join-Path -Path $unzipdir -ChildPath $toolFileName
-
-    if($osArchitecture.os -ne "windows") {
-        $isExecutable = $(test -x $toolFilePath; 0 -eq $LASTEXITCODE)
-        if(!($isExecutable)) {
-            chmod +x $toolFilePath
+        if($osArchitecture.os -eq "windows") {
+            $toolFileName = "$($toolFileName).exe"
         }
+
+        $toolFilePath = Join-Path -Path $unzipdir -ChildPath $toolFileName
+
+        if($osArchitecture.os -ne "windows") {
+            $isExecutable = $(test -x $toolFilePath; 0 -eq $LASTEXITCODE)
+            if(!($isExecutable)) {
+                chmod +x $toolFilePath
+            }
+        }
+        Write-Verbose "Installed Terraform version $version"
+        Remove-Item $zipfilePath | Out-String | Write-Verbose
     }
 
     if($osArchitecture.os -eq "windows") {
@@ -84,7 +82,4 @@ function Get-TerraformTool {
     } else {
         $env:PATH = "$($unzipdir):$env:PATH"
     }
-
-    Remove-Item $zipfilePath
-    Write-Verbose "Installed Terraform version $version"
 }
