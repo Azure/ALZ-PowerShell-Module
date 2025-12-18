@@ -4,7 +4,9 @@ function Test-Tooling {
         [Parameter(Mandatory = $false)]
         [switch]$skipAlzModuleVersionCheck,
         [Parameter(Mandatory = $false)]
-        [switch]$checkYamlModule
+        [switch]$checkYamlModule,
+        [Parameter(Mandatory = $false)]
+        [switch]$skipYamlModuleInstall
     )
 
     $checkResults = @()
@@ -157,12 +159,22 @@ function Test-Tooling {
         }
     }
 
+    $currentScope = "CurrentUser"
+
     if($skipAlzModuleVersionCheck.IsPresent) {
         Write-Verbose "Skipping ALZ module version check"
     } else {
         # Check if latest ALZ module is installed
         Write-Verbose "Checking ALZ module version"
-        $alzModuleCurrentVersion = Get-InstalledPSResource -Name ALZ | Select-Object -Property Name, Version | Sort-Object Version -Descending | Select-Object -First 1
+        $alzModuleCurrentVersion = Get-InstalledPSResource -Name ALZ 2>$null | Select-Object -Property Name, Version | Sort-Object Version -Descending | Select-Object -First 1
+        if($null -eq $alzModuleCurrentVersion) {
+            Write-Verbose "ALZ module not found in CurrentUser scope, checking AllUsers scope"
+            $alzModuleCurrentVersion = Get-InstalledPSResource -Name ALZ -Scope AllUsers 2>$null | Select-Object -Property Name, Version | Sort-Object Version -Descending | Select-Object -First 1
+            if($null -ne $alzModuleCurrentVersion) {
+                Write-Verbose "ALZ module found in AllUsers scope"
+                $currentScope = "AllUsers"
+            }
+        }
 
         if($null -eq $alzModuleCurrentVersion) {
             $checkResults += @{
@@ -191,31 +203,47 @@ function Test-Tooling {
     # Check if powershell-yaml module is installed (only when YAML files are being used)
     if ($checkYamlModule.IsPresent) {
         Write-Verbose "Checking powershell-yaml module installation"
-        $yamlModule = Get-InstalledPSResource -Name powershell-yaml 2> $null
+        $yamlModule = Get-InstalledPSResource -Name powershell-yaml 2> $null | Select-Object -Property Name, Version | Sort-Object Version -Descending | Select-Object -First 1
+        if($null -eq $yamlModule) {
+            Write-Verbose "powershell-yaml module not found in CurrentUser scope, checking AllUsers scope"
+            $yamlModule = Get-InstalledPSResource -Name powershell-yaml -Scope AllUsers 2> $null | Select-Object -Property Name, Version | Sort-Object Version -Descending | Select-Object -First 1
+        }
+
         if ($yamlModule) {
             $checkResults += @{
                 message = "powershell-yaml module is installed (version $($yamlModule.Version))."
                 result  = "Success"
             }
-        } else {
-            $installSuccessful = $false
-            try {
-                Install-PSResource powershell-yaml -TrustRepository
-                $installSuccessful = $true
-            } catch {
-                Write-Verbose "Failed to install powershell-yaml module"
+        } elseif ($skipYamlModuleInstall.IsPresent) {
+            Write-Verbose "powershell-yaml module is not installed, skipping installation attempt"
+            $checkResults += @{
+                message = "powershell-yaml module is not installed. Please install it using 'Install-PSResource powershell-yaml -Scope $currentScope'."
+                result  = "Failure"
             }
-            if($installSuccessful) {
+            $hasFailure = $true
+        } else {
+            Write-Verbose "powershell-yaml module is not installed, attempting installation"
+            $installResult = Install-PSResource powershell-yaml -TrustRepository -Scope $currentScope 2>&1
+            if($installResult -like "*Access to the path*") {
+                Write-Verbose "Failed to install powershell-yaml module due to permission issues at $currentScope scope."
                 $checkResults += @{
-                    message = "powershell-yaml module was not installed, but has been successfully installed (version $((Get-InstalledPSResource -Name powershell-yaml).Version))."
-                    result  = "Success"
-                }
-            } else {
-                $checkResults += @{
-                    message = "powershell-yaml module is not installed. Please install it using 'Install-PSResource powershell-yaml'."
+                    message = "powershell-yaml module is not installed. Please install it using an admin terminal with 'Install-PSResource powershell-yaml -Scope $currentScope'. Could not install due to permission issues."
                     result  = "Failure"
                 }
                 $hasFailure = $true
+            } elseif ($null -ne $installResult) {
+                Write-Verbose "Failed to install powershell-yaml module: $installResult"
+                $checkResults += @{
+                    message = "powershell-yaml module is not installed. Please install it using 'Install-PSResource powershell-yaml -Scope $currentScope'. Attempted installation error: $installResult"
+                    result  = "Failure"
+                }
+                $hasFailure = $true
+            } else {
+                $installedVersion = (Get-InstalledPSResource -Name powershell-yaml -Scope $currentScope).Version
+                $checkResults += @{
+                    message = "powershell-yaml module was not installed, but has been successfully installed (version $installedVersion)."
+                    result  = "Success"
+                }
             }
         }
     }
