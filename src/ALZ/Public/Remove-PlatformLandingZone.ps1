@@ -523,27 +523,39 @@ function Remove-PlatformLandingZone {
     function Invoke-PromptForConfirmation {
         param (
             [string]$Message,
-            [string]$InitialConfirmationText,
-            [string]$FinalConfirmationText = "YES I CONFIRM"
+            [string]$FinalConfirmationText = "CONFIRM"
         )
 
         Write-ToConsoleLog "$Message" -IsWarning
-        Write-ToConsoleLog "If you wish to proceed, type '$InitialConfirmationText' to confirm." -IsWarning
+        $randomString = (Get-RandomString -Length 6).ToUpper()
+        Write-ToConsoleLog "If you wish to proceed, type '$randomString' to confirm." -IsWarning
         $confirmation = Read-Host "Enter the confirmation text"
-        if ($confirmation -ne $InitialConfirmationText) {
-            Write-ToConsoleLog "Confirmation not received. Exiting without making any changes." -IsError
+        $confirmation = $confirmation.ToUpper().Replace("'","").Replace([System.Environment]::NewLine, "").Trim()
+        if ($confirmation -ne $randomString.ToUpper()) {
+            Write-ToConsoleLog "Confirmation text did not match the required input. Exiting without making any changes." -IsError
             return $false
         }
         Write-ToConsoleLog "Initial confirmation received." -IsSuccess
         Write-ToConsoleLog "This operation is permanent and cannot be reversed!" -IsWarning
         Write-ToConsoleLog "Are you sure you want to proceed? Type '$FinalConfirmationText' to perform the highly destructive operation..." -IsWarning
         $confirmation = Read-Host "Enter the final confirmation text"
-        if ($confirmation -ne $FinalConfirmationText) {
-            Write-ToConsoleLog "Final confirmation not received. Exiting without making any changes." -IsError
+        $confirmation = $confirmation.ToUpper().Replace("'","").Replace([System.Environment]::NewLine, "").Trim()
+        if ($confirmation -ne $FinalConfirmationText.ToUpper()) {
+            Write-ToConsoleLog "Final confirmation did not match the required input. Exiting without making any changes." -IsError
             return $false
         }
         Write-ToConsoleLog "Final confirmation received. Proceeding with destructive operation..." -IsSuccess
         return $true
+    }
+
+    function Get-RandomString {
+        param (
+            [int]$Length = 8
+        )
+
+        $chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+        $string = -join ((1..$Length) | ForEach-Object { $chars[(Get-Random -Maximum $chars.Length)] })
+        return $string
     }
 
     function Remove-OrphanedRoleAssignmentsForScope {
@@ -975,14 +987,10 @@ function Remove-PlatformLandingZone {
                 Write-ToConsoleLog "The following Management Groups will be processed for removal:"
                 $managementGroupsFound | ForEach-Object { Write-ToConsoleLog "Management Group: $($_.Name) ($($_.DisplayName))" -NoNewLine }
                 $warningMessage = "ALL THE MANAGEMENT GROUP STRUCTURES ONE LEVEL BELOW THE LISTED MANAGEMENT GROUPS WILL BE PERMANENTLY DELETED"
-                $confirmationText = "I CONFIRM I UNDERSTAND ALL THE MANAGEMENT GROUP STRUCTURES ONE LEVEL BELOW THE LISTED MANAGEMENT GROUPS WILL BE PERMANENTLY DELETED"
                 if($DeleteTargetManagementGroups) {
                     $warningMessage = "ALL THE LISTED MANAGEMENTS GROUPS AND THEIR CHILDREN WILL BE PERMANENTLY DELETED"
-                    $confirmationText = "I CONFIRM I UNDERSTAND ALL THE MANAGEMENT GROUPS AND THEIR CHILDREN WILL BE PERMANENTLY DELETED"
                 }
-                $continue = Invoke-PromptForConfirmation `
-                    -message $warningMessage `
-                    -initialConfirmationText $confirmationText
+                $continue = Invoke-PromptForConfirmation -message $warningMessage
                 if(-not $continue) {
                     Write-ToConsoleLog "Exiting..."
                     return
@@ -1204,9 +1212,7 @@ function Remove-PlatformLandingZone {
             if(-not $BypassConfirmation) {
                 Write-ToConsoleLog "The following Subscriptions were provided or discovered during management group cleanup:"
                 $subscriptionsFinal | ForEach-Object { Write-ToConsoleLog "Name: $($_.Name), ID: $($_.Id)" -NoNewline }
-                $continue = Invoke-PromptForConfirmation `
-                    -Message "ALL RESOURCE GROUPS IN THE LISTED SUBSCRIPTIONS WILL BE PERMANENTLY DELETED UNLESS THEY MATCH RETENTION PATTERNS" `
-                    -InitialConfirmationText "I CONFIRM I UNDERSTAND ALL SELECTED RESOURCE GROUPS IN THE NAMED SUBSCRIPTIONS WILL BE PERMANENTLY DELETED"
+                $continue = Invoke-PromptForConfirmation -Message "ALL RESOURCE GROUPS IN THE LISTED SUBSCRIPTIONS WILL BE PERMANENTLY DELETED UNLESS THEY MATCH RETENTION PATTERNS"
                 if(-not $continue) {
                     Write-ToConsoleLog "Exiting..."
                     return
