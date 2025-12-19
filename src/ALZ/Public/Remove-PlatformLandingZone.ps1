@@ -986,14 +986,19 @@ function Remove-PlatformLandingZone {
             if(-not $BypassConfirmation) {
                 Write-ToConsoleLog "The following Management Groups will be processed for removal:"
                 $managementGroupsFound | ForEach-Object { Write-ToConsoleLog "Management Group: $($_.Name) ($($_.DisplayName))" -NoNewLine }
-                $warningMessage = "ALL THE MANAGEMENT GROUP STRUCTURES ONE LEVEL BELOW THE LISTED MANAGEMENT GROUPS WILL BE PERMANENTLY DELETED"
-                if($DeleteTargetManagementGroups) {
-                    $warningMessage = "ALL THE LISTED MANAGEMENTS GROUPS AND THEIR CHILDREN WILL BE PERMANENTLY DELETED"
-                }
-                $continue = Invoke-PromptForConfirmation -message $warningMessage
-                if(-not $continue) {
-                    Write-ToConsoleLog "Exiting..."
-                    return
+
+                if($PlanMode) {
+                    Write-ToConsoleLog "Skipping confirmation for plan mode"
+                } else {
+                    $warningMessage = "ALL THE MANAGEMENT GROUP STRUCTURES ONE LEVEL BELOW THE LISTED MANAGEMENT GROUPS WILL BE PERMANENTLY DELETED"
+                    if($DeleteTargetManagementGroups) {
+                        $warningMessage = "ALL THE LISTED MANAGEMENTS GROUPS AND THEIR CHILDREN WILL BE PERMANENTLY DELETED"
+                    }
+                    $continue = Invoke-PromptForConfirmation -message $warningMessage
+                    if(-not $continue) {
+                        Write-ToConsoleLog "Exiting..."
+                        return
+                    }
                 }
             }
 
@@ -1212,10 +1217,15 @@ function Remove-PlatformLandingZone {
             if(-not $BypassConfirmation) {
                 Write-ToConsoleLog "The following Subscriptions were provided or discovered during management group cleanup:"
                 $subscriptionsFinal | ForEach-Object { Write-ToConsoleLog "Name: $($_.Name), ID: $($_.Id)" -NoNewline }
-                $continue = Invoke-PromptForConfirmation -Message "ALL RESOURCE GROUPS IN THE LISTED SUBSCRIPTIONS WILL BE PERMANENTLY DELETED UNLESS THEY MATCH RETENTION PATTERNS"
-                if(-not $continue) {
-                    Write-ToConsoleLog "Exiting..."
-                    return
+
+                if($PlanMode) {
+                    Write-ToConsoleLog "Skipping confirmation for plan mode"
+                } else {
+                    $continue = Invoke-PromptForConfirmation -Message "ALL RESOURCE GROUPS IN THE LISTED SUBSCRIPTIONS WILL BE PERMANENTLY DELETED UNLESS THEY MATCH RETENTION PATTERNS"
+                    if(-not $continue) {
+                        Write-ToConsoleLog "Exiting..."
+                        return
+                    }
                 }
             }
         }
