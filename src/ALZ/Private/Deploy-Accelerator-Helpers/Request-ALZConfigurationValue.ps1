@@ -617,7 +617,7 @@ function Request-ALZConfigurationValue {
                         if ([string]::IsNullOrWhiteSpace($oldValue)) {
                             # Empty value - match key followed by colon and optional whitespace/quotes
                             $pattern = "(?m)^(\s*${key}:\s*)`"?`"?(\s*)(#.*)?$"
-                            $replacement = "`${1}`"$newValue`"`${3}"
+                            $replacement = "`${1}`"$newValue`"`${2}`${3}"
                         } else {
                             # Non-empty value - match the specific value
                             $pattern = "(?m)^(\s*${key}:\s*)`"?${escapedOldValue}`"?(\s*)(#.*)?$"

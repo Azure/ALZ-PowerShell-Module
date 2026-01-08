@@ -6,8 +6,6 @@ function Request-AcceleratorConfigurationInput {
     This function interactively prompts the user for the inputs needed to set up the accelerator folder structure,
     calls New-AcceleratorFolderStructure to create the folders and configuration files, and returns the paths
     needed for Deploy-Accelerator to continue.
-    .PARAMETER AzureContext
-    A hashtable containing Azure context information including ManagementGroups and Subscriptions arrays.
     .OUTPUTS
     Returns a hashtable with the following keys:
     - Continue: Boolean indicating whether to continue with deployment
@@ -16,10 +14,7 @@ function Request-AcceleratorConfigurationInput {
     - OutputFolderPath: Path to the output folder
     #>
     [CmdletBinding(SupportsShouldProcess = $true)]
-    param(
-        [Parameter(Mandatory = $false)]
-        [hashtable] $AzureContext = @{ ManagementGroups = @(); Subscriptions = @() }
-    )
+    param()
 
     if ($PSCmdlet.ShouldProcess("Accelerator folder structure setup", "prompt and create")) {
         Write-InformationColored "No input configuration files provided. Let's set up the accelerator folder structure first..." -ForegroundColor Green -NewLineBefore -InformationAction Continue
@@ -215,11 +210,14 @@ function Request-AcceleratorConfigurationInput {
         # Offer to configure inputs interactively (default is Yes)
         $configureNowResponse = Read-Host "`nWould you like to configure the input values interactively now? (Y/n)"
         if ($configureNowResponse -ne "n" -and $configureNowResponse -ne "N") {
+            # Query Azure for management groups and subscriptions (for interactive selection)
+            $azureContext = Get-AzureContext
+
             Request-ALZConfigurationValue `
                 -ConfigFolderPath $configFolderPath `
                 -IacType $selectedIacType `
                 -VersionControl $selectedVersionControl `
-                -AzureContext $AzureContext
+                -AzureContext $azureContext
         }
 
         # Check for VS Code or VS Code Insiders and offer to open the config folder

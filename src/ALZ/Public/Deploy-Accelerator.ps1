@@ -211,26 +211,43 @@ function Deploy-Accelerator {
     }
 
     # Check software requirements first before any prompting
+    $toolingResult = $null
     if ($skip_requirements_check.IsPresent) {
         Write-InformationColored "WARNING: Skipping the software requirements check..." -ForegroundColor Yellow -InformationAction Continue
     } else {
         Write-InformationColored "Checking the software requirements for the Accelerator..." -ForegroundColor Green -InformationAction Continue
-        Test-Tooling -skipAlzModuleVersionCheck:$skip_alz_module_version_requirements_check.IsPresent -checkYamlModule:$checkYamlModule -skipYamlModuleInstall:$skip_yaml_module_install.IsPresent
+        $toolingResult = Test-Tooling -skipAlzModuleVersionCheck:$skip_alz_module_version_requirements_check.IsPresent -checkYamlModule:$checkYamlModule -skipYamlModuleInstall:$skip_yaml_module_install.IsPresent -skipAzureLoginCheck:$needsFolderStructureSetup
     }
 
-    # Query Azure for management groups and subscriptions (for interactive selection)
-    $azureContext = @{
-        ManagementGroups = @()
-        Subscriptions    = @()
-    }
+    # If az cli is installed but not logged in, prompt for tenant ID and login with device code
+    if ($needsFolderStructureSetup -and $toolingResult -and $toolingResult.AzCliInstalledButNotLoggedIn) {
+        Write-InformationColored "`nAzure CLI is installed but not logged in. Let's log you in..." -ForegroundColor Yellow -InformationAction Continue
+        Write-InformationColored "You'll need your Azure Tenant ID. You can find this in the Azure Portal under Microsoft Entra ID > Overview." -ForegroundColor Cyan -InformationAction Continue
 
-    if ($needsFolderStructureSetup) {
-        $azureContext = Get-AzureContext
+        $tenantId = ""
+        $guidRegex = "^(\{){0,1}[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}(\}){0,1}$"
+        do {
+            $tenantId = Read-Host "`nEnter your Azure Tenant ID (GUID)"
+            if ($tenantId -notmatch $guidRegex) {
+                Write-InformationColored "Invalid Tenant ID format. Please enter a valid GUID (e.g., 00000000-0000-0000-0000-000000000000)" -ForegroundColor Red -InformationAction Continue
+            }
+        } while ($tenantId -notmatch $guidRegex)
+
+        Write-InformationColored "`nLogging in to Azure using device code authentication..." -ForegroundColor Green -InformationAction Continue
+        Write-InformationColored "A browser window will open for you to authenticate. Follow the instructions to complete login." -ForegroundColor Cyan -InformationAction Continue
+
+        az login --use-device-code --tenant $tenantId --allow-no-subscriptions 2>&1 | Out-Null
+        if ($LASTEXITCODE -ne 0) {
+            Write-InformationColored "Azure login failed. Please try again or login manually using 'az login --tenant $tenantId'." -ForegroundColor Red -InformationAction Continue
+            throw "Azure login failed."
+        }
+
+        Write-InformationColored "Successfully logged in to Azure!" -ForegroundColor Green -InformationAction Continue
     }
 
     # If no inputs provided, prompt user for folder structure setup
     if ($needsFolderStructureSetup) {
-        $setupResult = Request-AcceleratorConfigurationInput -AzureContext $azureContext
+        $setupResult = Request-AcceleratorConfigurationInput
 
         if (-not $setupResult.Continue) {
             return
