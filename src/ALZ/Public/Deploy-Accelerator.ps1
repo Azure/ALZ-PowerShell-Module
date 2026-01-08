@@ -234,9 +234,14 @@ function Deploy-Accelerator {
         } while ($tenantId -notmatch $guidRegex)
 
         Write-InformationColored "`nLogging in to Azure using device code authentication..." -ForegroundColor Green -InformationAction Continue
-        Write-InformationColored "A browser window will open for you to authenticate. Follow the instructions to complete login." -ForegroundColor Cyan -InformationAction Continue
+        Write-InformationColored "Opening browser to https://microsoft.com/devicelogin for you to authenticate..." -ForegroundColor Cyan -InformationAction Continue
 
-        az login --use-device-code --tenant $tenantId --allow-no-subscriptions 2>&1 | Out-Null
+        try {
+            Start-Process "https://microsoft.com/devicelogin"
+        } catch {
+            Write-InformationColored "Could not open browser automatically. Please navigate to https://microsoft.com/devicelogin manually." -ForegroundColor Yellow -InformationAction Continue
+        }
+        az login --allow-no-subscriptions --use-device-code --tenant $tenantId
         if ($LASTEXITCODE -ne 0) {
             Write-InformationColored "Azure login failed. Please try again or login manually using 'az login --tenant $tenantId'." -ForegroundColor Red -InformationAction Continue
             throw "Azure login failed."

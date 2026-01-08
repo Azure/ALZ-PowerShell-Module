@@ -272,7 +272,7 @@ function Test-Tooling {
             $e = [char]27
             "$e[${color}m$($_.result)${e}[0m"
         }
-    }, @{ Label = "Check Details"; Expression = {$_.message} }  -AutoSize -Wrap
+    }, @{ Label = "Check Details"; Expression = {$_.message} }  -AutoSize -Wrap | Out-Host
 
     if($hasFailure) {
         Write-InformationColored "Accelerator software requirements have no been met, please review and install the missing software." -ForegroundColor Red -InformationAction Continue

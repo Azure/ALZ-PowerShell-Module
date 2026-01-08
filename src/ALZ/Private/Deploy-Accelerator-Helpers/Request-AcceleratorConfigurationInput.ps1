@@ -38,224 +38,101 @@ function Request-AcceleratorConfigurationInput {
         }
 
         # Normalize the path
-        $normalizedTargetPath = $targetFolderPathInput
-        if ($normalizedTargetPath.StartsWith("~/")) {
-            $normalizedTargetPath = Join-Path $HOME $normalizedTargetPath.Replace("~/", "")
-        }
+        $normalizedTargetPath = Get-NormalizedPath -Path $targetFolderPathInput
 
-        # Initialize detected values (will be used as defaults if folder exists)
-        $detectedIacType = $null
-        $detectedVersionControl = $null
-        $folderExists = Test-Path -Path $normalizedTargetPath
-        $configFolderPath = $null
-        $inputsYamlPath = $null
-        $inputsContent = $null
+        # Analyze existing folder configuration
+        $folderConfig = Get-AcceleratorFolderConfiguration -FolderPath $normalizedTargetPath
         $useExistingFolder = $false
         $forceFlag = $false
 
         # If folder exists, ask about overwriting before other prompts
-        if ($folderExists) {
-            $configFolderPath = Join-Path $normalizedTargetPath "config"
-            $inputsYamlPath = Join-Path $configFolderPath "inputs.yaml"
-
-            # Check if valid config exists
-            $hasValidConfig = (Test-Path -Path $configFolderPath) -and (Test-Path -Path $inputsYamlPath)
-
-            if ($hasValidConfig) {
-                Write-InformationColored "`nDetected existing accelerator folder. Analyzing configuration..." -ForegroundColor Cyan -InformationAction Continue
-
-                # Try to read and validate inputs.yaml
-                $inputsContent = Get-Content -Path $inputsYamlPath -Raw
-                try {
-                    $inputsYaml = $inputsContent | ConvertFrom-Yaml
-
-                    # Detect IaC type from existing files
-                    $tfvarsPath = Join-Path $configFolderPath "platform-landing-zone.tfvars"
-                    $bicepYamlPath = Join-Path $configFolderPath "platform-landing-zone.yaml"
-
-                    if (Test-Path -Path $tfvarsPath) {
-                        $detectedIacType = "terraform"
-                        Write-InformationColored "  Detected IaC type: terraform (found platform-landing-zone.tfvars)" -ForegroundColor Green -InformationAction Continue
-                    } elseif (Test-Path -Path $bicepYamlPath) {
-                        $detectedIacType = "bicep"
-                        Write-InformationColored "  Detected IaC type: bicep (found platform-landing-zone.yaml)" -ForegroundColor Green -InformationAction Continue
-                    }
-
-                    # Detect version control from bootstrap_module_name in inputs.yaml
-                    if ($inputsYaml.bootstrap_module_name) {
-                        $bootstrapModuleName = $inputsYaml.bootstrap_module_name
-                        if ($bootstrapModuleName -eq "alz_github") {
-                            $detectedVersionControl = "github"
-                        } elseif ($bootstrapModuleName -eq "alz_azuredevops") {
-                            $detectedVersionControl = "azure-devops"
-                        } elseif ($bootstrapModuleName -eq "alz_local") {
-                            $detectedVersionControl = "local"
-                        }
-                        if ($null -ne $detectedVersionControl) {
-                            Write-InformationColored "  Detected version control: $detectedVersionControl (from bootstrap_module_name: $bootstrapModuleName)" -ForegroundColor Green -InformationAction Continue
-                        }
-                    }
-
-                    Write-InformationColored "  Found inputs.yaml (valid YAML)" -ForegroundColor Green -InformationAction Continue
-                } catch {
-                    Write-InformationColored "  Warning: inputs.yaml exists but is not valid YAML: $($_.Exception.Message)" -ForegroundColor Yellow -InformationAction Continue
-                    $inputsContent = $null
-                    $hasValidConfig = $false
-                }
-            }
-
+        if ($folderConfig.FolderExists) {
             # Ask about overwriting the folder
             Write-InformationColored "`nTarget folder '$normalizedTargetPath' already exists." -ForegroundColor Yellow -InformationAction Continue
             $forceResponse = Read-Host "Do you want to overwrite it? (y/N)"
             if ($forceResponse -eq "y" -or $forceResponse -eq "Y") {
                 $forceFlag = $true
-                # Clear detected values since we're recreating - they'll be used as defaults in prompts
             } else {
                 # User wants to keep existing folder
                 $useExistingFolder = $true
 
                 # Validate config files exist
-                if (-not $hasValidConfig) {
-                    if (-not (Test-Path -Path $configFolderPath)) {
-                        Write-InformationColored "ERROR: Config folder not found at '$configFolderPath'" -ForegroundColor Red -InformationAction Continue
-                    } elseif (-not (Test-Path -Path $inputsYamlPath)) {
+                if (-not $folderConfig.IsValid) {
+                    if (-not (Test-Path -Path $folderConfig.ConfigFolderPath)) {
+                        Write-InformationColored "ERROR: Config folder not found at '$($folderConfig.ConfigFolderPath)'" -ForegroundColor Red -InformationAction Continue
+                    } elseif (-not (Test-Path -Path $folderConfig.InputsYamlPath)) {
                         Write-InformationColored "ERROR: Required configuration file not found: inputs.yaml" -ForegroundColor Red -InformationAction Continue
                     }
                     Write-InformationColored "Please overwrite the folder structure by choosing 'y', or run New-AcceleratorFolderStructure manually." -ForegroundColor Yellow -InformationAction Continue
-                    return @{
-                        Continue               = $false
-                        InputConfigFilePaths   = @()
-                        StarterAdditionalFiles = @()
-                        OutputFolderPath       = ""
-                    }
+                    return New-AcceleratorResult -Continue $false
                 }
             }
         }
 
         # Handle destroy mode - validate existing folder and return early
         if ($Destroy.IsPresent) {
-            # Folder must exist for destroy mode
-            if (-not $folderExists) {
+            if (-not $folderConfig.FolderExists) {
                 Write-InformationColored "ERROR: Target folder '$normalizedTargetPath' does not exist." -ForegroundColor Red -InformationAction Continue
                 Write-InformationColored "Cannot destroy a deployment that doesn't exist. Please check the path and try again." -ForegroundColor Yellow -InformationAction Continue
-                return @{
-                    Continue               = $false
-                    InputConfigFilePaths   = @()
-                    StarterAdditionalFiles = @()
-                    OutputFolderPath       = ""
-                }
+                return New-AcceleratorResult -Continue $false
             }
 
-            # Config folder must exist
-            if (-not (Test-Path -Path $configFolderPath)) {
-                Write-InformationColored "ERROR: Config folder not found at '$configFolderPath'" -ForegroundColor Red -InformationAction Continue
+            if (-not (Test-Path -Path $folderConfig.ConfigFolderPath)) {
+                Write-InformationColored "ERROR: Config folder not found at '$($folderConfig.ConfigFolderPath)'" -ForegroundColor Red -InformationAction Continue
                 Write-InformationColored "Cannot destroy a deployment without configuration files." -ForegroundColor Yellow -InformationAction Continue
-                return @{
-                    Continue               = $false
-                    InputConfigFilePaths   = @()
-                    StarterAdditionalFiles = @()
-                    OutputFolderPath       = ""
-                }
+                return New-AcceleratorResult -Continue $false
             }
 
-            # inputs.yaml must exist
-            if (-not (Test-Path -Path $inputsYamlPath)) {
+            if (-not (Test-Path -Path $folderConfig.InputsYamlPath)) {
                 Write-InformationColored "ERROR: Required configuration file not found: inputs.yaml" -ForegroundColor Red -InformationAction Continue
                 Write-InformationColored "Cannot destroy a deployment without inputs.yaml." -ForegroundColor Yellow -InformationAction Continue
-                return @{
-                    Continue               = $false
-                    InputConfigFilePaths   = @()
-                    StarterAdditionalFiles = @()
-                    OutputFolderPath       = ""
-                }
+                return New-AcceleratorResult -Continue $false
             }
 
             # Build input config file paths based on detected IaC type
-            $inputConfigFilePaths = @("$configFolderPath/inputs.yaml")
-            $starterAdditionalFiles = @()
-
-            if ($detectedIacType -eq "terraform") {
-                $inputConfigFilePaths += "$configFolderPath/platform-landing-zone.tfvars"
-                $libFolderPath = "$configFolderPath/lib"
-                if (Test-Path $libFolderPath) {
-                    $starterAdditionalFiles = @($libFolderPath)
-                }
-            } elseif ($detectedIacType -eq "bicep") {
-                $inputConfigFilePaths += "$configFolderPath/platform-landing-zone.yaml"
-            }
-
+            $configPaths = Get-AcceleratorConfigPaths -IacType $folderConfig.IacType -ConfigFolderPath $folderConfig.ConfigFolderPath
             $resolvedTargetPath = (Resolve-Path -Path $normalizedTargetPath).Path
+
             Write-InformationColored "Using existing folder: $resolvedTargetPath" -ForegroundColor Green -InformationAction Continue
             Write-InformationColored "`nProceeding with destroy..." -ForegroundColor Yellow -InformationAction Continue
 
-            return @{
-                Continue               = $true
-                InputConfigFilePaths   = $inputConfigFilePaths
-                StarterAdditionalFiles = $starterAdditionalFiles
-                OutputFolderPath       = "$resolvedTargetPath/output"
-            }
+            return New-AcceleratorResult -Continue $true `
+                -InputConfigFilePaths $configPaths.InputConfigFilePaths `
+                -StarterAdditionalFiles $configPaths.StarterAdditionalFiles `
+                -OutputFolderPath "$resolvedTargetPath/output"
         }
 
-        # Set selectedIacType and selectedVersionControl from detected values (for use existing folder case)
-        $selectedIacType = $detectedIacType
-        $selectedVersionControl = $detectedVersionControl
+        # Set selected values from detected values (for use existing folder case)
+        $selectedIacType = $folderConfig.IacType
+        $selectedVersionControl = $folderConfig.VersionControl
         $selectedScenarioNumber = 1
 
         # Only prompt for IaC type, version control, and scenario if creating new folder or overwriting
         if (-not $useExistingFolder) {
             # Prompt for IaC type with detected value as default
             $iacTypeOptions = @("terraform", "bicep")
-            $defaultIacTypeIndex = 0
-            if ($null -ne $detectedIacType) {
-                $detectedIndex = $iacTypeOptions.IndexOf($detectedIacType)
-                if ($detectedIndex -ge 0) {
-                    $defaultIacTypeIndex = $detectedIndex
-                }
-            }
+            $defaultIacTypeIndex = if ($null -ne $folderConfig.IacType) {
+                [Math]::Max(0, $iacTypeOptions.IndexOf($folderConfig.IacType))
+            } else { 0 }
 
-            Write-InformationColored "`nSelect the Infrastructure as Code (IaC) type:" -ForegroundColor Yellow -InformationAction Continue
-            for ($i = 0; $i -lt $iacTypeOptions.Count; $i++) {
-                $default = if ($i -eq $defaultIacTypeIndex) { " (Default)" } else { "" }
-                Write-InformationColored "  [$($i + 1)] $($iacTypeOptions[$i])$default" -ForegroundColor White -InformationAction Continue
-            }
-            do {
-                $iacTypeSelection = Read-Host "Enter selection (1-$($iacTypeOptions.Count), default: $($defaultIacTypeIndex + 1))"
-                if ([string]::IsNullOrWhiteSpace($iacTypeSelection)) {
-                    $iacTypeIndex = $defaultIacTypeIndex
-                } else {
-                    $iacTypeIndex = [int]$iacTypeSelection - 1
-                }
-            } while ($iacTypeIndex -lt 0 -or $iacTypeIndex -ge $iacTypeOptions.Count)
-            $selectedIacType = $iacTypeOptions[$iacTypeIndex]
+            $selectedIacType = Read-MenuSelection `
+                -Title "`nSelect the Infrastructure as Code (IaC) type:" `
+                -Options $iacTypeOptions `
+                -DefaultIndex $defaultIacTypeIndex
 
             # Prompt for version control with detected value as default
             $versionControlOptions = @("github", "azure-devops", "local")
-            $defaultVcsIndex = 0
-            if ($null -ne $detectedVersionControl) {
-                $detectedIndex = $versionControlOptions.IndexOf($detectedVersionControl)
-                if ($detectedIndex -ge 0) {
-                    $defaultVcsIndex = $detectedIndex
-                }
-            }
+            $defaultVcsIndex = if ($null -ne $folderConfig.VersionControl) {
+                [Math]::Max(0, $versionControlOptions.IndexOf($folderConfig.VersionControl))
+            } else { 0 }
 
-            Write-InformationColored "`nSelect the Version Control System:" -ForegroundColor Yellow -InformationAction Continue
-            for ($i = 0; $i -lt $versionControlOptions.Count; $i++) {
-                $default = if ($i -eq $defaultVcsIndex) { " (Default)" } else { "" }
-                Write-InformationColored "  [$($i + 1)] $($versionControlOptions[$i])$default" -ForegroundColor White -InformationAction Continue
-            }
-            do {
-                $vcsSelection = Read-Host "Enter selection (1-$($versionControlOptions.Count), default: $($defaultVcsIndex + 1))"
-                if ([string]::IsNullOrWhiteSpace($vcsSelection)) {
-                    $vcsIndex = $defaultVcsIndex
-                } else {
-                    $vcsIndex = [int]$vcsSelection - 1
-                }
-            } while ($vcsIndex -lt 0 -or $vcsIndex -ge $versionControlOptions.Count)
-            $selectedVersionControl = $versionControlOptions[$vcsIndex]
+            $selectedVersionControl = Read-MenuSelection `
+                -Title "`nSelect the Version Control System:" `
+                -Options $versionControlOptions `
+                -DefaultIndex $defaultVcsIndex
 
             # Prompt for scenario number (Terraform only)
             if ($selectedIacType -eq "terraform") {
-                Write-InformationColored "`nSelect the Terraform scenario (see https://aka.ms/alz/acc/scenarios):" -ForegroundColor Yellow -InformationAction Continue
                 $scenarioDescriptions = @(
                     "Full Multi-Region - Hub and Spoke VNet",
                     "Full Multi-Region - Virtual WAN",
@@ -267,24 +144,18 @@ function Request-AcceleratorConfigurationInput {
                     "Full Single-Region NVA - Hub and Spoke VNet",
                     "Full Single-Region NVA - Virtual WAN"
                 )
-                for ($i = 0; $i -lt $scenarioDescriptions.Count; $i++) {
-                    $default = if ($i -eq 0) { " (Default)" } else { "" }
-                    Write-InformationColored "  [$($i + 1)] $($scenarioDescriptions[$i])$default" -ForegroundColor White -InformationAction Continue
-                }
-                do {
-                    $scenarioSelection = Read-Host "Enter selection (1-$($scenarioDescriptions.Count), default: 1)"
-                    if ([string]::IsNullOrWhiteSpace($scenarioSelection)) {
-                        $scenarioIndex = 1
-                    } else {
-                        $scenarioIndex = [int]$scenarioSelection
-                    }
-                } while ($scenarioIndex -lt 1 -or $scenarioIndex -gt $scenarioDescriptions.Count)
-                $selectedScenarioNumber = $scenarioIndex
+                $scenarioNumbers = 1..$scenarioDescriptions.Count
+
+                $selectedScenarioNumber = Read-MenuSelection `
+                    -Title "`nSelect the Terraform scenario (see https://aka.ms/alz/acc/scenarios):" `
+                    -Options $scenarioNumbers `
+                    -OptionDescriptions $scenarioDescriptions `
+                    -DefaultIndex 0
             }
         }
 
         # Create folder structure if needed
-        if (-not $folderExists -or $forceFlag) {
+        if (-not $folderConfig.FolderExists -or $forceFlag) {
             New-AcceleratorFolderStructure `
                 -iacType $selectedIacType `
                 -versionControl $selectedVersionControl `
@@ -297,10 +168,10 @@ function Request-AcceleratorConfigurationInput {
 
         # Resolve the path after folder creation or validation
         $resolvedTargetPath = (Resolve-Path -Path $normalizedTargetPath).Path
-
-        # Build the input config paths based on the IaC type (only set if not already set from validation)
-        if (-not $useExistingFolder) {
-            $configFolderPath = Join-Path $resolvedTargetPath "config"
+        $configFolderPath = if ($useExistingFolder) {
+            $folderConfig.ConfigFolderPath
+        } else {
+            Join-Path $resolvedTargetPath "config"
         }
 
         if ($useExistingFolder) {
@@ -311,7 +182,6 @@ function Request-AcceleratorConfigurationInput {
         # Offer to configure inputs interactively (default is Yes)
         $configureNowResponse = Read-Host "`nWould you like to configure the input values interactively now? (Y/n)"
         if ($configureNowResponse -ne "n" -and $configureNowResponse -ne "N") {
-            # Query Azure for management groups and subscriptions (for interactive selection)
             $azureContext = Get-AzureContext
 
             Request-ALZConfigurationValue `
@@ -382,46 +252,17 @@ Deploy-Accelerator ``
 "@ -ForegroundColor Cyan -InformationAction Continue
             }
 
-            return @{
-                Continue               = $false
-                InputConfigFilePaths   = @()
-                StarterAdditionalFiles = @()
-                OutputFolderPath       = ""
-            }
+            return New-AcceleratorResult -Continue $false
         }
 
         # Build the result for continuing with deployment
-        $inputConfigFilePaths = @()
-        $starterAdditionalFiles = @()
-
-        if ($selectedIacType -eq "terraform") {
-            $inputConfigFilePaths = @(
-                "$configFolderPath/inputs.yaml",
-                "$configFolderPath/platform-landing-zone.tfvars"
-            )
-            $libFolderPath = "$configFolderPath/lib"
-            if (Test-Path $libFolderPath) {
-                $starterAdditionalFiles = @($libFolderPath)
-            }
-        } elseif ($selectedIacType -eq "bicep") {
-            $inputConfigFilePaths = @(
-                "$configFolderPath/inputs.yaml",
-                "$configFolderPath/platform-landing-zone.yaml"
-            )
-        } else {
-            # bicep-classic
-            $inputConfigFilePaths = @(
-                "$configFolderPath/inputs.yaml"
-            )
-        }
+        $configPaths = Get-AcceleratorConfigPaths -IacType $selectedIacType -ConfigFolderPath $configFolderPath
 
         Write-InformationColored "`nContinuing with deployment..." -ForegroundColor Green -InformationAction Continue
 
-        return @{
-            Continue               = $true
-            InputConfigFilePaths   = $inputConfigFilePaths
-            StarterAdditionalFiles = $starterAdditionalFiles
-            OutputFolderPath       = "$resolvedTargetPath/output"
-        }
+        return New-AcceleratorResult -Continue $true `
+            -InputConfigFilePaths $configPaths.InputConfigFilePaths `
+            -StarterAdditionalFiles $configPaths.StarterAdditionalFiles `
+            -OutputFolderPath "$resolvedTargetPath/output"
     }
 }
