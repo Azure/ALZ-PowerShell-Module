@@ -79,6 +79,16 @@ function Request-ALZConfigurationValue {
         $isRequired = Get-SchemaProperty -SchemaInfo $SchemaInfo -PropertyName "required" -Default $false
         $source = Get-SchemaProperty -SchemaInfo $SchemaInfo -PropertyName "source"
 
+        # For sensitive inputs, check if value is set via environment variable
+        $envVarValue = $null
+        if ($isSensitive) {
+            $envVarName = "TF_VAR_$Key"
+            $envVarValue = [System.Environment]::GetEnvironmentVariable($envVarName)
+            if (-not [string]::IsNullOrWhiteSpace($envVarValue)) {
+                $CurrentValue = $envVarValue
+            }
+        }
+
         # Check if the current value is an array
         $isArray = $schemaType -eq "array" -or $CurrentValue -is [System.Collections.IList]
 
@@ -561,7 +571,7 @@ function Request-ALZConfigurationValue {
                     # Handle sensitive values - set as environment variable instead of in file
                     if ($isSensitive -and -not [string]::IsNullOrWhiteSpace($newValue)) {
                         $envVarName = "TF_VAR_$key"
-                        [System.Environment]::SetEnvironmentVariable($envVarName, $newValue, [System.EnvironmentVariableTarget]::Process)
+                        [System.Environment]::SetEnvironmentVariable($envVarName, $newValue)
                         $sensitiveEnvVars[$key] = $envVarName
 
                         # Update the config file to indicate it's set as an env var
