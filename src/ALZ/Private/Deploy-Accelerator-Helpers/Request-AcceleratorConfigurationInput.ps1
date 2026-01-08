@@ -164,9 +164,6 @@ function Request-AcceleratorConfigurationInput {
                 } elseif (Test-Path -Path $bicepYamlPath) {
                     $selectedIacType = "bicep"
                     Write-InformationColored "  Detected IaC type: bicep (found platform-landing-zone.yaml)" -ForegroundColor Green -InformationAction Continue
-                } else {
-                    $selectedIacType = "bicep-classic"
-                    Write-InformationColored "  Detected IaC type: bicep-classic (no platform config file found)" -ForegroundColor Green -InformationAction Continue
                 }
 
                 # Detect version control from inputs.yaml content (already loaded above)
@@ -240,20 +237,23 @@ function Request-AcceleratorConfigurationInput {
             }
         }
 
-        Write-InformationColored "`nPlease update the configuration files in the config folder before continuing:" -ForegroundColor Yellow -InformationAction Continue
+        Write-InformationColored "`nPlease check and update the configuration files in the config folder before continuing:" -ForegroundColor Yellow -InformationAction Continue
         Write-InformationColored "  - inputs.yaml: Bootstrap configuration (required)" -ForegroundColor White -InformationAction Continue
 
         if ($selectedIacType -eq "terraform") {
             Write-InformationColored "  - platform-landing-zone.tfvars: Platform configuration (required)" -ForegroundColor White -InformationAction Continue
+            Write-InformationColored "    - starter_locations: Enter the regions for you platform landing zone (required)" -ForegroundColor White -InformationAction Continue
+            Write-InformationColored "    - defender_email_security_contact: Enter the email security contact for Microsoft Defender for Cloud (required)" -ForegroundColor White -InformationAction Continue
             Write-InformationColored "  - lib/: Library customizations (optional)" -ForegroundColor White -InformationAction Continue
         } elseif ($selectedIacType -eq "bicep") {
             Write-InformationColored "  - platform-landing-zone.yaml: Platform configuration (required)" -ForegroundColor White -InformationAction Continue
+            Write-InformationColored "    - starter_locations: Enter the regions for you platform landing zone (required)" -ForegroundColor White -InformationAction Continue
         }
 
         Write-InformationColored "`nFor more details, see: https://azure.github.io/Azure-Landing-Zones/accelerator/configuration-files/" -ForegroundColor Cyan -InformationAction Continue
 
         # Prompt to continue or exit
-        $continueResponse = Read-Host "`nHave you updated the configuration files? Enter 'yes' to continue with deployment, or 'no' to exit and configure later"
+        $continueResponse = Read-Host "`nHave you checked and updated the configuration files? Enter 'yes' to continue with deployment, or 'no' to exit and configure later"
         if ($continueResponse -ne "yes") {
             Write-InformationColored "`nTo continue later, run Deploy-Accelerator with the following parameters:" -ForegroundColor Green -InformationAction Continue
 
