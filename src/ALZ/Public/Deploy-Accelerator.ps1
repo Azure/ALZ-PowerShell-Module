@@ -178,40 +178,70 @@ function Deploy-Accelerator {
 
     $ProgressPreference = "SilentlyContinue"
 
-    # Determine if any input files are YAML to check for powershell-yaml module
-    $hasYamlFiles = $false
-    $pathsToCheck = @()
+    # Check if we need to prompt for folder structure creation (which creates YAML files)
+    $needsFolderStructureSetup = $false
+    $envInputConfigPaths = $env:ALZ_input_config_path
 
-    if ($inputConfigFilePaths.Length -gt 0) {
-        $pathsToCheck = $inputConfigFilePaths
-    } else {
-        # Check environment variable if no paths provided
-        $envInputConfigPaths = $env:ALZ_input_config_path
-        if ($null -ne $envInputConfigPaths -and $envInputConfigPaths -ne "") {
-            $pathsToCheck = $envInputConfigPaths -split "," | Where-Object { $_ -and $_.Trim() }
-        }
+    if ($inputConfigFilePaths.Length -eq 0 -and ($null -eq $envInputConfigPaths -or $envInputConfigPaths -eq "")) {
+        $needsFolderStructureSetup = $true
     }
 
-    foreach ($path in $pathsToCheck) {
-        if ($null -ne $path -and $path.Trim() -ne "") {
-            try {
-                $extension = [System.IO.Path]::GetExtension($path).ToLower()
-                if ($extension -eq ".yml" -or $extension -eq ".yaml") {
-                    $hasYamlFiles = $true
-                    break
+    # Determine if YAML module check is needed
+    $checkYamlModule = $needsFolderStructureSetup  # Always need YAML if prompting for folder structure
+    if (-not $checkYamlModule) {
+        # Check if any supplied input files are YAML
+        $pathsToCheck = if ($inputConfigFilePaths.Length -gt 0) {
+            $inputConfigFilePaths
+        } else {
+            $envInputConfigPaths -split "," | Where-Object { $_ -and $_.Trim() }
+        }
+        foreach ($path in $pathsToCheck) {
+            if ($null -ne $path -and $path.Trim() -ne "") {
+                try {
+                    $extension = [System.IO.Path]::GetExtension($path).ToLower()
+                    if ($extension -eq ".yml" -or $extension -eq ".yaml") {
+                        $checkYamlModule = $true
+                        break
+                    }
+                } catch {
+                    continue
                 }
-            } catch {
-                # Ignore invalid paths - they will be caught later during config file validation
-                continue
             }
         }
     }
 
+    # Check software requirements first before any prompting
     if ($skip_requirements_check.IsPresent) {
         Write-InformationColored "WARNING: Skipping the software requirements check..." -ForegroundColor Yellow -InformationAction Continue
     } else {
         Write-InformationColored "Checking the software requirements for the Accelerator..." -ForegroundColor Green -InformationAction Continue
-        Test-Tooling -skipAlzModuleVersionCheck:$skip_alz_module_version_requirements_check.IsPresent -checkYamlModule:$hasYamlFiles -skipYamlModuleInstall:$skip_yaml_module_install.IsPresent
+        Test-Tooling -skipAlzModuleVersionCheck:$skip_alz_module_version_requirements_check.IsPresent -checkYamlModule:$checkYamlModule -skipYamlModuleInstall:$skip_yaml_module_install.IsPresent
+    }
+
+    # Query Azure for management groups and subscriptions (for interactive selection)
+    $azureContext = @{
+        ManagementGroups = @()
+        Subscriptions    = @()
+    }
+
+    if ($needsFolderStructureSetup) {
+        $azureContext = Get-AzureContext
+    }
+
+    # If no inputs provided, prompt user for folder structure setup
+    if ($needsFolderStructureSetup) {
+        $setupResult = Request-AcceleratorConfigurationInput -AzureContext $azureContext
+
+        if (-not $setupResult.Continue) {
+            return
+        }
+
+        # Set the parameters from the setup result
+        $inputConfigFilePaths = $setupResult.InputConfigFilePaths
+        if ($setupResult.StarterAdditionalFiles.Count -gt 0) {
+            $starter_additional_files = $setupResult.StarterAdditionalFiles
+        }
+        $output_folder_path = $setupResult.OutputFolderPath
     }
 
     Write-InformationColored "Getting ready to deploy the accelerator with you..." -ForegroundColor Green -NewLineBefore -InformationAction Continue
