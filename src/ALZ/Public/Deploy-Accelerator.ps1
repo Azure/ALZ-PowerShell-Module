@@ -247,7 +247,7 @@ function Deploy-Accelerator {
 
     # If no inputs provided, prompt user for folder structure setup
     if ($needsFolderStructureSetup) {
-        $setupResult = Request-AcceleratorConfigurationInput
+        $setupResult = Request-AcceleratorConfigurationInput -Destroy:$destroy.IsPresent
 
         if (-not $setupResult.Continue) {
             return
