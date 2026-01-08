@@ -12,7 +12,8 @@
           "description": "The Azure region where bootstrap resources like storage accounts and container instances will be created (e.g., uksouth, eastus, westeurope). See Decision 4 in the planning phase.",
           "helpLink": "https://azure.github.io/Azure-Landing-Zones/accelerator/0_planning/#decision-4---choose-a-region-for-the-bootstrap-resources",
           "type": "string",
-          "required": true
+          "required": true,
+          "source": "azureRegion"
         },
         "root_parent_management_group_id": {
           "description": "The ID of the parent management group under which the ALZ management group hierarchy will be created. See Decision 6 in the planning phase.",
@@ -199,7 +200,7 @@
           "description": "The target directory for generated files. Leave empty to use the standard output directory.",
           "helpLink": "https://azure.github.io/Azure-Landing-Zones/accelerator/advancedscenarios/",
           "type": "string",
-          "required": true
+          "required": false
         }
       }
     }

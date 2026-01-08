@@ -1,16 +1,17 @@
 function Get-AzureContext {
     <#
     .SYNOPSIS
-    Queries Azure for management groups and subscriptions available to the current user.
+    Queries Azure for management groups, subscriptions, and regions available to the current user.
     .DESCRIPTION
-    This function uses the Azure CLI to query for management groups and subscriptions
+    This function uses the Azure CLI to query for management groups, subscriptions, and regions
     that the currently logged-in user has access to. The results are returned as a hashtable
-    containing arrays of management groups and subscriptions for use in interactive selection prompts.
+    containing arrays for use in interactive selection prompts.
     Only subscriptions from the current tenant are returned.
     .OUTPUTS
     Returns a hashtable with the following keys:
     - ManagementGroups: Array of objects with id and displayName properties
     - Subscriptions: Array of objects with id and name properties
+    - Regions: Array of objects with name, displayName, and hasAvailabilityZones properties
     #>
     [CmdletBinding()]
     param()
@@ -18,9 +19,10 @@ function Get-AzureContext {
     $azureContext = @{
         ManagementGroups = @()
         Subscriptions    = @()
+        Regions          = @()
     }
 
-    Write-InformationColored "Querying Azure for management groups and subscriptions..." -ForegroundColor Green -InformationAction Continue
+    Write-InformationColored "Querying Azure for management groups, subscriptions, and regions..." -ForegroundColor Green -InformationAction Continue
 
     try {
         # Get the current tenant ID
@@ -43,7 +45,13 @@ function Get-AzureContext {
             $azureContext.Subscriptions = $subResult | ConvertFrom-Json
         }
 
-        Write-InformationColored "  Found $($azureContext.ManagementGroups.Count) management groups and $($azureContext.Subscriptions.Count) subscriptions" -ForegroundColor Gray -InformationAction Continue
+        # Get regions (sorted by displayName, include availability zone support)
+        $regionResult = az account list-locations --query "sort_by([?metadata.regionType=='Physical'].{name:name, displayName:displayName, hasAvailabilityZones:length(availabilityZoneMappings || ``[]``) > ``0``}, &displayName)" -o json 2>$null
+        if ($LASTEXITCODE -eq 0 -and $regionResult) {
+            $azureContext.Regions = $regionResult | ConvertFrom-Json
+        }
+
+        Write-InformationColored "  Found $($azureContext.ManagementGroups.Count) management groups, $($azureContext.Subscriptions.Count) subscriptions, and $($azureContext.Regions.Count) regions" -ForegroundColor Gray -InformationAction Continue
     } catch {
         Write-InformationColored "  Warning: Could not query Azure resources. You will need to enter IDs manually." -ForegroundColor Yellow -InformationAction Continue
     }

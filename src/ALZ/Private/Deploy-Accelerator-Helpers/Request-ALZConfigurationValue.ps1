@@ -12,7 +12,7 @@ function Request-ALZConfigurationValue {
     .PARAMETER VersionControl
     The version control system (github, azure-devops, or local).
     .PARAMETER AzureContext
-    A hashtable containing Azure context information including ManagementGroups and Subscriptions arrays.
+    A hashtable containing Azure context information including ManagementGroups, Subscriptions, and Regions arrays.
     .OUTPUTS
     Returns $true if configuration was updated, $false otherwise.
     #>
@@ -28,7 +28,7 @@ function Request-ALZConfigurationValue {
         [string] $VersionControl,
 
         [Parameter(Mandatory = $false)]
-        [hashtable] $AzureContext = @{ ManagementGroups = @(); Subscriptions = @() }
+        [hashtable] $AzureContext = @{ ManagementGroups = @(); Subscriptions = @(); Regions = @() }
     )
 
     # Helper function to get a property from schema info safely
@@ -67,7 +67,8 @@ function Request-ALZConfigurationValue {
             $Indent = "",
             $DefaultDescription = "No description available",
             $Subscriptions = @(),
-            $ManagementGroups = @()
+            $ManagementGroups = @(),
+            $Regions = @()
         )
 
         $description = Get-SchemaProperty -SchemaInfo $SchemaInfo -PropertyName "description" -Default $DefaultDescription
@@ -308,6 +309,50 @@ function Request-ALZConfigurationValue {
                     $newValue = $effectiveDefault
                 }
             }
+        } elseif ($source -eq "azureRegion" -and $Regions.Count -gt 0) {
+            # Show region selection list
+            Write-InformationColored "${Indent}  Available regions (AZ = Availability Zone support):" -ForegroundColor Cyan -InformationAction Continue
+            for ($i = 0; $i -lt $Regions.Count; $i++) {
+                $region = $Regions[$i]
+                $azIndicator = if ($region.hasAvailabilityZones) { " [AZ]" } else { "" }
+                if ($region.name -eq $effectiveDefault) {
+                    Write-InformationColored "${Indent}    [$($i + 1)] $($region.displayName) ($($region.name))$azIndicator (current)" -ForegroundColor Green -InformationAction Continue
+                } else {
+                    Write-InformationColored "${Indent}    [$($i + 1)] $($region.displayName) ($($region.name))$azIndicator" -ForegroundColor White -InformationAction Continue
+                }
+            }
+            Write-InformationColored "${Indent}    [0] Enter manually" -ForegroundColor Gray -InformationAction Continue
+
+            $selection = Read-Host "${Indent}  Select region (1-$($Regions.Count), 0 for manual entry, or press Enter for default)"
+            if ([string]::IsNullOrWhiteSpace($selection)) {
+                $newValue = $effectiveDefault
+            } elseif ($selection -eq "0") {
+                $newValue = Read-Host "${Indent}  Enter region name (e.g., uksouth, eastus)"
+                if ([string]::IsNullOrWhiteSpace($newValue)) {
+                    $newValue = $effectiveDefault
+                }
+            } else {
+                $selIndex = [int]$selection - 1
+                if ($selIndex -ge 0 -and $selIndex -lt $Regions.Count) {
+                    $newValue = $Regions[$selIndex].name
+                } else {
+                    Write-InformationColored "${Indent}  Invalid selection, using default" -ForegroundColor Yellow -InformationAction Continue
+                    $newValue = $effectiveDefault
+                }
+            }
+            # Require value if required
+            while ($isRequired -and [string]::IsNullOrWhiteSpace($newValue)) {
+                Write-InformationColored "${Indent}  This field is required. Please select a region." -ForegroundColor Red -InformationAction Continue
+                $selection = Read-Host "${Indent}  Select region (1-$($Regions.Count), 0 for manual entry)"
+                if ($selection -eq "0") {
+                    $newValue = Read-Host "${Indent}  Enter region name (e.g., uksouth, eastus)"
+                } elseif (-not [string]::IsNullOrWhiteSpace($selection)) {
+                    $selIndex = [int]$selection - 1
+                    if ($selIndex -ge 0 -and $selIndex -lt $Regions.Count) {
+                        $newValue = $Regions[$selIndex].name
+                    }
+                }
+            }
         } elseif ($format -eq "guid") {
             $newValue = Get-ValidatedGuidInput -PromptText $promptText -CurrentValue $effectiveDefault -Indent "${Indent}  "
             # Require value if required
@@ -477,7 +522,7 @@ function Request-ALZConfigurationValue {
                             continue
                         }
 
-                        $result = Read-InputValue -Key $subKey -CurrentValue $subCurrentValue -SchemaInfo $subSchemaInfo -Indent "  " -DefaultDescription "Subscription ID for $subKey" -Subscriptions $AzureContext.Subscriptions -ManagementGroups $AzureContext.ManagementGroups
+                        $result = Read-InputValue -Key $subKey -CurrentValue $subCurrentValue -SchemaInfo $subSchemaInfo -Indent "  " -DefaultDescription "Subscription ID for $subKey" -Subscriptions $AzureContext.Subscriptions -ManagementGroups $AzureContext.ManagementGroups -Regions $AzureContext.Regions
                         $subNewValue = $result.Value
                         $subIsSensitive = $result.IsSensitive
 
@@ -513,7 +558,7 @@ function Request-ALZConfigurationValue {
                     $schemaInfo = $vcsSchema.$key
                 }
 
-                $result = Read-InputValue -Key $key -CurrentValue $currentValue -SchemaInfo $schemaInfo -Subscriptions $AzureContext.Subscriptions -ManagementGroups $AzureContext.ManagementGroups
+                $result = Read-InputValue -Key $key -CurrentValue $currentValue -SchemaInfo $schemaInfo -Subscriptions $AzureContext.Subscriptions -ManagementGroups $AzureContext.ManagementGroups -Regions $AzureContext.Regions
                 $newValue = $result.Value
                 $isSensitive = $result.IsSensitive
 
