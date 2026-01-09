@@ -6,11 +6,14 @@ function Test-Tooling {
         [Parameter(Mandatory = $false)]
         [switch]$checkYamlModule,
         [Parameter(Mandatory = $false)]
-        [switch]$skipYamlModuleInstall
+        [switch]$skipYamlModuleInstall,
+        [Parameter(Mandatory = $false)]
+        [switch]$skipAzureLoginCheck
     )
 
     $checkResults = @()
     $hasFailure = $false
+    $azCliInstalledButNotLoggedIn = $false
 
     # Check if PowerShell is the correct version
     Write-Verbose "Checking PowerShell version"
@@ -134,25 +137,33 @@ function Test-Tooling {
                 message = "Azure CLI is installed."
                 result  = "Success"
             }
+
+            # Check if Azure CLI is logged in
+            Write-Verbose "Checking Azure CLI login status"
+            $azCliAccount = $(az account show -o json 2>$null) | ConvertFrom-Json
+            if ($azCliAccount) {
+                $checkResults += @{
+                    message = "Azure CLI is logged in. Tenant ID: $($azCliAccount.tenantId), Subscription: $($azCliAccount.name) ($($azCliAccount.id))"
+                    result  = "Success"
+                }
+            } else {
+                $azCliInstalledButNotLoggedIn = $true
+                if ($skipAzureLoginCheck.IsPresent) {
+                    $checkResults += @{
+                        message = "Azure CLI is not logged in. Login will be prompted later."
+                        result  = "Warning"
+                    }
+                } else {
+                    $checkResults += @{
+                        message = "Azure CLI is not logged in. Please login to Azure CLI using 'az login -t `"00000000-0000-0000-0000-000000000000`"', replacing the empty GUID with your tenant ID."
+                        result  = "Failure"
+                    }
+                    $hasFailure = $true
+                }
+            }
         } else {
             $checkResults += @{
                 message = "Azure CLI is not installed. Follow the instructions here: https://learn.microsoft.com/en-us/cli/azure/install-azure-cli"
-                result  = "Failure"
-            }
-            $hasFailure = $true
-        }
-
-        # Check if Azure CLI is logged in
-        Write-Verbose "Checking Azure CLI login status"
-        $azCliAccount = $(az account show -o json) | ConvertFrom-Json
-        if ($azCliAccount) {
-            $checkResults += @{
-                message = "Azure CLI is logged in. Tenant ID: $($azCliAccount.tenantId), Subscription: $($azCliAccount.name) ($($azCliAccount.id))"
-                result  = "Success"
-            }
-        } else {
-            $checkResults += @{
-                message = "Azure CLI is not logged in. Please login to Azure CLI using 'az login -t `"00000000-0000-0000-0000-000000000000}`"', replacing the empty GUID with your tenant ID."
                 result  = "Failure"
             }
             $hasFailure = $true
@@ -261,11 +272,15 @@ function Test-Tooling {
             $e = [char]27
             "$e[${color}m$($_.result)${e}[0m"
         }
-    }, @{ Label = "Check Details"; Expression = {$_.message} }  -AutoSize -Wrap
+    }, @{ Label = "Check Details"; Expression = {$_.message} }  -AutoSize -Wrap | Out-Host
 
     if($hasFailure) {
         Write-InformationColored "Accelerator software requirements have no been met, please review and install the missing software." -ForegroundColor Red -InformationAction Continue
         Write-InformationColored "Cannot continue with Deployment..." -ForegroundColor Red -InformationAction Continue
         throw "Accelerator software requirements have no been met, please review and install the missing software."
+    }
+
+    return @{
+        AzCliInstalledButNotLoggedIn = $azCliInstalledButNotLoggedIn
     }
 }

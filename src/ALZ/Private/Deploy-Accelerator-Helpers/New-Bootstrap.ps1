@@ -292,11 +292,17 @@ function New-Bootstrap {
         # Running terraform init and apply
         Write-InformationColored "Thank you for providing those inputs, we are now initializing and applying Terraform to bootstrap your environment..." -ForegroundColor Green -NewLineBefore -InformationAction Continue
 
+        # Get bootstrap_subscription_id from inputConfig if available
+        $bootstrapSubscriptionId = ""
+        if ($null -ne $inputConfig.bootstrap_subscription_id -and $null -ne $inputConfig.bootstrap_subscription_id.Value) {
+            $bootstrapSubscriptionId = $inputConfig.bootstrap_subscription_id.Value
+        }
+
         if ($autoApprove) {
-            Invoke-Terraform -moduleFolderPath $bootstrapModulePath -autoApprove -destroy:$destroy.IsPresent
+            Invoke-Terraform -moduleFolderPath $bootstrapModulePath -autoApprove -destroy:$destroy.IsPresent -bootstrapSubscriptionId $bootstrapSubscriptionId
         } else {
             Write-InformationColored "Once the plan is complete you will be prompted to confirm the apply." -ForegroundColor Green -NewLineBefore -InformationAction Continue
-            Invoke-Terraform -moduleFolderPath $bootstrapModulePath -destroy:$destroy.IsPresent
+            Invoke-Terraform -moduleFolderPath $bootstrapModulePath -destroy:$destroy.IsPresent -bootstrapSubscriptionId $bootstrapSubscriptionId
         }
 
         Write-InformationColored "Bootstrap has completed successfully! Thanks for using our tool. Head over to Phase 3 in the documentation to continue..." -ForegroundColor Green -NewLineBefore -InformationAction Continue

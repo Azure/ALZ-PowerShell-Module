@@ -20,7 +20,10 @@ function Invoke-Terraform {
         [string] $outputFilePath = "",
 
         [Parameter(Mandatory = $false)]
-        [switch] $silent
+        [switch] $silent,
+
+        [Parameter(Mandatory = $false)]
+        [string] $bootstrapSubscriptionId = ""
     )
 
     # Resolve to absolute path for `terraform -chdir` switch
@@ -31,9 +34,19 @@ function Invoke-Terraform {
         $removeSubscriptionId = $false
         if ($null -eq $env:ARM_SUBSCRIPTION_ID -or $env:ARM_SUBSCRIPTION_ID -eq "") {
             Write-Verbose "Setting environment variable ARM_SUBSCRIPTION_ID"
-            $subscriptionId = $(az account show --query id -o tsv)
+
+            $subscriptionId = ""
+            if ($bootstrapSubscriptionId -ne "") {
+                # Use the provided bootstrap subscription ID
+                Write-Verbose "Using provided bootstrap_subscription_id: $bootstrapSubscriptionId"
+                $subscriptionId = $bootstrapSubscriptionId
+            } else {
+                # Fall back to az cli
+                $subscriptionId = $(az account show --query id -o tsv)
+            }
+
             if ($null -eq $subscriptionId -or $subscriptionId -eq "") {
-                Write-Error "Subscription ID not found. Please ensure you are logged in to Azure and have selected a subscription. Use 'az account show' to check."
+                Write-Error "Subscription ID not found. Please ensure you are logged in to Azure and have selected a subscription, or provide bootstrap_subscription_id. Use 'az account show' to check."
                 return
             }
             $env:ARM_SUBSCRIPTION_ID = $subscriptionId

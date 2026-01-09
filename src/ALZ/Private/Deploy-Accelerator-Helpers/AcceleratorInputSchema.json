@@ -1,0 +1,208 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ALZ Accelerator Input Schema",
+  "description": "Schema providing descriptions and help links for Azure Landing Zone Accelerator bootstrap inputs",
+  "version": "1.0.0",
+  "inputs": {
+    "bootstrap": {
+      "description": "Common bootstrap configuration inputs shared across all version control systems",
+      "helpLink": "https://azure.github.io/Azure-Landing-Zones/accelerator/0_planning/#3---bootstrap-decisions",
+      "properties": {
+        "bootstrap_location": {
+          "description": "The Azure region where bootstrap resources like storage accounts and container instances will be created (e.g., uksouth, eastus, westeurope). See Decision 4 in the planning phase.",
+          "helpLink": "https://azure.github.io/Azure-Landing-Zones/accelerator/0_planning/#decision-4---choose-a-region-for-the-bootstrap-resources",
+          "type": "string",
+          "required": true,
+          "source": "azureRegion"
+        },
+        "root_parent_management_group_id": {
+          "description": "The ID of the parent management group under which the ALZ management group hierarchy will be created. See Decision 6 in the planning phase.",
+          "helpLink": "https://azure.github.io/Azure-Landing-Zones/accelerator/0_planning/#decision-6---choose-a-parent-management-group",
+          "type": "string",
+          "required": true,
+          "source": "managementGroup"
+        },
+        "subscription_ids": {
+          "description": "The subscription IDs for the platform landing zone subscriptions. See Decision 7 in the planning phase.",
+          "helpLink": "https://azure.github.io/Azure-Landing-Zones/accelerator/0_planning/#decision-7---choose-the-platform-subscriptions",
+          "type": "object",
+          "required": true,
+          "properties": {
+            "management": {
+              "description": "The subscription ID for the Management subscription where logging, monitoring, and automation resources will be deployed",
+              "type": "string",
+              "format": "guid",
+              "required": true,
+              "source": "subscription"
+            },
+            "identity": {
+              "description": "The subscription ID for the Identity subscription where identity resources like domain controllers will be deployed",
+              "type": "string",
+              "format": "guid",
+              "required": true,
+              "source": "subscription"
+            },
+            "connectivity": {
+              "description": "The subscription ID for the Connectivity subscription where networking resources like hubs, firewalls, and DNS will be deployed",
+              "type": "string",
+              "format": "guid",
+              "required": true,
+              "source": "subscription"
+            },
+            "security": {
+              "description": "The subscription ID for the Security subscription where security monitoring and governance resources will be deployed",
+              "type": "string",
+              "format": "guid",
+              "required": true,
+              "source": "subscription"
+            }
+          }
+        },
+        "bootstrap_subscription_id": {
+          "description": "The subscription ID where bootstrap resources will be created. See Decision 8 in the planning phase.",
+          "helpLink": "https://azure.github.io/Azure-Landing-Zones/accelerator/0_planning/#decision-8---choose-the-bootstrap-subscription",
+          "type": "string",
+          "format": "guid",
+          "required": true,
+          "source": "subscription"
+        },
+        "service_name": {
+          "description": "A short name identifier for the service, used in resource naming (e.g., 'alz'). See Decision 9 in the planning phase.",
+          "helpLink": "https://azure.github.io/Azure-Landing-Zones/accelerator/0_planning/#decision-9---choose-the-bootstrap-resource-naming",
+          "type": "string",
+          "required": true
+        },
+        "environment_name": {
+          "description": "The environment name used in resource naming (e.g., 'mgmt', 'prod'). See Decision 9 in the planning phase.",
+          "helpLink": "https://azure.github.io/Azure-Landing-Zones/accelerator/0_planning/#decision-9---choose-the-bootstrap-resource-naming",
+          "type": "string",
+          "required": true
+        },
+        "postfix_number": {
+          "description": "A numeric postfix for resource naming to ensure uniqueness. See Decision 9 in the planning phase.",
+          "helpLink": "https://azure.github.io/Azure-Landing-Zones/accelerator/0_planning/#decision-9---choose-the-bootstrap-resource-naming",
+          "type": "number",
+          "required": true
+        }
+      }
+    },
+    "github": {
+      "description": "GitHub-specific configuration inputs for the alz_github bootstrap module. See Decision 11 in the planning phase.",
+      "helpLink": "https://azure.github.io/Azure-Landing-Zones/accelerator/0_planning/#decision-11---choose--validate-your-version-control-system-specific-settings",
+      "properties": {
+        "github_personal_access_token": {
+          "description": "A GitHub Personal Access Token (PAT) with repo and workflow scopes for creating and managing the repository. Can also be supplied via environment variable TF_VAR_github_personal_access_token.",
+          "helpLink": "https://azure.github.io/Azure-Landing-Zones/accelerator/1_prerequisites/github/",
+          "type": "string",
+          "required": true,
+          "sensitive": true
+        },
+        "github_runners_personal_access_token": {
+          "description": "A GitHub Personal Access Token (PAT) for registering self-hosted runners. Can also be supplied via environment variable TF_VAR_github_runners_personal_access_token.",
+          "helpLink": "https://azure.github.io/Azure-Landing-Zones/accelerator/1_prerequisites/github/",
+          "type": "string",
+          "required": false,
+          "sensitive": true
+        },
+        "github_organization_name": {
+          "description": "The name of your GitHub organization or username where the repository will be created",
+          "helpLink": "https://azure.github.io/Azure-Landing-Zones/accelerator/1_prerequisites/github/",
+          "type": "string",
+          "required": true
+        },
+        "use_self_hosted_runners": {
+          "description": "Whether to deploy self-hosted GitHub Actions runners in Azure instead of using GitHub-hosted runners. See Decision 10 in the planning phase.",
+          "helpLink": "https://azure.github.io/Azure-Landing-Zones/accelerator/0_planning/#decision-10---choose-the-bootstrap-networking",
+          "type": "boolean",
+          "required": true
+        },
+        "use_private_networking": {
+          "description": "Whether to use private networking for the bootstrap resources. When enabled, resources will use private endpoints and be isolated from the public internet. See Decision 10 in the planning phase.",
+          "helpLink": "https://azure.github.io/Azure-Landing-Zones/accelerator/0_planning/#decision-10---choose-the-bootstrap-networking",
+          "type": "boolean",
+          "required": true
+        },
+        "apply_approvers": {
+          "description": "List of GitHub usernames or email addresses who can approve Terraform apply operations in the GitHub Actions workflow",
+          "helpLink": "https://azure.github.io/Azure-Landing-Zones/accelerator/1_prerequisites/github/",
+          "type": "array",
+          "required": false
+        }
+      }
+    },
+    "azure_devops": {
+      "description": "Azure DevOps-specific configuration inputs for the alz_azuredevops bootstrap module. See Decision 11 in the planning phase.",
+      "helpLink": "https://azure.github.io/Azure-Landing-Zones/accelerator/0_planning/#decision-11---choose--validate-your-version-control-system-specific-settings",
+      "properties": {
+        "azure_devops_personal_access_token": {
+          "description": "An Azure DevOps Personal Access Token (PAT) with full access for creating and managing the project, repositories, and pipelines. Can also be supplied via environment variable TF_VAR_azure_devops_personal_access_token.",
+          "helpLink": "https://azure.github.io/Azure-Landing-Zones/accelerator/1_prerequisites/azuredevops/",
+          "type": "string",
+          "required": true,
+          "sensitive": true
+        },
+        "azure_devops_agents_personal_access_token": {
+          "description": "An Azure DevOps Personal Access Token (PAT) for registering self-hosted agents. Can also be supplied via environment variable TF_VAR_azure_devops_agents_personal_access_token.",
+          "helpLink": "https://azure.github.io/Azure-Landing-Zones/accelerator/1_prerequisites/azuredevops/",
+          "type": "string",
+          "required": false,
+          "sensitive": true
+        },
+        "azure_devops_organization_name": {
+          "description": "The name of your Azure DevOps organization (the part after dev.azure.com/ in your URL)",
+          "helpLink": "https://azure.github.io/Azure-Landing-Zones/accelerator/1_prerequisites/azuredevops/",
+          "type": "string",
+          "required": true
+        },
+        "azure_devops_project_name": {
+          "description": "The name of the Azure DevOps project to create or use for the ALZ deployment",
+          "helpLink": "https://azure.github.io/Azure-Landing-Zones/accelerator/1_prerequisites/azuredevops/",
+          "type": "string",
+          "required": true
+        },
+        "use_self_hosted_agents": {
+          "description": "Whether to deploy self-hosted Azure DevOps agents in Azure instead of using Microsoft-hosted agents. See Decision 10 in the planning phase.",
+          "helpLink": "https://azure.github.io/Azure-Landing-Zones/accelerator/0_planning/#decision-10---choose-the-bootstrap-networking",
+          "type": "boolean",
+          "required": true
+        },
+        "use_private_networking": {
+          "description": "Whether to use private networking for the bootstrap resources. When enabled, resources will use private endpoints and be isolated from the public internet. See Decision 10 in the planning phase.",
+          "helpLink": "https://azure.github.io/Azure-Landing-Zones/accelerator/0_planning/#decision-10---choose-the-bootstrap-networking",
+          "type": "boolean",
+          "required": true
+        },
+        "apply_approvers": {
+          "description": "List of Azure DevOps user email addresses who can approve Terraform apply operations in the Azure Pipelines",
+          "helpLink": "https://azure.github.io/Azure-Landing-Zones/accelerator/1_prerequisites/azuredevops/",
+          "type": "array",
+          "required": false
+        }
+      }
+    },
+    "local": {
+      "description": "Local-specific configuration inputs for the alz_local bootstrap module (no CI/CD pipeline). Use this if you are using another version control system. See Decision 2 in the planning phase.",
+      "helpLink": "https://azure.github.io/Azure-Landing-Zones/accelerator/0_planning/#decision-2---choose-a-version-control-system",
+      "properties": {
+        "create_bootstrap_resources_in_azure": {
+          "description": "Whether to create bootstrap resources (storage account, managed identities) in Azure. Set to false if you plan to set up your own identities and state storage.",
+          "helpLink": "https://azure.github.io/Azure-Landing-Zones/accelerator/advancedscenarios/",
+          "type": "boolean",
+          "required": true
+        },
+        "grant_permissions_to_current_user": {
+          "description": "Whether to grant permissions for the current Azure CLI user to be able to deploy the Platform Landing Zones. Set to false if you plan to configure a third-party Version Control System.",
+          "helpLink": "https://azure.github.io/Azure-Landing-Zones/accelerator/advancedscenarios/",
+          "type": "boolean",
+          "required": true
+        },
+        "target_directory": {
+          "description": "The target directory for generated files. Leave empty to use the standard output directory.",
+          "helpLink": "https://azure.github.io/Azure-Landing-Zones/accelerator/advancedscenarios/",
+          "type": "string",
+          "required": false
+        }
+      }
+    }
+  }
+}
