@@ -64,7 +64,7 @@ function Request-AcceleratorConfigurationInput {
                         Write-InformationColored "ERROR: Required configuration file not found: inputs.yaml" -ForegroundColor Red -InformationAction Continue
                     }
                     Write-InformationColored "Please overwrite the folder structure by choosing 'y', or run New-AcceleratorFolderStructure manually." -ForegroundColor Yellow -InformationAction Continue
-                    return New-AcceleratorResult -Continue $false
+                    return ConvertTo-AcceleratorResult -Continue $false
                 }
             }
         }
@@ -74,29 +74,29 @@ function Request-AcceleratorConfigurationInput {
             if (-not $folderConfig.FolderExists) {
                 Write-InformationColored "ERROR: Target folder '$normalizedTargetPath' does not exist." -ForegroundColor Red -InformationAction Continue
                 Write-InformationColored "Cannot destroy a deployment that doesn't exist. Please check the path and try again." -ForegroundColor Yellow -InformationAction Continue
-                return New-AcceleratorResult -Continue $false
+                return ConvertTo-AcceleratorResult -Continue $false
             }
 
             if (-not (Test-Path -Path $folderConfig.ConfigFolderPath)) {
                 Write-InformationColored "ERROR: Config folder not found at '$($folderConfig.ConfigFolderPath)'" -ForegroundColor Red -InformationAction Continue
                 Write-InformationColored "Cannot destroy a deployment without configuration files." -ForegroundColor Yellow -InformationAction Continue
-                return New-AcceleratorResult -Continue $false
+                return ConvertTo-AcceleratorResult -Continue $false
             }
 
             if (-not (Test-Path -Path $folderConfig.InputsYamlPath)) {
                 Write-InformationColored "ERROR: Required configuration file not found: inputs.yaml" -ForegroundColor Red -InformationAction Continue
                 Write-InformationColored "Cannot destroy a deployment without inputs.yaml." -ForegroundColor Yellow -InformationAction Continue
-                return New-AcceleratorResult -Continue $false
+                return ConvertTo-AcceleratorResult -Continue $false
             }
 
             # Build input config file paths based on detected IaC type
-            $configPaths = Get-AcceleratorConfigPaths -IacType $folderConfig.IacType -ConfigFolderPath $folderConfig.ConfigFolderPath
+            $configPaths = Get-AcceleratorConfigPath -IacType $folderConfig.IacType -ConfigFolderPath $folderConfig.ConfigFolderPath
             $resolvedTargetPath = (Resolve-Path -Path $normalizedTargetPath).Path
 
             Write-InformationColored "Using existing folder: $resolvedTargetPath" -ForegroundColor Green -InformationAction Continue
             Write-InformationColored "`nProceeding with destroy..." -ForegroundColor Yellow -InformationAction Continue
 
-            return New-AcceleratorResult -Continue $true `
+            return ConvertTo-AcceleratorResult -Continue $true `
                 -InputConfigFilePaths $configPaths.InputConfigFilePaths `
                 -StarterAdditionalFiles $configPaths.StarterAdditionalFiles `
                 -OutputFolderPath "$resolvedTargetPath/output"
@@ -252,15 +252,15 @@ Deploy-Accelerator ``
 "@ -ForegroundColor Cyan -InformationAction Continue
             }
 
-            return New-AcceleratorResult -Continue $false
+            return ConvertTo-AcceleratorResult -Continue $false
         }
 
         # Build the result for continuing with deployment
-        $configPaths = Get-AcceleratorConfigPaths -IacType $selectedIacType -ConfigFolderPath $configFolderPath
+        $configPaths = Get-AcceleratorConfigPath -IacType $selectedIacType -ConfigFolderPath $configFolderPath
 
         Write-InformationColored "`nContinuing with deployment..." -ForegroundColor Green -InformationAction Continue
 
-        return New-AcceleratorResult -Continue $true `
+        return ConvertTo-AcceleratorResult -Continue $true `
             -InputConfigFilePaths $configPaths.InputConfigFilePaths `
             -StarterAdditionalFiles $configPaths.StarterAdditionalFiles `
             -OutputFolderPath "$resolvedTargetPath/output"
