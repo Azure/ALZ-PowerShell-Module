@@ -30,6 +30,7 @@ function Get-AcceleratorFolderConfiguration {
         IacType          = $null
         VersionControl   = $null
         ConfigFolderPath = $null
+        OutputFolderPath = $null
         InputsYamlPath   = $null
         InputsYaml       = $null
         InputsContent    = $null
@@ -45,9 +46,11 @@ function Get-AcceleratorFolderConfiguration {
     $result.FolderExists = $true
 
     $configFolderPath = Join-Path $FolderPath "config"
+    $outputFolderPath = Join-Path $FolderPath "output"
     $inputsYamlPath = Join-Path $configFolderPath "inputs.yaml"
 
     $result.ConfigFolderPath = $configFolderPath
+    $result.OutputFolderPath = $outputFolderPath
     $result.InputsYamlPath = $inputsYamlPath
 
     # Check if config folder exists

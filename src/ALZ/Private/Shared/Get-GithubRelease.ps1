@@ -26,8 +26,8 @@ function Get-GithubRelease {
         [string]
         $githubRepoUrl,
 
-        [Parameter(Mandatory = $false, Position = 2, HelpMessage = "The releases to download. Specify 'latest' to download the latest release. Defaults to the latest release.")]
-        [array]
+        [Parameter(Mandatory = $false, Position = 2, HelpMessage = "The release to download. Specify 'latest' to download the latest release. Defaults to the latest release.")]
+        [string]
         $release = "latest",
 
         [Parameter(Mandatory = $true, Position = 3, HelpMessage = "The directory to download the releases to.")]
@@ -51,39 +51,12 @@ function Get-GithubRelease {
     $parentDirectory = $targetDirectory
     $targetPath = Join-Path $targetDirectory $moduleTargetFolder
 
-    # Split Repo URL into parts
-    $repoOrgPlusRepo = $githubRepoUrl.Split("/")[-2..-1] -join "/"
+    # Get the release tag and data from GitHub
+    $releaseResult = Get-GithubReleaseTag -githubRepoUrl $githubRepoUrl -release $release
+    $releaseTag = $releaseResult.ReleaseTag
+    $releaseData = $releaseResult.ReleaseData
 
-    Write-Verbose "=====> Checking for release on GitHub Repo: $repoOrgPlusRepo"
-
-    # Get releases on repo
-    $repoReleaseUrl = "https://api.github.com/repos/$repoOrgPlusRepo/releases/$release"
-    if($release -ne "latest") {
-        $repoReleaseUrl = "https://api.github.com/repos/$repoOrgPlusRepo/releases/tags/$release"
-    }
-
-    $releaseData = Invoke-RestMethod $repoReleaseUrl -SkipHttpErrorCheck -StatusCodeVariable "statusCode"
-
-    Write-Verbose "Status code: $statusCode"
-
-    if($statusCode -eq 404) {
-        Write-Error "The release $release does not exist in the GitHub repository $githubRepoUrl - $repoReleaseUrl"
-        throw "The release $release does not exist in the GitHub repository $githubRepoUrl - $repoReleaseUrl"
-    }
-
-    # Handle transient errors like throttling
-    if($statusCode -ge 400 -and $statusCode -le 599) {
-        Write-InformationColored "Retrying as got the Status Code $statusCode, which may be a transient error." -ForegroundColor Yellow -InformationAction Continue
-        $releaseData = Invoke-RestMethod $repoReleaseUrl -RetryIntervalSec 3 -MaximumRetryCount 100
-    }
-
-    if($statusCode -ne 200) {
-        throw "Unable to query repository version, please check your internet connection and try again..."
-    }
-
-    $releaseTag = $releaseData.tag_name
-
-    if($queryOnly) {
+    if ($queryOnly) {
         return $releaseTag
     }
 

@@ -39,6 +39,13 @@ function Deploy-Accelerator {
 
         [Parameter(
             Mandatory = $false,
+            HelpMessage = "[OPTIONAL] The name of the output folder within the target directory. Defaults to 'output'. Environment variable: ALZ_output_folder_name. Config file input: output_folder_name."
+        )]
+        [Alias("ofn")]
+        [string] $output_folder_name = "output",
+
+        [Parameter(
+            Mandatory = $false,
             HelpMessage = "[OPTIONAL] The version tag of the bootstrap module release to download. Defaults to latest. Environment variable: ALZ_bootstrap_module_version. Config file input: bootstrap_module_version."
         )]
         [Alias("bv")]
@@ -63,14 +70,14 @@ function Deploy-Accelerator {
 
         [Parameter(
             Mandatory = $false,
-            HelpMessage = "[OPTIONAL] Determines that this run is to destroup the bootstrap. This is used to cleanup experiments. Environment variable: ALZ_destroy. Config file input: destroy."
+            HelpMessage = "[OPTIONAL] Determines that this run is to destroy the bootstrap. This is used to cleanup experiments. Environment variable: ALZ_destroy. Config file input: destroy."
         )]
         [Alias("d")]
         [switch] $destroy,
 
         [Parameter(
             Mandatory = $false,
-            HelpMessage = "[OPTIONAL] The bootstrap modules reposiotry url. This can be overridden for custom modules. Environment variable: ALZ_bootstrap_module_url. Config file input: bootstrap_module_url."
+            HelpMessage = "[OPTIONAL] The bootstrap modules repository url. This can be overridden for custom modules. Environment variable: ALZ_bootstrap_module_url. Config file input: bootstrap_module_url."
         )]
         [Alias("bu")]
         [Alias("bootstrapModuleUrl")]
@@ -94,7 +101,7 @@ function Deploy-Accelerator {
 
         [Parameter(
             Mandatory = $false,
-            HelpMessage = "[OPTIONAL] The folder that containes the bootstrap modules in the bootstrap repo. This can be overridden for custom modules. Environment variable: ALZ_bootstrap_source_folder. Config file input: bootstrap_source_folder."
+            HelpMessage = "[OPTIONAL] The folder that contains the bootstrap modules in the bootstrap repo. This can be overridden for custom modules. Environment variable: ALZ_bootstrap_source_folder. Config file input: bootstrap_source_folder."
         )]
         [Alias("bf")]
         [Alias("bootstrapSourceFolder")]
@@ -126,7 +133,7 @@ function Deploy-Accelerator {
 
         [Parameter(
             Mandatory = $false,
-            HelpMessage = "[OPTIONAL] Whether to overwrite bootstrap and starter modules if they already exist. Warning, this may result in unexpected behaviour and should only be used for local development purposes. Environment variable: ALZ_replace_files. Config file input: replace_files."
+            HelpMessage = "[OPTIONAL] Whether to overwrite bootstrap and starter modules if they already exist. Warning, this may result in unexpected behavior and should only be used for local development purposes. Environment variable: ALZ_replace_files. Config file input: replace_files."
         )]
         [Alias("rf")]
         [Alias("replaceFiles")]
@@ -173,7 +180,21 @@ function Deploy-Accelerator {
             Mandatory = $false,
             HelpMessage = "[OPTIONAL] Determines whether Clean the bootstrap folder of Terraform meta files. Only use for development purposes."
         )]
-        [switch] $cleanBootstrapFolder
+        [switch] $cleanBootstrapFolder,
+
+        [Parameter(
+            Mandatory = $false,
+            HelpMessage = "[OPTIONAL] Determines whether to upgrade to the latest version of modules when version is set to 'latest'. Without this flag, existing versions are used. Environment variable: ALZ_upgrade. Config file input: upgrade."
+        )]
+        [Alias("u")]
+        [switch] $upgrade,
+
+        [Parameter(
+            Mandatory = $false,
+            HelpMessage = "[OPTIONAL] Clears the cached Azure context (management groups, subscriptions, regions) and fetches fresh data from Azure."
+        )]
+        [Alias("cc")]
+        [switch] $clear_cache
     )
 
     $ProgressPreference = "SilentlyContinue"
@@ -252,7 +273,7 @@ function Deploy-Accelerator {
 
     # If no inputs provided, prompt user for folder structure setup
     if ($needsFolderStructureSetup) {
-        $setupResult = Request-AcceleratorConfigurationInput -Destroy:$destroy.IsPresent
+        $setupResult = Request-AcceleratorConfigurationInput -Destroy:$destroy.IsPresent -ClearCache:$clear_cache.IsPresent -OutputFolderName $output_folder_name
 
         if (-not $setupResult.Continue) {
             return
@@ -361,7 +382,9 @@ function Deploy-Accelerator {
             -releaseArtifactName $inputConfig.bootstrap_module_release_artifact_name.Value `
             -moduleOverrideFolderPath $inputConfig.bootstrap_module_override_folder_path.Value `
             -skipInternetChecks $inputConfig.skip_internet_checks.Value `
-            -replaceFile:$inputConfig.replace_files.Value
+            -replaceFile:$inputConfig.replace_files.Value `
+            -upgrade:$inputConfig.upgrade.Value `
+            -autoApprove:$inputConfig.auto_approve.Value
 
         $bootstrapReleaseTag = $versionAndPath.releaseTag
         $bootstrapPath = $versionAndPath.path
@@ -421,7 +444,9 @@ function Deploy-Accelerator {
                 -releaseArtifactName $starterReleaseArtifactName `
                 -moduleOverrideFolderPath $inputConfig.starter_module_override_folder_path.Value `
                 -skipInternetChecks $inputConfig.skip_internet_checks.Value `
-                -replaceFile:$inputConfig.replace_files.Value
+                -replaceFile:$inputConfig.replace_files.Value `
+                -upgrade:$inputConfig.upgrade.Value `
+                -autoApprove:$inputConfig.auto_approve.Value
 
             $starterReleaseTag = $versionAndPath.releaseTag
             $starterPath = $versionAndPath.path

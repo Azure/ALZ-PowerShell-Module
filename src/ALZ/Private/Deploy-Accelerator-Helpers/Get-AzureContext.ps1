@@ -7,6 +7,11 @@ function Get-AzureContext {
     that the currently logged-in user has access to. The results are returned as a hashtable
     containing arrays for use in interactive selection prompts.
     Only subscriptions from the current tenant are returned.
+    Results are cached locally for 1 hour to improve performance.
+    .PARAMETER OutputDirectory
+    The output directory where the .cache folder will be created for storing the cached Azure context.
+    .PARAMETER ClearCache
+    When set, clears the cached Azure context and fetches fresh data from Azure.
     .OUTPUTS
     Returns a hashtable with the following keys:
     - ManagementGroups: Array of objects with id and displayName properties
@@ -14,7 +19,40 @@ function Get-AzureContext {
     - Regions: Array of objects with name, displayName, and hasAvailabilityZones properties
     #>
     [CmdletBinding()]
-    param()
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$OutputDirectory,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$ClearCache
+    )
+
+    # Define cache file path and expiration time (1 hour)
+    $cacheFolder = Join-Path $OutputDirectory ".cache"
+    $cacheFilePath = Join-Path $cacheFolder "azure-context-cache.json"
+    $cacheExpirationHours = 24
+
+    # Clear cache if requested
+    if ($ClearCache.IsPresent -and (Test-Path $cacheFilePath)) {
+        Remove-Item -Path $cacheFilePath -Force
+        Write-InformationColored "Azure context cache cleared." -ForegroundColor Yellow -InformationAction Continue
+    }
+
+    # Check if valid cache exists
+    if (Test-Path $cacheFilePath) {
+        $cacheFile = Get-Item $cacheFilePath
+        $cacheAge = (Get-Date) - $cacheFile.LastWriteTime
+        if ($cacheAge.TotalHours -lt $cacheExpirationHours) {
+            try {
+                $cachedContext = Get-Content -Path $cacheFilePath -Raw | ConvertFrom-Json -AsHashtable
+                Write-InformationColored "Using cached Azure context (cached $([math]::Round($cacheAge.TotalMinutes)) minutes ago). Use -clearCache to refresh." -ForegroundColor Gray -InformationAction Continue
+                Write-InformationColored "  Found $($cachedContext.ManagementGroups.Count) management groups, $($cachedContext.Subscriptions.Count) subscriptions, and $($cachedContext.Regions.Count) regions" -ForegroundColor Gray -InformationAction Continue
+                return $cachedContext
+            } catch {
+                Write-Verbose "Failed to read cache file, will fetch fresh data."
+            }
+        }
+    }
 
     $azureContext = @{
         ManagementGroups = @()
@@ -52,6 +90,17 @@ function Get-AzureContext {
         }
 
         Write-InformationColored "  Found $($azureContext.ManagementGroups.Count) management groups, $($azureContext.Subscriptions.Count) subscriptions, and $($azureContext.Regions.Count) regions" -ForegroundColor Gray -InformationAction Continue
+
+        # Save to cache
+        try {
+            if (-not (Test-Path $cacheFolder)) {
+                New-Item -Path $cacheFolder -ItemType Directory -Force | Out-Null
+            }
+            $azureContext | ConvertTo-Json -Depth 10 | Set-Content -Path $cacheFilePath -Force
+            Write-Verbose "Azure context cached to $cacheFilePath"
+        } catch {
+            Write-Verbose "Failed to write cache file: $_"
+        }
     } catch {
         Write-InformationColored "  Warning: Could not query Azure resources. You will need to enter IDs manually." -ForegroundColor Yellow -InformationAction Continue
     }

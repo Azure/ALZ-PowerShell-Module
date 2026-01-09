@@ -124,10 +124,6 @@ InModuleScope 'ALZ' {
 
                 Mock -CommandName Invoke-Terraform -MockWith { }
 
-                Mock -CommandName Invoke-Upgrade -MockWith { }
-
-                Mock -CommandName Invoke-FullUpgrade -MockWith { }
-
                 Mock -CommandName Get-TerraformTool -MockWith {}
 
                 Mock -CommandName New-FolderStructure -MockWith {}
