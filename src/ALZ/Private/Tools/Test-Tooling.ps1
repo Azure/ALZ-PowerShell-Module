@@ -221,9 +221,19 @@ function Test-Tooling {
         }
 
         if ($yamlModule) {
-            $checkResults += @{
-                message = "powershell-yaml module is installed (version $($yamlModule.Version))."
-                result  = "Success"
+            # Import powershell-yaml module if not already loaded
+            if (-not (Get-Module -Name powershell-yaml)) {
+                Write-Verbose "Importing powershell-yaml module version $($yamlModule.Version)"
+                Import-Module -Name powershell-yaml -RequiredVersion $yamlModule.Version -Global
+                $checkResults += @{
+                    message = "powershell-yaml module is installed but was not imported, now imported (version $($yamlModule.Version))."
+                    result  = "Success"
+                }
+            } else {
+                $checkResults += @{
+                    message = "powershell-yaml module is installed and imported (version $($yamlModule.Version))."
+                    result  = "Success"
+                }
             }
         } elseif ($skipYamlModuleInstall.IsPresent) {
             Write-Verbose "powershell-yaml module is not installed, skipping installation attempt"
