@@ -216,7 +216,7 @@ function Deploy-Accelerator {
         Write-InformationColored "WARNING: Skipping the software requirements check..." -ForegroundColor Yellow -InformationAction Continue
     } else {
         Write-InformationColored "Checking the software requirements for the Accelerator..." -ForegroundColor Green -InformationAction Continue
-        $toolingResult = Test-Tooling -skipAlzModuleVersionCheck:$skip_alz_module_version_requirements_check.IsPresent -checkYamlModule:$checkYamlModule -skipYamlModuleInstall:$skip_yaml_module_install.IsPresent -skipAzureLoginCheck:$needsFolderStructureSetup
+        $toolingResult = Test-Tooling -skipAlzModuleVersionCheck:$skip_alz_module_version_requirements_check.IsPresent -checkYamlModule:$checkYamlModule -skipYamlModuleInstall:$skip_yaml_module_install.IsPresent -skipAzureLoginCheck:$needsFolderStructureSetup -destroy:$destroy.IsPresent
     }
 
     # If az cli is installed but not logged in, prompt for tenant ID and login with device code
