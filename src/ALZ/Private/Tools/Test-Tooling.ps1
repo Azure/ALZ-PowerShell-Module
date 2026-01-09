@@ -172,8 +172,22 @@ function Test-Tooling {
 
     $currentScope = "CurrentUser"
 
-    if($skipAlzModuleVersionCheck.IsPresent) {
+    $importedModule = Get-Module -Name ALZ
+    $isDevelopmentModule = ($null -ne $importedModule -and $importedModule.Version -eq "0.1.0")
+    if($skipAlzModuleVersionCheck.IsPresent -or $isDevelopmentModule) {
         Write-Verbose "Skipping ALZ module version check"
+
+        if($isDevelopmentModule) {
+            $checkResults += @{
+                message = "ALZ module version is 0.1.0. Skipping version check as this is a development module."
+                result  = "Warning"
+            }
+        } elseif ($skipAlzModuleVersionCheck.IsPresent) {
+            $checkResults += @{
+                message = "ALZ module version check was explicitly skipped using the -skipAlzModuleVersionRequirementsCheck parameter."
+                result  = "Warning"
+            }
+        }
     } else {
         # Check if latest ALZ module is installed
         Write-Verbose "Checking ALZ module version"
@@ -203,9 +217,19 @@ function Test-Tooling {
                 }
                 $hasFailure = $true
             } else {
-                $checkResults += @{
-                    message = "ALZ module is the latest version ($($alzModuleCurrentVersion.Version))."
-                    result  = "Success"
+                if($importedModule.Version -lt $alzModuleLatestVersion.Version) {
+                    Write-Verbose "Imported ALZ module version ($($importedModule.Version)) is older than the latest installed version ($($alzModuleLatestVersion.Version)), re-importing module"
+
+                    $checkResults += @{
+                        message = "ALZ module has the latest version installed, but not imported. Imported version: ($($importedModule.Version)). Please re-import the module using 'Remove-Module -Name ALZ; Import-Module -Name ALZ -Global' to use the latest version."
+                        result  = "Failure"
+                    }
+                    $hasFailure = $true
+                } else {
+                    $checkResults += @{
+                        message = "ALZ module is the latest version ($($alzModuleCurrentVersion.Version))."
+                        result  = "Success"
+                    }
                 }
             }
         }
