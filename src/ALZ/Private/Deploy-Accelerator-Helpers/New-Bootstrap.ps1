@@ -76,13 +76,6 @@ function New-Bootstrap {
 
         Write-Verbose "Bootstrap Module Path: $bootstrapModulePath"
 
-        # Run upgrade
-        Invoke-FullUpgrade `
-            -bootstrapModuleFolder $bootstrapDetails.Value.location `
-            -bootstrapRelease $bootstrapRelease `
-            -bootstrapPath $bootstrapTargetPath `
-            -autoApprove:$autoApprove.IsPresent
-
         # Get starter module
         $starterModulePath = ""
         $starterRootModuleFolder = ""

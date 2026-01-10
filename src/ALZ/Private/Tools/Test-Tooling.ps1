@@ -8,7 +8,9 @@ function Test-Tooling {
         [Parameter(Mandatory = $false)]
         [switch]$skipYamlModuleInstall,
         [Parameter(Mandatory = $false)]
-        [switch]$skipAzureLoginCheck
+        [switch]$skipAzureLoginCheck,
+        [Parameter(Mandatory = $false)]
+        [switch]$destroy
     )
 
     $checkResults = @()
@@ -202,29 +204,50 @@ function Test-Tooling {
         }
 
         if($null -eq $alzModuleCurrentVersion) {
-            $checkResults += @{
-                message = "ALZ module is not correctly installed. Please install the latest version using 'Install-PSResource -Name ALZ'."
-                result  = "Failure"
+            if($destroy.IsPresent) {
+                $checkResults += @{
+                    message = "ALZ module is not correctly installed. Please install the latest version using 'Install-PSResource -Name ALZ'. Continuing as -destroy flag is set."
+                    result  = "Warning"
+                }
+            } else {
+                $checkResults += @{
+                    message = "ALZ module is not correctly installed. Please install the latest version using 'Install-PSResource -Name ALZ'."
+                    result  = "Failure"
+                }
+                $hasFailure = $true
             }
-            $hasFailure = $true
         }
         $alzModuleLatestVersion = Find-PSResource -Name ALZ
         if ($null -ne $alzModuleCurrentVersion) {
             if ($alzModuleCurrentVersion.Version -lt $alzModuleLatestVersion.Version) {
-                $checkResults += @{
-                    message = "ALZ module is not the latest version. Your version: $($alzModuleCurrentVersion.Version), Latest version: $($alzModuleLatestVersion.Version). Please update to the latest version using 'Update-PSResource -Name ALZ'."
-                    result  = "Failure"
+                if($destroy.IsPresent) {
+                    $checkResults += @{
+                        message = "ALZ module is not the latest version. Your version: $($alzModuleCurrentVersion.Version), Latest version: $($alzModuleLatestVersion.Version). Please update to the latest version using 'Update-PSResource -Name ALZ'. Continuing as -destroy flag is set."
+                        result  = "Warning"
+                    }
+                } else {
+                    $checkResults += @{
+                        message = "ALZ module is not the latest version. Your version: $($alzModuleCurrentVersion.Version), Latest version: $($alzModuleLatestVersion.Version). Please update to the latest version using 'Update-PSResource -Name ALZ'."
+                        result  = "Failure"
+                    }
+                    $hasFailure = $true
                 }
-                $hasFailure = $true
             } else {
                 if($importedModule.Version -lt $alzModuleLatestVersion.Version) {
                     Write-Verbose "Imported ALZ module version ($($importedModule.Version)) is older than the latest installed version ($($alzModuleLatestVersion.Version)), re-importing module"
 
-                    $checkResults += @{
-                        message = "ALZ module has the latest version installed, but not imported. Imported version: ($($importedModule.Version)). Please re-import the module using 'Remove-Module -Name ALZ; Import-Module -Name ALZ -Global' to use the latest version."
-                        result  = "Failure"
+                    if($destroy.IsPresent) {
+                        $checkResults += @{
+                            message = "ALZ module has the latest version installed, but not imported. Imported version: ($($importedModule.Version)). Please re-import the module using 'Remove-Module -Name ALZ; Import-Module -Name ALZ -Global' to use the latest version. Continuing as -destroy flag is set."
+                            result  = "Warning"
+                        }
+                    } else {
+                        $checkResults += @{
+                            message = "ALZ module has the latest version installed, but not imported. Imported version: ($($importedModule.Version)). Please re-import the module using 'Remove-Module -Name ALZ; Import-Module -Name ALZ -Global' to use the latest version."
+                            result  = "Failure"
+                        }
+                        $hasFailure = $true
                     }
-                    $hasFailure = $true
                 } else {
                     $checkResults += @{
                         message = "ALZ module is the latest version ($($alzModuleCurrentVersion.Version))."

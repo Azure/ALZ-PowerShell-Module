@@ -23,6 +23,11 @@ function New-AcceleratorFolderStructure {
         [string] $targetFolderPath = "~/accelerator",
         [Parameter(
             Mandatory = $false,
+            HelpMessage = "[OPTIONAL] The name of the output folder. Defaults to 'output'"
+        )]
+        [string] $outputFolderName = "output",
+        [Parameter(
+            Mandatory = $false,
             HelpMessage = "[OPTIONAL] Force recreate of the target folder if it already exists"
         )]
         [switch] $force
@@ -53,7 +58,7 @@ function New-AcceleratorFolderStructure {
         $targetFolderPath = (Resolve-Path -Path $targetFolderPath).Path
 
         # Create target folder structure
-        $outputFolder = Join-Path $targetFolderPath "output"
+        $outputFolder = Join-Path $targetFolderPath $outputFolderName
         Write-Host "Creating output folder at $outputFolder"
         New-Item -ItemType "directory" $outputFolder -Force | Write-Verbose | Out-Null
 

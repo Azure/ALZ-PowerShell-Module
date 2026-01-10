@@ -18,7 +18,13 @@ function Request-AcceleratorConfigurationInput {
     [CmdletBinding(SupportsShouldProcess = $true)]
     param(
         [Parameter(Mandatory = $false)]
-        [switch] $Destroy
+        [switch] $Destroy,
+
+        [Parameter(Mandatory = $false)]
+        [switch] $ClearCache,
+
+        [Parameter(Mandatory = $false)]
+        [string] $OutputFolderName = "output"
     )
 
     if ($PSCmdlet.ShouldProcess("Accelerator folder structure setup", "prompt and create")) {
@@ -99,7 +105,7 @@ function Request-AcceleratorConfigurationInput {
             return ConvertTo-AcceleratorResult -Continue $true `
                 -InputConfigFilePaths $configPaths.InputConfigFilePaths `
                 -StarterAdditionalFiles $configPaths.StarterAdditionalFiles `
-                -OutputFolderPath "$resolvedTargetPath/output"
+                -OutputFolderPath $folderConfig.OutputFolderPath
         }
 
         # Set selected values from detected values (for use existing folder case)
@@ -161,6 +167,7 @@ function Request-AcceleratorConfigurationInput {
                 -versionControl $selectedVersionControl `
                 -scenarioNumber $selectedScenarioNumber `
                 -targetFolderPath $targetFolderPathInput `
+                -outputFolderName $OutputFolderName `
                 -force:$forceFlag
 
             Write-InformationColored "`nFolder structure created at: $normalizedTargetPath" -ForegroundColor Green -InformationAction Continue
@@ -168,6 +175,7 @@ function Request-AcceleratorConfigurationInput {
 
         # Resolve the path after folder creation or validation
         $resolvedTargetPath = (Resolve-Path -Path $normalizedTargetPath).Path
+        $outputFolderPath = Join-Path $resolvedTargetPath $OutputFolderName
         $configFolderPath = if ($useExistingFolder) {
             $folderConfig.ConfigFolderPath
         } else {
@@ -182,7 +190,7 @@ function Request-AcceleratorConfigurationInput {
         # Offer to configure inputs interactively (default is Yes)
         $configureNowResponse = Read-Host "`nWould you like to configure the input values interactively now? (Y/n)"
         if ($configureNowResponse -ne "n" -and $configureNowResponse -ne "N") {
-            $azureContext = Get-AzureContext
+            $azureContext = Get-AzureContext -OutputDirectory $outputFolderPath -ClearCache:$ClearCache.IsPresent
 
             Request-ALZConfigurationValue `
                 -ConfigFolderPath $configFolderPath `
@@ -236,19 +244,19 @@ function Request-AcceleratorConfigurationInput {
 Deploy-Accelerator ``
     -inputs "$configFolderPath/inputs.yaml", "$configFolderPath/platform-landing-zone.tfvars" ``
     -starterAdditionalFiles "$configFolderPath/lib" ``
-    -output "$resolvedTargetPath/output"
+    -output "$outputFolderPath"
 "@ -ForegroundColor Cyan -InformationAction Continue
             } elseif ($selectedIacType -eq "bicep") {
                 Write-InformationColored @"
 Deploy-Accelerator ``
     -inputs "$configFolderPath/inputs.yaml", "$configFolderPath/platform-landing-zone.yaml" ``
-    -output "$resolvedTargetPath/output"
+    -output "$outputFolderPath"
 "@ -ForegroundColor Cyan -InformationAction Continue
             } else {
                 Write-InformationColored @"
 Deploy-Accelerator ``
     -inputs "$configFolderPath/inputs.yaml" ``
-    -output "$resolvedTargetPath/output"
+    -output "$outputFolderPath"
 "@ -ForegroundColor Cyan -InformationAction Continue
             }
 
@@ -263,6 +271,6 @@ Deploy-Accelerator ``
         return ConvertTo-AcceleratorResult -Continue $true `
             -InputConfigFilePaths $configPaths.InputConfigFilePaths `
             -StarterAdditionalFiles $configPaths.StarterAdditionalFiles `
-            -OutputFolderPath "$resolvedTargetPath/output"
+            -OutputFolderPath $outputFolderPath
     }
 }

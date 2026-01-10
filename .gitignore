@@ -55,3 +55,4 @@ templates/.test_github
 .vscode/settings.json
 /ALZ
 .tools
+.cache
