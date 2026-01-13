@@ -100,6 +100,18 @@ function Request-AcceleratorConfigurationInput {
             $resolvedTargetPath = (Resolve-Path -Path $normalizedTargetPath).Path
 
             Write-InformationColored "Using existing folder: $resolvedTargetPath" -ForegroundColor Green -InformationAction Continue
+
+            # Prompt for sensitive inputs that are not already set (e.g., PATs)
+            Write-InformationColored "`nChecking for sensitive inputs that need to be provided..." -ForegroundColor Yellow -InformationAction Continue
+            $azureContext = Get-AzureContext -OutputDirectory $folderConfig.OutputFolderPath -ClearCache:$ClearCache.IsPresent
+
+            Request-ALZConfigurationValue `
+                -ConfigFolderPath $folderConfig.ConfigFolderPath `
+                -IacType $folderConfig.IacType `
+                -VersionControl $folderConfig.VersionControl `
+                -AzureContext $azureContext `
+                -SensitiveOnly
+
             Write-InformationColored "`nProceeding with destroy..." -ForegroundColor Yellow -InformationAction Continue
 
             return ConvertTo-AcceleratorResult -Continue $true `
