@@ -13,6 +13,8 @@ function Request-ALZConfigurationValue {
     The version control system (github, azure-devops, or local).
     .PARAMETER AzureContext
     A hashtable containing Azure context information including ManagementGroups, Subscriptions, and Regions arrays.
+    .PARAMETER SensitiveOnly
+    When set, only prompts for sensitive inputs that are not already set (via environment variables or non-empty config values).
     .OUTPUTS
     Returns $true if configuration was updated, $false otherwise.
     #>
@@ -28,7 +30,10 @@ function Request-ALZConfigurationValue {
         [string] $VersionControl,
 
         [Parameter(Mandatory = $false)]
-        [hashtable] $AzureContext = @{ ManagementGroups = @(); Subscriptions = @(); Regions = @() }
+        [hashtable] $AzureContext = @{ ManagementGroups = @(); Subscriptions = @(); Regions = @() },
+
+        [Parameter(Mandatory = $false)]
+        [switch] $SensitiveOnly
     )
 
     # Helper function to get a property from schema info safely
@@ -500,6 +505,11 @@ function Request-ALZConfigurationValue {
 
                 # Handle nested subscription_ids object (always in schema)
                 if ($key -eq "subscription_ids" -and $currentValue -is [System.Collections.IDictionary]) {
+                    # Skip subscription_ids in SensitiveOnly mode (subscription IDs are not sensitive)
+                    if ($SensitiveOnly.IsPresent) {
+                        continue
+                    }
+
                     # Only process if subscription_ids is in the schema
                     if ($null -eq $bootstrapSchema -or -not ($bootstrapSchema.PSObject.Properties.Name -contains "subscription_ids")) {
                         continue
@@ -556,6 +566,33 @@ function Request-ALZConfigurationValue {
                     $schemaInfo = $bootstrapSchema.$key
                 } elseif ($isInVcsSchema) {
                     $schemaInfo = $vcsSchema.$key
+                }
+
+                # Check if this is a sensitive input
+                $isSensitiveField = Get-SchemaProperty -SchemaInfo $schemaInfo -PropertyName "sensitive" -Default $false
+
+                # In SensitiveOnly mode, skip non-sensitive inputs
+                if ($SensitiveOnly.IsPresent -and -not $isSensitiveField) {
+                    continue
+                }
+
+                # In SensitiveOnly mode, check if sensitive value is already set
+                if ($SensitiveOnly.IsPresent -and $isSensitiveField) {
+                    # Check environment variable first
+                    $envVarName = "TF_VAR_$key"
+                    $envVarValue = [System.Environment]::GetEnvironmentVariable($envVarName)
+                    if (-not [string]::IsNullOrWhiteSpace($envVarValue)) {
+                        Write-InformationColored "`n[$key] - Already set via environment variable $envVarName" -ForegroundColor Gray -InformationAction Continue
+                        continue
+                    }
+
+                    # Check if config value is a real value (not empty, not a placeholder)
+                    $isPlaceholderValue = $currentValue -is [string] -and $currentValue -match '^\s*<.*>\s*$'
+                    $isSetViaEnvVarPlaceholder = $currentValue -is [string] -and $currentValue -like "Set via environment variable*"
+                    if (-not [string]::IsNullOrWhiteSpace($currentValue) -and -not $isPlaceholderValue -and -not $isSetViaEnvVarPlaceholder) {
+                        Write-InformationColored "`n[$key] - Already set in configuration" -ForegroundColor Gray -InformationAction Continue
+                        continue
+                    }
                 }
 
                 $result = Read-InputValue -Key $key -CurrentValue $currentValue -SchemaInfo $schemaInfo -Subscriptions $AzureContext.Subscriptions -ManagementGroups $AzureContext.ManagementGroups -Regions $AzureContext.Regions
