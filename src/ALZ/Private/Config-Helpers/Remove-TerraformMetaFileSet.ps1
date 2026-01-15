@@ -12,7 +12,9 @@ function Remove-TerraformMetaFileSet {
             ".terraform.lock.hcl",
             "examples",
             "yaml.tf",
-            ".alzlib"
+            ".alzlib",
+            "tfplan",
+            "tfplan.json"
         ),
         [Parameter(Mandatory = $false)]
         [switch]$writeVerboseLogs

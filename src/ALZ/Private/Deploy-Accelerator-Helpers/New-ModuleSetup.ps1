@@ -40,6 +40,19 @@ function New-ModuleSetup {
             return $versionAndPath
         }
 
+        if(-not [string]::IsNullOrWhiteSpace($moduleOverrideFolderPath)) {
+            Write-Verbose "Using module override folder path, skipping version checks."
+            return New-FolderStructure `
+                -targetDirectory $targetDirectory `
+                -url $url `
+                -release $desiredRelease `
+                -releaseArtifactName $releaseArtifactName `
+                -targetFolder $targetFolder `
+                -sourceFolder $sourceFolder `
+                -overrideSourceDirectoryPath $moduleOverrideFolderPath `
+                -replaceFiles:$replaceFiles.IsPresent
+        }
+
         $latestReleaseTag = $null
         try {
             $latestResult = Get-GithubReleaseTag -githubRepoUrl $url -release "latest"
