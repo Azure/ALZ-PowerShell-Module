@@ -63,7 +63,7 @@ function New-ModuleSetup {
         }
 
         $isAutoVersion = $release -eq "latest"
-        $firstRun = $null -eq $currentVersion
+        $firstRun = $null -eq $currentVersion -or $currentVersion -eq ""
         $shouldDownload = $false
 
         if($isAutoVersion -and $upgrade.IsPresent -and $null -eq $latestReleaseTag) {
@@ -88,11 +88,11 @@ function New-ModuleSetup {
         if(!$shouldDownload -or $isFirstRun) {
             $newVersionAvailable = $false
             $currentCalculatedVersion = $currentVersion
-            if($isAutoVersion -and $null -ne $latestReleaseTag -and $latestReleaseTag -ne $currentVersion) {
+            if(!$isFirstRun -and $isAutoVersion -and $null -ne $latestReleaseTag -and $latestReleaseTag -ne $currentVersion) {
                 $newVersionAvailable = $true
             }
 
-            if(!$isAutoVersion -and $null -ne $latestReleaseTag -and $latestReleaseTag -ne $currentVersion) {
+            if(!$isFirstRun -and !$isAutoVersion -and $null -ne $latestReleaseTag -and $latestReleaseTag -ne $currentVersion) {
                 $newVersionAvailable = $true
             }
 
