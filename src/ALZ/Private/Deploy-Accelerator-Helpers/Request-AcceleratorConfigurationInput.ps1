@@ -103,13 +103,13 @@ function Request-AcceleratorConfigurationInput {
 
             # Prompt for sensitive inputs that are not already set (e.g., PATs)
             Write-InformationColored "`nChecking for sensitive inputs that need to be provided..." -ForegroundColor Yellow -InformationAction Continue
-            $azureContext = Get-AzureContext -OutputDirectory $folderConfig.OutputFolderPath -ClearCache:$ClearCache.IsPresent
 
             Request-ALZConfigurationValue `
                 -ConfigFolderPath $folderConfig.ConfigFolderPath `
                 -IacType $folderConfig.IacType `
                 -VersionControl $folderConfig.VersionControl `
-                -AzureContext $azureContext `
+                -AzureContextOutputDirectory $folderConfig.OutputFolderPath `
+                -AzureContextClearCache:$ClearCache.IsPresent `
                 -SensitiveOnly
 
             Write-InformationColored "`nProceeding with destroy..." -ForegroundColor Yellow -InformationAction Continue
@@ -202,13 +202,22 @@ function Request-AcceleratorConfigurationInput {
         # Offer to configure inputs interactively (default is Yes)
         $configureNowResponse = Read-Host "`nWould you like to configure the input values interactively now? (Y/n)"
         if ($configureNowResponse -ne "n" -and $configureNowResponse -ne "N") {
-            $azureContext = Get-AzureContext -OutputDirectory $outputFolderPath -ClearCache:$ClearCache.IsPresent
+            Request-ALZConfigurationValue `
+                -ConfigFolderPath $configFolderPath `
+                -IacType $selectedIacType `
+                -VersionControl $selectedVersionControl `
+                -AzureContextOutputDirectory $outputFolderPath `
+                -AzureContextClearCache:$ClearCache.IsPresent
+        } else {
+            Write-InformationColored "`nChecking for sensitive inputs that need to be provided..." -ForegroundColor Yellow -InformationAction Continue
 
             Request-ALZConfigurationValue `
                 -ConfigFolderPath $configFolderPath `
                 -IacType $selectedIacType `
                 -VersionControl $selectedVersionControl `
-                -AzureContext $azureContext
+                -AzureContextOutputDirectory $outputFolderPath `
+                -AzureContextClearCache:$ClearCache.IsPresent `
+                -SensitiveOnly
         }
 
         # Check for VS Code or VS Code Insiders and offer to open the config folder

@@ -11,8 +11,10 @@ function Request-ALZConfigurationValue {
     The Infrastructure as Code type (terraform or bicep).
     .PARAMETER VersionControl
     The version control system (github, azure-devops, or local).
-    .PARAMETER AzureContext
-    A hashtable containing Azure context information including ManagementGroups, Subscriptions, and Regions arrays.
+    .PARAMETER AzureContextOutputDirectory
+    The output directory to pass to Get-AzureContext for caching Azure context data.
+    .PARAMETER AzureContextClearCache
+    When set, clears the cached Azure context data before fetching.
     .PARAMETER SensitiveOnly
     When set, only prompts for sensitive inputs that are not already set (via environment variables or non-empty config values).
     .OUTPUTS
@@ -30,11 +32,30 @@ function Request-ALZConfigurationValue {
         [string] $VersionControl,
 
         [Parameter(Mandatory = $false)]
-        [hashtable] $AzureContext = @{ ManagementGroups = @(); Subscriptions = @(); Regions = @() },
+        [string] $AzureContextOutputDirectory = "",
+
+        [Parameter(Mandatory = $false)]
+        [switch] $AzureContextClearCache,
 
         [Parameter(Mandatory = $false)]
         [switch] $SensitiveOnly
     )
+
+    # Lazy-loaded Azure context - only fetched when first needed
+    $lazyAzureContext = $null
+    $azureContextFetched = $false
+
+    function Get-LazyAzureContext {
+        if (-not $azureContextFetched) {
+            Set-Variable -Name azureContextFetched -Value $true -Scope 1
+            if (-not [string]::IsNullOrWhiteSpace($AzureContextOutputDirectory)) {
+                Set-Variable -Name lazyAzureContext -Value (Get-AzureContext -OutputDirectory $AzureContextOutputDirectory -ClearCache:$AzureContextClearCache.IsPresent) -Scope 1
+            } else {
+                Set-Variable -Name lazyAzureContext -Value (Get-AzureContext -ClearCache:$AzureContextClearCache.IsPresent) -Scope 1
+            }
+        }
+        return $lazyAzureContext
+    }
 
     # Helper function to get a property from schema info safely
     function Get-SchemaProperty {
@@ -70,11 +91,13 @@ function Request-ALZConfigurationValue {
             $CurrentValue,
             $SchemaInfo,
             $Indent = "",
-            $DefaultDescription = "No description available",
-            $Subscriptions = @(),
-            $ManagementGroups = @(),
-            $Regions = @()
+            $DefaultDescription = "No description available"
         )
+
+        # Initialize arrays that will be lazily populated
+        $Subscriptions = @()
+        $ManagementGroups = @()
+        $Regions = @()
 
         $description = Get-SchemaProperty -SchemaInfo $SchemaInfo -PropertyName "description" -Default $DefaultDescription
         $helpLink = Get-SchemaProperty -SchemaInfo $SchemaInfo -PropertyName "helpLink"
@@ -243,118 +266,145 @@ function Request-ALZConfigurationValue {
                 # Parse comma-separated values into an array
                 $newValue = @($inputValue -split ',' | ForEach-Object { $_.Trim() } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
             }
-        } elseif ($source -eq "subscription" -and $Subscriptions.Count -gt 0) {
-            # Show subscription selection list
-            Write-InformationColored "${Indent}  Available subscriptions:" -ForegroundColor Cyan -InformationAction Continue
-            for ($i = 0; $i -lt $Subscriptions.Count; $i++) {
-                $sub = $Subscriptions[$i]
-                if ($sub.id -eq $effectiveDefault) {
-                    Write-InformationColored "${Indent}    [$($i + 1)] $($sub.name) ($($sub.id)) (current)" -ForegroundColor Green -InformationAction Continue
-                } else {
-                    Write-InformationColored "${Indent}    [$($i + 1)] $($sub.name) ($($sub.id))" -ForegroundColor White -InformationAction Continue
+        } elseif ($source -eq "subscription") {
+            # Lazy load Azure context if we haven't loaded subscriptions yet
+            if ($Subscriptions.Count -eq 0) {
+                $ctx = Get-LazyAzureContext
+                if ($null -ne $ctx -and $ctx.ContainsKey('Subscriptions')) {
+                    $Subscriptions = $ctx.Subscriptions
                 }
             }
-            Write-InformationColored "${Indent}    [0] Enter manually" -ForegroundColor Gray -InformationAction Continue
+            if ($Subscriptions.Count -gt 0) {
+                # Show subscription selection list
+                Write-InformationColored "${Indent}  Available subscriptions:" -ForegroundColor Cyan -InformationAction Continue
+                for ($i = 0; $i -lt $Subscriptions.Count; $i++) {
+                    $sub = $Subscriptions[$i]
+                    if ($sub.id -eq $effectiveDefault) {
+                        Write-InformationColored "${Indent}    [$($i + 1)] $($sub.name) ($($sub.id)) (current)" -ForegroundColor Green -InformationAction Continue
+                    } else {
+                        Write-InformationColored "${Indent}    [$($i + 1)] $($sub.name) ($($sub.id))" -ForegroundColor White -InformationAction Continue
+                    }
+                }
+                Write-InformationColored "${Indent}    [0] Enter manually" -ForegroundColor Gray -InformationAction Continue
 
-            $selection = Read-Host "${Indent}  Select subscription (1-$($Subscriptions.Count), 0 for manual entry, or press Enter for default)"
-            if ([string]::IsNullOrWhiteSpace($selection)) {
-                $newValue = $effectiveDefault
-            } elseif ($selection -eq "0") {
-                $newValue = Get-ValidatedGuidInput -PromptText "${Indent}  Enter subscription ID" -CurrentValue $effectiveDefault -Indent "${Indent}  "
-            } else {
-                $selIndex = [int]$selection - 1
-                if ($selIndex -ge 0 -and $selIndex -lt $Subscriptions.Count) {
-                    $newValue = $Subscriptions[$selIndex].id
-                } else {
-                    Write-InformationColored "${Indent}  Invalid selection, using default" -ForegroundColor Yellow -InformationAction Continue
+                $selection = Read-Host "${Indent}  Select subscription (1-$($Subscriptions.Count), 0 for manual entry, or press Enter for default)"
+                if ([string]::IsNullOrWhiteSpace($selection)) {
                     $newValue = $effectiveDefault
-                }
-            }
-            # Require value if required
-            while ($isRequired -and [string]::IsNullOrWhiteSpace($newValue)) {
-                Write-InformationColored "${Indent}  This field is required. Please select a subscription." -ForegroundColor Red -InformationAction Continue
-                $selection = Read-Host "${Indent}  Select subscription (1-$($Subscriptions.Count), 0 for manual entry)"
-                if ($selection -eq "0") {
-                    $newValue = Get-ValidatedGuidInput -PromptText "${Indent}  Enter subscription ID" -CurrentValue "" -Indent "${Indent}  "
-                } elseif (-not [string]::IsNullOrWhiteSpace($selection)) {
+                } elseif ($selection -eq "0") {
+                    $newValue = Get-ValidatedGuidInput -PromptText "${Indent}  Enter subscription ID" -CurrentValue $effectiveDefault -Indent "${Indent}  "
+                } else {
                     $selIndex = [int]$selection - 1
                     if ($selIndex -ge 0 -and $selIndex -lt $Subscriptions.Count) {
                         $newValue = $Subscriptions[$selIndex].id
+                    } else {
+                        Write-InformationColored "${Indent}  Invalid selection, using default" -ForegroundColor Yellow -InformationAction Continue
+                        $newValue = $effectiveDefault
+                    }
+                }
+                # Require value if required
+                while ($isRequired -and [string]::IsNullOrWhiteSpace($newValue)) {
+                    Write-InformationColored "${Indent}  This field is required. Please select a subscription." -ForegroundColor Red -InformationAction Continue
+                    $selection = Read-Host "${Indent}  Select subscription (1-$($Subscriptions.Count), 0 for manual entry)"
+                    if ($selection -eq "0") {
+                        $newValue = Get-ValidatedGuidInput -PromptText "${Indent}  Enter subscription ID" -CurrentValue "" -Indent "${Indent}  "
+                    } elseif (-not [string]::IsNullOrWhiteSpace($selection)) {
+                        $selIndex = [int]$selection - 1
+                        if ($selIndex -ge 0 -and $selIndex -lt $Subscriptions.Count) {
+                            $newValue = $Subscriptions[$selIndex].id
+                        }
                     }
                 }
             }
-        } elseif ($source -eq "managementGroup" -and $ManagementGroups.Count -gt 0) {
-            # Show management group selection list
-            Write-InformationColored "${Indent}  Available management groups:" -ForegroundColor Cyan -InformationAction Continue
-            for ($i = 0; $i -lt $ManagementGroups.Count; $i++) {
-                $mg = $ManagementGroups[$i]
-                if ($mg.id -eq $effectiveDefault) {
-                    Write-InformationColored "${Indent}    [$($i + 1)] $($mg.displayName) ($($mg.id)) (current)" -ForegroundColor Green -InformationAction Continue
-                } else {
-                    Write-InformationColored "${Indent}    [$($i + 1)] $($mg.displayName) ($($mg.id))" -ForegroundColor White -InformationAction Continue
+        } elseif ($source -eq "managementGroup") {
+            # Lazy load Azure context if we haven't loaded management groups yet
+            if ($ManagementGroups.Count -eq 0) {
+                $ctx = Get-LazyAzureContext
+                if ($null -ne $ctx -and $ctx.ContainsKey('ManagementGroups')) {
+                    $ManagementGroups = $ctx.ManagementGroups
                 }
             }
-            Write-InformationColored "${Indent}    [0] Enter manually" -ForegroundColor Gray -InformationAction Continue
-            Write-InformationColored "${Indent}    Press Enter to leave empty (uses Tenant Root Group)" -ForegroundColor Gray -InformationAction Continue
+            if ($ManagementGroups.Count -gt 0) {
+                # Show management group selection list
+                Write-InformationColored "${Indent}  Available management groups:" -ForegroundColor Cyan -InformationAction Continue
+                for ($i = 0; $i -lt $ManagementGroups.Count; $i++) {
+                    $mg = $ManagementGroups[$i]
+                    if ($mg.id -eq $effectiveDefault) {
+                        Write-InformationColored "${Indent}    [$($i + 1)] $($mg.displayName) ($($mg.id)) (current)" -ForegroundColor Green -InformationAction Continue
+                    } else {
+                        Write-InformationColored "${Indent}    [$($i + 1)] $($mg.displayName) ($($mg.id))" -ForegroundColor White -InformationAction Continue
+                    }
+                }
+                Write-InformationColored "${Indent}    [0] Enter manually" -ForegroundColor Gray -InformationAction Continue
+                Write-InformationColored "${Indent}    Press Enter to leave empty (uses Tenant Root Group)" -ForegroundColor Gray -InformationAction Continue
 
-            $selection = Read-Host "${Indent}  Select management group (1-$($ManagementGroups.Count), 0 for manual entry, or press Enter for default)"
-            if ([string]::IsNullOrWhiteSpace($selection)) {
-                $newValue = $effectiveDefault
-            } elseif ($selection -eq "0") {
-                $newValue = Read-Host "${Indent}  Enter management group ID"
-                if ([string]::IsNullOrWhiteSpace($newValue)) {
+                $selection = Read-Host "${Indent}  Select management group (1-$($ManagementGroups.Count), 0 for manual entry, or press Enter for default)"
+                if ([string]::IsNullOrWhiteSpace($selection)) {
                     $newValue = $effectiveDefault
-                }
-            } else {
-                $selIndex = [int]$selection - 1
-                if ($selIndex -ge 0 -and $selIndex -lt $ManagementGroups.Count) {
-                    $newValue = $ManagementGroups[$selIndex].id
+                } elseif ($selection -eq "0") {
+                    $newValue = Read-Host "${Indent}  Enter management group ID"
+                    if ([string]::IsNullOrWhiteSpace($newValue)) {
+                        $newValue = $effectiveDefault
+                    }
                 } else {
-                    Write-InformationColored "${Indent}  Invalid selection, using default" -ForegroundColor Yellow -InformationAction Continue
-                    $newValue = $effectiveDefault
+                    $selIndex = [int]$selection - 1
+                    if ($selIndex -ge 0 -and $selIndex -lt $ManagementGroups.Count) {
+                        $newValue = $ManagementGroups[$selIndex].id
+                    } else {
+                        Write-InformationColored "${Indent}  Invalid selection, using default" -ForegroundColor Yellow -InformationAction Continue
+                        $newValue = $effectiveDefault
+                    }
                 }
             }
-        } elseif ($source -eq "azureRegion" -and $Regions.Count -gt 0) {
-            # Show region selection list
-            Write-InformationColored "${Indent}  Available regions (AZ = Availability Zone support):" -ForegroundColor Cyan -InformationAction Continue
-            for ($i = 0; $i -lt $Regions.Count; $i++) {
-                $region = $Regions[$i]
-                $azIndicator = if ($region.hasAvailabilityZones) { " [AZ]" } else { "" }
-                if ($region.name -eq $effectiveDefault) {
-                    Write-InformationColored "${Indent}    [$($i + 1)] $($region.displayName) ($($region.name))$azIndicator (current)" -ForegroundColor Green -InformationAction Continue
-                } else {
-                    Write-InformationColored "${Indent}    [$($i + 1)] $($region.displayName) ($($region.name))$azIndicator" -ForegroundColor White -InformationAction Continue
+        } elseif ($source -eq "azureRegion") {
+            # Lazy load Azure context if we haven't loaded regions yet
+            if ($Regions.Count -eq 0) {
+                $ctx = Get-LazyAzureContext
+                if ($null -ne $ctx -and $ctx.ContainsKey('Regions')) {
+                    $Regions = $ctx.Regions
                 }
             }
-            Write-InformationColored "${Indent}    [0] Enter manually" -ForegroundColor Gray -InformationAction Continue
+            if ($Regions.Count -gt 0) {
+                # Show region selection list
+                Write-InformationColored "${Indent}  Available regions (AZ = Availability Zone support):" -ForegroundColor Cyan -InformationAction Continue
+                for ($i = 0; $i -lt $Regions.Count; $i++) {
+                    $region = $Regions[$i]
+                    $azIndicator = if ($region.hasAvailabilityZones) { " [AZ]" } else { "" }
+                    if ($region.name -eq $effectiveDefault) {
+                        Write-InformationColored "${Indent}    [$($i + 1)] $($region.displayName) ($($region.name))$azIndicator (current)" -ForegroundColor Green -InformationAction Continue
+                    } else {
+                        Write-InformationColored "${Indent}    [$($i + 1)] $($region.displayName) ($($region.name))$azIndicator" -ForegroundColor White -InformationAction Continue
+                    }
+                }
+                Write-InformationColored "${Indent}    [0] Enter manually" -ForegroundColor Gray -InformationAction Continue
 
-            $selection = Read-Host "${Indent}  Select region (1-$($Regions.Count), 0 for manual entry, or press Enter for default)"
-            if ([string]::IsNullOrWhiteSpace($selection)) {
-                $newValue = $effectiveDefault
-            } elseif ($selection -eq "0") {
-                $newValue = Read-Host "${Indent}  Enter region name (e.g., uksouth, eastus)"
-                if ([string]::IsNullOrWhiteSpace($newValue)) {
+                $selection = Read-Host "${Indent}  Select region (1-$($Regions.Count), 0 for manual entry, or press Enter for default)"
+                if ([string]::IsNullOrWhiteSpace($selection)) {
                     $newValue = $effectiveDefault
-                }
-            } else {
-                $selIndex = [int]$selection - 1
-                if ($selIndex -ge 0 -and $selIndex -lt $Regions.Count) {
-                    $newValue = $Regions[$selIndex].name
-                } else {
-                    Write-InformationColored "${Indent}  Invalid selection, using default" -ForegroundColor Yellow -InformationAction Continue
-                    $newValue = $effectiveDefault
-                }
-            }
-            # Require value if required
-            while ($isRequired -and [string]::IsNullOrWhiteSpace($newValue)) {
-                Write-InformationColored "${Indent}  This field is required. Please select a region." -ForegroundColor Red -InformationAction Continue
-                $selection = Read-Host "${Indent}  Select region (1-$($Regions.Count), 0 for manual entry)"
-                if ($selection -eq "0") {
+                } elseif ($selection -eq "0") {
                     $newValue = Read-Host "${Indent}  Enter region name (e.g., uksouth, eastus)"
-                } elseif (-not [string]::IsNullOrWhiteSpace($selection)) {
+                    if ([string]::IsNullOrWhiteSpace($newValue)) {
+                        $newValue = $effectiveDefault
+                    }
+                } else {
                     $selIndex = [int]$selection - 1
                     if ($selIndex -ge 0 -and $selIndex -lt $Regions.Count) {
                         $newValue = $Regions[$selIndex].name
+                    } else {
+                        Write-InformationColored "${Indent}  Invalid selection, using default" -ForegroundColor Yellow -InformationAction Continue
+                        $newValue = $effectiveDefault
+                    }
+                }
+                # Require value if required
+                while ($isRequired -and [string]::IsNullOrWhiteSpace($newValue)) {
+                    Write-InformationColored "${Indent}  This field is required. Please select a region." -ForegroundColor Red -InformationAction Continue
+                    $selection = Read-Host "${Indent}  Select region (1-$($Regions.Count), 0 for manual entry)"
+                    if ($selection -eq "0") {
+                        $newValue = Read-Host "${Indent}  Enter region name (e.g., uksouth, eastus)"
+                    } elseif (-not [string]::IsNullOrWhiteSpace($selection)) {
+                        $selIndex = [int]$selection - 1
+                        if ($selIndex -ge 0 -and $selIndex -lt $Regions.Count) {
+                            $newValue = $Regions[$selIndex].name
+                        }
                     }
                 }
             }
@@ -532,7 +582,7 @@ function Request-ALZConfigurationValue {
                             continue
                         }
 
-                        $result = Read-InputValue -Key $subKey -CurrentValue $subCurrentValue -SchemaInfo $subSchemaInfo -Indent "  " -DefaultDescription "Subscription ID for $subKey" -Subscriptions $AzureContext.Subscriptions -ManagementGroups $AzureContext.ManagementGroups -Regions $AzureContext.Regions
+                        $result = Read-InputValue -Key $subKey -CurrentValue $subCurrentValue -SchemaInfo $subSchemaInfo -Indent "  " -DefaultDescription "Subscription ID for $subKey"
                         $subNewValue = $result.Value
                         $subIsSensitive = $result.IsSensitive
 
@@ -595,7 +645,7 @@ function Request-ALZConfigurationValue {
                     }
                 }
 
-                $result = Read-InputValue -Key $key -CurrentValue $currentValue -SchemaInfo $schemaInfo -Subscriptions $AzureContext.Subscriptions -ManagementGroups $AzureContext.ManagementGroups -Regions $AzureContext.Regions
+                $result = Read-InputValue -Key $key -CurrentValue $currentValue -SchemaInfo $schemaInfo
                 $newValue = $result.Value
                 $isSensitive = $result.IsSensitive
 
