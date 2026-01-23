@@ -1077,7 +1077,7 @@ function Remove-PlatformLandingZone {
                                                 -IsPlan -LogFilePath $using:TempLogFileForPlan
                                         } else {
                                             $result = (az account management-group subscription add --name $subscriptionsTargetManagementGroup --subscription $subscription.name 2>&1)
-                                            if($result) {
+                                            if($result.ToLower().Contains("Error")) {
                                                 Write-ToConsoleLog "Failed to move subscription to target management group: $($subscriptionsTargetManagementGroup), subscription: $($subscription.displayName), $result" -IsWarning -NoNewLine
                                             } else {
                                                 Write-ToConsoleLog "Moved subscription to target management group: $($subscriptionsTargetManagementGroup), subscription: $($subscription.displayName)" -NoNewLine
@@ -1092,8 +1092,8 @@ function Remove-PlatformLandingZone {
                                                 -IsPlan -LogFilePath $using:TempLogFileForPlan
                                         } else {
                                             $result = (az account management-group subscription remove --name $_ --subscription $subscription.name 2>&1)
-                                            if($result) {
-                                                Write-ToConsoleLog "Failed to remove subscription from management group: $_, subscription: $($subscription.displayName)" -IsWarning -NoNewLine
+                                            if($result.ToLower().Contains("Error")) {
+                                                Write-ToConsoleLog "Failed to remove subscription from management group: $_, subscription: $($subscription.displayName), $result" -IsWarning -NoNewLine
                                             } else {
                                                 Write-ToConsoleLog "Removed subscription from management group: $_, subscription: $($subscription.displayName)" -NoNewLine
                                             }
