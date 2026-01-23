@@ -1078,7 +1078,7 @@ function Remove-PlatformLandingZone {
                                         } else {
                                             $result = (az account management-group subscription add --name $subscriptionsTargetManagementGroup --subscription $subscription.name 2>&1)
                                             if($result) {
-                                                Write-ToConsoleLog "Failed to move subscription to target management group: $($subscriptionsTargetManagementGroup), subscription: $($subscription.displayName)" -IsWarning -NoNewLine
+                                                Write-ToConsoleLog "Failed to move subscription to target management group: $($subscriptionsTargetManagementGroup), subscription: $($subscription.displayName), $result" -IsWarning -NoNewLine
                                             } else {
                                                 Write-ToConsoleLog "Moved subscription to target management group: $($subscriptionsTargetManagementGroup), subscription: $($subscription.displayName)" -NoNewLine
                                             }
