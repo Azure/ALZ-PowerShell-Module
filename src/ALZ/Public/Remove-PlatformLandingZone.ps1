@@ -151,6 +151,15 @@ function Remove-PlatformLandingZone {
         may have already been deleted but you still want to clean up subscriptions.
         Default: $false (exit with error if no management groups found)
 
+    .PARAMETER ForceSubscriptionPlacement
+        A switch parameter that forces moving all subscriptions (provided via -Subscriptions or -AdditionalSubscriptions)
+        to the management group specified in -SubscriptionsTargetManagementGroup. If -SubscriptionsTargetManagementGroup
+        is not specified, the default management group is determined from the tenant's hierarchy settings
+        (via az account management-group hierarchy-settings list), falling back to tenant root if no default is configured.
+        Before moving, the function checks if each subscription is already under the target management group and skips
+        the move if it is.
+        Default: $false (do not force placement)
+
     .EXAMPLE
         Remove-PlatformLandingZone -ManagementGroups @("alz-test") -AdditionalSubscriptions @("Bootstrap-Sub-001")
 
@@ -329,7 +338,8 @@ function Remove-PlatformLandingZone {
         [string[]]$ManagementGroupsToDeleteNamePatterns = @(),
         [string[]]$RoleDefinitionsToDeleteNamePatterns = @(),
         [string[]]$DeploymentStacksToDeleteNamePatterns = @(),
-        [switch]$AllowNoManagementGroupMatch
+        [switch]$AllowNoManagementGroupMatch,
+        [switch]$ForceSubscriptionPlacement
     )
 
     function Write-ToConsoleLog {
@@ -1222,6 +1232,50 @@ function Remove-PlatformLandingZone {
         }
 
         $subscriptionsFinal = $subscriptionsFound.ToArray() | Sort-Object -Property name -Unique
+
+        # Force subscription placement if requested
+        if($ForceSubscriptionPlacement -and $subscriptionsFinal.Count -gt 0) {
+            $targetManagementGroupForPlacement = $SubscriptionsTargetManagementGroup
+
+            if(-not $targetManagementGroupForPlacement) {
+                # Get default management group from hierarchy settings
+                $tenantId = (az account show --query "tenantId" -o tsv)
+                $hierarchySettings = (az account management-group hierarchy-settings list --name $tenantId -o json 2>$null) | ConvertFrom-Json
+                if($hierarchySettings -and $hierarchySettings.value.defaultManagementGroup) {
+                    $targetManagementGroupForPlacement = $hierarchySettings.value.defaultManagementGroup
+                    Write-ToConsoleLog "No target management group specified, using default management group from hierarchy settings: $targetManagementGroupForPlacement" -IsWarning
+                } else {
+                    # Fall back to tenant root if no default is configured
+                    $targetManagementGroupForPlacement = $tenantId
+                    Write-ToConsoleLog "No default management group configured in hierarchy settings, using tenant root: $targetManagementGroupForPlacement" -IsWarning
+                }
+            }
+
+            if($targetManagementGroupForPlacement) {
+                Write-ToConsoleLog "Force subscription placement enabled, moving subscriptions to management group: $targetManagementGroupForPlacement" -NoNewLine
+
+                $subscriptionsFinal | ForEach-Object -Parallel {
+                    $subscription = $_
+                    $targetMg = $using:targetManagementGroupForPlacement
+                    $funcWriteToConsoleLog = $using:funcWriteToConsoleLog
+                    ${function:Write-ToConsoleLog} = $funcWriteToConsoleLog
+                    $TempLogFileForPlan = $using:TempLogFileForPlan
+
+                    Write-ToConsoleLog "Moving subscription to management group: $targetMg, subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
+                    if($using:PlanMode) {
+                        Write-ToConsoleLog `
+                            "Moving subscription to management group: $targetMg, subscription: $($subscription.Name) (ID: $($subscription.Id))", `
+                            "Would run: az account management-group subscription add --name $targetMg --subscription $($subscription.Id)" `
+                            -IsPlan -LogFilePath $TempLogFileForPlan
+                    } else {
+                        az account management-group subscription add --name $targetMg --subscription $subscription.Id 2>&1 | Out-Null
+                        Write-ToConsoleLog "Subscription placed in management group: $targetMg, subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
+                    }
+                } -ThrottleLimit $ThrottleLimit
+
+                Write-ToConsoleLog "Forced subscription placement completed." -IsSuccess
+            }
+        }
 
         if($subscriptionsFinal.Count -eq 0) {
             Write-ToConsoleLog "No subscriptions provided or found, skipping resource group deletion..." -IsWarning
