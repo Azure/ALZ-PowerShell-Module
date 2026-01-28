@@ -623,7 +623,7 @@ function Remove-PlatformLandingZone {
                 if (!$result) {
                     Write-ToConsoleLog "Deleted orphaned role assignment: $($roleAssignment.roleDefinitionName) from $($ScopeType): $ScopeNameForLogs" -NoNewLine
                 } else {
-                    Write-ToConsoleLog "Failed to delete orphaned role assignment: $($roleAssignment.roleDefinitionName) from $($ScopeType): $ScopeNameForLogs" -IsWarning -NoNewLine
+                    Write-ToConsoleLog "Failed to delete orphaned role assignment: $($roleAssignment.roleDefinitionName) from $($ScopeType): $ScopeNameForLogs", "Full error: $result" -IsWarning -NoNewLine
                 }
             } -ThrottleLimit $using:ThrottleLimit
 
@@ -723,7 +723,7 @@ function Remove-PlatformLandingZone {
                     if (!$result) {
                         Write-ToConsoleLog "Deleted deployment stack: $($deploymentStack.name) from $($scopeType): $scopeNameForLogs" -NoNewLine
                     } else {
-                        Write-ToConsoleLog "Failed to delete deployment stack: $($deploymentStack.name) from $($scopeType): $scopeNameForLogs" -IsWarning -NoNewLine
+                        Write-ToConsoleLog "Failed to delete deployment stack: $($deploymentStack.name) from $($scopeType): $scopeNameForLogs", "Full error: $result" -IsWarning -NoNewLine
                     }
                 } -ThrottleLimit $ThrottleLimit
 
@@ -781,7 +781,7 @@ function Remove-PlatformLandingZone {
                     if (!$result) {
                         Write-ToConsoleLog "Deleted deployment: $deploymentName from $($scopeType): $scopeNameForLogs" -NoNewLine
                     } else {
-                        Write-ToConsoleLog "Failed to delete deployment: $deploymentName from $($scopeType): $scopeNameForLogs" -IsWarning -NoNewLine
+                        Write-ToConsoleLog "Failed to delete deployment: $deploymentName from $($scopeType): $scopeNameForLogs", "Full error: $result" -IsWarning -NoNewLine
                     }
                 } -ThrottleLimit $ThrottleLimit
 
@@ -884,7 +884,7 @@ function Remove-PlatformLandingZone {
                         if (!$result) {
                             Write-ToConsoleLog "Deleted role assignment '$($assignment.name)' of custom role '$roleDefinitionName'" -NoNewLine
                         } else {
-                            Write-ToConsoleLog "Failed to delete role assignment '$($assignment.name)' of custom role '$roleDefinitionName'" -IsWarning -NoNewLine
+                            Write-ToConsoleLog "Failed to delete role assignment '$($assignment.name)' of custom role '$roleDefinitionName'", "Full error: $result" -IsWarning -NoNewLine
                         }
                     }
                 } -ThrottleLimit $using:ThrottleLimit
@@ -905,7 +905,7 @@ function Remove-PlatformLandingZone {
                 if (!$result) {
                     Write-ToConsoleLog "Deleted custom role definition: $($roleDefinition.roleName) (ID: $($roleDefinition.name))" -NoNewLine
                 } else {
-                    Write-ToConsoleLog "Failed to delete custom role definition: $($roleDefinition.roleName) (ID: $($roleDefinition.name))" -IsWarning -NoNewLine
+                    Write-ToConsoleLog "Failed to delete custom role definition: $($roleDefinition.roleName) (ID: $($roleDefinition.name))", "Full error: $result" -IsWarning -NoNewLine
                 }
             }
         }
@@ -1110,7 +1110,7 @@ function Remove-PlatformLandingZone {
                                         } else {
                                             $result = (az account management-group subscription add --name $subscriptionsTargetManagementGroup --subscription $subscription.name 2>&1)
                                             if($result -and $result.ToLower().Contains("Error")) {
-                                                Write-ToConsoleLog "Failed to move subscription to target management group: $($subscriptionsTargetManagementGroup), subscription: $($subscription.displayName), $result" -IsWarning -NoNewLine
+                                                Write-ToConsoleLog "Failed to move subscription to target management group: $($subscriptionsTargetManagementGroup), subscription: $($subscription.displayName)", "Full error: $result" -IsWarning -NoNewLine
                                             } else {
                                                 Write-ToConsoleLog "Moved subscription to target management group: $($subscriptionsTargetManagementGroup), subscription: $($subscription.displayName)" -NoNewLine
                                             }
@@ -1125,7 +1125,7 @@ function Remove-PlatformLandingZone {
                                         } else {
                                             $result = (az account management-group subscription remove --name $_ --subscription $subscription.name 2>&1)
                                             if($result -and $result.ToLower().Contains("Error")) {
-                                                Write-ToConsoleLog "Failed to remove subscription from management group: $_, subscription: $($subscription.displayName), $result" -IsWarning -NoNewLine
+                                                Write-ToConsoleLog "Failed to remove subscription from management group: $_, subscription: $($subscription.displayName)", "Full error: $result" -IsWarning -NoNewLine
                                             } else {
                                                 Write-ToConsoleLog "Removed subscription from management group: $_, subscription: $($subscription.displayName)" -NoNewLine
                                             }
@@ -1145,7 +1145,7 @@ function Remove-PlatformLandingZone {
                             } else {
                                 $result = (az account management-group delete --name $_ 2>&1)
                                 if($result -like "*Error*") {
-                                    Write-ToConsoleLog "Failed to delete management group: $_" -IsWarning -NoNewline
+                                    Write-ToConsoleLog "Failed to delete management group: $_", "Full error: $result" -IsWarning -NoNewline
                                 } else {
                                     Write-ToConsoleLog "Deleted management group: $_" -NoNewline
                                 }
@@ -1377,7 +1377,7 @@ function Remove-PlatformLandingZone {
                             if (!$result) {
                                 Write-ToConsoleLog "Deleted resource group for subscription: $($subscription.Name) (ID: $($subscription.Id)), resource group: $($ResourceGroupName)" -NoNewLine
                             } else {
-                                Write-ToConsoleLog "Delete resource group failed for subscription: $($subscription.Name) (ID: $($subscription.Id)), resource group: $($ResourceGroupName)" -NoNewLine
+                                Write-ToConsoleLog "Delete resource group failed for subscription: $($subscription.Name) (ID: $($subscription.Id)), resource group: $($ResourceGroupName)", "Full error: $result" -NoNewLine
                                 Write-ToConsoleLog "It will be retried once the other resource groups in the subscription have reported their status." -NoNewLine
                                 $retries = $using:resourceGroupsToRetry
                                 $retries.Add($_)
