@@ -1396,7 +1396,7 @@ function Remove-PlatformLandingZone {
 
                 if(-not $using:SkipDefenderPlanReset) {
                     Write-ToConsoleLog "Checking for Microsoft Defender for Cloud Plans to reset in subscription: $($subscription.Name) (ID: $($subscription.Id))"
-                    $defenderPlans = (az security pricing list --subscription $subscription.Id) | ConvertFrom-Json
+                    $defenderPlans = (az security pricing list --subscription $subscription.Id 2>$null) | ConvertFrom-Json
 
                     $defenderPlans.value | Where-Object { -not $_.deprecated } | ForEach-Object -Parallel {
                         $subscription = $using:subscription
