@@ -144,6 +144,13 @@ function Remove-PlatformLandingZone {
         containing "alz" anywhere in their name).
         Default: Empty array (delete all deployment stacks)
 
+    .PARAMETER AllowNoManagementGroupMatch
+        A switch parameter that allows the function to continue processing subscriptions even when no valid
+        management groups are found from the provided list. When specified, a warning is logged instead of an
+        error, and the function continues to subscription cleanup. This is useful when the management groups
+        may have already been deleted but you still want to clean up subscriptions.
+        Default: $false (exit with error if no management groups found)
+
     .EXAMPLE
         Remove-PlatformLandingZone -ManagementGroups @("alz-test") -AdditionalSubscriptions @("Bootstrap-Sub-001")
 
@@ -321,7 +328,8 @@ function Remove-PlatformLandingZone {
         [switch]$SkipCustomRoleDefinitionDeletion,
         [string[]]$ManagementGroupsToDeleteNamePatterns = @(),
         [string[]]$RoleDefinitionsToDeleteNamePatterns = @(),
-        [string[]]$DeploymentStacksToDeleteNamePatterns = @()
+        [string[]]$DeploymentStacksToDeleteNamePatterns = @(),
+        [switch]$AllowNoManagementGroupMatch
     )
 
     function Write-ToConsoleLog {
@@ -979,8 +987,12 @@ function Remove-PlatformLandingZone {
             }
 
             if($managementGroupsFound.Count -eq 0) {
-                Write-ToConsoleLog "No valid management groups found from the provided list, exiting..." -IsError
-                return
+                if($AllowNoManagementGroupMatch) {
+                    Write-ToConsoleLog "No valid management groups found from the provided list, but continuing due to -AllowNoManagementGroupMatch..." -IsWarning
+                } else {
+                    Write-ToConsoleLog "No valid management groups found from the provided list, exiting..." -IsError
+                    return
+                }
             }
 
             if(-not $BypassConfirmation) {
