@@ -28,7 +28,9 @@ function Remove-PlatformLandingZone {
         Use with extreme caution and ensure you have appropriate backups and authorization before executing.
 
     .PARAMETER ManagementGroups
-        An array of management group IDs or names to process. By default, the function deletes child management groups
+        An array of regex patterns to match against management group names or display names. The function queries
+        all management groups in the tenant and matches each pattern against both the name and displayName properties.
+        Multiple management groups can match a single pattern. By default, the function deletes child management groups
         one level below these target groups (not the target groups themselves). Use -DeleteTargetManagementGroups to
         delete the target groups as well. Subscriptions under these management groups will be discovered unless
         subscriptions are explicitly provided via the -Subscriptions parameter.
@@ -982,17 +984,25 @@ function Remove-PlatformLandingZone {
             }
 
             Write-ToConsoleLog "Validating provided management groups..."
-            foreach($managementGroup in $ManagementGroups) {
-                $managementGroupObject = (az account management-group show --name $managementGroup) | ConvertFrom-Json
 
-                if($null -eq $managementGroupObject) {
-                    Write-ToConsoleLog "Management group not found: $managementGroup" -IsWarning
+            # Query all management groups in the tenant first
+            $allManagementGroups = (az account management-group list --query "[].{name:name,displayName:displayName}" -o json) | ConvertFrom-Json
+
+            foreach($managementGroup in $ManagementGroups) {
+                # Treat $managementGroup as a regex and match against name or displayName
+                $matchingMgs = $allManagementGroups | Where-Object { $_.name -match $managementGroup -or $_.displayName -match $managementGroup }
+
+                if($null -eq $matchingMgs -or $matchingMgs.Count -eq 0) {
+                    Write-ToConsoleLog "Management group not found matching pattern: $managementGroup" -IsWarning
                     continue
                 }
 
-                $managementGroupsFound += @{
-                    Name        = $managementGroupObject.name
-                    DisplayName = $managementGroupObject.displayName
+                foreach($matchedMg in $matchingMgs) {
+                    Write-ToConsoleLog "Found management group matching pattern '$managementGroup': $($matchedMg.name) ($($matchedMg.displayName))" -NoNewLine
+                    $managementGroupsFound += @{
+                        Name        = $matchedMg.name
+                        DisplayName = $matchedMg.displayName
+                    }
                 }
             }
 
