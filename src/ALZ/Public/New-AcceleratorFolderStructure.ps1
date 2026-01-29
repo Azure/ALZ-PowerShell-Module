@@ -43,7 +43,7 @@ function New-AcceleratorFolderStructure {
         }
         if(Test-Path -Path $targetFolderPath) {
             if($force.IsPresent) {
-                Write-Host "Force flag is set, removing existing target folder at $targetFolderPath"
+                Write-ToConsoleLog "Force flag is set, removing existing target folder at $targetFolderPath" -IsWarning
                 try {
                     Remove-Item -Recurse -Force -Path $targetFolderPath -ErrorAction Stop | Write-Verbose | Out-Null
                 } catch {
@@ -53,18 +53,18 @@ function New-AcceleratorFolderStructure {
                 throw "Target folder $targetFolderPath already exists. Please specify a different folder path or remove the existing folder."
             }
         }
-        Write-Host "Creating target folder at $targetFolderPath"
+        Write-ToConsoleLog "Creating target folder at $targetFolderPath"
         New-Item -ItemType "directory" -Path $targetFolderPath -Force | Write-Verbose | Out-Null
         $targetFolderPath = (Resolve-Path -Path $targetFolderPath).Path
 
         # Create target folder structure
         $outputFolder = Join-Path $targetFolderPath $outputFolderName
-        Write-Host "Creating output folder at $outputFolder"
+        Write-ToConsoleLog "Creating output folder at $outputFolder"
         New-Item -ItemType "directory" $outputFolder -Force | Write-Verbose | Out-Null
 
         # Create temp folder
         $tempFolderPath = Join-Path $targetFolderPath "temp"
-        Write-Host "Creating temp folder at $tempFolderPath"
+        Write-ToConsoleLog "Creating temp folder at $tempFolderPath"
         New-Item -ItemType "directory" $tempFolderPath -Force | Write-Verbose | Out-Null
 
         # Map the repo
@@ -104,8 +104,8 @@ function New-AcceleratorFolderStructure {
 
         # Clone the repo and copy the bootstrap and starter configuration files
         $repo = $repos[$iacType]
-        Write-Host "Cloning repo $($repo.repoName)"
-        git clone --depth=1 "https://github.com/Azure/$($repo.repoName)" "$tempFolderPath" | Write-Verbose | Out-Null
+        Write-ToConsoleLog "Cloning repo $($repo.repoName)"
+        git clone --depth=1 "https://github.com/Azure/$($repo.repoName)" "$tempFolderPath" 2>&1 | Write-Verbose
         Set-Location $tempFolderPath
 
         Set-Location $currentPath
@@ -113,16 +113,16 @@ function New-AcceleratorFolderStructure {
         $bootstrapExampleFolderPath = "$exampleFolderPath/$($repo.bootstrapExampleFolderPath)"
 
         $configFolderPath = Join-Path $targetFolderPath "config"
-        Write-Host "Creating config folder at $configFolderPath"
+        Write-ToConsoleLog "Creating config folder at $configFolderPath"
         New-Item -ItemType "directory" $configFolderPath -Force | Write-Verbose | Out-Null
 
         # Copy the bootstrap configuration file
-        Write-Host "Copying bootstrap configuration file to $($targetFolderPath)/config/inputs.yaml"
+        Write-ToConsoleLog "Copying bootstrap configuration file to $($targetFolderPath)/config/inputs.yaml"
         Copy-Item -Path "$tempFolderPath/$bootstrapExampleFolderPath/inputs-$versionControl.yaml" -Destination "$targetFolderPath/config/inputs.yaml" -Force | Write-Verbose | Out-Null
 
         if ($repo.hasLibrary) {
             $libFolderPath = "$($repo.folderToClone)/$($repo.libraryFolderPath)"
-            Write-Host "Copying library files to $($targetFolderPath)/config"
+            Write-ToConsoleLog "Copying library files to $($targetFolderPath)/config"
             Copy-Item -Path "$tempFolderPath/$libFolderPath" -Destination "$targetFolderPath/config" -Recurse -Force | Write-Verbose | Out-Null
         }
 
@@ -140,11 +140,11 @@ function New-AcceleratorFolderStructure {
                 9 = "full-single-region-nva/virtual-wan.tfvars"
             }
 
-            Write-Host "Copying platform landing zone configuration file for scenario $scenarioNumber to $($targetFolderPath)/config/platform-landing-zone.tfvars"
+            Write-ToConsoleLog "Copying platform landing zone configuration file for scenario $scenarioNumber to $($targetFolderPath)/config/platform-landing-zone.tfvars"
             Copy-Item -Path "$tempFolderPath/$exampleFolderPath/$($scenarios[$scenarioNumber])" -Destination "$targetFolderPath/config/platform-landing-zone.tfvars" -Force | Write-Verbose | Out-Null
 
         } elseif ($repo.platformLandingZoneFilePath -ne "") {
-            Write-Host "Copying platform landing zone configuration file to $($targetFolderPath)/config/platform-landing-zone.yaml"
+            Write-ToConsoleLog "Copying platform landing zone configuration file to $($targetFolderPath)/config/platform-landing-zone.yaml"
             Copy-Item -Path "$tempFolderPath/$exampleFolderPath/$($repo.platformLandingZoneFilePath)" -Destination "$targetFolderPath/config/platform-landing-zone.yaml" -Force | Write-Verbose | Out-Null
         }
 

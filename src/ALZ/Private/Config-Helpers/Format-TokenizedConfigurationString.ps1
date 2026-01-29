@@ -15,7 +15,7 @@ function Format-TokenizedConfigurationString {
         if ($null -ne $configuration.$value) {
             $returnValue += $configuration.$value.Value
         } elseif (($null -eq $configuration.$value) -and $isToken) {
-            Write-InformationColored "Specified replacement token '${value}' not found in configuration." -ForegroundColor Yellow -InformationAction Continue
+            Write-ToConsoleLog "Specified replacement token '${value}' not found in configuration." -IsWarning
             $returnValue += "{%$value%}"
         } else {
             $returnValue += $value

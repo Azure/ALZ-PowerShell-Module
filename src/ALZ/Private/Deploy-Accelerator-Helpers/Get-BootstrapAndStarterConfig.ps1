@@ -34,7 +34,7 @@ function Get-BootstrapAndStarterConfig {
         # Get the bootstrap details and validate it exists (use alias for legacy values)
         $bootstrapDetails = $bootstrapModules.PsObject.Properties | Where-Object { $_.Name -eq $bootstrap -or $bootstrap -in $_.Value.aliases }
         if($null -eq $bootstrapDetails) {
-            Write-InformationColored "The bootstrap type '$bootstrap' that you have selected does not exist. Please try again with a valid bootstrap type..." -ForegroundColor Red -InformationAction Continue
+            Write-ToConsoleLog "The bootstrap type '$bootstrap' that you have selected does not exist. Please try again with a valid bootstrap type..." -IsError
             throw
         }
 
@@ -48,7 +48,7 @@ function Get-BootstrapAndStarterConfig {
             $starterModuleType = $bootstrapStarterModule.Value
             $starterModuleDetails = $starterModules.PSObject.Properties | Where-Object { $_.Name -eq $starterModuleType }
             if($null -eq $starterModuleDetails) {
-                Write-InformationColored "The starter modules '$($starterModuleType)' for the bootstrap type '$bootstrap' that you have selected does not exist. This could be an issue with your custom configuration, please check and try again..." -ForegroundColor Red -InformationAction Continue
+                Write-ToConsoleLog "The starter modules '$($starterModuleType)' for the bootstrap type '$bootstrap' that you have selected does not exist. This could be an issue with your custom configuration, please check and try again..." -IsError
                 throw
             }
 

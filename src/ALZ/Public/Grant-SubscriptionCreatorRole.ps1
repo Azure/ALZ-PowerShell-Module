@@ -53,8 +53,8 @@ Grant-SubscriptionCreatorRole -servicePrincipalObjectId "bd42568a-7dd8-489b-bbbb
     )
 
     # Checks
-    Write-Host "Checking inputs..." -ForegroundColor Cyan
-    Write-Host ""
+    Write-ToConsoleLog "Checking inputs..."
+    Write-ToConsoleLog ""
 
     if($null -eq $servicePrincipalObjectId -or $servicePrincipalObjectId -eq "") {
         $errorMessage = "The 'Service Principal Object ID' parameter is required. Please provide a valid value and try again."
@@ -67,23 +67,23 @@ Grant-SubscriptionCreatorRole -servicePrincipalObjectId "bd42568a-7dd8-489b-bbbb
 
     if($null -ne $billingAccountID -and $billingAccountID -ne "" -and $null -ne $billingResourceID -and $billingResourceID -ne "" -and $null -ne $invoiceSectionID -and $invoiceSectionID -ne "") {
         $billingResourceID = $microsoftCustomerAgreementResourceIDFormat
-        Write-Host "Microsoft Customer Agreement (MCA) parameters provided..."
+        Write-ToConsoleLog "Microsoft Customer Agreement (MCA) parameters provided..."
     }
 
     if($null -ne $billingAccountID -and $billingAccountID -ne "" -and $null -ne $enrollmentAccountID -and $enrollmentAccountID -ne "") {
         $billingResourceID = $enterpriseAgreementResourceIDFormat
-        Write-Host "Enterpruse Agreement (EA) parameters provided..."
+        Write-ToConsoleLog "Enterprise Agreement (EA) parameters provided..."
     }
 
     if($null -ne $billingResourceID -and $billingResourceID -ne "") {
-        Write-Host "Billing Resource ID or required parameters provided..." -ForegroundColor Green
+        Write-ToConsoleLog "Billing Resource ID or required parameters provided..." -IsSuccess
     } else {
         $errorMessage = "No Billing Resource ID or required parameters provided."
         Write-Error $errorMessage
         throw $errorMessage
     }
 
-    Write-Host "Checking the specified billing account resource ID '$($billingResourceID)' exists..." -ForegroundColor Yellow
+    Write-ToConsoleLog "Checking the specified billing account resource ID '$($billingResourceID)' exists..." -IsWarning
 
     # Check $billingResourceID is valid and exists
     $getbillingResourceID = $(az rest --method GET --url "$managementApiPrefix$($billingResourceID)?api-version=2024-04-01") | ConvertFrom-Json
@@ -93,12 +93,12 @@ Grant-SubscriptionCreatorRole -servicePrincipalObjectId "bd42568a-7dd8-489b-bbbb
         Write-Error $errorMessage
         throw $errorMessage
     } else {
-        Write-Host "The specified billing account ID '$($billingResourceID)' exists. Continuing..." -ForegroundColor Green
-        Write-Host ""
+        Write-ToConsoleLog "The specified billing account ID '$($billingResourceID)' exists. Continuing..." -IsSuccess
+        Write-ToConsoleLog ""
     }
 
     # Check $existingSpnMiObjectId is valid and exists
-    Write-Host "Checking the specified service principal 'Object ID' '$($servicePrincipalObjectId)' exists..." -ForegroundColor Yellow
+    Write-ToConsoleLog "Checking the specified service principal 'Object ID' '$($servicePrincipalObjectId)' exists..." -IsWarning
     $getexistingSpnMiObjectId = $(az ad sp show --id $servicePrincipalObjectId) | ConvertFrom-Json
 
     if ($null -eq $getexistingSpnMiObjectId) {
@@ -110,14 +110,14 @@ Grant-SubscriptionCreatorRole -servicePrincipalObjectId "bd42568a-7dd8-489b-bbbb
         $finalSpnMiDisplayName = $getexistingSpnMiObjectId.displayName
         $finalSpnMiType = $getexistingSpnMiObjectId.servicePrincipalType
 
-        Write-Host "The specified service principal 'Object ID' '$($servicePrincipalObjectId)' exists with a Display Name of: '$finalSpnMiDisplayName' with a Type of: '$finalSpnMiType'. Continuing..." -ForegroundColor Green
-        Write-Host ""
+        Write-ToConsoleLog "The specified service principal 'Object ID' '$($servicePrincipalObjectId)' exists with a Display Name of: '$finalSpnMiDisplayName' with a Type of: '$finalSpnMiType'. Continuing..." -IsSuccess
+        Write-ToConsoleLog ""
     }
 
     # Grant service principal access to the specified EA billing account
     $subscriptionCreatorRoleId = "a0bcee42-bf30-4d1b-926a-48d21664ef71"
-    Write-Host "Pre-reqs passed and complete..." -ForegroundColor Cyan
-    Write-Host "Granting the 'SubscriptionCreator' role (ID: '$subscriptionCreatorRoleId') on the Billing Account ID of: '$($billingResourceID)' to the AAD Object ID of: '$($finalSpnMiObjectId)' which has the Display Name of: '$($finalSpnMiDisplayName)'..." -ForegroundColor Yellow
+    Write-ToConsoleLog "Pre-reqs passed and complete..." -IsSuccess
+    Write-ToConsoleLog "Granting the 'SubscriptionCreator' role (ID: '$subscriptionCreatorRoleId') on the Billing Account ID of: '$($billingResourceID)' to the AAD Object ID of: '$($finalSpnMiObjectId)' which has the Display Name of: '$($finalSpnMiDisplayName)'..." -IsWarning
 
     # Get the current AAD Tenant ID
     $tenantId = $(az account show --query tenantId -o tsv)
@@ -141,8 +141,8 @@ Grant-SubscriptionCreatorRole -servicePrincipalObjectId "bd42568a-7dd8-489b-bbbb
         Write-Error $errorMessage
         throw $errorMessage
     } else {
-        Write-Host "The 'SubscriptionCreator' role has been granted to the service principal." -ForegroundColor Green
-        Write-Host ""
+        Write-ToConsoleLog "The 'SubscriptionCreator' role has been granted to the service principal." -IsSuccess
+        Write-ToConsoleLog ""
     }
 
     return

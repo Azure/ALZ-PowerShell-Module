@@ -234,41 +234,54 @@ function Deploy-Accelerator {
     # Check software requirements first before any prompting
     $toolingResult = $null
     if ($skip_requirements_check.IsPresent) {
-        Write-InformationColored "WARNING: Skipping the software requirements check..." -ForegroundColor Yellow -InformationAction Continue
+        Write-ToConsoleLog "WARNING: Skipping the software requirements check..." -IsWarning
     } else {
-        Write-InformationColored "Checking the software requirements for the Accelerator..." -ForegroundColor Green -InformationAction Continue
-        $toolingResult = Test-Tooling -skipAlzModuleVersionCheck:$skip_alz_module_version_requirements_check.IsPresent -checkYamlModule:$checkYamlModule -skipYamlModuleInstall:$skip_yaml_module_install.IsPresent -skipAzureLoginCheck:$needsFolderStructureSetup -destroy:$destroy.IsPresent
+        Write-ToConsoleLog "Checking the software requirements for the Accelerator..."
+        $checks = @("PowerShell", "Git", "AzureCliOrEnvVars", "AlzModule")
+        if (-not $needsFolderStructureSetup) {
+            $checks += "AzureLogin"
+        }
+        if (-not $skip_alz_module_version_requirements_check.IsPresent) {
+            $checks += "AlzModuleVersion"
+        }
+        if ($checkYamlModule) {
+            $checks += "YamlModule"
+            if (-not $skip_yaml_module_install.IsPresent) {
+                $checks += "YamlModuleAutoInstall"
+            }
+        }
+        $toolingResult = Test-Tooling -Checks $checks -destroy:$destroy.IsPresent
     }
 
     # If az cli is installed but not logged in, prompt for tenant ID and login with device code
     if ($needsFolderStructureSetup -and $toolingResult -and $toolingResult.AzCliInstalledButNotLoggedIn) {
-        Write-InformationColored "`nAzure CLI is installed but not logged in. Let's log you in..." -ForegroundColor Yellow -InformationAction Continue
-        Write-InformationColored "You'll need your Azure Tenant ID. You can find this in the Azure Portal under Microsoft Entra ID > Overview." -ForegroundColor Cyan -InformationAction Continue
+        Write-ToConsoleLog "Azure CLI is installed but not logged in. Let's log you in..." -IsWarning
+        Write-ToConsoleLog "You'll need your Azure Tenant ID. You can find this in the Azure Portal under Microsoft Entra ID > Overview."
 
         $tenantId = ""
         $guidRegex = "^(\{){0,1}[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}(\}){0,1}$"
         do {
-            $tenantId = Read-Host "`nEnter your Azure Tenant ID (GUID)"
+            $tenantId = Read-Host "Enter your Azure Tenant ID (GUID)"
             if ($tenantId -notmatch $guidRegex) {
-                Write-InformationColored "Invalid Tenant ID format. Please enter a valid GUID (e.g., 00000000-0000-0000-0000-000000000000)" -ForegroundColor Red -InformationAction Continue
+                Write-ToConsoleLog "Invalid Tenant ID format. Please enter a valid GUID (e.g., 00000000-0000-0000-0000-000000000000)" -IsError
             }
         } while ($tenantId -notmatch $guidRegex)
 
-        Write-InformationColored "`nLogging in to Azure using device code authentication..." -ForegroundColor Green -InformationAction Continue
-        Write-InformationColored "Opening browser to https://microsoft.com/devicelogin for you to authenticate..." -ForegroundColor Cyan -InformationAction Continue
+        Write-ToConsoleLog "Logging in to Azure using device code authentication..." -IsSuccess
+        Write-ToConsoleLog "Opening browser to https://microsoft.com/devicelogin for you to authenticate..."
 
         try {
             Start-Process "https://microsoft.com/devicelogin"
         } catch {
-            Write-InformationColored "Could not open browser automatically. Please navigate to https://microsoft.com/devicelogin manually." -ForegroundColor Yellow -InformationAction Continue
+            Write-ToConsoleLog "Could not open browser automatically. Please navigate to https://microsoft.com/devicelogin manually." -IsWarning
         }
         az login --allow-no-subscriptions --use-device-code --tenant $tenantId
         if ($LASTEXITCODE -ne 0) {
-            Write-InformationColored "Azure login failed. Please try again or login manually using 'az login --tenant $tenantId'." -ForegroundColor Red -InformationAction Continue
+            Write-ToConsoleLog "Azure login failed. Please try again or login manually using 'az login --tenant $tenantId'." -IsError
             throw "Azure login failed."
         }
 
-        Write-InformationColored "Successfully logged in to Azure!" -ForegroundColor Green -InformationAction Continue
+        Write-ToConsoleLog "Successfully logged in to Azure!" -IsSuccess
     }
 
     # If no inputs provided, prompt user for folder structure setup
@@ -287,7 +300,7 @@ function Deploy-Accelerator {
         $output_folder_path = $setupResult.OutputFolderPath
     }
 
-    Write-InformationColored "Getting ready to deploy the accelerator with you..." -ForegroundColor Green -NewLineBefore -InformationAction Continue
+    Write-ToConsoleLog "Getting ready to deploy the accelerator with you..." -IsSuccess
 
     if ($PSCmdlet.ShouldProcess("Accelerator setup", "modify")) {
 
@@ -301,9 +314,9 @@ function Deploy-Accelerator {
         # Check and install tools needed
         $toolsPath = Join-Path -Path $output_folder_path -ChildPath ".tools"
         if ($skipInternetChecks) {
-            Write-InformationColored "Skipping Terraform tool check as you used the skipInternetCheck parameter. Please ensure you have the most recent version of Terraform installed" -ForegroundColor Yellow -InformationAction Continue
+            Write-ToConsoleLog "Skipping Terraform tool check as you used the skipInternetCheck parameter. Please ensure you have the most recent version of Terraform installed" -IsWarning
         } else {
-            Write-InformationColored "Checking you have the latest version of Terraform installed..." -ForegroundColor Green -NewLineBefore -InformationAction Continue
+            Write-ToConsoleLog "Checking you have the latest version of Terraform installed..." -IsSuccess
             Get-TerraformTool -version "latest" -toolsPath $toolsPath
             $hclParserToolPath = Get-HCLParserTool -toolVersion "v0.6.0" -toolsPath $toolsPath
         }
@@ -315,7 +328,7 @@ function Deploy-Accelerator {
             if ($null -ne $envInputConfigPaths -and $envInputConfigPaths -ne "") {
                 $inputConfigFilePaths = $envInputConfigPaths -split ","
             } else {
-                Write-InformationColored "No input configuration file path has been provided. Please provide the path(s) to your configuration file(s)..." -ForegroundColor Red -InformationAction Continue
+                Write-ToConsoleLog "No input configuration file path has been provided. Please provide the path(s) to your configuration file(s)..." -IsError
                 throw "No input configuration file path has been provided. Please provide the path(s) to your configuration file(s)..."
             }
         }
@@ -354,12 +367,12 @@ function Deploy-Accelerator {
 
         # Throw if IAC type is not specified
         if (!$inputConfig.iac_type.Value) {
-            Write-InformationColored "No Infrastructure as Code type has been specified. Please supply the IAC type you wish to deploy..." -ForegroundColor Red -InformationAction Continue
+            Write-ToConsoleLog "No Infrastructure as Code type has been specified. Please supply the IAC type you wish to deploy..." -IsError
             throw "No Infrastructure as Code type has been specified. Please supply the IAC type you wish to deploy..."
         }
 
         if ($inputConfig.iac_type.Value.ToString() -like "bicep*") {
-            Write-InformationColored "Although you have selected Bicep, the Accelerator leverages the Terraform tool to bootstrap your Version Control System and Azure. This will not impact your choice of Bicep post this initial bootstrap. Please refer to our documentation for further details..." -ForegroundColor Yellow -InformationAction Continue
+            Write-ToConsoleLog "Although you have selected Bicep, the Accelerator leverages the Terraform tool to bootstrap your Version Control System and Azure. This will not impact your choice of Bicep post this initial bootstrap. Please refer to our documentation for further details..." -IsWarning
         }
 
         # Download the bootstrap modules
@@ -367,7 +380,7 @@ function Deploy-Accelerator {
         $bootstrapPath = ""
         $bootstrapTargetFolder = "bootstrap"
 
-        Write-InformationColored "Checking and Downloading the bootstrap module..." -ForegroundColor Green -NewLineBefore -InformationAction Continue
+        Write-ToConsoleLog "Checking and Downloading the bootstrap module..." -IsSuccess
 
         if($inputConfig.bootstrap_module_override_folder_path.Value.StartsWith("~/" )) {
             $inputConfig.bootstrap_module_override_folder_path.Value = Join-Path $HOME $inputConfig.bootstrap_module_override_folder_path.Value.Replace("~/", "")
@@ -404,7 +417,7 @@ function Deploy-Accelerator {
 
         # Request the bootstrap type if not already specified
         if(!$inputConfig.bootstrap_module_name.Value) {
-            Write-InformationColored "No bootstrap module has been specified. Please supply the bootstrap module you wish to deploy..." -ForegroundColor Red -InformationAction Continue
+            Write-ToConsoleLog "No bootstrap module has been specified. Please supply the bootstrap module you wish to deploy..." -IsError
             throw "No bootstrap module has been specified. Please supply the bootstrap module you wish to deploy..."
         }
 
@@ -429,7 +442,7 @@ function Deploy-Accelerator {
         $starterConfig = $null
 
         if ($hasStarterModule) {
-            Write-InformationColored "Checking and downloading the starter module..." -ForegroundColor Green -NewLineBefore -InformationAction Continue
+            Write-ToConsoleLog "Checking and downloading the starter module..." -IsSuccess
 
             if($inputConfig.starter_module_override_folder_path.Value.StartsWith("~/" )) {
                 $inputConfig.starter_module_override_folder_path.Value = Join-Path $HOME $inputConfig.starter_module_override_folder_path.Value.Replace("~/", "")

@@ -20,10 +20,10 @@ InModuleScope 'ALZ' {
         Context 'When skipping interactive configuration but continuing' {
             It 'invokes SensitiveOnly check for missing sensitive inputs' {
                 $script:answers = @(
-                    'C:\\temp\\acc', # target folder
-                    'n',               # overwrite existing folder?
-                    'n',               # configure inputs now?
-                    'yes'              # continue?
+                    'C:\\temp\\acc', # target folder (free text entry)
+                    'false',           # overwrite existing folder? (boolean: false = No)
+                    '2',               # configure inputs now? (2 = No)
+                    ''                 # continue? (empty = default Yes)
                 )
                 $script:idx = 0
                 $prompts = [System.Collections.Generic.List[string]]::new()
@@ -33,7 +33,7 @@ InModuleScope 'ALZ' {
                     if ($script:idx -lt $script:answers.Count) {
                         $script:answers[$script:idx++]
                     } else {
-                        'yes'
+                        '1'
                     }
                 }
 
@@ -79,10 +79,10 @@ InModuleScope 'ALZ' {
         Context 'When configuring interactively' {
             It 'does not invoke SensitiveOnly check' {
                 $script:answers = @(
-                    'C:\\temp\\acc', # target folder
-                    'n',               # overwrite existing folder?
-                    '',                # configure inputs now? (default yes)
-                    'yes'              # continue?
+                    'C:\\temp\\acc', # target folder (free text entry)
+                    'false',           # overwrite existing folder? (boolean: false = No)
+                    '',                # configure inputs now? (empty = default Yes)
+                    ''                 # continue? (empty = default Yes)
                 )
                 $script:idx = 0
                 Mock -CommandName Read-Host -MockWith {
@@ -90,7 +90,7 @@ InModuleScope 'ALZ' {
                     if ($script:idx -lt $script:answers.Count) {
                         $script:answers[$script:idx++]
                     } else {
-                        'yes'
+                        '1'
                     }
                 }
 

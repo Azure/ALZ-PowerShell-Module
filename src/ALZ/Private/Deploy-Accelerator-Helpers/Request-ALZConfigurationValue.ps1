@@ -41,22 +41,6 @@ function Request-ALZConfigurationValue {
         [switch] $SensitiveOnly
     )
 
-    # Lazy-loaded Azure context - only fetched when first needed
-    $lazyAzureContext = $null
-    $azureContextFetched = $false
-
-    function Get-LazyAzureContext {
-        if (-not $azureContextFetched) {
-            Set-Variable -Name azureContextFetched -Value $true -Scope 1
-            if (-not [string]::IsNullOrWhiteSpace($AzureContextOutputDirectory)) {
-                Set-Variable -Name lazyAzureContext -Value (Get-AzureContext -OutputDirectory $AzureContextOutputDirectory -ClearCache:$AzureContextClearCache.IsPresent) -Scope 1
-            } else {
-                Set-Variable -Name lazyAzureContext -Value (Get-AzureContext -ClearCache:$AzureContextClearCache.IsPresent) -Scope 1
-            }
-        }
-        return $lazyAzureContext
-    }
-
     # Helper function to get a property from schema info safely
     function Get-SchemaProperty {
         param($SchemaInfo, $PropertyName, $Default = $null)
@@ -66,24 +50,6 @@ function Request-ALZConfigurationValue {
         return $Default
     }
 
-    # Helper function to validate and prompt for a value with GUID format
-    function Get-ValidatedGuidInput {
-        param($PromptText, $CurrentValue, $Indent = "  ")
-        $guidRegex = "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
-        $newValue = Read-Host "$PromptText"
-        if ([string]::IsNullOrWhiteSpace($newValue)) {
-            return $CurrentValue
-        }
-        while ($newValue -notmatch $guidRegex) {
-            Write-InformationColored "${Indent}Invalid GUID format. Please enter a valid GUID (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)" -ForegroundColor Red -InformationAction Continue
-            $newValue = Read-Host "$PromptText"
-            if ([string]::IsNullOrWhiteSpace($newValue)) {
-                return $CurrentValue
-            }
-        }
-        return $newValue
-    }
-
     # Helper function to prompt for a single input value
     function Read-InputValue {
         param(
@@ -91,19 +57,14 @@ function Request-ALZConfigurationValue {
             $CurrentValue,
             $SchemaInfo,
             $Indent = "",
-            $DefaultDescription = "No description available"
+            $DefaultDescription = "No description available",
+            $AzureContext
         )
 
-        # Initialize arrays that will be lazily populated
-        $Subscriptions = @()
-        $ManagementGroups = @()
-        $Regions = @()
-
+        # Use pre-fetched Azure context data from parent scope
         $description = Get-SchemaProperty -SchemaInfo $SchemaInfo -PropertyName "description" -Default $DefaultDescription
         $helpLink = Get-SchemaProperty -SchemaInfo $SchemaInfo -PropertyName "helpLink"
         $isSensitive = Get-SchemaProperty -SchemaInfo $SchemaInfo -PropertyName "sensitive" -Default $false
-        $allowedValues = Get-SchemaProperty -SchemaInfo $SchemaInfo -PropertyName "allowedValues"
-        $format = Get-SchemaProperty -SchemaInfo $SchemaInfo -PropertyName "format"
         $schemaType = Get-SchemaProperty -SchemaInfo $SchemaInfo -PropertyName "type" -Default "string"
         $isRequired = Get-SchemaProperty -SchemaInfo $SchemaInfo -PropertyName "required" -Default $false
         $source = Get-SchemaProperty -SchemaInfo $SchemaInfo -PropertyName "source"
@@ -141,365 +102,49 @@ function Request-ALZConfigurationValue {
         # Determine effective default (don't use placeholders as defaults)
         $effectiveDefault = if ($isPlaceholder) { "" } elseif ($isArray -and $hasPlaceholderItems) { @() } else { $CurrentValue }
 
-        # Display prompt information
-        Write-InformationColored "`n${Indent}[$Key]" -ForegroundColor Yellow -InformationAction Continue
-        Write-InformationColored "${Indent}  $description" -ForegroundColor White -InformationAction Continue
-        if ($null -ne $helpLink) {
-            Write-InformationColored "${Indent}  Help: $helpLink" -ForegroundColor Gray -InformationAction Continue
+        # Build base parameters for Read-MenuSelection
+        $menuParams = @{
+            Title             = $Key
+            HelpText          = @($description, $helpLink)
+            Options           = @()
+            DefaultValue      = $effectiveDefault
+            AllowManualEntry  = $true
+            ManualEntryPrompt = "Enter value (press enter to accept default)"
+            Type              = $schemaType
+            IsRequired        = $isRequired
+            RequiredMessage   = "This field is required. Please enter a value."
+            IsSensitive       = $isSensitive
         }
-        if ($isRequired) {
-            Write-InformationColored "${Indent}  Required: Yes" -ForegroundColor Magenta -InformationAction Continue
-        }
-        if ($null -ne $allowedValues) {
-            Write-InformationColored "${Indent}  Allowed values: $($allowedValues -join ', ')" -ForegroundColor Gray -InformationAction Continue
-        }
-        if ($format -eq "guid") {
-            Write-InformationColored "${Indent}  Format: GUID (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)" -ForegroundColor Gray -InformationAction Continue
-        }
-        if ($schemaType -eq "number") {
-            Write-InformationColored "${Indent}  Format: Integer number" -ForegroundColor Gray -InformationAction Continue
-        }
-        if ($schemaType -eq "boolean") {
-            Write-InformationColored "${Indent}  Format: true or false" -ForegroundColor Gray -InformationAction Continue
-        }
+
+        # Customize parameters based on input type
         if ($isArray) {
-            Write-InformationColored "${Indent}  Format: Comma-separated list of values" -ForegroundColor Gray -InformationAction Continue
-        }
-
-        # Helper to mask sensitive values - show first 3 and last 3 chars if long enough
-        function Get-MaskedValue {
-            param($Value)
-            if ([string]::IsNullOrWhiteSpace($Value)) {
-                return "(empty)"
-            }
-            $valueStr = $Value.ToString()
-            if ($valueStr.Length -ge 8) {
-                # Show first 3 and last 3 characters with asterisks in between
-                return $valueStr.Substring(0, 3) + "***" + $valueStr.Substring($valueStr.Length - 3)
-            } else {
-                # Too short to show partial, just mask completely
-                return "********"
-            }
-        }
-
-        # Show current value (mask if sensitive)
-        if ($isArray) {
-            $displayCurrentValue = if ($null -eq $CurrentValue -or $CurrentValue.Count -eq 0) {
-                "(empty)"
-            } elseif ($hasPlaceholderItems) {
-                "$($CurrentValue -join ', ') (contains placeholders - requires input)"
-            } elseif ($isSensitive) {
-                ($CurrentValue | ForEach-Object { Get-MaskedValue -Value $_ }) -join ", "
-            } else {
-                $CurrentValue -join ", "
-            }
-        } else {
-            $displayCurrentValue = if ($isSensitive -and -not [string]::IsNullOrWhiteSpace($CurrentValue)) {
-                Get-MaskedValue -Value $CurrentValue
-            } elseif ($isPlaceholder) {
-                "$CurrentValue (placeholder - requires input)"
-            } elseif ($CurrentValue -is [bool]) {
-                # Display booleans in lowercase
-                if ($CurrentValue) { "true" } else { "false" }
-            } else {
-                $CurrentValue
-            }
-        }
-        Write-InformationColored "${Indent}  Current value: $displayCurrentValue" -ForegroundColor Gray -InformationAction Continue
-
-        # Build prompt text
-        if ($isArray) {
-            # Use effective default (empty if has placeholders)
-            $effectiveArrayDefault = if ($hasPlaceholderItems) { @() } else { $CurrentValue }
-            $currentAsString = if ($null -eq $effectiveArrayDefault -or $effectiveArrayDefault.Count -eq 0) {
-                ""
-            } elseif ($isSensitive) {
-                ($effectiveArrayDefault | ForEach-Object { Get-MaskedValue -Value $_ }) -join ", "
-            } else {
-                $effectiveArrayDefault -join ", "
-            }
-            $promptText = if ([string]::IsNullOrWhiteSpace($currentAsString)) {
-                "${Indent}  Enter values (comma-separated)"
-            } else {
-                "${Indent}  Enter values (comma-separated, default: $currentAsString)"
-            }
-        } else {
-            $displayDefault = if ($isSensitive -and -not [string]::IsNullOrWhiteSpace($effectiveDefault)) {
-                Get-MaskedValue -Value $effectiveDefault
-            } elseif ($effectiveDefault -is [bool]) {
-                # Display booleans in lowercase
-                if ($effectiveDefault) { "true" } else { "false" }
-            } else {
-                $effectiveDefault
-            }
-            $promptText = if ([string]::IsNullOrWhiteSpace($effectiveDefault) -and $effectiveDefault -isnot [bool]) {
-                "${Indent}  Enter value"
-            } else {
-                "${Indent}  Enter value (default: $displayDefault)"
-            }
-        }
-
-        # Get new value based on input type
-        if ($isSensitive) {
-            $secureValue = Read-Host "$promptText" -AsSecureString
-            $newValue = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto(
-                [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($secureValue)
-            )
-            if ([string]::IsNullOrWhiteSpace($newValue)) {
-                $newValue = $effectiveDefault
-            }
-            # Require value if required
-            while ($isRequired -and [string]::IsNullOrWhiteSpace($newValue)) {
-                Write-InformationColored "${Indent}  This field is required. Please enter a value." -ForegroundColor Red -InformationAction Continue
-                $secureValue = Read-Host "$promptText" -AsSecureString
-                $newValue = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto(
-                    [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($secureValue)
-                )
-            }
-        } elseif ($isArray) {
-            $inputValue = Read-Host "$promptText"
-            # Use effective default (empty array if has placeholders)
-            $effectiveArrayDefault = if ($hasPlaceholderItems) { @() } else { $CurrentValue }
-            if ([string]::IsNullOrWhiteSpace($inputValue)) {
-                $newValue = $effectiveArrayDefault
-            } else {
-                # Parse comma-separated values into an array
-                $newValue = @($inputValue -split ',' | ForEach-Object { $_.Trim() } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
-            }
+            $menuParams.HelpText = @($description, $helpLink, "Format: Comma-separated list of values")
+            $menuParams.ManualEntryPrompt = "Enter values (comma-separated)"
+            $menuParams.RequiredMessage = "This field is required. Please enter values."
         } elseif ($source -eq "subscription") {
-            # Lazy load Azure context if we haven't loaded subscriptions yet
-            if ($Subscriptions.Count -eq 0) {
-                $ctx = Get-LazyAzureContext
-                if ($null -ne $ctx -and $ctx.ContainsKey('Subscriptions')) {
-                    $Subscriptions = $ctx.Subscriptions
-                }
-            }
-            if ($Subscriptions.Count -gt 0) {
-                # Show subscription selection list
-                Write-InformationColored "${Indent}  Available subscriptions:" -ForegroundColor Cyan -InformationAction Continue
-                for ($i = 0; $i -lt $Subscriptions.Count; $i++) {
-                    $sub = $Subscriptions[$i]
-                    if ($sub.id -eq $effectiveDefault) {
-                        Write-InformationColored "${Indent}    [$($i + 1)] $($sub.name) ($($sub.id)) (current)" -ForegroundColor Green -InformationAction Continue
-                    } else {
-                        Write-InformationColored "${Indent}    [$($i + 1)] $($sub.name) ($($sub.id))" -ForegroundColor White -InformationAction Continue
-                    }
-                }
-                Write-InformationColored "${Indent}    [0] Enter manually" -ForegroundColor Gray -InformationAction Continue
-
-                $selection = Read-Host "${Indent}  Select subscription (1-$($Subscriptions.Count), 0 for manual entry, or press Enter for default)"
-                if ([string]::IsNullOrWhiteSpace($selection)) {
-                    $newValue = $effectiveDefault
-                } elseif ($selection -eq "0") {
-                    $newValue = Get-ValidatedGuidInput -PromptText "${Indent}  Enter subscription ID" -CurrentValue $effectiveDefault -Indent "${Indent}  "
-                } else {
-                    $selIndex = [int]$selection - 1
-                    if ($selIndex -ge 0 -and $selIndex -lt $Subscriptions.Count) {
-                        $newValue = $Subscriptions[$selIndex].id
-                    } else {
-                        Write-InformationColored "${Indent}  Invalid selection, using default" -ForegroundColor Yellow -InformationAction Continue
-                        $newValue = $effectiveDefault
-                    }
-                }
-                # Require value if required
-                while ($isRequired -and [string]::IsNullOrWhiteSpace($newValue)) {
-                    Write-InformationColored "${Indent}  This field is required. Please select a subscription." -ForegroundColor Red -InformationAction Continue
-                    $selection = Read-Host "${Indent}  Select subscription (1-$($Subscriptions.Count), 0 for manual entry)"
-                    if ($selection -eq "0") {
-                        $newValue = Get-ValidatedGuidInput -PromptText "${Indent}  Enter subscription ID" -CurrentValue "" -Indent "${Indent}  "
-                    } elseif (-not [string]::IsNullOrWhiteSpace($selection)) {
-                        $selIndex = [int]$selection - 1
-                        if ($selIndex -ge 0 -and $selIndex -lt $Subscriptions.Count) {
-                            $newValue = $Subscriptions[$selIndex].id
-                        }
-                    }
-                }
-            }
+            $menuParams.OptionsTitle = "Available subscriptions:"
+            $menuParams.Options = $AzureContext.Subscriptions
+            $menuParams.ManualEntryPrompt = "Enter subscription ID"
+            $menuParams.RequiredMessage = "This field is required. Please select a subscription."
+            $menuParams.EmptyMessage = "No subscriptions found in Azure context."
         } elseif ($source -eq "managementGroup") {
-            # Lazy load Azure context if we haven't loaded management groups yet
-            if ($ManagementGroups.Count -eq 0) {
-                $ctx = Get-LazyAzureContext
-                if ($null -ne $ctx -and $ctx.ContainsKey('ManagementGroups')) {
-                    $ManagementGroups = $ctx.ManagementGroups
-                }
-            }
-            if ($ManagementGroups.Count -gt 0) {
-                # Show management group selection list
-                Write-InformationColored "${Indent}  Available management groups:" -ForegroundColor Cyan -InformationAction Continue
-                for ($i = 0; $i -lt $ManagementGroups.Count; $i++) {
-                    $mg = $ManagementGroups[$i]
-                    if ($mg.id -eq $effectiveDefault) {
-                        Write-InformationColored "${Indent}    [$($i + 1)] $($mg.displayName) ($($mg.id)) (current)" -ForegroundColor Green -InformationAction Continue
-                    } else {
-                        Write-InformationColored "${Indent}    [$($i + 1)] $($mg.displayName) ($($mg.id))" -ForegroundColor White -InformationAction Continue
-                    }
-                }
-                Write-InformationColored "${Indent}    [0] Enter manually" -ForegroundColor Gray -InformationAction Continue
-                Write-InformationColored "${Indent}    Press Enter to leave empty (uses Tenant Root Group)" -ForegroundColor Gray -InformationAction Continue
-
-                $selection = Read-Host "${Indent}  Select management group (1-$($ManagementGroups.Count), 0 for manual entry, or press Enter for default)"
-                if ([string]::IsNullOrWhiteSpace($selection)) {
-                    $newValue = $effectiveDefault
-                } elseif ($selection -eq "0") {
-                    $newValue = Read-Host "${Indent}  Enter management group ID"
-                    if ([string]::IsNullOrWhiteSpace($newValue)) {
-                        $newValue = $effectiveDefault
-                    }
-                } else {
-                    $selIndex = [int]$selection - 1
-                    if ($selIndex -ge 0 -and $selIndex -lt $ManagementGroups.Count) {
-                        $newValue = $ManagementGroups[$selIndex].id
-                    } else {
-                        Write-InformationColored "${Indent}  Invalid selection, using default" -ForegroundColor Yellow -InformationAction Continue
-                        $newValue = $effectiveDefault
-                    }
-                }
-            }
+            $menuParams.OptionsTitle = "Available management groups:"
+            $menuParams.Options = $AzureContext.ManagementGroups
+            $menuParams.ManualEntryPrompt = "Enter management group ID"
+            $menuParams.RequiredMessage = "This field is required. Please select a management group."
+            $menuParams.EmptyMessage = "No management groups found in Azure context."
         } elseif ($source -eq "azureRegion") {
-            # Lazy load Azure context if we haven't loaded regions yet
-            if ($Regions.Count -eq 0) {
-                $ctx = Get-LazyAzureContext
-                if ($null -ne $ctx -and $ctx.ContainsKey('Regions')) {
-                    $Regions = $ctx.Regions
-                }
-            }
-            if ($Regions.Count -gt 0) {
-                # Show region selection list
-                Write-InformationColored "${Indent}  Available regions (AZ = Availability Zone support):" -ForegroundColor Cyan -InformationAction Continue
-                for ($i = 0; $i -lt $Regions.Count; $i++) {
-                    $region = $Regions[$i]
-                    $azIndicator = if ($region.hasAvailabilityZones) { " [AZ]" } else { "" }
-                    if ($region.name -eq $effectiveDefault) {
-                        Write-InformationColored "${Indent}    [$($i + 1)] $($region.displayName) ($($region.name))$azIndicator (current)" -ForegroundColor Green -InformationAction Continue
-                    } else {
-                        Write-InformationColored "${Indent}    [$($i + 1)] $($region.displayName) ($($region.name))$azIndicator" -ForegroundColor White -InformationAction Continue
-                    }
-                }
-                Write-InformationColored "${Indent}    [0] Enter manually" -ForegroundColor Gray -InformationAction Continue
-
-                $selection = Read-Host "${Indent}  Select region (1-$($Regions.Count), 0 for manual entry, or press Enter for default)"
-                if ([string]::IsNullOrWhiteSpace($selection)) {
-                    $newValue = $effectiveDefault
-                } elseif ($selection -eq "0") {
-                    $newValue = Read-Host "${Indent}  Enter region name (e.g., uksouth, eastus)"
-                    if ([string]::IsNullOrWhiteSpace($newValue)) {
-                        $newValue = $effectiveDefault
-                    }
-                } else {
-                    $selIndex = [int]$selection - 1
-                    if ($selIndex -ge 0 -and $selIndex -lt $Regions.Count) {
-                        $newValue = $Regions[$selIndex].name
-                    } else {
-                        Write-InformationColored "${Indent}  Invalid selection, using default" -ForegroundColor Yellow -InformationAction Continue
-                        $newValue = $effectiveDefault
-                    }
-                }
-                # Require value if required
-                while ($isRequired -and [string]::IsNullOrWhiteSpace($newValue)) {
-                    Write-InformationColored "${Indent}  This field is required. Please select a region." -ForegroundColor Red -InformationAction Continue
-                    $selection = Read-Host "${Indent}  Select region (1-$($Regions.Count), 0 for manual entry)"
-                    if ($selection -eq "0") {
-                        $newValue = Read-Host "${Indent}  Enter region name (e.g., uksouth, eastus)"
-                    } elseif (-not [string]::IsNullOrWhiteSpace($selection)) {
-                        $selIndex = [int]$selection - 1
-                        if ($selIndex -ge 0 -and $selIndex -lt $Regions.Count) {
-                            $newValue = $Regions[$selIndex].name
-                        }
-                    }
-                }
-            }
-        } elseif ($format -eq "guid") {
-            $newValue = Get-ValidatedGuidInput -PromptText $promptText -CurrentValue $effectiveDefault -Indent "${Indent}  "
-            # Require value if required
-            while ($isRequired -and [string]::IsNullOrWhiteSpace($newValue)) {
-                Write-InformationColored "${Indent}  This field is required. Please enter a value." -ForegroundColor Red -InformationAction Continue
-                $newValue = Get-ValidatedGuidInput -PromptText $promptText -CurrentValue $effectiveDefault -Indent "${Indent}  "
-            }
-        } elseif ($schemaType -eq "number") {
-            $newValue = Read-Host "$promptText"
-            if ([string]::IsNullOrWhiteSpace($newValue)) {
-                $newValue = $effectiveDefault
-            }
-            # Validate integer format and require if required
-            $intResult = 0
-            # Check if effective default is valid, if not clear it
-            if (-not [string]::IsNullOrWhiteSpace($newValue)) {
-                $valueToCheck = if ($newValue -is [int]) { $newValue.ToString() } else { $newValue }
-                while (-not [int]::TryParse($valueToCheck, [ref]$intResult)) {
-                    Write-InformationColored "${Indent}  Invalid format. Please enter an integer number." -ForegroundColor Red -InformationAction Continue
-                    $newValue = Read-Host "${Indent}  Enter value"
-                    if ([string]::IsNullOrWhiteSpace($newValue)) {
-                        $newValue = ""
-                        break
-                    }
-                    $valueToCheck = $newValue
-                }
-            }
-            # Require value if required
-            while ($isRequired -and [string]::IsNullOrWhiteSpace($newValue)) {
-                Write-InformationColored "${Indent}  This field is required. Please enter a value." -ForegroundColor Red -InformationAction Continue
-                $newValue = Read-Host "${Indent}  Enter value"
-                # Re-validate integer format
-                if (-not [string]::IsNullOrWhiteSpace($newValue)) {
-                    while (-not [int]::TryParse($newValue, [ref]$intResult)) {
-                        Write-InformationColored "${Indent}  Invalid format. Please enter an integer number." -ForegroundColor Red -InformationAction Continue
-                        $newValue = Read-Host "${Indent}  Enter value"
-                        if ([string]::IsNullOrWhiteSpace($newValue)) {
-                            break
-                        }
-                    }
-                }
-            }
-            # Convert to integer if we have a valid value
-            if (-not [string]::IsNullOrWhiteSpace($newValue) -and [int]::TryParse($newValue.ToString(), [ref]$intResult)) {
-                $newValue = $intResult
-            }
+            $menuParams.OptionsTitle = "Available regions (AZ = Availability Zone support):"
+            $menuParams.Options = $AzureContext.Regions
+            $menuParams.ManualEntryPrompt = "Enter region name (e.g., uksouth, eastus)"
+            $menuParams.RequiredMessage = "This field is required. Please select a region."
+            $menuParams.EmptyMessage = "No regions found in Azure context."
         } elseif ($schemaType -eq "boolean") {
-            $newValue = Read-Host "$promptText"
-            if ([string]::IsNullOrWhiteSpace($newValue)) {
-                $newValue = $effectiveDefault
-            }
-            # Validate and convert boolean
-            if (-not [string]::IsNullOrWhiteSpace($newValue)) {
-                $validBooleans = @('true', 'false', 'yes', 'no', '1', '0')
-                $valueStr = $newValue.ToString().ToLower()
-                while ($validBooleans -notcontains $valueStr) {
-                    Write-InformationColored "${Indent}  Invalid format. Please enter true or false." -ForegroundColor Red -InformationAction Continue
-                    $newValue = Read-Host "$promptText"
-                    if ([string]::IsNullOrWhiteSpace($newValue)) {
-                        $newValue = $effectiveDefault
-                        break
-                    }
-                    $valueStr = $newValue.ToString().ToLower()
-                }
-                # Convert to actual boolean
-                if (-not [string]::IsNullOrWhiteSpace($newValue)) {
-                    $valueStr = $newValue.ToString().ToLower()
-                    $newValue = $valueStr -in @('true', 'yes', '1')
-                }
-            }
-        } else {
-            $newValue = Read-Host "$promptText"
-            if ([string]::IsNullOrWhiteSpace($newValue)) {
-                $newValue = $effectiveDefault
-            }
-            # Require value if required
-            while ($isRequired -and [string]::IsNullOrWhiteSpace($newValue)) {
-                Write-InformationColored "${Indent}  This field is required. Please enter a value." -ForegroundColor Red -InformationAction Continue
-                $newValue = Read-Host "$promptText"
-            }
+            $menuParams.ManualEntryPrompt = "Enter value (true/false) (press enter to accept default)"
+            $menuParams.DefaultValue = $effectiveDefault.ToString().ToLower()
         }
 
-        # Validate against allowed values if specified
-        if ($null -ne $allowedValues -and -not [string]::IsNullOrWhiteSpace($newValue)) {
-            while ($allowedValues -notcontains $newValue) {
-                Write-InformationColored "${Indent}  Invalid value. Please choose from: $($allowedValues -join ', ')" -ForegroundColor Red -InformationAction Continue
-                $newValue = Read-Host "$promptText"
-                if ([string]::IsNullOrWhiteSpace($newValue)) {
-                    $newValue = $effectiveDefault
-                }
-            }
-        }
+        $newValue = Read-MenuSelection @menuParams
 
         # Return value along with sensitivity info
         return @{
@@ -509,6 +154,19 @@ function Request-ALZConfigurationValue {
     }
 
     if ($PSCmdlet.ShouldProcess("Configuration files", "prompt for input values")) {
+        $AzureContext = $null
+
+        # Fetch Azure context once upfront if not in SensitiveOnly mode
+        if (-not $SensitiveOnly.IsPresent) {
+            if (-not [string]::IsNullOrWhiteSpace($AzureContextOutputDirectory)) {
+                $AzureContext = Get-AzureContext -OutputDirectory $AzureContextOutputDirectory -ClearCache:$AzureContextClearCache.IsPresent
+            } else {
+                $AzureContext = Get-AzureContext -ClearCache:$AzureContextClearCache.IsPresent
+            }
+        }
+
+        Write-Verbose (ConvertTo-Json $AzureContext)
+
         # Load the schema file
         $schemaPath = Join-Path $PSScriptRoot "AcceleratorInputSchema.json"
         if (-not (Test-Path $schemaPath)) {
@@ -525,8 +183,8 @@ function Request-ALZConfigurationValue {
 
         # Process inputs.yaml - prompt for ALL inputs
         if (Test-Path $inputsYamlPath) {
-            Write-InformationColored "`n=== Bootstrap Configuration (inputs.yaml) ===" -ForegroundColor Cyan -InformationAction Continue
-            Write-InformationColored "For more information, see: https://aka.ms/alz/acc/phase0" -ForegroundColor Gray -InformationAction Continue
+            Write-ToConsoleLog "=== Bootstrap Configuration (inputs.yaml) ==="
+            Write-ToConsoleLog "For more information, see: https://aka.ms/alz/acc/phase0"
 
             # Read the raw content to preserve comments and ordering
             $inputsYamlContent = Get-Content -Path $inputsYamlPath -Raw
@@ -565,10 +223,6 @@ function Request-ALZConfigurationValue {
                         continue
                     }
 
-                    Write-InformationColored "`n[subscription_ids]" -ForegroundColor Yellow -InformationAction Continue
-                    Write-InformationColored "  The subscription IDs for the platform landing zone subscriptions" -ForegroundColor White -InformationAction Continue
-                    Write-InformationColored "  Help: https://aka.ms/alz/acc/phase0" -ForegroundColor Gray -InformationAction Continue
-
                     $subscriptionIdsSchema = $bootstrapSchema.subscription_ids.properties
 
                     foreach ($subKey in @($currentValue.Keys)) {
@@ -582,7 +236,7 @@ function Request-ALZConfigurationValue {
                             continue
                         }
 
-                        $result = Read-InputValue -Key $subKey -CurrentValue $subCurrentValue -SchemaInfo $subSchemaInfo -Indent "  " -DefaultDescription "Subscription ID for $subKey"
+                        $result = Read-InputValue -Key $subKey -CurrentValue $subCurrentValue -SchemaInfo $subSchemaInfo -DefaultDescription "Subscription ID for $subKey" -AzureContext $AzureContext
                         $subNewValue = $result.Value
                         $subIsSensitive = $result.IsSensitive
 
@@ -632,7 +286,7 @@ function Request-ALZConfigurationValue {
                     $envVarName = "TF_VAR_$key"
                     $envVarValue = [System.Environment]::GetEnvironmentVariable($envVarName)
                     if (-not [string]::IsNullOrWhiteSpace($envVarValue)) {
-                        Write-InformationColored "`n[$key] - Already set via environment variable $envVarName" -ForegroundColor Gray -InformationAction Continue
+                        Write-ToConsoleLog "[$key] - Already set via environment variable $envVarName"
                         continue
                     }
 
@@ -640,12 +294,12 @@ function Request-ALZConfigurationValue {
                     $isPlaceholderValue = $currentValue -is [string] -and $currentValue -match '^\s*<.*>\s*$'
                     $isSetViaEnvVarPlaceholder = $currentValue -is [string] -and $currentValue -like "Set via environment variable*"
                     if (-not [string]::IsNullOrWhiteSpace($currentValue) -and -not $isPlaceholderValue -and -not $isSetViaEnvVarPlaceholder) {
-                        Write-InformationColored "`n[$key] - Already set in configuration" -ForegroundColor Gray -InformationAction Continue
+                        Write-ToConsoleLog "[$key] - Already set in configuration"
                         continue
                     }
                 }
 
-                $result = Read-InputValue -Key $key -CurrentValue $currentValue -SchemaInfo $schemaInfo
+                $result = Read-InputValue -Key $key -CurrentValue $currentValue -SchemaInfo $schemaInfo -AzureContext $AzureContext
                 $newValue = $result.Value
                 $isSensitive = $result.IsSensitive
 
@@ -723,9 +377,20 @@ function Request-ALZConfigurationValue {
                         # Handle array values - convert to YAML inline array format
                         $yamlArrayValue = "[" + (($newValue | ForEach-Object { "`"$_`"" }) -join ", ") + "]"
 
-                        # Match the existing array or empty value - use greedy match within brackets
-                        # Pattern matches: key: [anything] with optional comment
-                        $pattern = "(?m)^(\s*${key}:\s*)\[[^\]]*\](\s*)(#.*)?$"
+                        # Check if old value is already in array format or a different format (string/placeholder)
+                        $oldValueIsArray = $oldValue -is [System.Collections.IList]
+                        if ($oldValueIsArray) {
+                            # Match the existing array - greedy match within brackets
+                            $pattern = "(?m)^(\s*${key}:\s*)\[[^\]]*\](\s*)(#.*)?$"
+                        } else {
+                            # Old value was a string/placeholder, match quoted or unquoted value
+                            $escapedOldValue = if ([string]::IsNullOrWhiteSpace($oldValue)) { "" } else { [regex]::Escape($oldValue.ToString()) }
+                            if ([string]::IsNullOrWhiteSpace($escapedOldValue)) {
+                                $pattern = "(?m)^(\s*${key}:\s*)`"?`"?(\s*)(#.*)?$"
+                            } else {
+                                $pattern = "(?m)^(\s*${key}:\s*)`"?${escapedOldValue}`"?(\s*)(#.*)?$"
+                            }
+                        }
                         $replacement = "`${1}$yamlArrayValue`${2}`${3}"
                     } elseif ($isBoolean) {
                         # Handle boolean values - no quotes, lowercase true/false
@@ -761,16 +426,16 @@ function Request-ALZConfigurationValue {
                 }
 
                 $updatedContent | Set-Content -Path $inputsYamlPath -Force -NoNewline
-                Write-InformationColored "`nUpdated inputs.yaml" -ForegroundColor Green -InformationAction Continue
+                Write-ToConsoleLog "Updated inputs.yaml" -IsSuccess
 
                 # Display summary of sensitive environment variables
                 if ($sensitiveEnvVars.Count -gt 0) {
-                    Write-InformationColored "`nSensitive values have been set as environment variables:" -ForegroundColor Yellow -InformationAction Continue
+                    Write-ToConsoleLog "Sensitive values have been set as environment variables:" -IsWarning
                     foreach ($varKey in $sensitiveEnvVars.Keys) {
-                        Write-InformationColored "  $varKey -> $($sensitiveEnvVars[$varKey])" -ForegroundColor Gray -InformationAction Continue
+                        Write-ToConsoleLog "$varKey -> $($sensitiveEnvVars[$varKey])" -IsSelection -IndentLevel 1
                     }
-                    Write-InformationColored "`nThese environment variables are set for the current process only." -ForegroundColor Gray -InformationAction Continue
-                    Write-InformationColored "The config file contains placeholders indicating the values are set via environment variables." -ForegroundColor Gray -InformationAction Continue
+                    Write-ToConsoleLog "These environment variables are set for the current process only."
+                    Write-ToConsoleLog "The config file contains placeholders indicating the values are set via environment variables."
                 }
 
                 $configUpdated = $true

@@ -99,7 +99,7 @@ function Get-GithubRelease {
         Invoke-WebRequest -Uri $releaseArtifactUrl -OutFile $targetPathForZip -RetryIntervalSec 3 -MaximumRetryCount 100 | Out-String | Write-Verbose
 
         if(!(Test-Path $targetPathForZip)) {
-            Write-InformationColored "Failed to download the release $releaseTag from the GitHub repository $repoOrgPlusRepo" -ForegroundColor Red -InformationAction Continue
+            Write-ToConsoleLog "Failed to download the release $releaseTag from the GitHub repository $repoOrgPlusRepo" -IsError
             throw
         }
 
@@ -117,9 +117,9 @@ function Get-GithubRelease {
         Copy-Item -Path "$($extractedSubFolder)/$moduleSourceFolder/*" -Destination "$targetVersionPath" -Recurse -Force | Out-String | Write-Verbose
 
         Remove-Item -Path "$targetVersionPath/tmp" -Force -Recurse
-        Write-InformationColored "The directory for $targetVersionPath has been created and populated." -ForegroundColor Green -InformationAction Continue
+        Write-ToConsoleLog "The directory for $targetVersionPath has been created and populated." -IsSuccess
     } else {
-        Write-InformationColored "The directory for $targetVersionPath already exists and has content in it, so we are not overwriting it." -ForegroundColor Green -InformationAction Continue
+        Write-ToConsoleLog "The directory for $targetVersionPath already exists and has content in it, so we are not overwriting it." -IsSuccess
         Write-Verbose "===> Content already exists in $releaseDirectory. Skipping"
     }
 
