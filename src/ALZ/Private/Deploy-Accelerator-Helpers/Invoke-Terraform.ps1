@@ -130,7 +130,7 @@ function Invoke-Terraform {
         $arguments += "$planFileName"
 
         if (!$silent) {
-            Write-ToConsoleLog "Running Apply Command for $action : $command $arguments" -IsSuccess
+            Write-ToConsoleLog "Running Apply Command for $action : $command $arguments"
             & $command $arguments
         } else {
             & $command $arguments | Write-Verbose
@@ -157,7 +157,7 @@ function Invoke-Terraform {
                 $arguments += "-destroy"
             }
 
-            Write-ToConsoleLog "Running Apply Command for $action : $command $arguments" -IsSuccess
+            Write-ToConsoleLog "Retry Attempt $($currentAttempt) of $($maxAttempts): Running Apply Command for $action : $command $arguments"
             & $command $arguments
             $exitCode = $LASTEXITCODE
         }
@@ -170,7 +170,7 @@ function Invoke-Terraform {
         # Stop and display timer
         $StopWatch.Stop()
         if (!$silent) {
-            Write-ToConsoleLog "Time taken to complete Terraform apply:" -IsSuccess
+            Write-ToConsoleLog "Time taken to complete Terraform apply:"
         }
         $StopWatch.Elapsed | Format-Table
 
