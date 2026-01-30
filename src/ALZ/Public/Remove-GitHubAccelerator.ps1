@@ -34,14 +34,8 @@ function Remove-GitHubAccelerator {
 
     .PARAMETER RunnerGroupNamePatterns
         An array of regex patterns to match against runner group names. Runner groups matching any of
-        these patterns will be deleted. If empty, no runner groups will be deleted. Requires the
-        -IncludeRunnerGroups switch to be specified.
+        these patterns will be deleted. If empty, no runner groups will be deleted.
         Default: Empty array (no runner groups deleted)
-
-    .PARAMETER IncludeRunnerGroups
-        A switch parameter that enables deletion of runner groups matching the patterns specified in
-        -RunnerGroupNamePatterns. By default, runner groups are not deleted.
-        Default: $false (do not delete runner groups)
 
     .PARAMETER BypassConfirmation
         A switch parameter that bypasses the interactive confirmation prompts. When specified, the function
@@ -80,7 +74,7 @@ function Remove-GitHubAccelerator {
         Deletes all repositories and teams matching the pattern "^alz-.*" from the "my-org" organization.
 
     .EXAMPLE
-        Remove-GitHubAccelerator -GitHubOrganization "my-org" -RepositoryNamePatterns @("^alz-.*", "^landing-zone-.*") -IncludeRunnerGroups -RunnerGroupNamePatterns @("^alz-.*")
+        Remove-GitHubAccelerator -GitHubOrganization "my-org" -RepositoryNamePatterns @("^alz-.*", "^landing-zone-.*") -RunnerGroupNamePatterns @("^alz-.*")
 
         Deletes repositories matching either pattern and runner groups matching "^alz-.*" from the
         "my-org" organization.
@@ -116,9 +110,6 @@ function Remove-GitHubAccelerator {
         [Parameter(Mandatory = $false, HelpMessage = "[OPTIONAL] Regex patterns to match runner group names for deletion.")]
         [Alias("runners")]
         [string[]]$RunnerGroupNamePatterns = @(),
-
-        [Parameter(Mandatory = $false, HelpMessage = "[OPTIONAL] Include runner groups in the deletion process.")]
-        [switch]$IncludeRunnerGroups,
 
         [Parameter(Mandatory = $false, HelpMessage = "[OPTIONAL] Bypass interactive confirmation prompts.")]
         [switch]$BypassConfirmation,
@@ -171,7 +162,7 @@ function Remove-GitHubAccelerator {
 
         $hasRepositoryPatterns = $RepositoryNamePatterns.Count -gt 0
         $hasTeamPatterns = $TeamNamePatterns.Count -gt 0
-        $hasRunnerGroupPatterns = $IncludeRunnerGroups -and $RunnerGroupNamePatterns.Count -gt 0
+        $hasRunnerGroupPatterns = $RunnerGroupNamePatterns.Count -gt 0
 
         if(-not $hasRepositoryPatterns -and -not $hasTeamPatterns -and -not $hasRunnerGroupPatterns) {
             Write-ToConsoleLog "No patterns provided for repositories, teams, or runner groups. Nothing to do. Exiting..." -IsError
