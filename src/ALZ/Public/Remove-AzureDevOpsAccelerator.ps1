@@ -17,7 +17,7 @@ function Remove-AzureDevOpsAccelerator {
         CRITICAL WARNING: This is a highly destructive operation that will permanently delete Azure DevOps resources.
         Use with extreme caution and ensure you have appropriate backups and authorization before executing.
 
-    .PARAMETER AzureDevOpsOrganization
+    .PARAMETER Organization
         The Azure DevOps organization URL or name. Can be provided as either the full URL
         (e.g., https://dev.azure.com/my-org) or just the organization name (e.g., my-org).
         This parameter is required.
@@ -29,15 +29,8 @@ function Remove-AzureDevOpsAccelerator {
 
     .PARAMETER AgentPoolNamePatterns
         An array of regex patterns to match against agent pool names. Agent pools matching any of
-        these patterns will be deleted. If empty, no agent pools will be deleted. Requires the
-        -IncludeAgentPools switch to be specified.
+        these patterns will be deleted. If empty, no agent pools will be deleted.
         Default: Empty array (no agent pools deleted)
-
-    .PARAMETER IncludeAgentPools
-        A switch parameter that enables deletion of agent pools matching the patterns specified in
-        -AgentPoolNamePatterns. By default, agent pools are not deleted. This is useful for cleaning
-        up self-hosted agent pools created during the bootstrap process.
-        Default: $false (do not delete agent pools)
 
     .PARAMETER BypassConfirmation
         A switch parameter that bypasses the interactive confirmation prompts. When specified, the function
@@ -65,24 +58,24 @@ function Remove-AzureDevOpsAccelerator {
         Default: $false (execute actual deletions)
 
     .EXAMPLE
-        Remove-AzureDevOpsAccelerator -AzureDevOpsOrganization "my-org" -ProjectNamePatterns @("^alz-.*") -PlanMode
+        Remove-AzureDevOpsAccelerator -Organization "my-org" -ProjectNamePatterns @("^alz-.*") -PlanMode
 
         Shows what projects matching the pattern "^alz-.*" would be deleted from the "my-org"
         organization without making any changes.
 
     .EXAMPLE
-        Remove-AzureDevOpsAccelerator -AzureDevOpsOrganization "https://dev.azure.com/my-org" -ProjectNamePatterns @("^alz-.*")
+        Remove-AzureDevOpsAccelerator -Organization "https://dev.azure.com/my-org" -ProjectNamePatterns @("^alz-.*")
 
         Deletes all projects matching the pattern "^alz-.*" from the "my-org" organization.
 
     .EXAMPLE
-        Remove-AzureDevOpsAccelerator -AzureDevOpsOrganization "my-org" -ProjectNamePatterns @("^alz-.*") -IncludeAgentPools -AgentPoolNamePatterns @("^alz-.*")
+        Remove-AzureDevOpsAccelerator -Organization "my-org" -ProjectNamePatterns @("^alz-.*") -AgentPoolNamePatterns @("^alz-.*")
 
         Deletes projects and self-hosted agent pools matching the pattern "^alz-.*" from the
         "my-org" organization.
 
     .EXAMPLE
-        Remove-AzureDevOpsAccelerator -AzureDevOpsOrganization "my-org" -ProjectNamePatterns @("^test-alz$") -BypassConfirmation -BypassConfirmationTimeoutSeconds 10
+        Remove-AzureDevOpsAccelerator -Organization "my-org" -ProjectNamePatterns @("^test-alz$") -BypassConfirmation -BypassConfirmationTimeoutSeconds 10
 
         Deletes the project named exactly "test-alz" with a 10-second confirmation bypass timeout.
 
@@ -99,8 +92,8 @@ function Remove-AzureDevOpsAccelerator {
     [CmdletBinding(SupportsShouldProcess = $true)]
     param (
         [Parameter(Mandatory = $true, HelpMessage = "[REQUIRED] The Azure DevOps organization URL or name.")]
-        [Alias("org")]
-        [string]$AzureDevOpsOrganization,
+        [Alias("org", "AzureDevOpsOrganization")]
+        [string]$Organization,
 
         [Parameter(Mandatory = $false, HelpMessage = "[OPTIONAL] Regex patterns to match project names for deletion.")]
         [Alias("projects")]
@@ -109,9 +102,6 @@ function Remove-AzureDevOpsAccelerator {
         [Parameter(Mandatory = $false, HelpMessage = "[OPTIONAL] Regex patterns to match agent pool names for deletion.")]
         [Alias("pools")]
         [string[]]$AgentPoolNamePatterns = @(),
-
-        [Parameter(Mandatory = $false, HelpMessage = "[OPTIONAL] Include agent pools in the deletion process.")]
-        [switch]$IncludeAgentPools,
 
         [Parameter(Mandatory = $false, HelpMessage = "[OPTIONAL] Bypass interactive confirmation prompts.")]
         [switch]$BypassConfirmation,
@@ -154,7 +144,7 @@ function Remove-AzureDevOpsAccelerator {
         $funcWriteToConsoleLog = ${function:Write-ToConsoleLog}.ToString()
 
         # Normalize organization URL
-        $organizationUrl = Get-NormalizedOrganizationUrl -Organization $AzureDevOpsOrganization
+        $organizationUrl = Get-NormalizedOrganizationUrl -Organization $Organization
         Write-ToConsoleLog "Using Azure DevOps organization: $organizationUrl"
 
         # Configure Azure DevOps CLI defaults
@@ -184,7 +174,7 @@ function Remove-AzureDevOpsAccelerator {
         Write-ToConsoleLog "Thanks for providing the inputs, getting started..." -IsSuccess
 
         $hasProjectPatterns = $ProjectNamePatterns.Count -gt 0
-        $hasAgentPoolPatterns = $IncludeAgentPools -and $AgentPoolNamePatterns.Count -gt 0
+        $hasAgentPoolPatterns = $AgentPoolNamePatterns.Count -gt 0
 
         if(-not $hasProjectPatterns -and -not $hasAgentPoolPatterns) {
             Write-ToConsoleLog "No patterns provided for projects or agent pools. Nothing to do. Exiting..." -IsError
@@ -237,9 +227,9 @@ function Remove-AzureDevOpsAccelerator {
             Write-ToConsoleLog "Found $($allAgentPools.Count) total agent pools in organization: $organizationUrl"
 
             foreach($pool in $allAgentPools) {
-                # Skip system pools (Azure Pipelines, Default, etc.)
-                if($pool.isHosted -or $pool.poolType -eq "automation") {
-                    Write-ToConsoleLog "Skipping hosted/system pool: $($pool.name)"
+                # Skip hosted pools (Microsoft-hosted Azure Pipelines)
+                if($pool.isHosted) {
+                    Write-ToConsoleLog "Skipping hosted pool: $($pool.name)"
                     continue
                 }
 

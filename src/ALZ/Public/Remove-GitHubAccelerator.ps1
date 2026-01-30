@@ -18,7 +18,7 @@ function Remove-GitHubAccelerator {
         CRITICAL WARNING: This is a highly destructive operation that will permanently delete GitHub resources.
         Use with extreme caution and ensure you have appropriate backups and authorization before executing.
 
-    .PARAMETER GitHubOrganization
+    .PARAMETER Organization
         The GitHub organization name where the resources to be deleted are located.
         This parameter is required.
 
@@ -63,24 +63,24 @@ function Remove-GitHubAccelerator {
         Default: $false (execute actual deletions)
 
     .EXAMPLE
-        Remove-GitHubAccelerator -GitHubOrganization "my-org" -RepositoryNamePatterns @("^alz-.*") -PlanMode
+        Remove-GitHubAccelerator -Organization "my-org" -RepositoryNamePatterns @("^alz-.*") -PlanMode
 
         Shows what repositories matching the pattern "^alz-.*" would be deleted from the "my-org"
         organization without making any changes.
 
     .EXAMPLE
-        Remove-GitHubAccelerator -GitHubOrganization "my-org" -RepositoryNamePatterns @("^alz-.*") -TeamNamePatterns @("^alz-.*")
+        Remove-GitHubAccelerator -Organization "my-org" -RepositoryNamePatterns @("^alz-.*") -TeamNamePatterns @("^alz-.*")
 
         Deletes all repositories and teams matching the pattern "^alz-.*" from the "my-org" organization.
 
     .EXAMPLE
-        Remove-GitHubAccelerator -GitHubOrganization "my-org" -RepositoryNamePatterns @("^alz-.*", "^landing-zone-.*") -RunnerGroupNamePatterns @("^alz-.*")
+        Remove-GitHubAccelerator -Organization "my-org" -RepositoryNamePatterns @("^alz-.*", "^landing-zone-.*") -RunnerGroupNamePatterns @("^alz-.*")
 
         Deletes repositories matching either pattern and runner groups matching "^alz-.*" from the
         "my-org" organization.
 
     .EXAMPLE
-        Remove-GitHubAccelerator -GitHubOrganization "my-org" -RepositoryNamePatterns @("^test-alz$") -BypassConfirmation -BypassConfirmationTimeoutSeconds 10
+        Remove-GitHubAccelerator -Organization "my-org" -RepositoryNamePatterns @("^test-alz$") -BypassConfirmation -BypassConfirmationTimeoutSeconds 10
 
         Deletes the repository named exactly "test-alz" with a 10-second confirmation bypass timeout.
 
@@ -96,8 +96,8 @@ function Remove-GitHubAccelerator {
     [CmdletBinding(SupportsShouldProcess = $true)]
     param (
         [Parameter(Mandatory = $true, HelpMessage = "[REQUIRED] The GitHub organization name.")]
-        [Alias("org")]
-        [string]$GitHubOrganization,
+        [Alias("org", "GitHubOrganization")]
+        [string]$Organization,
 
         [Parameter(Mandatory = $false, HelpMessage = "[OPTIONAL] Regex patterns to match repository names for deletion.")]
         [Alias("repos")]
@@ -176,15 +176,15 @@ function Remove-GitHubAccelerator {
 
         # Discover repositories
         if($hasRepositoryPatterns) {
-            Write-ToConsoleLog "Discovering repositories in organization: $GitHubOrganization"
+            Write-ToConsoleLog "Discovering repositories in organization: $Organization"
 
-            $repositoriesResponse = (gh repo list $GitHubOrganization --json name,url --limit 1000 2>&1)
+            $repositoriesResponse = (gh repo list $Organization --json name,url --limit 1000 2>&1)
             if($LASTEXITCODE -ne 0) {
-                Write-ToConsoleLog "Failed to list repositories in organization: $GitHubOrganization" -IsError
+                Write-ToConsoleLog "Failed to list repositories in organization: $Organization" -IsError
                 return
             }
             $allRepositories = @($repositoriesResponse | ConvertFrom-Json)
-            Write-ToConsoleLog "Found $($allRepositories.Count) total repositories in organization: $GitHubOrganization"
+            Write-ToConsoleLog "Found $($allRepositories.Count) total repositories in organization: $Organization"
 
             foreach($repo in $allRepositories) {
                 foreach($pattern in $RepositoryNamePatterns) {
@@ -204,15 +204,15 @@ function Remove-GitHubAccelerator {
 
         # Discover teams
         if($hasTeamPatterns) {
-            Write-ToConsoleLog "Discovering teams in organization: $GitHubOrganization"
+            Write-ToConsoleLog "Discovering teams in organization: $Organization"
 
-            $teamsResponse = (gh api "orgs/$GitHubOrganization/teams" --paginate 2>&1)
+            $teamsResponse = (gh api "orgs/$Organization/teams" --paginate 2>&1)
             if($LASTEXITCODE -ne 0) {
-                Write-ToConsoleLog "Failed to list teams in organization: $GitHubOrganization" -IsError
+                Write-ToConsoleLog "Failed to list teams in organization: $Organization" -IsError
                 return
             }
             $allTeams = @($teamsResponse | ConvertFrom-Json)
-            Write-ToConsoleLog "Found $($allTeams.Count) total teams in organization: $GitHubOrganization"
+            Write-ToConsoleLog "Found $($allTeams.Count) total teams in organization: $Organization"
 
             foreach($team in $allTeams) {
                 foreach($pattern in $TeamNamePatterns) {
@@ -233,18 +233,18 @@ function Remove-GitHubAccelerator {
 
         # Discover runner groups
         if($hasRunnerGroupPatterns) {
-            Write-ToConsoleLog "Discovering runner groups in organization: $GitHubOrganization"
+            Write-ToConsoleLog "Discovering runner groups in organization: $Organization"
 
-            $runnerGroupsResponse = (gh api "orgs/$GitHubOrganization/actions/runner-groups" --paginate 2>&1)
+            $runnerGroupsResponse = (gh api "orgs/$Organization/actions/runner-groups" --paginate 2>&1)
             if($LASTEXITCODE -ne 0) {
-                Write-ToConsoleLog "Failed to list runner groups in organization: $GitHubOrganization (may require GitHub Enterprise)" -IsWarning
+                Write-ToConsoleLog "Failed to list runner groups in organization: $Organization (may require GitHub Enterprise)" -IsWarning
                 $allRunnerGroups = @()
             } else {
                 $allRunnerGroups = ($runnerGroupsResponse | ConvertFrom-Json).runner_groups
             }
 
             if($null -ne $allRunnerGroups) {
-                Write-ToConsoleLog "Found $($allRunnerGroups.Count) total runner groups in organization: $GitHubOrganization"
+                Write-ToConsoleLog "Found $($allRunnerGroups.Count) total runner groups in organization: $Organization"
 
                 foreach($runnerGroup in $allRunnerGroups) {
                     # Skip the default runner group as it cannot be deleted
@@ -313,7 +313,7 @@ function Remove-GitHubAccelerator {
                 $funcWriteToConsoleLog = $using:funcWriteToConsoleLog
                 ${function:Write-ToConsoleLog} = $funcWriteToConsoleLog
                 $TempLogFileForPlan = $using:TempLogFileForPlan
-                $org = $using:GitHubOrganization
+                $org = $using:Organization
 
                 $repo = $_
                 $repoFullName = "$org/$($repo.Name)"
@@ -343,7 +343,7 @@ function Remove-GitHubAccelerator {
                 $funcWriteToConsoleLog = $using:funcWriteToConsoleLog
                 ${function:Write-ToConsoleLog} = $funcWriteToConsoleLog
                 $TempLogFileForPlan = $using:TempLogFileForPlan
-                $org = $using:GitHubOrganization
+                $org = $using:Organization
 
                 $team = $_
 
@@ -372,7 +372,7 @@ function Remove-GitHubAccelerator {
                 $funcWriteToConsoleLog = $using:funcWriteToConsoleLog
                 ${function:Write-ToConsoleLog} = $funcWriteToConsoleLog
                 $TempLogFileForPlan = $using:TempLogFileForPlan
-                $org = $using:GitHubOrganization
+                $org = $using:Organization
 
                 $runnerGroup = $_
 
