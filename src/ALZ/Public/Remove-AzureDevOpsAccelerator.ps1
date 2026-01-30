@@ -323,11 +323,11 @@ function Remove-AzureDevOpsAccelerator {
                 if($using:PlanMode) {
                     Write-ToConsoleLog `
                         "Would delete agent pool: $($pool.Name)", `
-                        "Would run: az pipelines pool delete --id $($pool.Id) --org $orgUrl --yes" `
+                        "Would run: az devops invoke --org $orgUrl --area distributedtask --resource pools --route-parameters poolId=$($pool.Id) --http-method DELETE --api-version 7.1" `
                         -IsPlan -LogFilePath $TempLogFileForPlan
                 } else {
                     Write-ToConsoleLog "Deleting agent pool: $($pool.Name)"
-                    $result = az pipelines pool delete --id $pool.Id --org $orgUrl --yes 2>&1
+                    $result = az devops invoke --org $orgUrl --area distributedtask --resource pools --route-parameters poolId=$($pool.Id) --http-method DELETE --api-version 7.1 2>&1
                     if($LASTEXITCODE -ne 0) {
                         Write-ToConsoleLog "Failed to delete agent pool: $($pool.Name)", "Full error: $result" -IsWarning
                     } else {
