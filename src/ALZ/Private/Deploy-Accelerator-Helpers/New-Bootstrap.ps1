@@ -84,7 +84,7 @@ function New-Bootstrap {
 
         if ($hasStarter) {
             if (!$inputConfig.starter_module_name.Value) {
-                Write-InformationColored "No starter module has been specified. Please supply the starter module you wish to deploy..." -ForegroundColor Red -InformationAction Continue
+                Write-ToConsoleLog "No starter module has been specified. Please supply the starter module you wish to deploy..." -IsError
                 throw "No starter module has been specified. Please supply the starter module you wish to deploy..."
             }
 
@@ -93,7 +93,7 @@ function New-Bootstrap {
             $chosenStarterConfig = $starterConfig.starter_modules.Value.$($starter_module_name)
 
             if($null -eq $chosenStarterConfig ) {
-                Write-InformationColored "The starter module name '$($starter_module_name)' does not exist in the starter configuration. Please check your input and try again." -ForegroundColor Red -InformationAction Continue
+                Write-ToConsoleLog "The starter module name '$($starter_module_name)' does not exist in the starter configuration. Please check your input and try again." -IsError
                 throw "The starter module name '$($starter_module_name)' does not exist in the starter configuration. Please check your input and try again."
             }
 
@@ -283,7 +283,7 @@ function New-Bootstrap {
         }
 
         # Running terraform init and apply
-        Write-InformationColored "Thank you for providing those inputs, we are now initializing and applying Terraform to bootstrap your environment..." -ForegroundColor Green -NewLineBefore -InformationAction Continue
+        Write-ToConsoleLog "Thank you for providing those inputs, we are now initializing and applying Terraform to bootstrap your environment..." -IsSuccess
 
         # Get bootstrap_subscription_id from inputConfig if available
         $bootstrapSubscriptionId = ""
@@ -294,10 +294,10 @@ function New-Bootstrap {
         if ($autoApprove) {
             Invoke-Terraform -moduleFolderPath $bootstrapModulePath -autoApprove -destroy:$destroy.IsPresent -bootstrapSubscriptionId $bootstrapSubscriptionId
         } else {
-            Write-InformationColored "Once the plan is complete you will be prompted to confirm the apply." -ForegroundColor Green -NewLineBefore -InformationAction Continue
+            Write-ToConsoleLog "Once the plan is complete you will be prompted to confirm the apply." -IsSuccess
             Invoke-Terraform -moduleFolderPath $bootstrapModulePath -destroy:$destroy.IsPresent -bootstrapSubscriptionId $bootstrapSubscriptionId
         }
 
-        Write-InformationColored "Bootstrap has completed successfully! Thanks for using our tool. Head over to Phase 3 in the documentation to continue..." -ForegroundColor Green -NewLineBefore -InformationAction Continue
+        Write-ToConsoleLog "Bootstrap has completed successfully! Thanks for using our tool. Head over to Phase 3 in the documentation to continue..." -IsSuccess
     }
 }

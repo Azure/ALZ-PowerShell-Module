@@ -14,9 +14,9 @@ function Get-AzureContext {
     When set, clears the cached Azure context and fetches fresh data from Azure.
     .OUTPUTS
     Returns a hashtable with the following keys:
-    - ManagementGroups: Array of objects with id and displayName properties
-    - Subscriptions: Array of objects with id and name properties
-    - Regions: Array of objects with name, displayName, and hasAvailabilityZones properties
+    - ManagementGroups: Array of label/value objects for menu selection
+    - Subscriptions: Array of label/value objects for menu selection
+    - Regions: Array of label/value objects for menu selection (includes [AZ] indicator)
     #>
     [CmdletBinding()]
     param(
@@ -35,7 +35,7 @@ function Get-AzureContext {
     # Clear cache if requested
     if ($ClearCache.IsPresent -and (Test-Path $cacheFilePath)) {
         Remove-Item -Path $cacheFilePath -Force
-        Write-InformationColored "Azure context cache cleared." -ForegroundColor Yellow -InformationAction Continue
+        Write-ToConsoleLog "Azure context cache cleared." -IsSuccess
     }
 
     # Check if valid cache exists
@@ -45,8 +45,8 @@ function Get-AzureContext {
         if ($cacheAge.TotalHours -lt $cacheExpirationHours) {
             try {
                 $cachedContext = Get-Content -Path $cacheFilePath -Raw | ConvertFrom-Json -AsHashtable
-                Write-InformationColored "Using cached Azure context (cached $([math]::Round($cacheAge.TotalMinutes)) minutes ago). Use -clearCache to refresh." -ForegroundColor Gray -InformationAction Continue
-                Write-InformationColored "  Found $($cachedContext.ManagementGroups.Count) management groups, $($cachedContext.Subscriptions.Count) subscriptions, and $($cachedContext.Regions.Count) regions" -ForegroundColor Gray -InformationAction Continue
+                Write-ToConsoleLog "Using cached Azure context (cached $([math]::Round($cacheAge.TotalMinutes)) minutes ago). Use -clearCache to refresh."
+                Write-ToConsoleLog "Found $($cachedContext.ManagementGroups.Count) management groups, $($cachedContext.Subscriptions.Count) subscriptions, and $($cachedContext.Regions.Count) regions"
                 return $cachedContext
             } catch {
                 Write-Verbose "Failed to read cache file, will fetch fresh data."
@@ -60,7 +60,7 @@ function Get-AzureContext {
         Regions          = @()
     }
 
-    Write-InformationColored "Querying Azure for management groups, subscriptions, and regions..." -ForegroundColor Green -InformationAction Continue
+    Write-ToConsoleLog "Querying Azure for management groups, subscriptions, and regions..."
 
     try {
         # Get the current tenant ID
@@ -70,7 +70,15 @@ function Get-AzureContext {
         # Get management groups
         $mgResult = az account management-group list --query "[].{id:name, displayName:displayName}" -o json 2>$null
         if ($LASTEXITCODE -eq 0 -and $mgResult) {
-            $azureContext.ManagementGroups = $mgResult | ConvertFrom-Json
+            $mgRaw = $mgResult | ConvertFrom-Json
+            $azureContext.ManagementGroups = @($mgRaw | ForEach-Object {
+                    @{
+                        label = "$($_.displayName) ($($_.id))"
+                        value = $_.id
+                    }
+                })
+        } else {
+            Write-ToConsoleLog "No management groups found or access denied." -IsWarning
         }
 
         # Get subscriptions (filtered to current tenant only, sorted by name)
@@ -80,16 +88,33 @@ function Get-AzureContext {
             $subResult = az account list --query "sort_by([].{id:id, name:name}, &name)" -o json 2>$null
         }
         if ($LASTEXITCODE -eq 0 -and $subResult) {
-            $azureContext.Subscriptions = $subResult | ConvertFrom-Json
+            $subRaw = $subResult | ConvertFrom-Json
+            $azureContext.Subscriptions = @($subRaw | ForEach-Object {
+                    @{
+                        label = "$($_.name) ($($_.id))"
+                        value = $_.id
+                    }
+                })
+        } else {
+            Write-ToConsoleLog "No subscriptions found or access denied." -IsWarning
         }
 
         # Get regions (sorted by displayName, include availability zone support)
         $regionResult = az account list-locations --query "sort_by([?metadata.regionType=='Physical'].{name:name, displayName:displayName, hasAvailabilityZones:length(availabilityZoneMappings || ``[]``) > ``0``}, &displayName)" -o json 2>$null
         if ($LASTEXITCODE -eq 0 -and $regionResult) {
-            $azureContext.Regions = $regionResult | ConvertFrom-Json
+            $regionRaw = $regionResult | ConvertFrom-Json
+            $azureContext.Regions = @($regionRaw | ForEach-Object {
+                    $azIndicator = if ($_.hasAvailabilityZones) { " [AZ]" } else { "" }
+                    @{
+                        label = "$($_.displayName) ($($_.name))$azIndicator"
+                        value = $_.name
+                    }
+                })
+        } else {
+            Write-ToConsoleLog "No regions found or access denied." -IsWarning
         }
 
-        Write-InformationColored "  Found $($azureContext.ManagementGroups.Count) management groups, $($azureContext.Subscriptions.Count) subscriptions, and $($azureContext.Regions.Count) regions" -ForegroundColor Gray -InformationAction Continue
+        Write-ToConsoleLog "Found $($azureContext.ManagementGroups.Count) management groups, $($azureContext.Subscriptions.Count) subscriptions, and $($azureContext.Regions.Count) regions"
 
         # Save to cache
         try {
@@ -102,7 +127,7 @@ function Get-AzureContext {
             Write-Verbose "Failed to write cache file: $_"
         }
     } catch {
-        Write-InformationColored "  Warning: Could not query Azure resources. You will need to enter IDs manually." -ForegroundColor Yellow -InformationAction Continue
+        Write-ToConsoleLog "Could not query Azure resources. You will need to enter IDs manually." -IsWarning
     }
 
     return $azureContext

@@ -28,7 +28,9 @@ function Remove-PlatformLandingZone {
         Use with extreme caution and ensure you have appropriate backups and authorization before executing.
 
     .PARAMETER ManagementGroups
-        An array of management group IDs or names to process. By default, the function deletes child management groups
+        An array of regex patterns to match against management group names or display names. The function queries
+        all management groups in the tenant and matches each pattern against both the name and displayName properties.
+        Multiple management groups can match a single pattern. By default, the function deletes child management groups
         one level below these target groups (not the target groups themselves). Use -DeleteTargetManagementGroups to
         delete the target groups as well. Subscriptions under these management groups will be discovered unless
         subscriptions are explicitly provided via the -Subscriptions parameter.
@@ -143,6 +145,22 @@ function Remove-PlatformLandingZone {
         -like expression with wildcards at the start and end (e.g., a pattern of "alz" will match deployment stacks
         containing "alz" anywhere in their name).
         Default: Empty array (delete all deployment stacks)
+
+    .PARAMETER AllowNoManagementGroupMatch
+        A switch parameter that allows the function to continue processing subscriptions even when no valid
+        management groups are found from the provided list. When specified, a warning is logged instead of an
+        error, and the function continues to subscription cleanup. This is useful when the management groups
+        may have already been deleted but you still want to clean up subscriptions.
+        Default: $false (exit with error if no management groups found)
+
+    .PARAMETER ForceSubscriptionPlacement
+        A switch parameter that forces moving all subscriptions (provided via -Subscriptions or -AdditionalSubscriptions)
+        to the management group specified in -SubscriptionsTargetManagementGroup. If -SubscriptionsTargetManagementGroup
+        is not specified, the default management group is determined from the tenant's hierarchy settings
+        (via az account management-group hierarchy-settings list), falling back to tenant root if no default is configured.
+        Before moving, the function checks if each subscription is already under the target management group and skips
+        the move if it is.
+        Default: $false (do not force placement)
 
     .EXAMPLE
         Remove-PlatformLandingZone -ManagementGroups @("alz-test") -AdditionalSubscriptions @("Bootstrap-Sub-001")
@@ -321,137 +339,10 @@ function Remove-PlatformLandingZone {
         [switch]$SkipCustomRoleDefinitionDeletion,
         [string[]]$ManagementGroupsToDeleteNamePatterns = @(),
         [string[]]$RoleDefinitionsToDeleteNamePatterns = @(),
-        [string[]]$DeploymentStacksToDeleteNamePatterns = @()
+        [string[]]$DeploymentStacksToDeleteNamePatterns = @(),
+        [switch]$AllowNoManagementGroupMatch,
+        [switch]$ForceSubscriptionPlacement
     )
-
-    function Write-ToConsoleLog {
-        param (
-            [string[]]$Messages,
-            [string]$Level = "INFO",
-            [System.ConsoleColor]$Color = [System.ConsoleColor]::Blue,
-            [switch]$NoNewLine,
-            [switch]$Overwrite,
-            [switch]$IsError,
-            [switch]$IsWarning,
-            [switch]$IsSuccess,
-            [switch]$IsPlan,
-            [switch]$WriteToFile,
-            [string]$LogFilePath = $null
-        )
-
-        $isDefaultColor = $Color -eq [System.ConsoleColor]::Blue
-
-        if($IsError) {
-            $Level = "ERROR"
-        } elseif ($IsWarning) {
-            $Level = "WARNING"
-        } elseif ($IsSuccess) {
-            $Level = "SUCCESS"
-        } elseif ($IsPlan) {
-            $Level = "PLAN"
-            $WriteToFile = $true
-            $NoNewLine = $true
-        }
-
-        if($isDefaultColor) {
-            if($Level -eq "ERROR") {
-                $Color = [System.ConsoleColor]::Red
-            } elseif ($Level -eq "WARNING") {
-                $Color = [System.ConsoleColor]::Yellow
-            } elseif ($Level -eq "SUCCESS") {
-                $Color = [System.ConsoleColor]::Green
-            } elseif ($Level -eq "PLAN") {
-                $Color = [System.ConsoleColor]::Gray
-            }
-        }
-
-        $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss.fff"
-        $prefix = ""
-
-        if ($Overwrite) {
-            $prefix = "`r"
-        } else {
-            if (-not $NoNewLine) {
-                $prefix = [System.Environment]::NewLine
-            }
-        }
-
-        $finalMessages = @()
-        foreach ($Message in $Messages) {
-            $finalMessages += "$prefix[$timestamp] [$Level] $Message"
-        }
-
-        if($finalMessages.Count -gt 1) {
-            $finalMessages = $finalMessages -join "`n"
-        }
-
-        Write-Host $finalMessages -ForegroundColor $Color -NoNewline:$Overwrite.IsPresent
-        if($WriteToFile -and $LogFilePath) {
-            Add-Content -Path $LogFilePath -Value $finalMessages
-        }
-    }
-
-    function Test-RequiredTooling {
-        Write-ToConsoleLog "Checking the software requirements..."
-
-        $checkResults = @()
-        $hasFailure = $false
-
-        # Check if Azure CLI is installed
-        Write-Verbose "Checking Azure CLI installation"
-        $azCliPath = Get-Command az -ErrorAction SilentlyContinue
-        if ($azCliPath) {
-            $checkResults += @{
-                message = "Azure CLI is installed."
-                result  = "Success"
-            }
-        } else {
-            $checkResults += @{
-                message = "Azure CLI is not installed. Follow the instructions here: https://learn.microsoft.com/en-us/cli/azure/install-azure-cli"
-                result  = "Failure"
-            }
-            $hasFailure = $true
-        }
-
-        # Check if Azure CLI is logged in
-        Write-Verbose "Checking Azure CLI login status"
-        $azCliAccount = $(az account show -o json) | ConvertFrom-Json
-        if ($azCliAccount) {
-            $checkResults += @{
-                message = "Azure CLI is logged in. Tenant ID: $($azCliAccount.tenantId), Subscription: $($azCliAccount.name) ($($azCliAccount.id))"
-                result  = "Success"
-            }
-        } else {
-            $checkResults += @{
-                message = "Azure CLI is not logged in. Please login to Azure CLI using 'az login -t `"00000000-0000-0000-0000-000000000000}`"', replacing the empty GUID with your tenant ID."
-                result  = "Failure"
-            }
-            $hasFailure = $true
-        }
-
-        Write-Verbose "Showing check results"
-        Write-Verbose $(ConvertTo-Json $checkResults -Depth 100)
-        $checkResults | ForEach-Object {[PSCustomObject]$_} | Format-Table -Property @{
-            Label = "Check Result"; Expression = {
-                switch ($_.result) {
-                    'Success' { $color = "92"; break }
-                    'Failure' { $color = "91"; break }
-                    'Warning' { $color = "93"; break }
-                    default { $color = "0" }
-                }
-                $e = [char]27
-                "$e[${color}m$($_.result)${e}[0m"
-            }
-        }, @{ Label = "Check Details"; Expression = {$_.message} }  -AutoSize -Wrap
-
-        if($hasFailure) {
-            Write-ToConsoleLog "Software requirements have no been met, please review and install the missing software." -IsError
-            Write-ToConsoleLog "Cannot continue with Deployment..." -IsError
-            throw "Software requirements have no been met, please review and install the missing software."
-        }
-
-        Write-ToConsoleLog "All software requirements have been met." -IsSuccess
-    }
 
     function Get-ManagementGroupChildrenRecursive {
         param (
@@ -470,7 +361,7 @@ function Remove-PlatformLandingZone {
                 $shouldDelete = $false
                 foreach($pattern in $ManagementGroupsToDeleteNamePatterns) {
                     if($mg.name -like "*$pattern*" -or $mg.displayName -like "*$pattern*") {
-                        Write-ToConsoleLog "Including management group for deletion due to pattern match '$pattern': $($mg.name) ($($mg.displayName))" -NoNewLine
+                        Write-ToConsoleLog "Including management group for deletion due to pattern match '$pattern': $($mg.name) ($($mg.displayName))"
                         $shouldDelete = $true
                         break
                     }
@@ -478,7 +369,7 @@ function Remove-PlatformLandingZone {
                 if($shouldDelete) {
                     $filteredManagementGroups += $mg
                 } else {
-                    Write-ToConsoleLog "Skipping management group (no pattern match): $($mg.name) ($($mg.displayName))" -NoNewLine
+                    Write-ToConsoleLog "Skipping management group (no pattern match): $($mg.name) ($($mg.displayName))"
                 }
             }
             $ManagementGroups = $filteredManagementGroups
@@ -494,13 +385,13 @@ function Remove-PlatformLandingZone {
             $children = $managementGroup.children | Where-Object { $_.type -eq "Microsoft.Management/managementGroups" }
 
             if ($children -and $children.Count -gt 0) {
-                Write-ToConsoleLog "Management group has children: $($managementGroup.name)" -NoNewLine
+                Write-ToConsoleLog "Management group has children: $($managementGroup.name)"
                 if(!$ManagementGroupsFound.ContainsKey($Depth + 1)) {
                     $ManagementGroupsFound[$Depth + 1] = @()
                 }
                 Get-ManagementGroupChildrenRecursive -ManagementGroups $children -Depth ($Depth + 1) -ManagementGroupsFound $ManagementGroupsFound -ManagementGroupsToDeleteNamePatterns $ManagementGroupsToDeleteNamePatterns
             } else {
-                Write-ToConsoleLog "Management group has no children: $($managementGroup.name)" -NoNewLine
+                Write-ToConsoleLog "Management group has no children: $($managementGroup.name)"
             }
         }
 
@@ -520,44 +411,6 @@ function Remove-PlatformLandingZone {
         return [System.Guid]::TryParse($StringGuid,[System.Management.Automation.PSReference]$ObjectGuid)
     }
 
-    function Invoke-PromptForConfirmation {
-        param (
-            [string]$Message,
-            [string]$FinalConfirmationText = "CONFIRM"
-        )
-
-        Write-ToConsoleLog "$Message" -IsWarning
-        $randomString = (Get-RandomString -Length 6).ToUpper()
-        Write-ToConsoleLog "If you wish to proceed, type '$randomString' to confirm." -IsWarning
-        $confirmation = Read-Host "Enter the confirmation text"
-        $confirmation = $confirmation.ToUpper().Replace("'","").Replace([System.Environment]::NewLine, "").Trim()
-        if ($confirmation -ne $randomString.ToUpper()) {
-            Write-ToConsoleLog "Confirmation text did not match the required input. Exiting without making any changes." -IsError
-            return $false
-        }
-        Write-ToConsoleLog "Initial confirmation received." -IsSuccess
-        Write-ToConsoleLog "This operation is permanent and cannot be reversed!" -IsWarning
-        Write-ToConsoleLog "Are you sure you want to proceed? Type '$FinalConfirmationText' to perform the highly destructive operation..." -IsWarning
-        $confirmation = Read-Host "Enter the final confirmation text"
-        $confirmation = $confirmation.ToUpper().Replace("'","").Replace([System.Environment]::NewLine, "").Trim()
-        if ($confirmation -ne $FinalConfirmationText.ToUpper()) {
-            Write-ToConsoleLog "Final confirmation did not match the required input. Exiting without making any changes." -IsError
-            return $false
-        }
-        Write-ToConsoleLog "Final confirmation received. Proceeding with destructive operation..." -IsSuccess
-        return $true
-    }
-
-    function Get-RandomString {
-        param (
-            [int]$Length = 8
-        )
-
-        $chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-        $string = -join ((1..$Length) | ForEach-Object { $chars[(Get-Random -Maximum $chars.Length)] })
-        return $string
-    }
-
     function Remove-OrphanedRoleAssignmentsForScope {
         [CmdletBinding(SupportsShouldProcess = $true)]
         param (
@@ -575,12 +428,12 @@ function Remove-PlatformLandingZone {
 
         $funcWriteToConsoleLog = ${function:Write-ToConsoleLog}.ToString()
         $isSubscriptionScope = $ScopeType -eq "subscription"
-        Write-ToConsoleLog "Checking for orphaned role assignments to delete in $($ScopeType): $ScopeNameForLogs" -NoNewLine
+        Write-ToConsoleLog "Checking for orphaned role assignments to delete in $($ScopeType): $ScopeNameForLogs"
         $scopePrefix = $isSubscriptionScope ? "/subscriptions" : "/providers/Microsoft.Management/managementGroups"
         $roleAssignments = (az role assignment list --scope "$scopePrefix/$ScopeId" --query "[?principalName==''].{id:id,principalId:principalId,roleDefinitionName:roleDefinitionName}" -o json) | ConvertFrom-Json
 
         if ($roleAssignments -and $roleAssignments.Count -gt 0) {
-            Write-ToConsoleLog "Found $($roleAssignments.Count) orphaned role assignment(s) in $($ScopeType): $ScopeNameForLogs" -NoNewLine
+            Write-ToConsoleLog "Found $($roleAssignments.Count) orphaned role assignment(s) in $($ScopeType): $ScopeNameForLogs"
 
             $roleAssignments | ForEach-Object -Parallel {
                 $roleAssignment = $_
@@ -589,7 +442,7 @@ function Remove-PlatformLandingZone {
                 $funcWriteToConsoleLog = $using:funcWriteToConsoleLog
                 ${function:Write-ToConsoleLog} = $funcWriteToConsoleLog
 
-                Write-ToConsoleLog "Deleting orphaned role assignment: $($roleAssignment.roleDefinitionName) for principal: $($roleAssignment.principalId) from $($ScopeType): $ScopeNameForLogs" -NoNewLine
+                Write-ToConsoleLog "Deleting orphaned role assignment: $($roleAssignment.roleDefinitionName) for principal: $($roleAssignment.principalId) from $($ScopeType): $ScopeNameForLogs"
                 $result = $null
                 if($using:PlanMode) {
                     Write-ToConsoleLog `
@@ -601,15 +454,15 @@ function Remove-PlatformLandingZone {
                 }
 
                 if (!$result) {
-                    Write-ToConsoleLog "Deleted orphaned role assignment: $($roleAssignment.roleDefinitionName) from $($ScopeType): $ScopeNameForLogs" -NoNewLine
+                    Write-ToConsoleLog "Deleted orphaned role assignment: $($roleAssignment.roleDefinitionName) from $($ScopeType): $ScopeNameForLogs"
                 } else {
-                    Write-ToConsoleLog "Failed to delete orphaned role assignment: $($roleAssignment.roleDefinitionName) from $($ScopeType): $ScopeNameForLogs" -IsWarning -NoNewLine
+                    Write-ToConsoleLog "Failed to delete orphaned role assignment: $($roleAssignment.roleDefinitionName) from $($ScopeType): $ScopeNameForLogs", "Full error: $result" -IsWarning
                 }
             } -ThrottleLimit $using:ThrottleLimit
 
-            Write-ToConsoleLog "All orphaned role assignments processed in $($ScopeType): $ScopeNameForLogs" -NoNewLine
+            Write-ToConsoleLog "All orphaned role assignments processed in $($ScopeType): $ScopeNameForLogs"
         } else {
-            Write-ToConsoleLog "No orphaned role assignments found in $($ScopeType): $ScopeNameForLogs, skipping." -NoNewLine
+            Write-ToConsoleLog "No orphaned role assignments found in $($ScopeType): $ScopeNameForLogs, skipping."
         }
     }
 
@@ -636,7 +489,7 @@ function Remove-PlatformLandingZone {
 
         # Delete deployment stacks first (before regular deployments)
         if(-not $SkipDeploymentStackDeletion) {
-            Write-ToConsoleLog "Checking for deployment stacks to delete in $($ScopeType): $ScopeNameForLogs" -NoNewLine
+            Write-ToConsoleLog "Checking for deployment stacks to delete in $($ScopeType): $ScopeNameForLogs"
 
             $deploymentStacks = @()
             if ($isSubscriptionScope) {
@@ -652,7 +505,7 @@ function Remove-PlatformLandingZone {
                     $shouldDelete = $false
                     foreach($pattern in $DeploymentStacksToDeleteNamePatterns) {
                         if($stack.name -like "*$pattern*") {
-                            Write-ToConsoleLog "Including deployment stack for deletion due to pattern match '$pattern': $($stack.name)" -NoNewLine
+                            Write-ToConsoleLog "Including deployment stack for deletion due to pattern match '$pattern': $($stack.name)"
                             $shouldDelete = $true
                             break
                         }
@@ -660,14 +513,14 @@ function Remove-PlatformLandingZone {
                     if($shouldDelete) {
                         $filteredDeploymentStacks += $stack
                     } else {
-                        Write-ToConsoleLog "Skipping deployment stack (no pattern match): $($stack.name)" -NoNewLine
+                        Write-ToConsoleLog "Skipping deployment stack (no pattern match): $($stack.name)"
                     }
                 }
                 $deploymentStacks = $filteredDeploymentStacks
             }
 
             if ($deploymentStacks -and $deploymentStacks.Count -gt 0) {
-                Write-ToConsoleLog "Found $($deploymentStacks.Count) deployment stack(s) in $($ScopeType): $ScopeNameForLogs" -NoNewLine
+                Write-ToConsoleLog "Found $($deploymentStacks.Count) deployment stack(s) in $($ScopeType): $ScopeNameForLogs"
 
                 $deploymentStacks | ForEach-Object -Parallel {
                     $deploymentStack = $_
@@ -678,7 +531,7 @@ function Remove-PlatformLandingZone {
                     ${function:Write-ToConsoleLog} = $funcWriteToConsoleLog
                     $isSubscriptionScope = $using:isSubscriptionScope
 
-                    Write-ToConsoleLog "Deleting deployment stack: $($deploymentStack.name) from $($scopeType): $scopeNameForLogs" -NoNewLine
+                    Write-ToConsoleLog "Deleting deployment stack: $($deploymentStack.name) from $($scopeType): $scopeNameForLogs"
                     $result = $null
                     if($isSubscriptionScope) {
                         if($using:PlanMode) {
@@ -701,22 +554,22 @@ function Remove-PlatformLandingZone {
                     }
 
                     if (!$result) {
-                        Write-ToConsoleLog "Deleted deployment stack: $($deploymentStack.name) from $($scopeType): $scopeNameForLogs" -NoNewLine
+                        Write-ToConsoleLog "Deleted deployment stack: $($deploymentStack.name) from $($scopeType): $scopeNameForLogs"
                     } else {
-                        Write-ToConsoleLog "Failed to delete deployment stack: $($deploymentStack.name) from $($scopeType): $scopeNameForLogs" -IsWarning -NoNewLine
+                        Write-ToConsoleLog "Failed to delete deployment stack: $($deploymentStack.name) from $($scopeType): $scopeNameForLogs", "Full error: $result" -IsWarning
                     }
                 } -ThrottleLimit $ThrottleLimit
 
-                Write-ToConsoleLog "All deployment stacks processed in $($ScopeType): $ScopeNameForLogs" -NoNewLine
+                Write-ToConsoleLog "All deployment stacks processed in $($ScopeType): $ScopeNameForLogs"
             } else {
-                Write-ToConsoleLog "No deployment stacks found in $($ScopeType): $ScopeNameForLogs, skipping." -NoNewLine
+                Write-ToConsoleLog "No deployment stacks found in $($ScopeType): $ScopeNameForLogs, skipping."
             }
         } else {
-            Write-ToConsoleLog "Skipping deployment stack deletion in $($ScopeType): $ScopeNameForLogs" -NoNewLine
+            Write-ToConsoleLog "Skipping deployment stack deletion in $($ScopeType): $ScopeNameForLogs"
         }
 
         if(-not $SkipDeploymentDeletion) {
-            Write-ToConsoleLog "Checking for deployments to delete in $($ScopeType): $ScopeNameForLogs" -NoNewLine
+            Write-ToConsoleLog "Checking for deployments to delete in $($ScopeType): $ScopeNameForLogs"
 
             $deployments = @()
             if ($isSubscriptionScope) {
@@ -726,7 +579,7 @@ function Remove-PlatformLandingZone {
             }
 
             if ($deployments -and $deployments.Count -gt 0) {
-                Write-ToConsoleLog "Found $($deployments.Count) deployment(s) in $($ScopeType): $scopeNameForLogs" -NoNewLine
+                Write-ToConsoleLog "Found $($deployments.Count) deployment(s) in $($ScopeType): $scopeNameForLogs"
 
                 $deployments | ForEach-Object -Parallel {
                     $deploymentName = $_
@@ -736,7 +589,7 @@ function Remove-PlatformLandingZone {
                     ${function:Write-ToConsoleLog} = $funcWriteToConsoleLog
                     $isSubscriptionScope = $using:isSubscriptionScope
 
-                    Write-ToConsoleLog "Deleting deployment: $deploymentName from $($scopeType): $scopeNameForLogs" -NoNewLine
+                    Write-ToConsoleLog "Deleting deployment: $deploymentName from $($scopeType): $scopeNameForLogs"
                     $result = $null
                     if($isSubscriptionScope) {
                         if($using:PlanMode) {
@@ -759,18 +612,18 @@ function Remove-PlatformLandingZone {
                     }
 
                     if (!$result) {
-                        Write-ToConsoleLog "Deleted deployment: $deploymentName from $($scopeType): $scopeNameForLogs" -NoNewLine
+                        Write-ToConsoleLog "Deleted deployment: $deploymentName from $($scopeType): $scopeNameForLogs"
                     } else {
-                        Write-ToConsoleLog "Failed to delete deployment: $deploymentName from $($scopeType): $scopeNameForLogs" -IsWarning -NoNewLine
+                        Write-ToConsoleLog "Failed to delete deployment: $deploymentName from $($scopeType): $scopeNameForLogs", "Full error: $result" -IsWarning
                     }
                 } -ThrottleLimit $ThrottleLimit
 
-                Write-ToConsoleLog "All deployments processed in $($scopeType): $scopeNameForLogs" -NoNewLine
+                Write-ToConsoleLog "All deployments processed in $($scopeType): $scopeNameForLogs"
             } else {
-                Write-ToConsoleLog "No deployments found in $($scopeType): $scopeNameForLogs, skipping." -NoNewLine
+                Write-ToConsoleLog "No deployments found in $($scopeType): $scopeNameForLogs, skipping."
             }
         } else {
-            Write-ToConsoleLog "Skipping deployment deletion in $($ScopeType): $ScopeNameForLogs" -NoNewLine
+            Write-ToConsoleLog "Skipping deployment deletion in $($ScopeType): $ScopeNameForLogs"
         }
     }
 
@@ -791,7 +644,7 @@ function Remove-PlatformLandingZone {
 
         $funcWriteToConsoleLog = ${function:Write-ToConsoleLog}.ToString()
 
-        Write-ToConsoleLog "Checking for custom role definitions on management group: $ManagementGroupId ($ManagementGroupDisplayName)" -NoNewLine
+        Write-ToConsoleLog "Checking for custom role definitions on management group: $ManagementGroupId ($ManagementGroupDisplayName)"
 
         # Get all custom role definitions scoped to this management group
         $customRoleDefinitions = (az role definition list --custom-role-only true --scope "/providers/Microsoft.Management/managementGroups/$ManagementGroupId" --query "[].{name:name,roleName:roleName,id:id,assignableScopes:assignableScopes}" -o json) | ConvertFrom-Json
@@ -807,7 +660,7 @@ function Remove-PlatformLandingZone {
                 $shouldDelete = $false
                 foreach($pattern in $RoleDefinitionsToDeleteNamePatterns) {
                     if($roleDef.roleName -like "*$pattern*") {
-                        Write-ToConsoleLog "Including custom role definition for deletion due to pattern match '$pattern': $($roleDef.roleName) (ID: $($roleDef.name))" -NoNewLine
+                        Write-ToConsoleLog "Including custom role definition for deletion due to pattern match '$pattern': $($roleDef.roleName) (ID: $($roleDef.name))"
                         $shouldDelete = $true
                         break
                     }
@@ -815,36 +668,36 @@ function Remove-PlatformLandingZone {
                 if($shouldDelete) {
                     $filteredRoleDefinitions += $roleDef
                 } else {
-                    Write-ToConsoleLog "Skipping custom role definition (no pattern match): $($roleDef.roleName) (ID: $($roleDef.name))" -NoNewLine
+                    Write-ToConsoleLog "Skipping custom role definition (no pattern match): $($roleDef.roleName) (ID: $($roleDef.name))"
                 }
             }
             $customRoleDefinitions = $filteredRoleDefinitions
         }
 
         if (-not $customRoleDefinitions -or $customRoleDefinitions.Count -eq 0) {
-            Write-ToConsoleLog "No custom role definitions found on management group: $ManagementGroupId ($ManagementGroupDisplayName), skipping." -NoNewLine
+            Write-ToConsoleLog "No custom role definitions found on management group: $ManagementGroupId ($ManagementGroupDisplayName), skipping."
             return
         }
 
-        Write-ToConsoleLog "Found $($customRoleDefinitions.Count) custom role definition(s) on management group: $ManagementGroupId ($ManagementGroupDisplayName)" -NoNewLine
+        Write-ToConsoleLog "Found $($customRoleDefinitions.Count) custom role definition(s) on management group: $ManagementGroupId ($ManagementGroupDisplayName)"
 
         # For each custom role definition, find and delete all assignments using Resource Graph, then delete the definition
         foreach ($roleDefinition in $customRoleDefinitions) {
             $graphExtension = az extension show --name resource-graph 2>$null
             if (-not $graphExtension) {
-                Write-ToConsoleLog "Installing Azure Resource Graph extension for role assignment queries..." -NoNewLine -IsWarning
+                Write-ToConsoleLog "Installing Azure Resource Graph extension for role assignment queries..." -IsWarning
                 az config set extension.dynamic_install_allow_preview=true 2>$null
                 az extension add --name resource-graph 2>$null
             }
 
-            Write-ToConsoleLog "Processing custom role definition: $($roleDefinition.roleName) (ID: $($roleDefinition.name))" -NoNewLine
+            Write-ToConsoleLog "Processing custom role definition: $($roleDefinition.roleName) (ID: $($roleDefinition.name))"
 
             # Use Resource Graph to find all role assignments for this custom role definition across all scopes
             $resourceGraphQuery = "authorizationresources | where type == 'microsoft.authorization/roleassignments' | where properties.roleDefinitionId == '/providers/Microsoft.Authorization/RoleDefinitions/$($roleDefinition.name)' | project id, name, properties"
             $roleAssignments = (az graph query -q $resourceGraphQuery --query "data" --management-groups $ManagementGroupId -o json) | ConvertFrom-Json
 
             if ($roleAssignments -and $roleAssignments.Count -gt 0) {
-                Write-ToConsoleLog "Found $($roleAssignments.Count) role assignment(s) for custom role '$($roleDefinition.roleName)'" -NoNewLine
+                Write-ToConsoleLog "Found $($roleAssignments.Count) role assignment(s) for custom role '$($roleDefinition.roleName)'"
 
                 $roleAssignments | ForEach-Object -Parallel {
                     $assignment = $_
@@ -852,7 +705,7 @@ function Remove-PlatformLandingZone {
                     $funcWriteToConsoleLog = $using:funcWriteToConsoleLog
                     ${function:Write-ToConsoleLog} = $funcWriteToConsoleLog
 
-                    Write-ToConsoleLog "Deleting role assignment '$($assignment.name)' of custom role '$roleDefinitionName' for principal: $($assignment.properties.principalId)" -NoNewLine
+                    Write-ToConsoleLog "Deleting role assignment '$($assignment.name)' of custom role '$roleDefinitionName' for principal: $($assignment.properties.principalId)"
 
                     if($using:PlanMode) {
                         Write-ToConsoleLog `
@@ -862,18 +715,18 @@ function Remove-PlatformLandingZone {
                     } else {
                         $result = az role assignment delete --ids $assignment.id 2>&1
                         if (!$result) {
-                            Write-ToConsoleLog "Deleted role assignment '$($assignment.name)' of custom role '$roleDefinitionName'" -NoNewLine
+                            Write-ToConsoleLog "Deleted role assignment '$($assignment.name)' of custom role '$roleDefinitionName'"
                         } else {
-                            Write-ToConsoleLog "Failed to delete role assignment '$($assignment.name)' of custom role '$roleDefinitionName'" -IsWarning -NoNewLine
+                            Write-ToConsoleLog "Failed to delete role assignment '$($assignment.name)' of custom role '$roleDefinitionName'", "Full error: $result" -IsWarning
                         }
                     }
                 } -ThrottleLimit $using:ThrottleLimit
             } else {
-                Write-ToConsoleLog "No role assignments found for custom role '$($roleDefinition.roleName)'" -NoNewLine
+                Write-ToConsoleLog "No role assignments found for custom role '$($roleDefinition.roleName)'"
             }
 
             # Now delete the custom role definition itself
-            Write-ToConsoleLog "Deleting custom role definition: $($roleDefinition.roleName) (ID: $($roleDefinition.name))" -NoNewLine
+            Write-ToConsoleLog "Deleting custom role definition: $($roleDefinition.roleName) (ID: $($roleDefinition.name))"
 
             if($PlanMode) {
                 Write-ToConsoleLog `
@@ -883,20 +736,20 @@ function Remove-PlatformLandingZone {
             } else {
                 $result = az role definition delete --name $roleDefinition.name --scope "/providers/Microsoft.Management/managementGroups/$ManagementGroupId" 2>&1
                 if (!$result) {
-                    Write-ToConsoleLog "Deleted custom role definition: $($roleDefinition.roleName) (ID: $($roleDefinition.name))" -NoNewLine
+                    Write-ToConsoleLog "Deleted custom role definition: $($roleDefinition.roleName) (ID: $($roleDefinition.name))"
                 } else {
-                    Write-ToConsoleLog "Failed to delete custom role definition: $($roleDefinition.roleName) (ID: $($roleDefinition.name))" -IsWarning -NoNewLine
+                    Write-ToConsoleLog "Failed to delete custom role definition: $($roleDefinition.roleName) (ID: $($roleDefinition.name))", "Full error: $result" -IsWarning
                 }
             }
         }
 
-        Write-ToConsoleLog "All custom role definitions processed for management group: $ManagementGroupId ($ManagementGroupDisplayName)" -NoNewLine
+        Write-ToConsoleLog "All custom role definitions processed for management group: $ManagementGroupId ($ManagementGroupDisplayName)"
     }
 
     # Main execution starts here
     if ($PSCmdlet.ShouldProcess("Delete Management Groups and Clean Subscriptions", "delete")) {
 
-        Test-RequiredTooling
+        Test-Tooling -Checks @("AzureCli", "AzureLogin")
 
         Write-ToConsoleLog "This cmdlet uses preview features of the Azure CLI. By continuing, you agree to install preview extensions." -IsWarning
 
@@ -964,28 +817,40 @@ function Remove-PlatformLandingZone {
             }
 
             Write-ToConsoleLog "Validating provided management groups..."
-            foreach($managementGroup in $ManagementGroups) {
-                $managementGroupObject = (az account management-group show --name $managementGroup) | ConvertFrom-Json
 
-                if($null -eq $managementGroupObject) {
-                    Write-ToConsoleLog "Management group not found: $managementGroup" -IsWarning
+            # Query all management groups in the tenant first
+            $allManagementGroups = (az account management-group list --query "[].{name:name,displayName:displayName}" -o json) | ConvertFrom-Json
+
+            foreach($managementGroup in $ManagementGroups) {
+                # Treat $managementGroup as a regex and match against name or displayName
+                $matchingMgs = $allManagementGroups | Where-Object { $_.name -match $managementGroup -or $_.displayName -match $managementGroup }
+
+                if($null -eq $matchingMgs -or $matchingMgs.Count -eq 0) {
+                    Write-ToConsoleLog "Management group not found matching pattern: $managementGroup" -IsWarning
                     continue
                 }
 
-                $managementGroupsFound += @{
-                    Name        = $managementGroupObject.name
-                    DisplayName = $managementGroupObject.displayName
+                foreach($matchedMg in $matchingMgs) {
+                    Write-ToConsoleLog "Found management group matching pattern '$managementGroup': $($matchedMg.name) ($($matchedMg.displayName))"
+                    $managementGroupsFound += @{
+                        Name        = $matchedMg.name
+                        DisplayName = $matchedMg.displayName
+                    }
                 }
             }
 
             if($managementGroupsFound.Count -eq 0) {
-                Write-ToConsoleLog "No valid management groups found from the provided list, exiting..." -IsError
-                return
+                if($AllowNoManagementGroupMatch) {
+                    Write-ToConsoleLog "No valid management groups found from the provided list, but continuing due to -AllowNoManagementGroupMatch..." -IsWarning
+                } else {
+                    Write-ToConsoleLog "No valid management groups found from the provided list, exiting..." -IsError
+                    return
+                }
             }
 
             if(-not $BypassConfirmation) {
                 Write-ToConsoleLog "The following Management Groups will be processed for removal:"
-                $managementGroupsFound | ForEach-Object { Write-ToConsoleLog "Management Group: $($_.Name) ($($_.DisplayName))" -NoNewLine }
+                $managementGroupsFound | ForEach-Object { Write-ToConsoleLog "Management Group: $($_.Name) ($($_.DisplayName))" }
 
                 if($PlanMode) {
                     Write-ToConsoleLog "Skipping confirmation for plan mode"
@@ -1021,8 +886,13 @@ function Remove-PlatformLandingZone {
                     $managementGroupId = $_.Name
                     $managementGroupDisplayName = $_.DisplayName
 
-                    Write-ToConsoleLog "Finding management group: $managementGroupId ($managementGroupDisplayName)" -NoNewLine
-                    $topLevelManagementGroup = (az account management-group show --name $managementGroupId --expand --recurse) | ConvertFrom-Json
+                    Write-ToConsoleLog "Finding management group: $managementGroupId ($managementGroupDisplayName)"
+                    $topLevelManagementGroup = (az account management-group show --name $managementGroupId --expand --recurse 2>$null) | ConvertFrom-Json
+
+                    if($null -eq $topLevelManagementGroup) {
+                        Write-ToConsoleLog "Management group '$managementGroupId' was listed but could not be retrieved (it may have been deleted or you may not have access). Skipping..." -IsWarning
+                        return
+                    }
 
                     $hasChildren = $topLevelManagementGroup.children -and $topLevelManagementGroup.children.Count -gt 0
 
@@ -1035,7 +905,7 @@ function Remove-PlatformLandingZone {
                         $patternsToUse = $deleteTargetManagementGroups ? @() : $using:ManagementGroupsToDeleteNamePatterns
                         $managementGroupsToDelete = Get-ManagementGroupChildrenRecursive -ManagementGroups @($targetManagementGroups) -ManagementGroupsToDeleteNamePatterns $patternsToUse
                     } else {
-                        Write-ToConsoleLog "Management group has no children: $managementGroupId ($managementGroupDisplayName)" -NoNewLine
+                        Write-ToConsoleLog "Management group has no children: $managementGroupId ($managementGroupDisplayName)"
                     }
 
                     $reverseKeys = $managementGroupsToDelete.Keys | Sort-Object -Descending
@@ -1046,7 +916,7 @@ function Remove-PlatformLandingZone {
                     foreach($depth in $reverseKeys) {
                         $managementGroups = $managementGroupsToDelete[$depth]
 
-                        Write-ToConsoleLog "Deleting management groups at depth: $depth" -NoNewLine
+                        Write-ToConsoleLog "Deleting management groups at depth: $depth"
 
                         $managementGroups | ForEach-Object -Parallel {
                             $subscriptionsFound = $using:subscriptionsFound
@@ -1056,9 +926,9 @@ function Remove-PlatformLandingZone {
 
                             $subscriptions = (az account management-group subscription show-sub-under-mg --name $_) | ConvertFrom-Json
                             if ($subscriptions.Count -gt 0) {
-                                Write-ToConsoleLog "Management group has subscriptions: $_" -NoNewLine
+                                Write-ToConsoleLog "Management group has subscriptions: $_"
                                 foreach ($subscription in $subscriptions) {
-                                    Write-ToConsoleLog "Removing subscription from management group: $_, subscription: $($subscription.displayName)" -NoNewLine
+                                    Write-ToConsoleLog "Removing subscription from management group: $_, subscription: $($subscription.displayName)"
                                     if(-not $subscriptionsProvided) {
                                         $subscriptionsFound.Add(
                                             @{
@@ -1069,7 +939,7 @@ function Remove-PlatformLandingZone {
                                     }
 
                                     if($subscriptionsTargetManagementGroup) {
-                                        Write-ToConsoleLog "Moving subscription from management group $_ to target management group: $($subscriptionsTargetManagementGroup), subscription: $($subscription.displayName)" -NoNewLine
+                                        Write-ToConsoleLog "Moving subscription from management group $_ to target management group: $($subscriptionsTargetManagementGroup), subscription: $($subscription.displayName)"
                                         if($using:PlanMode) {
                                             Write-ToConsoleLog `
                                                 "Moving subscription from management group $_ to target management group: $($subscriptionsTargetManagementGroup), subscription: $($subscription.displayName)", `
@@ -1077,14 +947,14 @@ function Remove-PlatformLandingZone {
                                                 -IsPlan -LogFilePath $using:TempLogFileForPlan
                                         } else {
                                             $result = (az account management-group subscription add --name $subscriptionsTargetManagementGroup --subscription $subscription.name 2>&1)
-                                            if($result) {
-                                                Write-ToConsoleLog "Failed to move subscription to target management group: $($subscriptionsTargetManagementGroup), subscription: $($subscription.displayName)" -IsWarning -NoNewLine
+                                            if($result -and $result.ToLower().Contains("Error")) {
+                                                Write-ToConsoleLog "Failed to move subscription to target management group: $($subscriptionsTargetManagementGroup), subscription: $($subscription.displayName)", "Full error: $result" -IsWarning
                                             } else {
-                                                Write-ToConsoleLog "Moved subscription to target management group: $($subscriptionsTargetManagementGroup), subscription: $($subscription.displayName)" -NoNewLine
+                                                Write-ToConsoleLog "Moved subscription to target management group: $($subscriptionsTargetManagementGroup), subscription: $($subscription.displayName)"
                                             }
                                         }
                                     } else {
-                                        Write-ToConsoleLog "Removing subscription from management group $($_): $($subscription.displayName)" -NoNewLine
+                                        Write-ToConsoleLog "Removing subscription from management group $($_): $($subscription.displayName)"
                                         if($using:PlanMode) {
                                             Write-ToConsoleLog `
                                                 "Removing subscription from management group $($_): $($subscription.displayName)", `
@@ -1092,19 +962,19 @@ function Remove-PlatformLandingZone {
                                                 -IsPlan -LogFilePath $using:TempLogFileForPlan
                                         } else {
                                             $result = (az account management-group subscription remove --name $_ --subscription $subscription.name 2>&1)
-                                            if($result) {
-                                                Write-ToConsoleLog "Failed to remove subscription from management group: $_, subscription: $($subscription.displayName)" -IsWarning -NoNewLine
+                                            if($result -and $result.ToLower().Contains("Error")) {
+                                                Write-ToConsoleLog "Failed to remove subscription from management group: $_, subscription: $($subscription.displayName)", "Full error: $result" -IsWarning
                                             } else {
-                                                Write-ToConsoleLog "Removed subscription from management group: $_, subscription: $($subscription.displayName)" -NoNewLine
+                                                Write-ToConsoleLog "Removed subscription from management group: $_, subscription: $($subscription.displayName)"
                                             }
                                         }
                                     }
                                 }
                             } else {
-                                Write-ToConsoleLog "Management group has no subscriptions: $_" -NoNewline
+                                Write-ToConsoleLog "Management group has no subscriptions: $_"
                             }
 
-                            Write-ToConsoleLog "Deleting management group: $_" -NoNewline
+                            Write-ToConsoleLog "Deleting management group: $_"
                             if($using:PlanMode) {
                                 Write-ToConsoleLog `
                                     "Deleting management group: $_", `
@@ -1113,9 +983,9 @@ function Remove-PlatformLandingZone {
                             } else {
                                 $result = (az account management-group delete --name $_ 2>&1)
                                 if($result -like "*Error*") {
-                                    Write-ToConsoleLog "Failed to delete management group: $_" -IsWarning -NoNewline
+                                    Write-ToConsoleLog "Failed to delete management group: $_", "Full error: $result" -IsWarning
                                 } else {
-                                    Write-ToConsoleLog "Deleted management group: $_" -NoNewline
+                                    Write-ToConsoleLog "Deleted management group: $_"
                                 }
                             }
                         } -ThrottleLimit $using:ThrottleLimit
@@ -1147,7 +1017,7 @@ function Remove-PlatformLandingZone {
 
                 } -ThrottleLimit $ThrottleLimit
             } else {
-                Write-ToConsoleLog "Skipping deployment and deployment stack deletion for management groups" -NoNewLine
+                Write-ToConsoleLog "Skipping deployment and deployment stack deletion for management groups"
             }
 
             # Delete orphaned role assignments from target management groups that are not being deleted
@@ -1171,7 +1041,7 @@ function Remove-PlatformLandingZone {
 
                 } -ThrottleLimit $ThrottleLimit
             } else {
-                Write-ToConsoleLog "Skipping orphaned role assignment deletion for management groups" -NoNewLine
+                Write-ToConsoleLog "Skipping orphaned role assignment deletion for management groups"
             }
         }
 
@@ -1204,19 +1074,63 @@ function Remove-PlatformLandingZone {
                     Write-ToConsoleLog "Additional subscription not found, skipping: $subscription" -IsWarning
                     continue
                 }
-                Write-ToConsoleLog "Adding additional subscription: $($subscriptionObject.Name) (ID: $($subscriptionObject.Id))" -NoNewLine
+                Write-ToConsoleLog "Adding additional subscription: $($subscriptionObject.Name) (ID: $($subscriptionObject.Id))"
                 $subscriptionsFound.Add($subscriptionObject)
             }
         }
 
         $subscriptionsFinal = $subscriptionsFound.ToArray() | Sort-Object -Property name -Unique
 
+        # Force subscription placement if requested
+        if($ForceSubscriptionPlacement -and $subscriptionsFinal.Count -gt 0) {
+            $targetManagementGroupForPlacement = $SubscriptionsTargetManagementGroup
+
+            if(-not $targetManagementGroupForPlacement) {
+                # Get default management group from hierarchy settings
+                $tenantId = (az account show --query "tenantId" -o tsv)
+                $hierarchySettings = (az account management-group hierarchy-settings list --name $tenantId -o json 2>$null) | ConvertFrom-Json
+                if($hierarchySettings -and $hierarchySettings.value.defaultManagementGroup) {
+                    $targetManagementGroupForPlacement = $hierarchySettings.value.defaultManagementGroup
+                    Write-ToConsoleLog "No target management group specified, using default management group from hierarchy settings: $targetManagementGroupForPlacement" -IsWarning
+                } else {
+                    # Fall back to tenant root if no default is configured
+                    $targetManagementGroupForPlacement = $tenantId
+                    Write-ToConsoleLog "No default management group configured in hierarchy settings, using tenant root: $targetManagementGroupForPlacement" -IsWarning
+                }
+            }
+
+            if($targetManagementGroupForPlacement) {
+                Write-ToConsoleLog "Force subscription placement enabled, moving subscriptions to management group: $targetManagementGroupForPlacement"
+
+                $subscriptionsFinal | ForEach-Object -Parallel {
+                    $subscription = $_
+                    $targetMg = $using:targetManagementGroupForPlacement
+                    $funcWriteToConsoleLog = $using:funcWriteToConsoleLog
+                    ${function:Write-ToConsoleLog} = $funcWriteToConsoleLog
+                    $TempLogFileForPlan = $using:TempLogFileForPlan
+
+                    Write-ToConsoleLog "Moving subscription to management group: $targetMg, subscription: $($subscription.Name) (ID: $($subscription.Id))"
+                    if($using:PlanMode) {
+                        Write-ToConsoleLog `
+                            "Moving subscription to management group: $targetMg, subscription: $($subscription.Name) (ID: $($subscription.Id))", `
+                            "Would run: az account management-group subscription add --name $targetMg --subscription $($subscription.Id)" `
+                            -IsPlan -LogFilePath $TempLogFileForPlan
+                    } else {
+                        az account management-group subscription add --name $targetMg --subscription $subscription.Id 2>&1 | Out-Null
+                        Write-ToConsoleLog "Subscription placed in management group: $targetMg, subscription: $($subscription.Name) (ID: $($subscription.Id))"
+                    }
+                } -ThrottleLimit $ThrottleLimit
+
+                Write-ToConsoleLog "Forced subscription placement completed." -IsSuccess
+            }
+        }
+
         if($subscriptionsFinal.Count -eq 0) {
             Write-ToConsoleLog "No subscriptions provided or found, skipping resource group deletion..." -IsWarning
         } else {
             if(-not $BypassConfirmation) {
                 Write-ToConsoleLog "The following Subscriptions were provided or discovered during management group cleanup:"
-                $subscriptionsFinal | ForEach-Object { Write-ToConsoleLog "Name: $($_.Name), ID: $($_.Id)" -NoNewline }
+                $subscriptionsFinal | ForEach-Object { Write-ToConsoleLog "Name: $($_.Name), ID: $($_.Id)" }
 
                 if($PlanMode) {
                     Write-ToConsoleLog "Skipping confirmation for plan mode"
@@ -1243,14 +1157,14 @@ function Remove-PlatformLandingZone {
                 $planMode = $using:PlanMode
 
                 $subscription = $_
-                Write-ToConsoleLog "Finding resource groups for subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewline
+                Write-ToConsoleLog "Finding resource groups for subscription: $($subscription.Name) (ID: $($subscription.Id))"
 
                 $resourceGroups = (az group list --subscription $subscription.Id) | ConvertFrom-Json
 
                 if ($resourceGroups.Count -eq 0) {
-                    Write-ToConsoleLog "No resource groups found for subscription: $($subscription.Name) (ID: $($subscription.Id)), skipping." -NoNewline
+                    Write-ToConsoleLog "No resource groups found for subscription: $($subscription.Name) (ID: $($subscription.Id)), skipping."
                 } else {
-                    Write-ToConsoleLog "Found resource groups for subscription: $($subscription.Name) (ID: $($subscription.Id)), count: $($resourceGroups.Count)" -NoNewline
+                    Write-ToConsoleLog "Found resource groups for subscription: $($subscription.Name) (ID: $($subscription.Id)), count: $($resourceGroups.Count)"
 
                     $resourceGroupsToDelete = @()
                     $resourceGroupsToRetainNamePatterns = $using:ResourceGroupsToRetainNamePatterns
@@ -1260,7 +1174,7 @@ function Remove-PlatformLandingZone {
 
                         foreach ($pattern in $resourceGroupsToRetainNamePatterns) {
                             if ($resourceGroup.name -match $pattern) {
-                                Write-ToConsoleLog "Retaining resource group as it matches the pattern '$pattern': $($resourceGroup.name) in subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
+                                Write-ToConsoleLog "Retaining resource group as it matches the pattern '$pattern': $($resourceGroup.name) in subscription: $($subscription.Name) (ID: $($subscription.Id))"
                                 $foundMatch = $true
                                 break
                             }
@@ -1287,7 +1201,7 @@ function Remove-PlatformLandingZone {
                             $resourceGroupName = $_.ResourceGroupName
                             $subscription = $_.Subscription
 
-                            Write-ToConsoleLog "Deleting resource group for subscription: $($subscription.Name) (ID: $($subscription.Id)), resource group: $($ResourceGroupName)" -NoNewLine
+                            Write-ToConsoleLog "Deleting resource group for subscription: $($subscription.Name) (ID: $($subscription.Id)), resource group: $($ResourceGroupName)"
                             $result = $null
                             if($using:PlanMode) {
                                 Write-ToConsoleLog `
@@ -1299,28 +1213,28 @@ function Remove-PlatformLandingZone {
                             }
 
                             if (!$result) {
-                                Write-ToConsoleLog "Deleted resource group for subscription: $($subscription.Name) (ID: $($subscription.Id)), resource group: $($ResourceGroupName)" -NoNewLine
+                                Write-ToConsoleLog "Deleted resource group for subscription: $($subscription.Name) (ID: $($subscription.Id)), resource group: $($ResourceGroupName)"
                             } else {
-                                Write-ToConsoleLog "Delete resource group failed for subscription: $($subscription.Name) (ID: $($subscription.Id)), resource group: $($ResourceGroupName)" -NoNewLine
-                                Write-ToConsoleLog "It will be retried once the other resource groups in the subscription have reported their status." -NoNewLine
+                                Write-ToConsoleLog "Delete resource group failed for subscription: $($subscription.Name) (ID: $($subscription.Id)), resource group: $($ResourceGroupName)", "Full error: $result"
+                                Write-ToConsoleLog "It will be retried once the other resource groups in the subscription have reported their status."
                                 $retries = $using:resourceGroupsToRetry
                                 $retries.Add($_)
                             }
                         } -ThrottleLimit $using:ThrottleLimit
 
                         if($resourceGroupsToRetry.Count -gt 0) {
-                            Write-ToConsoleLog "Some resource groups failed to delete and will be retried in subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
+                            Write-ToConsoleLog "Some resource groups failed to delete and will be retried in subscription: $($subscription.Name) (ID: $($subscription.Id))"
                             $shouldRetry = $true
                             $resourceGroupsToDelete = $resourceGroupsToRetry.ToArray()
                         } else {
-                            Write-ToConsoleLog "All resource groups deleted successfully in subscription: $($subscription.Name) (ID: $($subscription.Id))." -NoNewLine
+                            Write-ToConsoleLog "All resource groups deleted successfully in subscription: $($subscription.Name) (ID: $($subscription.Id))."
                         }
                     }
                 }
 
                 if(-not $using:SkipDefenderPlanReset) {
                     Write-ToConsoleLog "Checking for Microsoft Defender for Cloud Plans to reset in subscription: $($subscription.Name) (ID: $($subscription.Id))"
-                    $defenderPlans = (az security pricing list --subscription $subscription.Id) | ConvertFrom-Json
+                    $defenderPlans = (az security pricing list --subscription $subscription.Id 2>$null) | ConvertFrom-Json
 
                     $defenderPlans.value | Where-Object { -not $_.deprecated } | ForEach-Object -Parallel {
                         $subscription = $using:subscription
@@ -1328,7 +1242,7 @@ function Remove-PlatformLandingZone {
                         ${function:Write-ToConsoleLog} = $funcWriteToConsoleLog
 
                         if ($_.pricingTier -ne "Free") {
-                            Write-ToConsoleLog "Resetting Microsoft Defender for Cloud Plan to Free for plan: $($_.name) in subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
+                            Write-ToConsoleLog "Resetting Microsoft Defender for Cloud Plan to Free for plan: $($_.name) in subscription: $($subscription.Name) (ID: $($subscription.Id))"
                             $result = $null
                             if($using:PlanMode) {
                                 Write-ToConsoleLog `
@@ -1339,7 +1253,7 @@ function Remove-PlatformLandingZone {
                                 $result = (az security pricing create --name $_.name --tier "Free" --subscription $subscription.Id 2>&1)
                             }
                             if ($result -like "*must be 'Standard'*") {
-                                Write-ToConsoleLog "Resetting Microsoft Defender for Cloud Plan to Standard as Free is not supported for plan: $($_.name) in subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
+                                Write-ToConsoleLog "Resetting Microsoft Defender for Cloud Plan to Standard as Free is not supported for plan: $($_.name) in subscription: $($subscription.Name) (ID: $($subscription.Id))"
                                 if($using:PlanMode) {
                                     Write-ToConsoleLog `
                                         "Resetting Microsoft Defender for Cloud Plan to Standard for plan: $($_.name) in subscription: $($subscription.Name) (ID: $($subscription.Id))", `
@@ -1349,13 +1263,13 @@ function Remove-PlatformLandingZone {
                                     $result = az security pricing create --name $_.name --tier "Standard" --subscription $subscription.Id
                                 }
                             }
-                            Write-ToConsoleLog "Microsoft Defender for Cloud Plan reset for plan: $($_.name) in subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
+                            Write-ToConsoleLog "Microsoft Defender for Cloud Plan reset for plan: $($_.name) in subscription: $($subscription.Name) (ID: $($subscription.Id))"
                         } else {
-                            Write-ToConsoleLog "Microsoft Defender for Cloud Plan is already set to Free for plan: $($_.name) in subscription: $($subscription.Name) (ID: $($subscription.Id)), skipping." -NoNewLine
+                            Write-ToConsoleLog "Microsoft Defender for Cloud Plan is already set to Free for plan: $($_.name) in subscription: $($subscription.Name) (ID: $($subscription.Id)), skipping."
                         }
                     } -ThrottleLimit $using:ThrottleLimit
                 } else {
-                    Write-ToConsoleLog "Skipping Microsoft Defender for Cloud Plans reset in subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
+                    Write-ToConsoleLog "Skipping Microsoft Defender for Cloud Plans reset in subscription: $($subscription.Name) (ID: $($subscription.Id))"
                 }
 
                 if(-not $using:SkipDeploymentDeletion -or -not $using:SkipDeploymentStackDeletion) {
@@ -1370,7 +1284,7 @@ function Remove-PlatformLandingZone {
                         -SkipDeploymentDeletion:$using:SkipDeploymentDeletion `
                         -DeploymentStacksToDeleteNamePatterns $using:DeploymentStacksToDeleteNamePatterns
                 } else {
-                    Write-ToConsoleLog "Skipping subscription level deployment and deployment stack deletion in subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
+                    Write-ToConsoleLog "Skipping subscription level deployment and deployment stack deletion in subscription: $($subscription.Name) (ID: $($subscription.Id))"
                 }
 
                 if(-not $using:SkipOrphanedRoleAssignmentDeletion) {
@@ -1382,7 +1296,7 @@ function Remove-PlatformLandingZone {
                         -PlanMode:$using:PlanMode `
                         -TempLogFileForPlan $using:TempLogFileForPlan
                 } else {
-                    Write-ToConsoleLog "Skipping orphaned role assignment deletion in subscription: $($subscription.Name) (ID: $($subscription.Id))" -NoNewLine
+                    Write-ToConsoleLog "Skipping orphaned role assignment deletion in subscription: $($subscription.Name) (ID: $($subscription.Id))"
                 }
 
             } -ThrottleLimit $ThrottleLimit
@@ -1408,7 +1322,7 @@ function Remove-PlatformLandingZone {
 
             } -ThrottleLimit $ThrottleLimit
         } else {
-            Write-ToConsoleLog "Skipping custom role definition deletion for management groups" -NoNewLine
+            Write-ToConsoleLog "Skipping custom role definition deletion for management groups"
         }
 
         Write-ToConsoleLog "Cleanup completed." -IsSuccess
@@ -1416,7 +1330,7 @@ function Remove-PlatformLandingZone {
         if($PlanMode) {
             Write-ToConsoleLog "Plan mode enabled, no changes were made." -IsWarning
             $planLogContents = Get-Content -Path $TempLogFileForPlan -Raw
-            Write-ToConsoleLog "Plan mode log contents:`n$planLogContents" -Color Gray
+            Write-ToConsoleLog @("Plan mode log contents:", $planLogContents) -Color Gray
             Remove-Item -Path $TempLogFileForPlan -Force
         }
     }

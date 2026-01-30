@@ -150,7 +150,7 @@ function Set-Config {
                 continue
             }
 
-            Write-InformationColored "Input not supplied, and no default for $($configurationValue.Name)..." -ForegroundColor Red -InformationAction Continue
+            Write-ToConsoleLog "Input not supplied, and no default for $($configurationValue.Name)..." -IsError
             throw "Input not supplied, and no default for $($configurationValue.Name)..."
         }
 

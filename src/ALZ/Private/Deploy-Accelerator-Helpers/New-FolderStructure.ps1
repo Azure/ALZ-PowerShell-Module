@@ -43,7 +43,7 @@ function New-FolderStructure {
             if ((Test-Path $path) -and !$replaceFiles) {
                 Write-Verbose "Folder $path already exists, so not copying files."
             } else {
-                Write-InformationColored "Copying files from $overrideSourceDirectoryPath to $path" -ForegroundColor Green -InformationAction Continue
+                Write-ToConsoleLog "Copying files from $overrideSourceDirectoryPath to $path" -IsSuccess
                 if (!(Test-Path $path)) {
                     New-Item -Path $path -ItemType "Directory"
                 }

@@ -40,6 +40,19 @@ function New-ModuleSetup {
             return $versionAndPath
         }
 
+        if(-not [string]::IsNullOrWhiteSpace($moduleOverrideFolderPath)) {
+            Write-Verbose "Using module override folder path, skipping version checks."
+            return New-FolderStructure `
+                -targetDirectory $targetDirectory `
+                -url $url `
+                -release $desiredRelease `
+                -releaseArtifactName $releaseArtifactName `
+                -targetFolder $targetFolder `
+                -sourceFolder $sourceFolder `
+                -overrideSourceDirectoryPath $moduleOverrideFolderPath `
+                -replaceFiles:$replaceFiles.IsPresent
+        }
+
         $latestReleaseTag = $null
         try {
             $latestResult = Get-GithubReleaseTag -githubRepoUrl $url -release "latest"
@@ -50,7 +63,7 @@ function New-ModuleSetup {
         }
 
         $isAutoVersion = $release -eq "latest"
-        $firstRun = $null -eq $currentVersion
+        $firstRun = $null -eq $currentVersion -or $currentVersion -eq ""
         $shouldDownload = $false
 
         if($isAutoVersion -and $upgrade.IsPresent -and $null -eq $latestReleaseTag) {
@@ -75,11 +88,11 @@ function New-ModuleSetup {
         if(!$shouldDownload -or $isFirstRun) {
             $newVersionAvailable = $false
             $currentCalculatedVersion = $currentVersion
-            if($isAutoVersion -and $null -ne $latestReleaseTag -and $latestReleaseTag -ne $currentVersion) {
+            if(!$isFirstRun -and $isAutoVersion -and $null -ne $latestReleaseTag -and $latestReleaseTag -ne $currentVersion) {
                 $newVersionAvailable = $true
             }
 
-            if(!$isAutoVersion -and $null -ne $latestReleaseTag -and $latestReleaseTag -ne $currentVersion) {
+            if(!$isFirstRun -and !$isAutoVersion -and $null -ne $latestReleaseTag -and $latestReleaseTag -ne $currentVersion) {
                 $newVersionAvailable = $true
             }
 
@@ -89,16 +102,16 @@ function New-ModuleSetup {
             }
 
             if($newVersionAvailable) {
-                Write-InformationColored "INFO: A newer $targetFolder module version is available ($latestReleaseTag). You are currently using $currentCalculatedVersion." -ForegroundColor Cyan -InformationAction Continue
-                Write-InformationColored "      To upgrade, run with the -upgrade flag." -ForegroundColor Cyan -InformationAction Continue
+                Write-ToConsoleLog "A newer $targetFolder module version is available ($latestReleaseTag). You are currently using $currentCalculatedVersion."
+                Write-ToConsoleLog "To upgrade, run with the -upgrade flag." -IndentLevel 1
             } else {
                 if(!$firstRun) {
                     if($upgrade.IsPresent) {
-                        Write-InformationColored "No upgrade required for $targetFolder module; already at latest version ($currentCalculatedVersion)." -ForegroundColor Yellow -InformationAction Continue
+                        Write-ToConsoleLog "No upgrade required for $targetFolder module; already at latest version ($currentCalculatedVersion)." -IsWarning
                     }
-                    Write-InformationColored "Using existing $targetFolder module version ($currentCalculatedVersion)." -ForegroundColor Green -InformationAction Continue
+                    Write-ToConsoleLog "Using existing $targetFolder module version ($currentCalculatedVersion)." -IsSuccess
                 } else {
-                    Write-InformationColored "Using specified $targetFolder module version ($currentCalculatedVersion) for the first run." -ForegroundColor Green -InformationAction Continue
+                    Write-ToConsoleLog "Using specified $targetFolder module version ($currentCalculatedVersion) for the first run." -IsSuccess
                 }
             }
         }
@@ -107,12 +120,12 @@ function New-ModuleSetup {
 
             $previousVersionPath = $versionAndPath.path
             $desiredRelease = $isAutoVersion ? $latestReleaseTag : $release
-            Write-InformationColored "Upgrading $targetFolder module from $currentVersion to $desiredRelease" -ForegroundColor Yellow -InformationAction Continue
+            Write-ToConsoleLog "Upgrading $targetFolder module from $currentVersion to $desiredRelease" -IsWarning
 
             if (-not $autoApprove.IsPresent) {
                 $confirm = Read-Host "Do you want to proceed with the upgrade? (y/n)"
                 if ($confirm -ne "y" -and $confirm -ne "Y") {
-                    Write-InformationColored "Upgrade declined. Continuing with existing version $currentVersion." -ForegroundColor Yellow -InformationAction Continue
+                    Write-ToConsoleLog "Upgrade declined. Continuing with existing version $currentVersion." -IsWarning
                     return $versionAndPath
                 }
             }
@@ -137,15 +150,15 @@ function New-ModuleSetup {
                     foreach ($stateFile in $previousStateFiles) {
                         $previousStateFilePath = $stateFile
                         $newStateFilePath = $previousStateFilePath.Replace($previousVersionPath, $versionAndPath.path)
-                        Write-InformationColored "Copying state file from $previousStateFilePath to $newStateFilePath" -ForegroundColor Green -InformationAction Continue
+                        Write-ToConsoleLog "Copying state file from $previousStateFilePath to $newStateFilePath" -IsSuccess
                         Copy-Item -Path $previousStateFilePath -Destination $newStateFilePath -Force | Out-String | Write-Verbose
                     }
                 } else {
                     Write-Verbose "No state files found at $previousVersionPath - skipping migration"
                 }
 
-                Write-InformationColored "Module $targetFolder upgraded from version $currentVersion to $($versionAndPath.releaseTag)." -ForegroundColor Green -InformationAction Continue
-                Write-InformationColored "  If any repository files have been updated in the new version, you'll need to turn off branch protection for the run to succeed..." -ForegroundColor Yellow -InformationAction Continue
+                Write-ToConsoleLog "Module $targetFolder upgraded from version $currentVersion to $($versionAndPath.releaseTag)." -IsSuccess
+                Write-ToConsoleLog "  If any repository files have been updated in the new version, you'll need to turn off branch protection for the run to succeed..." -IsWarning
             }
 
             # Update version data

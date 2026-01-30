@@ -41,6 +41,8 @@ Included Cmdlets:
 - Grant-SubscriptionCreatorRole: Grants the Subscription Creator role to a specified user or service principal.
 - Remove-PlatformLandingZone: Removes the deployed Azure Landing Zone from your Azure subscription
 - New-AcceleratorFolderStructure: Creates a new folder structure for the Azure Landing Zone accelerator with necessary configuration files.
+- Remove-GitHubAccelerator: Removes GitHub resources (repositories, teams, runner groups) created by the ALZ accelerator bootstrap.
+- Remove-AzureDevOpsAccelerator: Removes Azure DevOps resources (projects, agent pools) created by the ALZ accelerator bootstrap.
 '@
 
     CompatiblePSEditions = 'Core'
@@ -87,7 +89,9 @@ Included Cmdlets:
         'Deploy-Accelerator',
         'Grant-SubscriptionCreatorRole',
         'Remove-PlatformLandingZone',
-        'New-AcceleratorFolderStructure'
+        'New-AcceleratorFolderStructure',
+        'Remove-GitHubAccelerator',
+        'Remove-AzureDevOpsAccelerator'
     )
 
     # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.

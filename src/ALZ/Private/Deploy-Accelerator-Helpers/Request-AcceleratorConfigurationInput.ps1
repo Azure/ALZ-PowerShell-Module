@@ -28,20 +28,21 @@ function Request-AcceleratorConfigurationInput {
     )
 
     if ($PSCmdlet.ShouldProcess("Accelerator folder structure setup", "prompt and create")) {
+
         # Display appropriate header message
         if ($Destroy.IsPresent) {
-            Write-InformationColored "Running in destroy mode. Please provide the path to your existing accelerator folder." -ForegroundColor Yellow -NewLineBefore -InformationAction Continue
+            Write-ToConsoleLog "Running in destroy mode. Please provide the path to your existing accelerator folder." -IsWarning
         } else {
-            Write-InformationColored "No input configuration files provided. Let's set up the accelerator folder structure first..." -ForegroundColor Green -NewLineBefore -InformationAction Continue
-            Write-InformationColored "For more information, see: https://aka.ms/alz/acc/phase2" -ForegroundColor Cyan -InformationAction Continue
+            Write-ToConsoleLog "No input configuration files provided. Let's set up the accelerator folder structure first..." -IsSuccess
+            Write-ToConsoleLog "For more information, see: https://aka.ms/alz/acc/phase2"
         }
 
         # Prompt for target folder path (first prompt for both modes)
-        Write-InformationColored "`nEnter the target folder path for the accelerator files (default: ~/accelerator):" -ForegroundColor Yellow -InformationAction Continue
-        $targetFolderPathInput = Read-Host "Target folder path"
-        if ([string]::IsNullOrWhiteSpace($targetFolderPathInput)) {
-            $targetFolderPathInput = "~/accelerator"
-        }
+        $targetFolderPathInput = Read-MenuSelection `
+            -Title "Enter the target folder path for the accelerator files:" `
+            -DefaultValue "~/accelerator" `
+            -AllowManualEntry `
+            -ManualEntryPrompt "Target folder path"
 
         # Normalize the path
         $normalizedTargetPath = Get-NormalizedPath -Path $targetFolderPathInput
@@ -54,9 +55,18 @@ function Request-AcceleratorConfigurationInput {
         # If folder exists, ask about overwriting before other prompts
         if ($folderConfig.FolderExists) {
             # Ask about overwriting the folder
-            Write-InformationColored "`nTarget folder '$normalizedTargetPath' already exists." -ForegroundColor Yellow -InformationAction Continue
-            $forceResponse = Read-Host "Do you want to overwrite it? (y/N)"
-            if ($forceResponse -eq "y" -or $forceResponse -eq "Y") {
+            Write-ToConsoleLog "Target folder '$normalizedTargetPath' already exists." -IsWarning
+            $forceResponse = Read-MenuSelection `
+                -Title "Do you want to overwrite the existing folder structure? This will replace existing configuration files." `
+                -DefaultValue "no" `
+                -Type "boolean" `
+                -AllowManualEntry `
+                -ManualEntryPrompt "Enter '[y]es' to overwrite or '[n]o' to keep existing"
+
+            Write-Verbose "User overwrite response: $forceResponse"
+            Write-Verbose $forceResponse.GetType().FullName
+
+            if ($forceResponse) {
                 $forceFlag = $true
             } else {
                 # User wants to keep existing folder
@@ -65,11 +75,11 @@ function Request-AcceleratorConfigurationInput {
                 # Validate config files exist
                 if (-not $folderConfig.IsValid) {
                     if (-not (Test-Path -Path $folderConfig.ConfigFolderPath)) {
-                        Write-InformationColored "ERROR: Config folder not found at '$($folderConfig.ConfigFolderPath)'" -ForegroundColor Red -InformationAction Continue
+                        Write-ToConsoleLog "ERROR: Config folder not found at '$($folderConfig.ConfigFolderPath)'" -IsError
                     } elseif (-not (Test-Path -Path $folderConfig.InputsYamlPath)) {
-                        Write-InformationColored "ERROR: Required configuration file not found: inputs.yaml" -ForegroundColor Red -InformationAction Continue
+                        Write-ToConsoleLog "ERROR: Required configuration file not found: inputs.yaml" -IsError
                     }
-                    Write-InformationColored "Please overwrite the folder structure by choosing 'y', or run New-AcceleratorFolderStructure manually." -ForegroundColor Yellow -InformationAction Continue
+                    Write-ToConsoleLog "Please overwrite the folder structure by choosing 'y', or run New-AcceleratorFolderStructure manually." -IsWarning
                     return ConvertTo-AcceleratorResult -Continue $false
                 }
             }
@@ -78,20 +88,20 @@ function Request-AcceleratorConfigurationInput {
         # Handle destroy mode - validate existing folder and return early
         if ($Destroy.IsPresent) {
             if (-not $folderConfig.FolderExists) {
-                Write-InformationColored "ERROR: Target folder '$normalizedTargetPath' does not exist." -ForegroundColor Red -InformationAction Continue
-                Write-InformationColored "Cannot destroy a deployment that doesn't exist. Please check the path and try again." -ForegroundColor Yellow -InformationAction Continue
+                Write-ToConsoleLog "ERROR: Target folder '$normalizedTargetPath' does not exist." -IsError
+                Write-ToConsoleLog "Cannot destroy a deployment that doesn't exist. Please check the path and try again." -IsWarning
                 return ConvertTo-AcceleratorResult -Continue $false
             }
 
             if (-not (Test-Path -Path $folderConfig.ConfigFolderPath)) {
-                Write-InformationColored "ERROR: Config folder not found at '$($folderConfig.ConfigFolderPath)'" -ForegroundColor Red -InformationAction Continue
-                Write-InformationColored "Cannot destroy a deployment without configuration files." -ForegroundColor Yellow -InformationAction Continue
+                Write-ToConsoleLog "ERROR: Config folder not found at '$($folderConfig.ConfigFolderPath)'" -IsError
+                Write-ToConsoleLog "Cannot destroy a deployment without configuration files." -IsWarning
                 return ConvertTo-AcceleratorResult -Continue $false
             }
 
             if (-not (Test-Path -Path $folderConfig.InputsYamlPath)) {
-                Write-InformationColored "ERROR: Required configuration file not found: inputs.yaml" -ForegroundColor Red -InformationAction Continue
-                Write-InformationColored "Cannot destroy a deployment without inputs.yaml." -ForegroundColor Yellow -InformationAction Continue
+                Write-ToConsoleLog "ERROR: Required configuration file not found: inputs.yaml" -IsError
+                Write-ToConsoleLog "Cannot destroy a deployment without inputs.yaml." -IsWarning
                 return ConvertTo-AcceleratorResult -Continue $false
             }
 
@@ -99,20 +109,20 @@ function Request-AcceleratorConfigurationInput {
             $configPaths = Get-AcceleratorConfigPath -IacType $folderConfig.IacType -ConfigFolderPath $folderConfig.ConfigFolderPath
             $resolvedTargetPath = (Resolve-Path -Path $normalizedTargetPath).Path
 
-            Write-InformationColored "Using existing folder: $resolvedTargetPath" -ForegroundColor Green -InformationAction Continue
+            Write-ToConsoleLog "Using existing folder: $resolvedTargetPath" -IsSuccess
 
             # Prompt for sensitive inputs that are not already set (e.g., PATs)
-            Write-InformationColored "`nChecking for sensitive inputs that need to be provided..." -ForegroundColor Yellow -InformationAction Continue
-            $azureContext = Get-AzureContext -OutputDirectory $folderConfig.OutputFolderPath -ClearCache:$ClearCache.IsPresent
+            Write-ToConsoleLog "Checking for sensitive inputs that need to be provided..." -IsWarning
 
             Request-ALZConfigurationValue `
                 -ConfigFolderPath $folderConfig.ConfigFolderPath `
                 -IacType $folderConfig.IacType `
                 -VersionControl $folderConfig.VersionControl `
-                -AzureContext $azureContext `
+                -AzureContextOutputDirectory $folderConfig.OutputFolderPath `
+                -AzureContextClearCache:$ClearCache.IsPresent `
                 -SensitiveOnly
 
-            Write-InformationColored "`nProceeding with destroy..." -ForegroundColor Yellow -InformationAction Continue
+            Write-ToConsoleLog "Proceeding with destroy..." -IsWarning
 
             return ConvertTo-AcceleratorResult -Continue $true `
                 -InputConfigFilePaths $configPaths.InputConfigFilePaths `
@@ -134,7 +144,7 @@ function Request-AcceleratorConfigurationInput {
             } else { 0 }
 
             $selectedIacType = Read-MenuSelection `
-                -Title "`nSelect the Infrastructure as Code (IaC) type:" `
+                -Title "Select the Infrastructure as Code (IaC) type:" `
                 -Options $iacTypeOptions `
                 -DefaultIndex $defaultIacTypeIndex
 
@@ -145,29 +155,27 @@ function Request-AcceleratorConfigurationInput {
             } else { 0 }
 
             $selectedVersionControl = Read-MenuSelection `
-                -Title "`nSelect the Version Control System:" `
+                -Title "Select the Version Control System:" `
                 -Options $versionControlOptions `
                 -DefaultIndex $defaultVcsIndex
 
             # Prompt for scenario number (Terraform only)
             if ($selectedIacType -eq "terraform") {
-                $scenarioDescriptions = @(
-                    "Full Multi-Region - Hub and Spoke VNet",
-                    "Full Multi-Region - Virtual WAN",
-                    "Full Multi-Region NVA - Hub and Spoke VNet",
-                    "Full Multi-Region NVA - Virtual WAN",
-                    "Management Only",
-                    "Full Single-Region - Hub and Spoke VNet",
-                    "Full Single-Region - Virtual WAN",
-                    "Full Single-Region NVA - Hub and Spoke VNet",
-                    "Full Single-Region NVA - Virtual WAN"
+                $scenarioOptions = @(
+                    @{ label = "1 - Full Multi-Region - Hub and Spoke VNet"; value = 1 },
+                    @{ label = "2 - Full Multi-Region - Virtual WAN"; value = 2 },
+                    @{ label = "3 - Full Multi-Region NVA - Hub and Spoke VNet"; value = 3 },
+                    @{ label = "4 - Full Multi-Region NVA - Virtual WAN"; value = 4 },
+                    @{ label = "5 - Management Only"; value = 5 },
+                    @{ label = "6 - Full Single-Region - Hub and Spoke VNet"; value = 6 },
+                    @{ label = "7 - Full Single-Region - Virtual WAN"; value = 7 },
+                    @{ label = "8 - Full Single-Region NVA - Hub and Spoke VNet"; value = 8 },
+                    @{ label = "9 - Full Single-Region NVA - Virtual WAN"; value = 9 }
                 )
-                $scenarioNumbers = 1..$scenarioDescriptions.Count
 
                 $selectedScenarioNumber = Read-MenuSelection `
-                    -Title "`nSelect the Terraform scenario (see https://aka.ms/alz/acc/scenarios):" `
-                    -Options $scenarioNumbers `
-                    -OptionDescriptions $scenarioDescriptions `
+                    -Title "Select the Terraform scenario (see https://aka.ms/alz/acc/scenarios):" `
+                    -Options $scenarioOptions `
                     -DefaultIndex 0
             }
         }
@@ -182,7 +190,7 @@ function Request-AcceleratorConfigurationInput {
                 -outputFolderName $OutputFolderName `
                 -force:$forceFlag
 
-            Write-InformationColored "`nFolder structure created at: $normalizedTargetPath" -ForegroundColor Green -InformationAction Continue
+            Write-ToConsoleLog "Folder structure created at: $normalizedTargetPath" -IsSuccess
         }
 
         # Resolve the path after folder creation or validation
@@ -195,20 +203,35 @@ function Request-AcceleratorConfigurationInput {
         }
 
         if ($useExistingFolder) {
-            Write-InformationColored "`nUsing existing folder structure at: $resolvedTargetPath" -ForegroundColor Green -InformationAction Continue
+            Write-ToConsoleLog "Using existing folder structure at: $resolvedTargetPath" -IsSuccess
         }
-        Write-InformationColored "Config folder: $configFolderPath" -ForegroundColor Cyan -InformationAction Continue
+        Write-ToConsoleLog "Config folder: $configFolderPath"
 
         # Offer to configure inputs interactively (default is Yes)
-        $configureNowResponse = Read-Host "`nWould you like to configure the input values interactively now? (Y/n)"
-        if ($configureNowResponse -ne "n" -and $configureNowResponse -ne "N") {
-            $azureContext = Get-AzureContext -OutputDirectory $outputFolderPath -ClearCache:$ClearCache.IsPresent
+        $configureNowResponse = Read-MenuSelection `
+            -Title "Would you like to configure the input values interactively now?" `
+            -DefaultValue "yes" `
+            -Type "boolean" `
+            -AllowManualEntry `
+            -ManualEntryPrompt "Enter '[y]es' for interactive mode or '[n]o' to update the file manually later"
+
+        if ($configureNowResponse) {
+            Request-ALZConfigurationValue `
+                -ConfigFolderPath $configFolderPath `
+                -IacType $selectedIacType `
+                -VersionControl $selectedVersionControl `
+                -AzureContextOutputDirectory $outputFolderPath `
+                -AzureContextClearCache:$ClearCache.IsPresent
+        } else {
+            Write-ToConsoleLog "Checking for sensitive inputs that need to be provided..." -IsWarning
 
             Request-ALZConfigurationValue `
                 -ConfigFolderPath $configFolderPath `
                 -IacType $selectedIacType `
                 -VersionControl $selectedVersionControl `
-                -AzureContext $azureContext
+                -AzureContextOutputDirectory $outputFolderPath `
+                -AzureContextClearCache:$ClearCache.IsPresent `
+                -SensitiveOnly
         }
 
         # Check for VS Code or VS Code Insiders and offer to open the config folder
@@ -224,52 +247,64 @@ function Request-AcceleratorConfigurationInput {
         }
 
         if ($null -ne $vsCodeCommand) {
-            $openInVsCodeResponse = Read-Host "`nWould you like to open the config folder in $($vsCodeName)? (Y/n)"
-            if ($openInVsCodeResponse -ne "n" -and $openInVsCodeResponse -ne "N") {
-                Write-InformationColored "Opening config folder in $vsCodeName..." -ForegroundColor Green -InformationAction Continue
+            $openInVsCodeResponse = Read-MenuSelection `
+                -Title "Would you like to open the config folder in $($vsCodeName)?" `
+                -DefaultValue "yes" `
+                -Type "boolean" `
+                -AllowManualEntry `
+                -ManualEntryPrompt "Enter '[y]es' to open or '[n]o' to continue without opening"
+
+            if ($openInVsCodeResponse) {
+                Write-ToConsoleLog "Opening config folder in $vsCodeName..." -IsSuccess
                 & $vsCodeCommand $configFolderPath
             }
         }
 
-        Write-InformationColored "`nPlease check and update the configuration files in the config folder before continuing:" -ForegroundColor Yellow -InformationAction Continue
-        Write-InformationColored "  - inputs.yaml: Bootstrap configuration (required)" -ForegroundColor White -InformationAction Continue
+        Write-ToConsoleLog "Please check and update the configuration files in the config folder before continuing:" -IsWarning
+        Write-ToConsoleLog "  - inputs.yaml: Bootstrap configuration (required)" -IsSelection
 
         if ($selectedIacType -eq "terraform") {
-            Write-InformationColored "  - platform-landing-zone.tfvars: Platform configuration (required)" -ForegroundColor White -InformationAction Continue
-            Write-InformationColored "    - starter_locations: Enter the regions for you platform landing zone (required)" -ForegroundColor White -InformationAction Continue
-            Write-InformationColored "    - defender_email_security_contact: Enter the email security contact for Microsoft Defender for Cloud (required)" -ForegroundColor White -InformationAction Continue
-            Write-InformationColored "  - lib/: Library customizations (optional)" -ForegroundColor White -InformationAction Continue
+            Write-ToConsoleLog "  - platform-landing-zone.tfvars: Platform configuration (required)" -IsSelection
+            Write-ToConsoleLog "    - starter_locations: Enter the regions for you platform landing zone (required)" -IsSelection
+            Write-ToConsoleLog "    - defender_email_security_contact: Enter the email security contact for Microsoft Defender for Cloud (required)" -IsSelection
+            Write-ToConsoleLog "  - lib/: Library customizations (optional)" -IsSelection
         } elseif ($selectedIacType -eq "bicep") {
-            Write-InformationColored "  - platform-landing-zone.yaml: Platform configuration (required)" -ForegroundColor White -InformationAction Continue
-            Write-InformationColored "    - starter_locations: Enter the regions for you platform landing zone (required)" -ForegroundColor White -InformationAction Continue
+            Write-ToConsoleLog "  - platform-landing-zone.yaml: Platform configuration (required)" -IsSelection
+            Write-ToConsoleLog "    - starter_locations: Enter the regions for you platform landing zone (required)" -IsSelection
         }
 
-        Write-InformationColored "`nFor more details, see: https://azure.github.io/Azure-Landing-Zones/accelerator/configuration-files/" -ForegroundColor Cyan -InformationAction Continue
+        Write-ToConsoleLog "For more details, see: https://azure.github.io/Azure-Landing-Zones/accelerator/configuration-files/"
 
         # Prompt to continue or exit
-        $continueResponse = Read-Host "`nHave you checked and updated the configuration files? Enter 'yes' to continue with deployment, or 'no' to exit and configure later"
-        if ($continueResponse -ne "yes") {
-            Write-InformationColored "`nTo continue later, run Deploy-Accelerator with the following parameters:" -ForegroundColor Green -InformationAction Continue
+        $continueResponse = Read-MenuSelection `
+            -Title "Have you checked and updated the configuration files? Ready to continue with deployment?" `
+            -DefaultValue "yes" `
+            -Type "boolean" `
+            -AllowManualEntry `
+            -ManualEntryPrompt "Enter '[y]es' to continue or '[n]o' to exit"
+
+        if (!$continueResponse) {
+            Write-ToConsoleLog "To continue later, run Deploy-Accelerator with the following parameters:" -IsSuccess
 
             if ($selectedIacType -eq "terraform") {
-                Write-InformationColored @"
+                Write-ToConsoleLog @"
 Deploy-Accelerator ``
     -inputs "$configFolderPath/inputs.yaml", "$configFolderPath/platform-landing-zone.tfvars" ``
     -starterAdditionalFiles "$configFolderPath/lib" ``
     -output "$outputFolderPath"
-"@ -ForegroundColor Cyan -InformationAction Continue
+"@ -Color Cyan
             } elseif ($selectedIacType -eq "bicep") {
-                Write-InformationColored @"
+                Write-ToConsoleLog @"
 Deploy-Accelerator ``
     -inputs "$configFolderPath/inputs.yaml", "$configFolderPath/platform-landing-zone.yaml" ``
     -output "$outputFolderPath"
-"@ -ForegroundColor Cyan -InformationAction Continue
+"@ -Color Cyan
             } else {
-                Write-InformationColored @"
+                Write-ToConsoleLog @"
 Deploy-Accelerator ``
     -inputs "$configFolderPath/inputs.yaml" ``
     -output "$outputFolderPath"
-"@ -ForegroundColor Cyan -InformationAction Continue
+"@ -Color Cyan
             }
 
             return ConvertTo-AcceleratorResult -Continue $false
@@ -278,7 +313,7 @@ Deploy-Accelerator ``
         # Build the result for continuing with deployment
         $configPaths = Get-AcceleratorConfigPath -IacType $selectedIacType -ConfigFolderPath $configFolderPath
 
-        Write-InformationColored "`nContinuing with deployment..." -ForegroundColor Green -InformationAction Continue
+        Write-ToConsoleLog "Continuing with deployment..." -IsSuccess
 
         return ConvertTo-AcceleratorResult -Continue $true `
             -InputConfigFilePaths $configPaths.InputConfigFilePaths `

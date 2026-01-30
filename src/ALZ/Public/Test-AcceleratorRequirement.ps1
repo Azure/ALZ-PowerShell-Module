@@ -8,6 +8,8 @@ function Test-AcceleratorRequirement {
         C:\PS> Test-AcceleratorRequirement
     .EXAMPLE
         C:\PS> Test-AcceleratorRequirement -Verbose
+    .EXAMPLE
+        C:\PS> Test-AcceleratorRequirement -Checks @("GitHubCli")
     .OUTPUTS
         Boolean - True if all requirements are met, false if not.
     .NOTES
@@ -18,10 +20,10 @@ function Test-AcceleratorRequirement {
     param (
         [Parameter(
             Mandatory = $false,
-            HelpMessage = "[OPTIONAL] Determines whether to skip the requirements check for the ALZ PowerShell Module version only. This is not recommended."
+            HelpMessage = "[OPTIONAL] Specifies which checks to run. Valid values: PowerShell, Git, AzureCli, AzureEnvVars, AzureCliOrEnvVars, AzureLogin, AlzModule, AlzModuleVersion, YamlModule, YamlModuleAutoInstall, GitHubCli, AzureDevOpsCli"
         )]
-        [Alias("skipAlzModuleVersionRequirementsCheck")]
-        [switch] $skip_alz_module_version_requirements_check
+        [ValidateSet("PowerShell", "Git", "AzureCli", "AzureEnvVars", "AzureCliOrEnvVars", "AzureLogin", "AlzModule", "AlzModuleVersion", "YamlModule", "YamlModuleAutoInstall", "GitHubCli", "AzureDevOpsCli")]
+        [string[]]$Checks = @("PowerShell", "Git", "AzureCliOrEnvVars", "AzureLogin", "AlzModule", "AlzModuleVersion")
     )
-    Test-Tooling -skipAlzModuleVersionCheck:$skip_alz_module_version_requirements_check.IsPresent
+    Test-Tooling -Checks $Checks
 }

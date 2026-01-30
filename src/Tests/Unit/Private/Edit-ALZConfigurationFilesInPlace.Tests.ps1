@@ -16,7 +16,7 @@ InModuleScope 'ALZ' {
         $testFile1Name = "test.parameters.all.json"
 
         Mock -CommandName Out-File -MockWith {
-            Write-InformationColored "Out-File was called with $FilePath and $InputObject" -ForegroundColor Yellow -InformationAction Continue
+            Write-ToConsoleLog "Out-File was called with $FilePath and $InputObject" -IsWarning
         }
 
         Mock -CommandName Get-ChildItem -ParameterFilter { $Path -match 'config$' } -MockWith {
@@ -459,14 +459,14 @@ InModuleScope 'ALZ' {
                 $contentAfterParsing.parameters.parLogging.value = "logs/dev/eastus"
 
                 $contentStringAfterParsing = ConvertTo-Json -InputObject $contentAfterParsing
-                Write-InformationColored $contentStringAfterParsing -ForegroundColor Yellow -InformationAction Continue
+                Write-ToConsoleLog $contentStringAfterParsing -IsWarning
                 Should -Invoke -CommandName Out-File -ParameterFilter { $FilePath -eq "test1.parameters.json" -and $InputObject -eq $contentStringAfterParsing } -Scope It
 
                 $contentAfterParsing = ConvertFrom-Json -InputObject $secondFileContent -AsHashtable
                 $contentAfterParsing.parameters.parLocation.value = 'eastus'
 
                 $contentStringAfterParsing = ConvertTo-Json -InputObject $contentAfterParsing
-                Write-InformationColored $contentStringAfterParsing -ForegroundColor Yellow -InformationAction Continue
+                Write-ToConsoleLog $contentStringAfterParsing -IsWarning
                 Should -Invoke -CommandName Out-File -ParameterFilter { $FilePath -eq "test2.parameters.json" -and $InputObject -eq $contentStringAfterParsing } -Scope It
             }
 
@@ -540,14 +540,14 @@ InModuleScope 'ALZ' {
                 $contentAfterParsing.parameters.parCompanyPrefix.value = 'value1'
 
                 $contentStringAfterParsing = ConvertTo-Json -InputObject $contentAfterParsing
-                Write-InformationColored $contentStringAfterParsing -ForegroundColor Yellow -InformationAction Continue
+                Write-ToConsoleLog $contentStringAfterParsing -IsWarning
                 Should -Invoke -CommandName Out-File -ParameterFilter { $FilePath -eq "test1.parameters.json" -and $InputObject -eq $contentStringAfterParsing } -Scope It
 
                 $contentAfterParsing = ConvertFrom-Json -InputObject $secondFileContent -AsHashtable
                 $contentAfterParsing.parameters.parCompanyPrefix.value = 'value2'
 
                 $contentStringAfterParsing = ConvertTo-Json -InputObject $contentAfterParsing
-                Write-InformationColored $contentStringAfterParsing -ForegroundColor Yellow -InformationAction Continue
+                Write-ToConsoleLog $contentStringAfterParsing -IsWarning
                 Should -Invoke -CommandName Out-File -ParameterFilter { $FilePath -eq "test2.parameters.json" -and $InputObject -eq $contentStringAfterParsing } -Scope It
 
             }

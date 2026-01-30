@@ -99,7 +99,7 @@ InModuleScope 'ALZ' {
 
                 Mock -CommandName Get-GithubRelease -MockWith { $("v0.0.1") }
 
-                Mock -CommandName Write-InformationColored
+                Mock -CommandName Write-ToConsoleLog
 
                 Mock -CommandName Get-HCLParserTool -MockWith { "test" }
 

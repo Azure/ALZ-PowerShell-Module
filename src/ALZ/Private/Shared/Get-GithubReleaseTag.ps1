@@ -55,7 +55,7 @@ function Get-GithubReleaseTag {
 
     # Handle transient errors like throttling
     if ($statusCode -ge 400 -and $statusCode -le 599) {
-        Write-InformationColored "Retrying as got the Status Code $statusCode, which may be a transient error." -ForegroundColor Yellow -InformationAction Continue
+        Write-ToConsoleLog "Retrying as got the Status Code $statusCode, which may be a transient error." -IsWarning
         $releaseData = Invoke-RestMethod $repoReleaseUrl -RetryIntervalSec 3 -MaximumRetryCount 100
     }
 
