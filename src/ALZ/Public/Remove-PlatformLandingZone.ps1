@@ -1330,7 +1330,7 @@ function Remove-PlatformLandingZone {
         if($PlanMode) {
             Write-ToConsoleLog "Plan mode enabled, no changes were made." -IsWarning
             $planLogContents = Get-Content -Path $TempLogFileForPlan -Raw
-            Write-ToConsoleLog "Plan mode log contents:", $planLogContents -Color Gray
+            Write-ToConsoleLog @("Plan mode log contents:", $planLogContents) -Color Gray
             Remove-Item -Path $TempLogFileForPlan -Force
         }
     }

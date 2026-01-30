@@ -111,6 +111,7 @@ function Write-ToConsoleLog {
                 NewLine      = $false
                 ShowDateTime = $true
                 ShowType     = $true
+                WriteToFile  = $false
             },
             @{
                 Level        = "ERROR"
@@ -118,6 +119,7 @@ function Write-ToConsoleLog {
                 NewLine      = $true
                 ShowDateTime = $true
                 ShowType     = $true
+                WriteToFile  = $false
             },
             @{
                 Level        = "WARNING"
@@ -125,6 +127,7 @@ function Write-ToConsoleLog {
                 NewLine      = $true
                 ShowDateTime = $true
                 ShowType     = $true
+                WriteToFile  = $false
             },
             @{
                 Level        = "SUCCESS"
@@ -132,6 +135,7 @@ function Write-ToConsoleLog {
                 NewLine      = $true
                 ShowDateTime = $true
                 ShowType     = $true
+                WriteToFile  = $false
             },
             @{
                 Level        = "PLAN"
@@ -139,6 +143,7 @@ function Write-ToConsoleLog {
                 NewLine      = $false
                 ShowDateTime = $true
                 ShowType     = $true
+                WriteToFile  = $true
             },
             @{
                 Level        = "INPUT REQUIRED"
@@ -146,6 +151,7 @@ function Write-ToConsoleLog {
                 NewLine      = $true
                 ShowDateTime = $true
                 ShowType     = $true
+                WriteToFile  = $false
             },
             @{
                 Level        = "SELECTION"
@@ -153,6 +159,7 @@ function Write-ToConsoleLog {
                 NewLine      = $false
                 ShowDateTime = $false
                 ShowType     = $false
+                WriteToFile  = $false
             }
         )
     )
@@ -214,7 +221,7 @@ function Write-ToConsoleLog {
     }
 
     Write-Host $finalMessages -ForegroundColor $Color -NoNewline:$Overwrite.IsPresent
-    if ($WriteToFile -and $LogFilePath) {
+    if (($WriteToFile -or ($defaultSettings -and $defaultSettings.WriteToFile)) -and $LogFilePath) {
         Add-Content -Path $LogFilePath -Value $finalMessages
     }
 }
