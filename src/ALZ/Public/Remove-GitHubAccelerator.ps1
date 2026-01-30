@@ -178,12 +178,12 @@ function Remove-GitHubAccelerator {
         if($hasRepositoryPatterns) {
             Write-ToConsoleLog "Discovering repositories in organization: $GitHubOrganization"
 
-            $allRepositories = (gh repo list $GitHubOrganization --json name,url --limit 1000) | ConvertFrom-Json
-            if($null -eq $allRepositories) {
+            $repositoriesResponse = (gh repo list $GitHubOrganization --json name,url --limit 1000 2>&1)
+            if($LASTEXITCODE -ne 0) {
                 Write-ToConsoleLog "Failed to list repositories in organization: $GitHubOrganization" -IsError
                 return
             }
-
+            $allRepositories = @($repositoriesResponse | ConvertFrom-Json)
             Write-ToConsoleLog "Found $($allRepositories.Count) total repositories in organization: $GitHubOrganization"
 
             foreach($repo in $allRepositories) {
@@ -206,12 +206,12 @@ function Remove-GitHubAccelerator {
         if($hasTeamPatterns) {
             Write-ToConsoleLog "Discovering teams in organization: $GitHubOrganization"
 
-            $allTeams = (gh api "orgs/$GitHubOrganization/teams" --paginate) | ConvertFrom-Json
-            if($null -eq $allTeams) {
-                Write-ToConsoleLog "Failed to list teams in organization: $GitHubOrganization" -IsWarning
-                $allTeams = @()
+            $teamsResponse = (gh api "orgs/$GitHubOrganization/teams" --paginate 2>&1)
+            if($LASTEXITCODE -ne 0) {
+                Write-ToConsoleLog "Failed to list teams in organization: $GitHubOrganization" -IsError
+                return
             }
-
+            $allTeams = @($teamsResponse | ConvertFrom-Json)
             Write-ToConsoleLog "Found $($allTeams.Count) total teams in organization: $GitHubOrganization"
 
             foreach($team in $allTeams) {
