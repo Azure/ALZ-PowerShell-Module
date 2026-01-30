@@ -887,7 +887,12 @@ function Remove-PlatformLandingZone {
                     $managementGroupDisplayName = $_.DisplayName
 
                     Write-ToConsoleLog "Finding management group: $managementGroupId ($managementGroupDisplayName)"
-                    $topLevelManagementGroup = (az account management-group show --name $managementGroupId --expand --recurse) | ConvertFrom-Json
+                    $topLevelManagementGroup = (az account management-group show --name $managementGroupId --expand --recurse 2>$null) | ConvertFrom-Json
+
+                    if($null -eq $topLevelManagementGroup) {
+                        Write-ToConsoleLog "Management group '$managementGroupId' was listed but could not be retrieved (it may have been deleted or you may not have access). Skipping..." -IsWarning
+                        return
+                    }
 
                     $hasChildren = $topLevelManagementGroup.children -and $topLevelManagementGroup.children.Count -gt 0
 

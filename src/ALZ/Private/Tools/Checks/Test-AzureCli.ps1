@@ -26,6 +26,22 @@ function Test-AzureCli {
                 message = "Azure CLI is logged in. Tenant ID: $($azCliAccount.tenantId), Subscription: $($azCliAccount.name) ($($azCliAccount.id))"
                 result  = "Success"
             }
+
+            # Verify access token can be obtained/refreshed
+            Write-Verbose "Checking Azure CLI access token"
+            $tokenResult = $(az account get-access-token -o json 2>$null) | ConvertFrom-Json
+            if ($tokenResult -and $tokenResult.accessToken) {
+                $results += @{
+                    message = "Azure CLI access token is valid."
+                    result  = "Success"
+                }
+            } else {
+                $results += @{
+                    message = "Azure CLI access token could not be obtained. Please re-authenticate using 'az login -t `"$($azCliAccount.tenantId)`"'."
+                    result  = "Failure"
+                }
+                $hasFailure = $true
+            }
         } else {
             $azCliInstalledButNotLoggedIn = $true
             if (-not $RequireLogin) {
