@@ -155,7 +155,7 @@ function Remove-AzureDevOpsAccelerator {
 
         # Normalize organization URL
         $organizationUrl = Get-NormalizedOrganizationUrl -Organization $AzureDevOpsOrganization
-        Write-ToConsoleLog "Using Azure DevOps organization: $organizationUrl" -NoNewLine
+        Write-ToConsoleLog "Using Azure DevOps organization: $organizationUrl"
 
         # Configure Azure DevOps CLI defaults
         az devops configure --defaults organization=$organizationUrl 2>&1 | Out-Null
@@ -206,12 +206,12 @@ function Remove-AzureDevOpsAccelerator {
             }
 
             $projectList = $allProjects.value
-            Write-ToConsoleLog "Found $($projectList.Count) total projects in organization: $organizationUrl" -NoNewLine
+            Write-ToConsoleLog "Found $($projectList.Count) total projects in organization: $organizationUrl"
 
             foreach($project in $projectList) {
                 foreach($pattern in $ProjectNamePatterns) {
                     if($project.name -match $pattern) {
-                        Write-ToConsoleLog "Project matches pattern '$pattern': $($project.name)" -NoNewLine
+                        Write-ToConsoleLog "Project matches pattern '$pattern': $($project.name)"
                         $projectsToDelete += @{
                             Name = $project.name
                             Id   = $project.id
@@ -221,7 +221,7 @@ function Remove-AzureDevOpsAccelerator {
                 }
             }
 
-            Write-ToConsoleLog "Found $($projectsToDelete.Count) projects matching patterns for deletion" -NoNewLine
+            Write-ToConsoleLog "Found $($projectsToDelete.Count) projects matching patterns for deletion"
         }
 
         # Discover agent pools
@@ -234,18 +234,18 @@ function Remove-AzureDevOpsAccelerator {
                 $allAgentPools = @()
             }
 
-            Write-ToConsoleLog "Found $($allAgentPools.Count) total agent pools in organization: $organizationUrl" -NoNewLine
+            Write-ToConsoleLog "Found $($allAgentPools.Count) total agent pools in organization: $organizationUrl"
 
             foreach($pool in $allAgentPools) {
                 # Skip system pools (Azure Pipelines, Default, etc.)
                 if($pool.isHosted -or $pool.poolType -eq "automation") {
-                    Write-ToConsoleLog "Skipping hosted/system pool: $($pool.name)" -NoNewLine
+                    Write-ToConsoleLog "Skipping hosted/system pool: $($pool.name)"
                     continue
                 }
 
                 foreach($pattern in $AgentPoolNamePatterns) {
                     if($pool.name -match $pattern) {
-                        Write-ToConsoleLog "Agent pool matches pattern '$pattern': $($pool.name)" -NoNewLine
+                        Write-ToConsoleLog "Agent pool matches pattern '$pattern': $($pool.name)"
                         $agentPoolsToDelete += @{
                             Name = $pool.name
                             Id   = $pool.id
@@ -255,7 +255,7 @@ function Remove-AzureDevOpsAccelerator {
                 }
             }
 
-            Write-ToConsoleLog "Found $($agentPoolsToDelete.Count) agent pools matching patterns for deletion" -NoNewLine
+            Write-ToConsoleLog "Found $($agentPoolsToDelete.Count) agent pools matching patterns for deletion"
         }
 
         # Confirm deletion
@@ -270,12 +270,12 @@ function Remove-AzureDevOpsAccelerator {
 
             if($projectsToDelete.Count -gt 0) {
                 Write-ToConsoleLog "Projects ($($projectsToDelete.Count)):"
-                $projectsToDelete | ForEach-Object { Write-ToConsoleLog "  - $($_.Name)" -NoNewLine }
+                $projectsToDelete | ForEach-Object { Write-ToConsoleLog "  - $($_.Name)"  }
             }
 
             if($agentPoolsToDelete.Count -gt 0) {
                 Write-ToConsoleLog "Agent Pools ($($agentPoolsToDelete.Count)):"
-                $agentPoolsToDelete | ForEach-Object { Write-ToConsoleLog "  - $($_.Name)" -NoNewLine }
+                $agentPoolsToDelete | ForEach-Object { Write-ToConsoleLog "  - $($_.Name)"  }
             }
 
             if($PlanMode) {
@@ -307,12 +307,12 @@ function Remove-AzureDevOpsAccelerator {
                         "Would run: az devops project delete --id $($project.Id) --org $orgUrl --yes" `
                         -IsPlan -LogFilePath $TempLogFileForPlan
                 } else {
-                    Write-ToConsoleLog "Deleting project: $($project.Name)" -NoNewLine
+                    Write-ToConsoleLog "Deleting project: $($project.Name)"
                     $result = az devops project delete --id $project.Id --org $orgUrl --yes 2>&1
                     if($LASTEXITCODE -ne 0) {
-                        Write-ToConsoleLog "Failed to delete project: $($project.Name)", "Full error: $result" -IsWarning -NoNewLine
+                        Write-ToConsoleLog "Failed to delete project: $($project.Name)", "Full error: $result" -IsWarning
                     } else {
-                        Write-ToConsoleLog "Deleted project: $($project.Name)" -NoNewLine
+                        Write-ToConsoleLog "Deleted project: $($project.Name)"
                     }
                 }
             } -ThrottleLimit $ThrottleLimit
@@ -336,12 +336,12 @@ function Remove-AzureDevOpsAccelerator {
                         "Would run: az pipelines pool delete --id $($pool.Id) --org $orgUrl --yes" `
                         -IsPlan -LogFilePath $TempLogFileForPlan
                 } else {
-                    Write-ToConsoleLog "Deleting agent pool: $($pool.Name)" -NoNewLine
+                    Write-ToConsoleLog "Deleting agent pool: $($pool.Name)"
                     $result = az pipelines pool delete --id $pool.Id --org $orgUrl --yes 2>&1
                     if($LASTEXITCODE -ne 0) {
-                        Write-ToConsoleLog "Failed to delete agent pool: $($pool.Name)", "Full error: $result" -IsWarning -NoNewLine
+                        Write-ToConsoleLog "Failed to delete agent pool: $($pool.Name)", "Full error: $result" -IsWarning
                     } else {
-                        Write-ToConsoleLog "Deleted agent pool: $($pool.Name)" -NoNewLine
+                        Write-ToConsoleLog "Deleted agent pool: $($pool.Name)"
                     }
                 }
             } -ThrottleLimit $ThrottleLimit

@@ -193,12 +193,12 @@ function Remove-GitHubAccelerator {
                 return
             }
 
-            Write-ToConsoleLog "Found $($allRepositories.Count) total repositories in organization: $GitHubOrganization" -NoNewLine
+            Write-ToConsoleLog "Found $($allRepositories.Count) total repositories in organization: $GitHubOrganization"
 
             foreach($repo in $allRepositories) {
                 foreach($pattern in $RepositoryNamePatterns) {
                     if($repo.name -match $pattern) {
-                        Write-ToConsoleLog "Repository matches pattern '$pattern': $($repo.name)" -NoNewLine
+                        Write-ToConsoleLog "Repository matches pattern '$pattern': $($repo.name)"
                         $repositoriesToDelete += @{
                             Name = $repo.name
                             Url  = $repo.url
@@ -208,7 +208,7 @@ function Remove-GitHubAccelerator {
                 }
             }
 
-            Write-ToConsoleLog "Found $($repositoriesToDelete.Count) repositories matching patterns for deletion" -NoNewLine
+            Write-ToConsoleLog "Found $($repositoriesToDelete.Count) repositories matching patterns for deletion"
         }
 
         # Discover teams
@@ -221,12 +221,12 @@ function Remove-GitHubAccelerator {
                 $allTeams = @()
             }
 
-            Write-ToConsoleLog "Found $($allTeams.Count) total teams in organization: $GitHubOrganization" -NoNewLine
+            Write-ToConsoleLog "Found $($allTeams.Count) total teams in organization: $GitHubOrganization"
 
             foreach($team in $allTeams) {
                 foreach($pattern in $TeamNamePatterns) {
                     if($team.name -match $pattern -or $team.slug -match $pattern) {
-                        Write-ToConsoleLog "Team matches pattern '$pattern': $($team.name) (slug: $($team.slug))" -NoNewLine
+                        Write-ToConsoleLog "Team matches pattern '$pattern': $($team.name) (slug: $($team.slug))"
                         $teamsToDelete += @{
                             Name = $team.name
                             Slug = $team.slug
@@ -237,7 +237,7 @@ function Remove-GitHubAccelerator {
                 }
             }
 
-            Write-ToConsoleLog "Found $($teamsToDelete.Count) teams matching patterns for deletion" -NoNewLine
+            Write-ToConsoleLog "Found $($teamsToDelete.Count) teams matching patterns for deletion"
         }
 
         # Discover runner groups
@@ -253,18 +253,18 @@ function Remove-GitHubAccelerator {
             }
 
             if($null -ne $allRunnerGroups) {
-                Write-ToConsoleLog "Found $($allRunnerGroups.Count) total runner groups in organization: $GitHubOrganization" -NoNewLine
+                Write-ToConsoleLog "Found $($allRunnerGroups.Count) total runner groups in organization: $GitHubOrganization"
 
                 foreach($runnerGroup in $allRunnerGroups) {
                     # Skip the default runner group as it cannot be deleted
                     if($runnerGroup.name -eq "Default" -or $runnerGroup.default) {
-                        Write-ToConsoleLog "Skipping default runner group: $($runnerGroup.name)" -NoNewLine
+                        Write-ToConsoleLog "Skipping default runner group: $($runnerGroup.name)"
                         continue
                     }
 
                     foreach($pattern in $RunnerGroupNamePatterns) {
                         if($runnerGroup.name -match $pattern) {
-                            Write-ToConsoleLog "Runner group matches pattern '$pattern': $($runnerGroup.name)" -NoNewLine
+                            Write-ToConsoleLog "Runner group matches pattern '$pattern': $($runnerGroup.name)"
                             $runnerGroupsToDelete += @{
                                 Name = $runnerGroup.name
                                 Id   = $runnerGroup.id
@@ -274,7 +274,7 @@ function Remove-GitHubAccelerator {
                     }
                 }
 
-                Write-ToConsoleLog "Found $($runnerGroupsToDelete.Count) runner groups matching patterns for deletion" -NoNewLine
+                Write-ToConsoleLog "Found $($runnerGroupsToDelete.Count) runner groups matching patterns for deletion"
             }
         }
 
@@ -290,17 +290,17 @@ function Remove-GitHubAccelerator {
 
             if($repositoriesToDelete.Count -gt 0) {
                 Write-ToConsoleLog "Repositories ($($repositoriesToDelete.Count)):"
-                $repositoriesToDelete | ForEach-Object { Write-ToConsoleLog "  - $($_.Name)" -NoNewLine }
+                $repositoriesToDelete | ForEach-Object { Write-ToConsoleLog "  - $($_.Name)"  }
             }
 
             if($teamsToDelete.Count -gt 0) {
                 Write-ToConsoleLog "Teams ($($teamsToDelete.Count)):"
-                $teamsToDelete | ForEach-Object { Write-ToConsoleLog "  - $($_.Name) (slug: $($_.Slug))" -NoNewLine }
+                $teamsToDelete | ForEach-Object { Write-ToConsoleLog "  - $($_.Name) (slug: $($_.Slug))"  }
             }
 
             if($runnerGroupsToDelete.Count -gt 0) {
                 Write-ToConsoleLog "Runner Groups ($($runnerGroupsToDelete.Count)):"
-                $runnerGroupsToDelete | ForEach-Object { Write-ToConsoleLog "  - $($_.Name)" -NoNewLine }
+                $runnerGroupsToDelete | ForEach-Object { Write-ToConsoleLog "  - $($_.Name)"  }
             }
 
             if($PlanMode) {
@@ -333,12 +333,12 @@ function Remove-GitHubAccelerator {
                         "Would run: gh repo delete $repoFullName --yes" `
                         -IsPlan -LogFilePath $TempLogFileForPlan
                 } else {
-                    Write-ToConsoleLog "Deleting repository: $repoFullName" -NoNewLine
+                    Write-ToConsoleLog "Deleting repository: $repoFullName"
                     $result = gh repo delete $repoFullName --yes 2>&1
                     if($LASTEXITCODE -ne 0) {
-                        Write-ToConsoleLog "Failed to delete repository: $repoFullName", "Full error: $result" -IsWarning -NoNewLine
+                        Write-ToConsoleLog "Failed to delete repository: $repoFullName", "Full error: $result" -IsWarning
                     } else {
-                        Write-ToConsoleLog "Deleted repository: $repoFullName" -NoNewLine
+                        Write-ToConsoleLog "Deleted repository: $repoFullName"
                     }
                 }
             } -ThrottleLimit $ThrottleLimit
@@ -362,12 +362,12 @@ function Remove-GitHubAccelerator {
                         "Would run: gh api -X DELETE orgs/$org/teams/$($team.Slug)" `
                         -IsPlan -LogFilePath $TempLogFileForPlan
                 } else {
-                    Write-ToConsoleLog "Deleting team: $($team.Name) (slug: $($team.Slug))" -NoNewLine
+                    Write-ToConsoleLog "Deleting team: $($team.Name) (slug: $($team.Slug))"
                     $result = gh api -X DELETE "orgs/$org/teams/$($team.Slug)" 2>&1
                     if($LASTEXITCODE -ne 0) {
-                        Write-ToConsoleLog "Failed to delete team: $($team.Name)", "Full error: $result" -IsWarning -NoNewLine
+                        Write-ToConsoleLog "Failed to delete team: $($team.Name)", "Full error: $result" -IsWarning
                     } else {
-                        Write-ToConsoleLog "Deleted team: $($team.Name)" -NoNewLine
+                        Write-ToConsoleLog "Deleted team: $($team.Name)"
                     }
                 }
             } -ThrottleLimit $ThrottleLimit
@@ -391,12 +391,12 @@ function Remove-GitHubAccelerator {
                         "Would run: gh api -X DELETE orgs/$org/actions/runner-groups/$($runnerGroup.Id)" `
                         -IsPlan -LogFilePath $TempLogFileForPlan
                 } else {
-                    Write-ToConsoleLog "Deleting runner group: $($runnerGroup.Name)" -NoNewLine
+                    Write-ToConsoleLog "Deleting runner group: $($runnerGroup.Name)"
                     $result = gh api -X DELETE "orgs/$org/actions/runner-groups/$($runnerGroup.Id)" 2>&1
                     if($LASTEXITCODE -ne 0) {
-                        Write-ToConsoleLog "Failed to delete runner group: $($runnerGroup.Name)", "Full error: $result" -IsWarning -NoNewLine
+                        Write-ToConsoleLog "Failed to delete runner group: $($runnerGroup.Name)", "Full error: $result" -IsWarning
                     } else {
-                        Write-ToConsoleLog "Deleted runner group: $($runnerGroup.Name)" -NoNewLine
+                        Write-ToConsoleLog "Deleted runner group: $($runnerGroup.Name)"
                     }
                 }
             } -ThrottleLimit $ThrottleLimit
