@@ -335,7 +335,8 @@ function Read-MenuSelection {
     }
 
     # Build prompt text
-    $promptText = "Enter selection (1-$($Options.Count)"
+    $fieldLabel = if (-not [string]::IsNullOrWhiteSpace($Title)) { "$($Title.TrimEnd(':')) - " } else { "" }
+    $promptText = "${fieldLabel}Enter selection (1-$($Options.Count)"
     if ($AllowManualEntry.IsPresent) {
         $promptText += ", 0 for manual entry"
     }

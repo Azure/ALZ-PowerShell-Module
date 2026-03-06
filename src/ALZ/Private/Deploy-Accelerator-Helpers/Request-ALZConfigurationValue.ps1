@@ -190,9 +190,7 @@ function Request-ALZConfigurationValue {
             $inputsYamlContent = Get-Content -Path $inputsYamlPath -Raw
             $inputsConfig = $inputsYamlContent | ConvertFrom-Yaml -Ordered
             $inputsUpdated = $false
-
-            # Track changes to apply to the raw content
-            $changes = @{}
+            $sensitiveEnvVars = @{}
 
             # Get the appropriate schema sections based on version control
             $bootstrapSchema = $null
@@ -208,72 +206,82 @@ function Request-ALZConfigurationValue {
                 }
             }
 
+            # Helper: look up schema info for a key from bootstrap or VCS schema
+            function Get-InputSchemaInfo {
+                param($Key, $BootstrapSchema, $VcsSchema)
+                if ($null -ne $BootstrapSchema -and $BootstrapSchema.PSObject.Properties.Name -contains $Key) {
+                    return $BootstrapSchema.$Key
+                }
+                if ($null -ne $VcsSchema -and $VcsSchema.PSObject.Properties.Name -contains $Key) {
+                    return $VcsSchema.$Key
+                }
+                return $null
+            }
+
+            # Helper: format a value for inline YAML output (strongly typed)
+            function Format-YamlInlineValue {
+                param($Value)
+                if ($null -eq $Value) { return "" }
+                if ($Value -is [bool]) { if ($Value) { return "true" } else { return "false" } }
+                if ($Value -is [int] -or $Value -is [long] -or $Value -is [double]) { return $Value.ToString() }
+                if ($Value -is [System.Collections.IList]) {
+                    if ($Value.Count -eq 0) { return "[]" }
+                    $items = ($Value | ForEach-Object { "`"$_`"" }) -join ", "
+                    return "[$items]"
+                }
+                if ($Value -is [System.Collections.IDictionary]) { return "" }
+                return "`"$Value`""
+            }
+
             foreach ($key in @($inputsConfig.Keys)) {
                 $currentValue = $inputsConfig[$key]
 
-                # Handle nested subscription_ids object (always in schema)
-                if ($key -eq "subscription_ids" -and $currentValue -is [System.Collections.IDictionary]) {
-                    # Skip subscription_ids in SensitiveOnly mode (subscription IDs are not sensitive)
+                # Handle nested dictionary objects generically (e.g. subscription_ids)
+                if ($currentValue -is [System.Collections.IDictionary]) {
                     if ($SensitiveOnly.IsPresent) {
                         continue
                     }
 
-                    # Only process if subscription_ids is in the schema
-                    if ($null -eq $bootstrapSchema -or -not ($bootstrapSchema.PSObject.Properties.Name -contains "subscription_ids")) {
+                    $parentSchemaInfo = Get-InputSchemaInfo -Key $key -BootstrapSchema $bootstrapSchema -VcsSchema $vcsSchema
+                    if ($null -eq $parentSchemaInfo) {
                         continue
                     }
 
-                    $subscriptionIdsSchema = $bootstrapSchema.subscription_ids.properties
+                    $nestedSchema = Get-SchemaProperty -SchemaInfo $parentSchemaInfo -PropertyName "properties"
+                    if ($null -eq $nestedSchema) {
+                        continue
+                    }
 
                     foreach ($subKey in @($currentValue.Keys)) {
                         $subCurrentValue = $currentValue[$subKey]
                         $subSchemaInfo = $null
 
-                        if ($null -ne $subscriptionIdsSchema -and $subscriptionIdsSchema.PSObject.Properties.Name -contains $subKey) {
-                            $subSchemaInfo = $subscriptionIdsSchema.$subKey
+                        if ($nestedSchema.PSObject.Properties.Name -contains $subKey) {
+                            $subSchemaInfo = $nestedSchema.$subKey
                         } else {
-                            # Skip subscription IDs not in schema
                             continue
                         }
 
-                        $result = Read-InputValue -Key $subKey -CurrentValue $subCurrentValue -SchemaInfo $subSchemaInfo -DefaultDescription "Subscription ID for $subKey" -AzureContext $AzureContext
+                        $result = Read-InputValue -Key $subKey -CurrentValue $subCurrentValue -SchemaInfo $subSchemaInfo -DefaultDescription "$key - $subKey" -AzureContext $AzureContext
                         $subNewValue = $result.Value
-                        $subIsSensitive = $result.IsSensitive
 
-                        if ($subNewValue -ne $subCurrentValue -or $subIsSensitive) {
-                            $currentValue[$subKey] = $subNewValue
-                            $changes["subscription_ids.$subKey"] = @{
-                                OldValue    = $subCurrentValue
-                                NewValue    = $subNewValue
-                                Key         = $subKey
-                                IsNested    = $true
-                                IsSensitive = $subIsSensitive
-                            }
+                        if ($subNewValue -ne $subCurrentValue) {
+                            $currentValue[$subKey] = [string]$subNewValue
                             $inputsUpdated = $true
                         }
                     }
                     continue
                 }
 
-                # Skip inputs that are not in the schema
-                $schemaInfo = $null
-                $isInBootstrapSchema = $null -ne $bootstrapSchema -and $bootstrapSchema.PSObject.Properties.Name -contains $key
-                $isInVcsSchema = $null -ne $vcsSchema -and $vcsSchema.PSObject.Properties.Name -contains $key
-
-                if (-not $isInBootstrapSchema -and -not $isInVcsSchema) {
-                    # This input is not in the schema, skip it
+                # Look up schema info
+                $schemaInfo = Get-InputSchemaInfo -Key $key -BootstrapSchema $bootstrapSchema -VcsSchema $vcsSchema
+                if ($null -eq $schemaInfo) {
                     continue
-                }
-
-                # Look up schema info from bootstrap or VCS-specific schema
-                if ($isInBootstrapSchema) {
-                    $schemaInfo = $bootstrapSchema.$key
-                } elseif ($isInVcsSchema) {
-                    $schemaInfo = $vcsSchema.$key
                 }
 
                 # Check if this is a sensitive input
                 $isSensitiveField = Get-SchemaProperty -SchemaInfo $schemaInfo -PropertyName "sensitive" -Default $false
+                $schemaType = Get-SchemaProperty -SchemaInfo $schemaInfo -PropertyName "type" -Default "string"
 
                 # In SensitiveOnly mode, skip non-sensitive inputs
                 if ($SensitiveOnly.IsPresent -and -not $isSensitiveField) {
@@ -282,7 +290,6 @@ function Request-ALZConfigurationValue {
 
                 # In SensitiveOnly mode, check if sensitive value is already set
                 if ($SensitiveOnly.IsPresent -and $isSensitiveField) {
-                    # Check environment variable first
                     $envVarName = "TF_VAR_$key"
                     $envVarValue = [System.Environment]::GetEnvironmentVariable($envVarName)
                     if (-not [string]::IsNullOrWhiteSpace($envVarValue)) {
@@ -290,7 +297,6 @@ function Request-ALZConfigurationValue {
                         continue
                     }
 
-                    # Check if config value is a real value (not empty, not a placeholder)
                     $isPlaceholderValue = $currentValue -is [string] -and $currentValue -match '^\s*<.*>\s*$'
                     $isSetViaEnvVarPlaceholder = $currentValue -is [string] -and $currentValue -like "Set via environment variable*"
                     if (-not [string]::IsNullOrWhiteSpace($currentValue) -and -not $isPlaceholderValue -and -not $isSetViaEnvVarPlaceholder) {
@@ -303,10 +309,19 @@ function Request-ALZConfigurationValue {
                 $newValue = $result.Value
                 $isSensitive = $result.IsSensitive
 
-                # Update if changed (handle array comparison) or if sensitive (always track sensitive values)
+                # Handle sensitive values - store in env var, set placeholder in hashtable
+                if ($isSensitive -and -not [string]::IsNullOrWhiteSpace($newValue)) {
+                    $envVarName = "TF_VAR_$key"
+                    [System.Environment]::SetEnvironmentVariable($envVarName, $newValue)
+                    $sensitiveEnvVars[$key] = $envVarName
+                    $inputsConfig[$key] = [string]"Set via environment variable $envVarName"
+                    $inputsUpdated = $true
+                    continue
+                }
+
+                # Determine if value changed (handle array comparison)
                 $hasChanged = $false
                 if ($currentValue -is [System.Collections.IList] -or $newValue -is [System.Collections.IList]) {
-                    # Compare arrays
                     $currentArray = @($currentValue)
                     $newArray = @($newValue)
                     if ($currentArray.Count -ne $newArray.Count) {
@@ -323,109 +338,132 @@ function Request-ALZConfigurationValue {
                     $hasChanged = $newValue -ne $currentValue
                 }
 
-                if ($hasChanged -or $isSensitive) {
-                    $inputsConfig[$key] = $newValue
-                    $changes[$key] = @{
-                        OldValue    = $currentValue
-                        NewValue    = $newValue
-                        Key         = $key
-                        IsNested    = $false
-                        IsArray     = $newValue -is [System.Collections.IList]
-                        IsBoolean   = $newValue -is [bool]
-                        IsNumber    = $newValue -is [int] -or $newValue -is [long] -or $newValue -is [double]
-                        IsSensitive = $isSensitive
+                # Always store the value with the correct type for YAML serialization
+                switch ($schemaType) {
+                    "boolean" {
+                        $typedValue = if ($newValue -is [bool]) { $newValue } else { $newValue.ToString().ToLower() -in @('true', 'yes', '1', 'y', 't') }
+                        $inputsConfig[$key] = [bool]$typedValue
                     }
+                    "number" {
+                        $inputsConfig[$key] = [int]$newValue
+                    }
+                    "array" {
+                        $inputsConfig[$key] = [System.Collections.Generic.List[object]]@($newValue)
+                    }
+                    default {
+                        $inputsConfig[$key] = [string]$newValue
+                    }
+                }
+                if ($hasChanged) {
                     $inputsUpdated = $true
                 }
             }
 
             # Save updated inputs.yaml preserving comments and ordering
             if ($inputsUpdated) {
-                $updatedContent = $inputsYamlContent
-                $sensitiveEnvVars = @{}
+                # Serialize the updated ordered hashtable to YAML
+                $serializedYaml = ($inputsConfig | ConvertTo-Yaml).TrimEnd()
+                $serializedLines = $serializedYaml -split "`n"
 
-                foreach ($changeKey in $changes.Keys) {
-                    $change = $changes[$changeKey]
-                    $key = $change.Key
-                    $oldValue = $change.OldValue
-                    $newValue = $change.NewValue
-                    $isArray = if ($change.ContainsKey('IsArray')) { $change.IsArray } else { $false }
-                    $isBoolean = if ($change.ContainsKey('IsBoolean')) { $change.IsBoolean } else { $false }
-                    $isNumber = if ($change.ContainsKey('IsNumber')) { $change.IsNumber } else { $false }
-                    $isSensitive = if ($change.ContainsKey('IsSensitive')) { $change.IsSensitive } else { $false }
+                # Build a lookup from serialized YAML: key (with indentation) -> serialized line
+                # Multi-line arrays are converted to inline format
+                $serializedLookup = [ordered]@{}
+                $currentLookupKey = $null
+                $currentLookupKeyName = $null
+                $currentLookupIndent = ""
+                $pendingArrayItems = @()
 
-                    # Handle sensitive values - set as environment variable instead of in file
-                    if ($isSensitive -and -not [string]::IsNullOrWhiteSpace($newValue)) {
-                        $envVarName = "TF_VAR_$key"
-                        [System.Environment]::SetEnvironmentVariable($envVarName, $newValue)
-                        $sensitiveEnvVars[$key] = $envVarName
-
-                        # Update the config file to indicate it's set as an env var
-                        $envVarPlaceholder = "Set via environment variable $envVarName"
-                        $escapedOldValue = if ([string]::IsNullOrWhiteSpace($oldValue)) { "" } else { [regex]::Escape($oldValue) }
-                        if ([string]::IsNullOrWhiteSpace($escapedOldValue)) {
-                            $pattern = "(?m)^(\s*${key}:\s*)`"?`"?(\s*)(#.*)?$"
-                        } else {
-                            $pattern = "(?m)^(\s*${key}:\s*)`"?${escapedOldValue}`"?(\s*)(#.*)?$"
+                foreach ($sLine in $serializedLines) {
+                    if ($sLine -match '^(\s*)([\w_][\w_\-]*):(.*)$') {
+                        # Flush any pending array items from the previous key
+                        if ($currentLookupKey -and $pendingArrayItems.Count -gt 0) {
+                            $inlineArray = "[" + (($pendingArrayItems | ForEach-Object { "`"$_`"" }) -join ", ") + "]"
+                            $serializedLookup[$currentLookupKey] = "$currentLookupIndent${currentLookupKeyName}: $inlineArray"
+                            $pendingArrayItems = @()
                         }
-                        $replacement = "`${1}`"$envVarPlaceholder`"`${2}`${3}"
-                        $updatedContent = $updatedContent -replace $pattern, $replacement
+
+                        $indent = $Matches[1]
+                        $keyName = $Matches[2]
+                        $lookupKey = "${indent}${keyName}"
+                        $currentLookupKey = $lookupKey
+                        $currentLookupKeyName = $keyName
+                        $currentLookupIndent = $indent
+                        $serializedLookup[$lookupKey] = $sLine
+                    } elseif ($sLine -match '^\s*- (.+)$') {
+                        # Array continuation line - collect for inline conversion
+                        $pendingArrayItems += $Matches[1]
+                    }
+                }
+
+                # Flush trailing array items
+                if ($currentLookupKey -and $pendingArrayItems.Count -gt 0) {
+                    $inlineArray = "[" + (($pendingArrayItems | ForEach-Object { "`"$_`"" }) -join ", ") + "]"
+                    $serializedLookup[$currentLookupKey] = "$currentLookupIndent${currentLookupKeyName}: $inlineArray"
+                }
+
+                # Walk original file lines, merge comments with serialized values
+                $originalLines = $inputsYamlContent -split "`n"
+                $resultLines = @()
+
+                foreach ($originalLine in $originalLines) {
+                    $trimmedLine = $originalLine.TrimStart()
+
+                    # Preserve blank lines, comment-only lines, and YAML document markers
+                    if ([string]::IsNullOrWhiteSpace($originalLine) -or $trimmedLine.StartsWith('#') -or $trimmedLine -eq '---') {
+                        $resultLines += $originalLine
                         continue
                     }
 
-                    if ($isArray) {
-                        # Handle array values - convert to YAML inline array format
-                        $yamlArrayValue = "[" + (($newValue | ForEach-Object { "`"$_`"" }) -join ", ") + "]"
+                    # Data line - extract key and look up the serialized value
+                    if ($originalLine -match '^(\s*)([\w_][\w_\-]*):') {
+                        $indent = $Matches[1]
+                        $keyName = $Matches[2]
+                        $lookupKey = "${indent}${keyName}"
 
-                        # Check if old value is already in array format or a different format (string/placeholder)
-                        $oldValueIsArray = $oldValue -is [System.Collections.IList]
-                        if ($oldValueIsArray) {
-                            # Match the existing array - greedy match within brackets
-                            $pattern = "(?m)^(\s*${key}:\s*)\[[^\]]*\](\s*)(#.*)?$"
-                        } else {
-                            # Old value was a string/placeholder, match quoted or unquoted value
-                            $escapedOldValue = if ([string]::IsNullOrWhiteSpace($oldValue)) { "" } else { [regex]::Escape($oldValue.ToString()) }
-                            if ([string]::IsNullOrWhiteSpace($escapedOldValue)) {
-                                $pattern = "(?m)^(\s*${key}:\s*)`"?`"?(\s*)(#.*)?$"
-                            } else {
-                                $pattern = "(?m)^(\s*${key}:\s*)`"?${escapedOldValue}`"?(\s*)(#.*)?$"
+                        # Extract inline comment from the original line
+                        $inlineComment = $null
+                        if ($originalLine -match '\S\s{2,}(#.*)$') {
+                            $inlineComment = $Matches[1]
+                        }
+
+                        if ($serializedLookup.Contains($lookupKey)) {
+                            $newLine = $serializedLookup[$lookupKey]
+
+                            # Format the value using our inline formatter for consistent output
+                            $hashtableValue = $null
+                            if ($indent -eq "" -and $inputsConfig.Contains($keyName)) {
+                                $hashtableValue = $inputsConfig[$keyName]
+                            } elseif ($indent.Length -gt 0) {
+                                # Nested value - find the parent key
+                                foreach ($parentKey in $inputsConfig.Keys) {
+                                    if ($inputsConfig[$parentKey] -is [System.Collections.IDictionary] -and $inputsConfig[$parentKey].Contains($keyName)) {
+                                        $hashtableValue = $inputsConfig[$parentKey][$keyName]
+                                        break
+                                    }
+                                }
                             }
-                        }
-                        $replacement = "`${1}$yamlArrayValue`${2}`${3}"
-                    } elseif ($isBoolean) {
-                        # Handle boolean values - no quotes, lowercase true/false
-                        $yamlBoolValue = if ($newValue) { "true" } else { "false" }
-                        # Match any boolean-like value (true/false/True/False/yes/no) case-insensitively
-                        $pattern = "(?mi)^(\s*${key}:\s*)`"?(true|false)`"?(\s*)(#.*)?$"
-                        $replacement = "`${1}$yamlBoolValue`${3}`${4}"
-                    } elseif ($isNumber) {
-                        # Handle numeric values - no quotes
-                        $yamlNumValue = $newValue.ToString()
-                        $escapedOldValue = [regex]::Escape($oldValue.ToString())
-                        $pattern = "(?m)^(\s*${key}:\s*)`"?${escapedOldValue}`"?(\s*)(#.*)?$"
-                        $replacement = "`${1}$yamlNumValue`${2}`${3}"
-                    } else {
-                        # Handle string values
-                        # Escape special regex characters in the old value
-                        $escapedOldValue = [regex]::Escape($oldValue)
 
-                        # Build regex pattern to match the key-value pair
-                        # This handles both quoted and unquoted values
-                        if ([string]::IsNullOrWhiteSpace($oldValue)) {
-                            # Empty value - match key followed by colon and optional whitespace/quotes
-                            $pattern = "(?m)^(\s*${key}:\s*)`"?`"?(\s*)(#.*)?$"
-                            $replacement = "`${1}`"$newValue`"`${2}`${3}"
+                            # Use the formatted value for the line
+                            if ($null -ne $hashtableValue -and -not ($hashtableValue -is [System.Collections.IDictionary])) {
+                                $formattedValue = Format-YamlInlineValue -Value $hashtableValue
+                                $newLine = "${indent}${keyName}: $formattedValue"
+                            }
+
+                            if ($inlineComment) {
+                                $newLine = "$newLine  $inlineComment"
+                            }
+                            $resultLines += $newLine
                         } else {
-                            # Non-empty value - match the specific value
-                            $pattern = "(?m)^(\s*${key}:\s*)`"?${escapedOldValue}`"?(\s*)(#.*)?$"
-                            $replacement = "`${1}`"$newValue`"`${2}`${3}"
+                            # Key not found in serialized output, keep original line
+                            $resultLines += $originalLine
                         }
+                    } else {
+                        # Non-key data line (shouldn't normally happen), keep as-is
+                        $resultLines += $originalLine
                     }
-
-                    $updatedContent = $updatedContent -replace $pattern, $replacement
                 }
 
-                $updatedContent | Set-Content -Path $inputsYamlPath -Force -NoNewline
+                ($resultLines -join "`n") | Set-Content -Path $inputsYamlPath -Force -NoNewline
                 Write-ToConsoleLog "Updated inputs.yaml" -IsSuccess
 
                 # Display summary of sensitive environment variables
