@@ -17,7 +17,11 @@ function Test-NetworkConnectivity {
     foreach ($endpoint in $endpoints) {
         Write-Verbose "Testing network connectivity to $($endpoint.Uri)"
         try {
-            Invoke-WebRequest -Uri $endpoint.Uri -Method Head -TimeoutSec 10 -SkipHttpErrorCheck -ErrorAction Stop -UseBasicParsing | Out-Null
+            if ($endpoint.Uri -eq "https://api.github.com") {
+                Invoke-GitHubApiRequest -Uri $endpoint.Uri -Method Head -SkipHttpErrorCheck -MaxRetryCount 0 | Out-Null
+            } else {
+                Invoke-WebRequest -Uri $endpoint.Uri -Method Head -TimeoutSec 10 -SkipHttpErrorCheck -ErrorAction Stop -UseBasicParsing | Out-Null
+            }
             $results += @{
                 message = "Network connectivity to $($endpoint.Description) ($($endpoint.Uri)) is available."
                 result  = "Success"

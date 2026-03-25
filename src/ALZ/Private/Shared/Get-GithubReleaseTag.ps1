@@ -29,7 +29,11 @@ function Get-GithubReleaseTag {
 
         [Parameter(Mandatory = $false, Position = 2, HelpMessage = "The release to check. Specify 'latest' to get the latest release tag. Defaults to 'latest'.")]
         [string]
-        $release = "latest"
+        $release = "latest",
+
+        [Parameter(Mandatory = $false, HelpMessage = "Maximum number of retries for transient GitHub API errors.")]
+        [int]
+        $maxRetryCount = 10
     )
 
     # Split Repo URL into parts
@@ -44,19 +48,15 @@ function Get-GithubReleaseTag {
     }
 
     # Query the GitHub API
-    $releaseData = Invoke-RestMethod $repoReleaseUrl -SkipHttpErrorCheck -StatusCodeVariable "statusCode"
+    $response = Invoke-GitHubApiRequest -Uri $repoReleaseUrl -SkipHttpErrorCheck -MaxRetryCount $maxRetryCount -RetryIntervalSeconds 3
+    $releaseData = $response.Result
+    $statusCode = $response.StatusCode
 
     Write-Verbose "Status code: $statusCode"
 
     if ($statusCode -eq 404) {
         Write-Error "The release $release does not exist in the GitHub repository $githubRepoUrl - $repoReleaseUrl"
         throw "The release $release does not exist in the GitHub repository $githubRepoUrl - $repoReleaseUrl"
-    }
-
-    # Handle transient errors like throttling
-    if ($statusCode -ge 400 -and $statusCode -le 599) {
-        Write-ToConsoleLog "Retrying as got the Status Code $statusCode, which may be a transient error." -IsWarning
-        $releaseData = Invoke-RestMethod $repoReleaseUrl -RetryIntervalSec 3 -MaximumRetryCount 100
     }
 
     if ($statusCode -ne 200) {

@@ -23,7 +23,9 @@ function New-ModuleSetup {
         [Parameter(Mandatory = $false)]
         [switch]$upgrade,
         [Parameter(Mandatory = $false)]
-        [switch]$autoApprove
+        [switch]$autoApprove,
+        [Parameter(Mandatory = $false)]
+        [int]$maxRetryCount = 10
     )
 
     if ($PSCmdlet.ShouldProcess("Check and get module", "modify")) {
@@ -50,12 +52,13 @@ function New-ModuleSetup {
                 -targetFolder $targetFolder `
                 -sourceFolder $sourceFolder `
                 -overrideSourceDirectoryPath $moduleOverrideFolderPath `
-                -replaceFiles:$replaceFiles.IsPresent
+                -replaceFiles:$replaceFiles.IsPresent `
+                -maxRetryCount $maxRetryCount
         }
 
         $latestReleaseTag = $null
         try {
-            $latestResult = Get-GithubReleaseTag -githubRepoUrl $url -release "latest"
+            $latestResult = Get-GithubReleaseTag -githubRepoUrl $url -release "latest" -maxRetryCount $maxRetryCount
             $latestReleaseTag = $latestResult.ReleaseTag
             Write-Verbose "Latest available $targetFolder version: $latestReleaseTag"
         } catch {
@@ -85,18 +88,18 @@ function New-ModuleSetup {
             $shouldDownload = $true
         }
 
-        if(!$shouldDownload -or $isFirstRun) {
+        if(!$shouldDownload -or $firstRun) {
             $newVersionAvailable = $false
             $currentCalculatedVersion = $currentVersion
-            if(!$isFirstRun -and $isAutoVersion -and $null -ne $latestReleaseTag -and $latestReleaseTag -ne $currentVersion) {
+            if(!$firstRun -and $isAutoVersion -and $null -ne $latestReleaseTag -and $latestReleaseTag -ne $currentVersion) {
                 $newVersionAvailable = $true
             }
 
-            if(!$isFirstRun -and !$isAutoVersion -and $null -ne $latestReleaseTag -and $latestReleaseTag -ne $currentVersion) {
+            if(!$firstRun -and !$isAutoVersion -and $null -ne $latestReleaseTag -and $latestReleaseTag -ne $currentVersion) {
                 $newVersionAvailable = $true
             }
 
-            if($isFirstRun -and !$isAutoVersion -and $release -ne $latestReleaseTag) {
+            if($firstRun -and !$isAutoVersion -and $release -ne $latestReleaseTag) {
                 $currentCalculatedVersion = $release
                 $newVersionAvailable = $true
             }
@@ -110,8 +113,6 @@ function New-ModuleSetup {
                         Write-ToConsoleLog "No upgrade required for $targetFolder module; already at latest version ($currentCalculatedVersion)." -IsWarning
                     }
                     Write-ToConsoleLog "Using existing $targetFolder module version ($currentCalculatedVersion)." -IsSuccess
-                } else {
-                    Write-ToConsoleLog "Using specified $targetFolder module version ($currentCalculatedVersion) for the first run." -IsSuccess
                 }
             }
         }
@@ -120,14 +121,19 @@ function New-ModuleSetup {
 
             $previousVersionPath = $versionAndPath.path
             $desiredRelease = $isAutoVersion ? $latestReleaseTag : $release
-            Write-ToConsoleLog "Upgrading $targetFolder module from $currentVersion to $desiredRelease" -IsWarning
 
-            if (-not $autoApprove.IsPresent) {
-                $confirm = Read-Host "Do you want to proceed with the upgrade? (y/n)"
-                if ($confirm -ne "y" -and $confirm -ne "Y") {
-                    Write-ToConsoleLog "Upgrade declined. Continuing with existing version $currentVersion." -IsWarning
-                    return $versionAndPath
+            if (!$firstRun) {
+                Write-ToConsoleLog "Upgrading $targetFolder module from $currentVersion to $desiredRelease" -IsWarning
+
+                if (-not $autoApprove.IsPresent) {
+                    $confirm = Read-Host "Do you want to proceed with the upgrade? (y/n)"
+                    if ($confirm -ne "y" -and $confirm -ne "Y") {
+                        Write-ToConsoleLog "Upgrade declined. Continuing with existing version $currentVersion." -IsWarning
+                        return $versionAndPath
+                    }
                 }
+            } else {
+                Write-ToConsoleLog "Downloading $targetFolder module version $desiredRelease" -IsSuccess
             }
 
             $versionAndPath = New-FolderStructure `
@@ -138,11 +144,12 @@ function New-ModuleSetup {
                 -targetFolder $targetFolder `
                 -sourceFolder $sourceFolder `
                 -overrideSourceDirectoryPath $moduleOverrideFolderPath `
-                -replaceFiles:$replaceFiles.IsPresent
+                -replaceFiles:$replaceFiles.IsPresent `
+                -maxRetryCount $maxRetryCount
 
             Write-Verbose "New version: $($versionAndPath.releaseTag) at path: $($versionAndPath.path)"
 
-            if (!$isFirstRun) {
+            if (!$firstRun) {
                 Write-Verbose "Checking for state files at: $previousStatePath"
                 $previousStateFiles = Get-ChildItem $previousVersionPath -Filter "terraform.tfstate" -Recurse | Select-Object -First 1 | ForEach-Object { $_.FullName }
 

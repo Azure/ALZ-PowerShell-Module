@@ -194,7 +194,15 @@ function Deploy-Accelerator {
             HelpMessage = "[OPTIONAL] Clears the cached Azure context (management groups, subscriptions, regions) and fetches fresh data from Azure."
         )]
         [Alias("cc")]
-        [switch] $clear_cache
+        [switch] $clear_cache,
+
+        [Parameter(
+            Mandatory = $false,
+            HelpMessage = "[OPTIONAL] Maximum number of retries for transient GitHub API errors. Defaults to 10. Environment variable: ALZ_github_max_retry_count. Config file input: github_max_retry_count."
+        )]
+        [Alias("gmrc")]
+        [Alias("githubMaxRetryCount")]
+        [int] $github_max_retry_count = 10
     )
 
     $ProgressPreference = "SilentlyContinue"
@@ -321,7 +329,7 @@ function Deploy-Accelerator {
         } else {
             Write-ToConsoleLog "Checking you have the latest version of Terraform installed..." -IsSuccess
             Get-TerraformTool -version "latest" -toolsPath $toolsPath
-            $hclParserToolPath = Get-HCLParserTool -toolVersion "v0.6.0" -toolsPath $toolsPath
+            $hclParserToolPath = Get-HCLParserTool -toolVersion "v0.6.0" -toolsPath $toolsPath -maxRetryCount $github_max_retry_count
         }
 
         # Get User Inputs from the input config file
