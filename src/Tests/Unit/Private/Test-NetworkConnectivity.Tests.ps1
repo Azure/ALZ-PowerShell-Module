@@ -23,6 +23,9 @@ InModuleScope 'ALZ' {
                 Mock -CommandName Invoke-WebRequest -MockWith {
                     [PSCustomObject]@{ StatusCode = 200 }
                 }
+                Mock -CommandName Invoke-GitHubApiRequest -MockWith {
+                    @{ StatusCode = 200; Result = $null }
+                }
             }
 
             It 'returns HasFailure = $false when all endpoints succeed' {
@@ -45,7 +48,7 @@ InModuleScope 'ALZ' {
 
         Context 'One endpoint is unreachable' {
             BeforeAll {
-                Mock -CommandName Invoke-WebRequest -ParameterFilter { $Uri -eq "https://api.github.com" } -MockWith {
+                Mock -CommandName Invoke-GitHubApiRequest -MockWith {
                     throw "Unable to connect to the remote server"
                 }
                 Mock -CommandName Invoke-WebRequest -MockWith {
@@ -83,6 +86,9 @@ InModuleScope 'ALZ' {
                 Mock -CommandName Invoke-WebRequest -MockWith {
                     throw "Network unreachable"
                 }
+                Mock -CommandName Invoke-GitHubApiRequest -MockWith {
+                    throw "Network unreachable"
+                }
             }
 
             It 'returns HasFailure = $true' {
@@ -104,7 +110,8 @@ InModuleScope 'ALZ' {
 
             It 'checks all endpoints and does not stop at the first failure' {
                 $result = Test-NetworkConnectivity
-                Should -Invoke -CommandName Invoke-WebRequest -Times 6 -Scope It
+                Should -Invoke -CommandName Invoke-WebRequest -Times 5 -Scope It
+                Should -Invoke -CommandName Invoke-GitHubApiRequest -Times 1 -Scope It
             }
         }
     }

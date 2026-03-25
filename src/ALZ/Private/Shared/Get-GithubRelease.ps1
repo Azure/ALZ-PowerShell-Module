@@ -45,14 +45,18 @@ function Get-GithubRelease {
         $moduleTargetFolder,
 
         [Parameter(Mandatory = $false, HelpMessage = "The name of the release artifact in the target release. Defaults to standard release zip.")]
-        $releaseArtifactName = ""
+        $releaseArtifactName = "",
+
+        [Parameter(Mandatory = $false, HelpMessage = "Maximum number of retries for transient GitHub API errors.")]
+        [int]
+        $maxRetryCount = 10
     )
 
     $parentDirectory = $targetDirectory
     $targetPath = Join-Path $targetDirectory $moduleTargetFolder
 
     # Get the release tag and data from GitHub
-    $releaseResult = Get-GithubReleaseTag -githubRepoUrl $githubRepoUrl -release $release
+    $releaseResult = Get-GithubReleaseTag -githubRepoUrl $githubRepoUrl -release $release -maxRetryCount $maxRetryCount
     $releaseTag = $releaseResult.ReleaseTag
     $releaseData = $releaseResult.ReleaseData
 
@@ -96,7 +100,7 @@ function Get-GithubRelease {
 
         Write-Verbose "===> Downloading the release artifact $releaseArtifactUrl from the GitHub repository $repoOrgPlusRepo"
 
-        Invoke-WebRequest -Uri $releaseArtifactUrl -OutFile $targetPathForZip -RetryIntervalSec 3 -MaximumRetryCount 100 | Out-String | Write-Verbose
+        Invoke-GitHubApiRequest -Uri $releaseArtifactUrl -OutputFile $targetPathForZip -MaxRetryCount $maxRetryCount -RetryIntervalSeconds 3
 
         if(!(Test-Path $targetPathForZip)) {
             Write-ToConsoleLog "Failed to download the release $releaseTag from the GitHub repository $repoOrgPlusRepo" -IsError

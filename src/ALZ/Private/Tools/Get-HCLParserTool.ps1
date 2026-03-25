@@ -5,7 +5,10 @@ function Get-HCLParserTool {
         [string] $toolsPath,
 
         [Parameter(Mandatory = $false)]
-        [string] $toolVersion
+        [string] $toolVersion,
+
+        [Parameter(Mandatory = $false)]
+        [int] $maxRetryCount = 10
     )
 
     if ($PSCmdlet.ShouldProcess("Download Terraform Tools", "modify")) {
@@ -29,7 +32,7 @@ function Get-HCLParserTool {
 
             $uri = "https://github.com/tmccombs/hcl2json/releases/download/$($toolVersion)/$($toolFileName)"
             Write-Verbose "Downloading Terraform HCL parser Tool from $uri"
-            Invoke-WebRequest -Uri $uri -OutFile "$toolFilePath" | Out-String | Write-Verbose
+            Invoke-GitHubApiRequest -Uri $uri -OutputFile $toolFilePath -MaxRetryCount $maxRetryCount
         }
 
         if($osArchitecture.os -ne "windows") {
