@@ -3,7 +3,7 @@ function Test-AcceleratorRequirement {
     .SYNOPSIS
         Test that the Accelerator software requirements are met
     .DESCRIPTION
-        This will check for the pre-requisite software
+        This will check for the pre-requisite software and network connectivity to the external endpoints required by the Accelerator.
     .EXAMPLE
         C:\PS> Test-AcceleratorRequirement
     .EXAMPLE
@@ -20,10 +20,10 @@ function Test-AcceleratorRequirement {
     param (
         [Parameter(
             Mandatory = $false,
-            HelpMessage = "[OPTIONAL] Specifies which checks to run. Valid values: PowerShell, Git, AzureCli, AzureEnvVars, AzureCliOrEnvVars, AzureLogin, AlzModule, AlzModuleVersion, YamlModule, YamlModuleAutoInstall, GitHubCli, AzureDevOpsCli"
+            HelpMessage = "[OPTIONAL] Specifies which checks to run. Valid values: PowerShell, Git, AzureCli, AzureEnvVars, AzureCliOrEnvVars, AzureLogin, AlzModule, AlzModuleVersion, YamlModule, YamlModuleAutoInstall, GitHubCli, AzureDevOpsCli, NetworkConnectivity"
         )]
-        [ValidateSet("PowerShell", "Git", "AzureCli", "AzureEnvVars", "AzureCliOrEnvVars", "AzureLogin", "AlzModule", "AlzModuleVersion", "YamlModule", "YamlModuleAutoInstall", "GitHubCli", "AzureDevOpsCli")]
-        [string[]]$Checks = @("PowerShell", "Git", "AzureCliOrEnvVars", "AzureLogin", "AlzModule", "AlzModuleVersion")
+        [ValidateSet("PowerShell", "Git", "AzureCli", "AzureEnvVars", "AzureCliOrEnvVars", "AzureLogin", "AlzModule", "AlzModuleVersion", "YamlModule", "YamlModuleAutoInstall", "GitHubCli", "AzureDevOpsCli", "NetworkConnectivity")]
+        [string[]]$Checks = @("PowerShell", "Git", "AzureCliOrEnvVars", "AzureLogin", "AlzModule", "AlzModuleVersion", "NetworkConnectivity")
     )
     Test-Tooling -Checks $Checks
 }

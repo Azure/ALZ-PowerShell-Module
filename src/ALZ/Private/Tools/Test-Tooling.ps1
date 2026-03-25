@@ -2,7 +2,7 @@ function Test-Tooling {
     [CmdletBinding(SupportsShouldProcess = $true)]
     param(
         [Parameter(Mandatory = $false)]
-        [ValidateSet("PowerShell", "Git", "AzureCli", "AzureEnvVars", "AzureCliOrEnvVars", "AzureLogin", "AlzModule", "AlzModuleVersion", "YamlModule", "YamlModuleAutoInstall", "GitHubCli", "AzureDevOpsCli")]
+        [ValidateSet("PowerShell", "Git", "AzureCli", "AzureEnvVars", "AzureCliOrEnvVars", "AzureLogin", "AlzModule", "AlzModuleVersion", "YamlModule", "YamlModuleAutoInstall", "GitHubCli", "AzureDevOpsCli", "NetworkConnectivity")]
         [string[]]$Checks = @("PowerShell", "Git", "AzureCliOrEnvVars", "AzureLogin", "AlzModule", "AlzModuleVersion"),
         [Parameter(Mandatory = $false)]
         [switch]$destroy
@@ -87,6 +87,13 @@ function Test-Tooling {
     # Check Azure DevOps CLI
     if ($Checks -contains "AzureDevOpsCli") {
         $result = Test-AzureDevOpsCli
+        $checkResults += $result.Results
+        if ($result.HasFailure) { $hasFailure = $true }
+    }
+
+    # Check Network Connectivity
+    if ($Checks -contains "NetworkConnectivity") {
+        $result = Test-NetworkConnectivity
         $checkResults += $result.Results
         if ($result.HasFailure) { $hasFailure = $true }
     }
