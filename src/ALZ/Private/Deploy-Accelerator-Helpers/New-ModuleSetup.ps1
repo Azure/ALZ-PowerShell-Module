@@ -113,8 +113,6 @@ function New-ModuleSetup {
                         Write-ToConsoleLog "No upgrade required for $targetFolder module; already at latest version ($currentCalculatedVersion)." -IsWarning
                     }
                     Write-ToConsoleLog "Using existing $targetFolder module version ($currentCalculatedVersion)." -IsSuccess
-                } else {
-                    Write-ToConsoleLog "Using specified $targetFolder module version ($currentCalculatedVersion) for the first run." -IsSuccess
                 }
             }
         }
