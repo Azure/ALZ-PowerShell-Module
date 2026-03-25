@@ -20,7 +20,7 @@ function Test-NetworkConnectivity {
             if ($endpoint.Uri -eq "https://api.github.com") {
                 Invoke-GitHubApiRequest -Uri $endpoint.Uri -Method Head -SkipHttpErrorCheck -MaxRetryCount 0 | Out-Null
             } else {
-                Invoke-WebRequest -Uri $endpoint.Uri -Method Head -TimeoutSec 10 -SkipHttpErrorCheck -ErrorAction Stop -UseBasicParsing | Out-Null
+                Invoke-HttpRequestWithRetry -Uri $endpoint.Uri -Method Head -TimeoutSec 10 -SkipHttpErrorCheck -MaxRetryCount 0 | Out-Null
             }
             $results += @{
                 message = "Network connectivity to $($endpoint.Description) ($($endpoint.Uri)) is available."
