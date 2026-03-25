@@ -5,6 +5,7 @@ function Test-GitHubCli {
     $results = @()
     $hasFailure = $false
 
+    Write-ToConsoleLog "Checking GitHub CLI installation..."
     Write-Verbose "Checking GitHub CLI installation"
     $ghCliPath = Get-Command gh -ErrorAction SilentlyContinue
 

@@ -10,6 +10,7 @@ function Test-YamlModule {
     $results = @()
     $hasFailure = $false
 
+    Write-ToConsoleLog "Checking powershell-yaml module installation..."
     Write-Verbose "Checking powershell-yaml module installation"
     $yamlModule = Get-InstalledPSResource -Name powershell-yaml 2> $null | Select-Object -Property Name, Version | Sort-Object Version -Descending | Select-Object -First 1
     if($null -eq $yamlModule) {

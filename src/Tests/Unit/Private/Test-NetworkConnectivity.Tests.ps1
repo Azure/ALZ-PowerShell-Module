@@ -20,7 +20,7 @@ InModuleScope 'ALZ' {
 
         Context 'All endpoints are reachable' {
             BeforeAll {
-                Mock -CommandName Invoke-WebRequest -MockWith {
+                Mock -CommandName Invoke-HttpRequestWithRetry -MockWith {
                     [PSCustomObject]@{ StatusCode = 200 }
                 }
                 Mock -CommandName Invoke-GitHubApiRequest -MockWith {
@@ -51,7 +51,7 @@ InModuleScope 'ALZ' {
                 Mock -CommandName Invoke-GitHubApiRequest -MockWith {
                     throw "Unable to connect to the remote server"
                 }
-                Mock -CommandName Invoke-WebRequest -MockWith {
+                Mock -CommandName Invoke-HttpRequestWithRetry -MockWith {
                     [PSCustomObject]@{ StatusCode = 200 }
                 }
             }
@@ -83,7 +83,7 @@ InModuleScope 'ALZ' {
 
         Context 'All endpoints are unreachable' {
             BeforeAll {
-                Mock -CommandName Invoke-WebRequest -MockWith {
+                Mock -CommandName Invoke-HttpRequestWithRetry -MockWith {
                     throw "Network unreachable"
                 }
                 Mock -CommandName Invoke-GitHubApiRequest -MockWith {
@@ -110,7 +110,7 @@ InModuleScope 'ALZ' {
 
             It 'checks all endpoints and does not stop at the first failure' {
                 $result = Test-NetworkConnectivity
-                Should -Invoke -CommandName Invoke-WebRequest -Times 5 -Scope It
+                Should -Invoke -CommandName Invoke-HttpRequestWithRetry -Times 5 -Scope It
                 Should -Invoke -CommandName Invoke-GitHubApiRequest -Times 1 -Scope It
             }
         }

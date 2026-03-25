@@ -198,11 +198,30 @@ function Deploy-Accelerator {
 
         [Parameter(
             Mandatory = $false,
-            HelpMessage = "[OPTIONAL] Maximum number of retries for transient GitHub API errors. Defaults to 10. Environment variable: ALZ_github_max_retry_count. Config file input: github_max_retry_count."
+            HelpMessage = "[OPTIONAL] Maximum number of retries for transient HTTP request errors. Defaults to 10. Environment variable: ALZ_http_request_max_retry_count. Config file input: http_request_max_retry_count."
         )]
+        [Alias("hrmrc")]
+        [Alias("httpRequestMaxRetryCount")]
         [Alias("gmrc")]
         [Alias("githubMaxRetryCount")]
-        [int] $github_max_retry_count = 10
+        [Alias("github_max_retry_count")]
+        [int] $http_request_max_retry_count = 10,
+
+        [Parameter(
+            Mandatory = $false,
+            HelpMessage = "[OPTIONAL] Seconds to wait between retries for transient HTTP request errors. Defaults to 3. Environment variable: ALZ_http_request_retry_interval_seconds. Config file input: http_request_retry_interval_seconds."
+        )]
+        [Alias("hrris")]
+        [Alias("httpRequestRetryIntervalSeconds")]
+        [int] $http_request_retry_interval_seconds = 3,
+
+        [Parameter(
+            Mandatory = $false,
+            HelpMessage = "[OPTIONAL] Timeout in seconds for HTTP requests. If not specified, uses the default timeout. Environment variable: ALZ_http_request_timeout_seconds. Config file input: http_request_timeout_seconds."
+        )]
+        [Alias("hrts")]
+        [Alias("httpRequestTimeoutSeconds")]
+        [int] $http_request_timeout_seconds
     )
 
     $ProgressPreference = "SilentlyContinue"
@@ -242,9 +261,9 @@ function Deploy-Accelerator {
     # Check software requirements first before any prompting
     $toolingResult = $null
     if ($skip_requirements_check.IsPresent) {
-        Write-ToConsoleLog "WARNING: Skipping the software requirements check..." -IsWarning
+        Write-ToConsoleLog "Skipping the software requirements check..." -IsWarning
     } else {
-        Write-ToConsoleLog "Checking the software requirements for the Accelerator..."
+        Write-ToConsoleLog "Checking the software and connectivity requirements for the Accelerator..."
         $checks = @("PowerShell", "Git", "AzureCliOrEnvVars", "AlzModule")
         if (-not $needsFolderStructureSetup) {
             $checks += "AzureLogin"
@@ -261,7 +280,16 @@ function Deploy-Accelerator {
         if (-not $skip_internet_checks.IsPresent) {
             $checks += "NetworkConnectivity"
         }
-        $toolingResult = Test-Tooling -Checks $checks -destroy:$destroy.IsPresent
+        $toolingParams = @{
+            Checks                          = $checks
+            destroy                         = $destroy.IsPresent
+            HttpRequestMaxRetryCount        = $http_request_max_retry_count
+            HttpRequestRetryIntervalSeconds = $http_request_retry_interval_seconds
+        }
+        if ($PSBoundParameters.ContainsKey("http_request_timeout_seconds")) {
+            $toolingParams["HttpRequestTimeoutSeconds"] = $http_request_timeout_seconds
+        }
+        $toolingResult = Test-Tooling @toolingParams
     }
 
     # If az cli is installed but not logged in, prompt for tenant ID and login with device code
@@ -328,8 +356,27 @@ function Deploy-Accelerator {
             Write-ToConsoleLog "Skipping Terraform tool check as you used the skipInternetCheck parameter. Please ensure you have the most recent version of Terraform installed" -IsWarning
         } else {
             Write-ToConsoleLog "Checking you have the latest version of Terraform installed..." -IsSuccess
-            Get-TerraformTool -version "latest" -toolsPath $toolsPath
-            $hclParserToolPath = Get-HCLParserTool -toolVersion "v0.6.0" -toolsPath $toolsPath -maxRetryCount $github_max_retry_count
+            $terraformToolParams = @{
+                version              = "latest"
+                toolsPath            = $toolsPath
+                maxRetryCount        = $http_request_max_retry_count
+                retryIntervalSeconds = $http_request_retry_interval_seconds
+            }
+            if ($PSBoundParameters.ContainsKey("http_request_timeout_seconds")) {
+                $terraformToolParams["httpRequestTimeoutSeconds"] = $http_request_timeout_seconds
+            }
+            Get-TerraformTool @terraformToolParams
+
+            $hclParserToolParams = @{
+                toolVersion          = "v0.6.0"
+                toolsPath            = $toolsPath
+                maxRetryCount        = $http_request_max_retry_count
+                retryIntervalSeconds = $http_request_retry_interval_seconds
+            }
+            if ($PSBoundParameters.ContainsKey("http_request_timeout_seconds")) {
+                $hclParserToolParams["httpRequestTimeoutSeconds"] = $http_request_timeout_seconds
+            }
+            $hclParserToolPath = Get-HCLParserTool @hclParserToolParams
         }
 
         # Get User Inputs from the input config file
@@ -397,18 +444,25 @@ function Deploy-Accelerator {
             $inputConfig.bootstrap_module_override_folder_path.Value = Join-Path $HOME $inputConfig.bootstrap_module_override_folder_path.Value.Replace("~/", "")
         }
 
-        $versionAndPath = New-ModuleSetup `
-            -targetDirectory $inputConfig.output_folder_path.Value `
-            -targetFolder $bootstrapTargetFolder `
-            -sourceFolder $inputConfig.bootstrap_source_folder.Value `
-            -url $inputConfig.bootstrap_module_url.Value `
-            -release $inputConfig.bootstrap_module_version.Value `
-            -releaseArtifactName $inputConfig.bootstrap_module_release_artifact_name.Value `
-            -moduleOverrideFolderPath $inputConfig.bootstrap_module_override_folder_path.Value `
-            -skipInternetChecks $inputConfig.skip_internet_checks.Value `
-            -replaceFile:$inputConfig.replace_files.Value `
-            -upgrade:$inputConfig.upgrade.Value `
-            -autoApprove:$inputConfig.auto_approve.Value
+        $bootstrapModuleSetupParams = @{
+            targetDirectory          = $inputConfig.output_folder_path.Value
+            targetFolder             = $bootstrapTargetFolder
+            sourceFolder             = $inputConfig.bootstrap_source_folder.Value
+            url                      = $inputConfig.bootstrap_module_url.Value
+            release                  = $inputConfig.bootstrap_module_version.Value
+            releaseArtifactName      = $inputConfig.bootstrap_module_release_artifact_name.Value
+            moduleOverrideFolderPath = $inputConfig.bootstrap_module_override_folder_path.Value
+            skipInternetChecks       = $inputConfig.skip_internet_checks.Value
+            replaceFiles             = $inputConfig.replace_files.Value
+            upgrade                  = $inputConfig.upgrade.Value
+            autoApprove              = $inputConfig.auto_approve.Value
+            maxRetryCount            = $http_request_max_retry_count
+            retryIntervalSeconds     = $http_request_retry_interval_seconds
+        }
+        if ($PSBoundParameters.ContainsKey("http_request_timeout_seconds")) {
+            $bootstrapModuleSetupParams["httpRequestTimeoutSeconds"] = $http_request_timeout_seconds
+        }
+        $versionAndPath = New-ModuleSetup @bootstrapModuleSetupParams
 
         $bootstrapReleaseTag = $versionAndPath.releaseTag
         $bootstrapPath = $versionAndPath.path
@@ -459,18 +513,25 @@ function Deploy-Accelerator {
                 $inputConfig.starter_module_override_folder_path.Value = Join-Path $HOME $inputConfig.starter_module_override_folder_path.Value.Replace("~/", "")
             }
 
-            $versionAndPath = New-ModuleSetup `
-                -targetDirectory $inputConfig.output_folder_path.Value `
-                -targetFolder $starterModuleTargetFolder `
-                -sourceFolder $starterModuleSourceFolder `
-                -url $starterModuleUrl `
-                -release $inputConfig.starter_module_version.Value `
-                -releaseArtifactName $starterReleaseArtifactName `
-                -moduleOverrideFolderPath $inputConfig.starter_module_override_folder_path.Value `
-                -skipInternetChecks $inputConfig.skip_internet_checks.Value `
-                -replaceFile:$inputConfig.replace_files.Value `
-                -upgrade:$inputConfig.upgrade.Value `
-                -autoApprove:$inputConfig.auto_approve.Value
+            $starterModuleSetupParams = @{
+                targetDirectory          = $inputConfig.output_folder_path.Value
+                targetFolder             = $starterModuleTargetFolder
+                sourceFolder             = $starterModuleSourceFolder
+                url                      = $starterModuleUrl
+                release                  = $inputConfig.starter_module_version.Value
+                releaseArtifactName      = $starterReleaseArtifactName
+                moduleOverrideFolderPath = $inputConfig.starter_module_override_folder_path.Value
+                skipInternetChecks       = $inputConfig.skip_internet_checks.Value
+                replaceFiles             = $inputConfig.replace_files.Value
+                upgrade                  = $inputConfig.upgrade.Value
+                autoApprove              = $inputConfig.auto_approve.Value
+                maxRetryCount            = $http_request_max_retry_count
+                retryIntervalSeconds     = $http_request_retry_interval_seconds
+            }
+            if ($PSBoundParameters.ContainsKey("http_request_timeout_seconds")) {
+                $starterModuleSetupParams["httpRequestTimeoutSeconds"] = $http_request_timeout_seconds
+            }
+            $versionAndPath = New-ModuleSetup @starterModuleSetupParams
 
             $starterReleaseTag = $versionAndPath.releaseTag
             $starterPath = $versionAndPath.path

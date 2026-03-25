@@ -8,7 +8,13 @@ function Get-HCLParserTool {
         [string] $toolVersion,
 
         [Parameter(Mandatory = $false)]
-        [int] $maxRetryCount = 10
+        [int] $maxRetryCount = 10,
+
+        [Parameter(Mandatory = $false)]
+        [int] $retryIntervalSeconds = 3,
+
+        [Parameter(Mandatory = $false)]
+        [int] $httpRequestTimeoutSeconds
     )
 
     if ($PSCmdlet.ShouldProcess("Download Terraform Tools", "modify")) {
@@ -32,7 +38,16 @@ function Get-HCLParserTool {
 
             $uri = "https://github.com/tmccombs/hcl2json/releases/download/$($toolVersion)/$($toolFileName)"
             Write-Verbose "Downloading Terraform HCL parser Tool from $uri"
-            Invoke-GitHubApiRequest -Uri $uri -OutputFile $toolFilePath -MaxRetryCount $maxRetryCount
+            $downloadParams = @{
+                Uri                  = $uri
+                OutputFile           = $toolFilePath
+                MaxRetryCount        = $maxRetryCount
+                RetryIntervalSeconds = $retryIntervalSeconds
+            }
+            if ($PSBoundParameters.ContainsKey("httpRequestTimeoutSeconds")) {
+                $downloadParams["TimeoutSec"] = $httpRequestTimeoutSeconds
+            }
+            Invoke-GitHubApiRequest @downloadParams
         }
 
         if($osArchitecture.os -ne "windows") {

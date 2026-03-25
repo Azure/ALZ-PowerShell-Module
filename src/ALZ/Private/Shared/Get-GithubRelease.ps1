@@ -49,14 +49,31 @@ function Get-GithubRelease {
 
         [Parameter(Mandatory = $false, HelpMessage = "Maximum number of retries for transient GitHub API errors.")]
         [int]
-        $maxRetryCount = 10
+        $maxRetryCount = 10,
+
+        [Parameter(Mandatory = $false, HelpMessage = "Seconds to wait between retries for transient HTTP request errors.")]
+        [int]
+        $retryIntervalSeconds = 3,
+
+        [Parameter(Mandatory = $false, HelpMessage = "Timeout in seconds for HTTP requests.")]
+        [int]
+        $httpRequestTimeoutSeconds
     )
 
     $parentDirectory = $targetDirectory
     $targetPath = Join-Path $targetDirectory $moduleTargetFolder
 
     # Get the release tag and data from GitHub
-    $releaseResult = Get-GithubReleaseTag -githubRepoUrl $githubRepoUrl -release $release -maxRetryCount $maxRetryCount
+    $releaseTagParams = @{
+        githubRepoUrl        = $githubRepoUrl
+        release              = $release
+        maxRetryCount        = $maxRetryCount
+        retryIntervalSeconds = $retryIntervalSeconds
+    }
+    if ($PSBoundParameters.ContainsKey("httpRequestTimeoutSeconds")) {
+        $releaseTagParams["httpRequestTimeoutSeconds"] = $httpRequestTimeoutSeconds
+    }
+    $releaseResult = Get-GithubReleaseTag @releaseTagParams
     $releaseTag = $releaseResult.ReleaseTag
     $releaseData = $releaseResult.ReleaseData
 
@@ -100,7 +117,16 @@ function Get-GithubRelease {
 
         Write-Verbose "===> Downloading the release artifact $releaseArtifactUrl from the GitHub repository $repoOrgPlusRepo"
 
-        Invoke-GitHubApiRequest -Uri $releaseArtifactUrl -OutputFile $targetPathForZip -MaxRetryCount $maxRetryCount -RetryIntervalSeconds 3
+        $downloadParams = @{
+            Uri                  = $releaseArtifactUrl
+            OutputFile           = $targetPathForZip
+            MaxRetryCount        = $maxRetryCount
+            RetryIntervalSeconds = $retryIntervalSeconds
+        }
+        if ($PSBoundParameters.ContainsKey("httpRequestTimeoutSeconds")) {
+            $downloadParams["TimeoutSec"] = $httpRequestTimeoutSeconds
+        }
+        Invoke-GitHubApiRequest @downloadParams
 
         if(!(Test-Path $targetPathForZip)) {
             Write-ToConsoleLog "Failed to download the release $releaseTag from the GitHub repository $repoOrgPlusRepo" -IsError

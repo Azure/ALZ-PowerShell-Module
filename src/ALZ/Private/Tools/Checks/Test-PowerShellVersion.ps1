@@ -5,6 +5,7 @@ function Test-PowerShellVersion {
     $results = @()
     $hasFailure = $false
 
+    Write-ToConsoleLog "Checking PowerShell version..."
     Write-Verbose "Checking PowerShell version"
     $powerShellVersionTable = $PSVersionTable
     $powerShellVersion = $powerShellVersionTable.PSVersion.ToString()

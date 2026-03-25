@@ -25,7 +25,11 @@ function New-ModuleSetup {
         [Parameter(Mandatory = $false)]
         [switch]$autoApprove,
         [Parameter(Mandatory = $false)]
-        [int]$maxRetryCount = 10
+        [int]$maxRetryCount = 10,
+        [Parameter(Mandatory = $false)]
+        [int]$retryIntervalSeconds = 3,
+        [Parameter(Mandatory = $false)]
+        [int]$httpRequestTimeoutSeconds
     )
 
     if ($PSCmdlet.ShouldProcess("Check and get module", "modify")) {
@@ -44,21 +48,36 @@ function New-ModuleSetup {
 
         if(-not [string]::IsNullOrWhiteSpace($moduleOverrideFolderPath)) {
             Write-Verbose "Using module override folder path, skipping version checks."
-            return New-FolderStructure `
-                -targetDirectory $targetDirectory `
-                -url $url `
-                -release $desiredRelease `
-                -releaseArtifactName $releaseArtifactName `
-                -targetFolder $targetFolder `
-                -sourceFolder $sourceFolder `
-                -overrideSourceDirectoryPath $moduleOverrideFolderPath `
-                -replaceFiles:$replaceFiles.IsPresent `
-                -maxRetryCount $maxRetryCount
+            $folderParams = @{
+                targetDirectory             = $targetDirectory
+                url                         = $url
+                release                     = $desiredRelease
+                releaseArtifactName         = $releaseArtifactName
+                targetFolder                = $targetFolder
+                sourceFolder                = $sourceFolder
+                overrideSourceDirectoryPath = $moduleOverrideFolderPath
+                replaceFiles                = $replaceFiles.IsPresent
+                maxRetryCount               = $maxRetryCount
+                retryIntervalSeconds        = $retryIntervalSeconds
+            }
+            if ($PSBoundParameters.ContainsKey("httpRequestTimeoutSeconds")) {
+                $folderParams["httpRequestTimeoutSeconds"] = $httpRequestTimeoutSeconds
+            }
+            return New-FolderStructure @folderParams
         }
 
         $latestReleaseTag = $null
         try {
-            $latestResult = Get-GithubReleaseTag -githubRepoUrl $url -release "latest" -maxRetryCount $maxRetryCount
+            $releaseTagParams = @{
+                githubRepoUrl        = $url
+                release              = "latest"
+                maxRetryCount        = $maxRetryCount
+                retryIntervalSeconds = $retryIntervalSeconds
+            }
+            if ($PSBoundParameters.ContainsKey("httpRequestTimeoutSeconds")) {
+                $releaseTagParams["httpRequestTimeoutSeconds"] = $httpRequestTimeoutSeconds
+            }
+            $latestResult = Get-GithubReleaseTag @releaseTagParams
             $latestReleaseTag = $latestResult.ReleaseTag
             Write-Verbose "Latest available $targetFolder version: $latestReleaseTag"
         } catch {
@@ -136,16 +155,22 @@ function New-ModuleSetup {
                 Write-ToConsoleLog "Downloading $targetFolder module version $desiredRelease" -IsSuccess
             }
 
-            $versionAndPath = New-FolderStructure `
-                -targetDirectory $targetDirectory `
-                -url $url `
-                -release $desiredRelease `
-                -releaseArtifactName $releaseArtifactName `
-                -targetFolder $targetFolder `
-                -sourceFolder $sourceFolder `
-                -overrideSourceDirectoryPath $moduleOverrideFolderPath `
-                -replaceFiles:$replaceFiles.IsPresent `
-                -maxRetryCount $maxRetryCount
+            $downloadFolderParams = @{
+                targetDirectory             = $targetDirectory
+                url                         = $url
+                release                     = $desiredRelease
+                releaseArtifactName         = $releaseArtifactName
+                targetFolder                = $targetFolder
+                sourceFolder                = $sourceFolder
+                overrideSourceDirectoryPath = $moduleOverrideFolderPath
+                replaceFiles                = $replaceFiles.IsPresent
+                maxRetryCount               = $maxRetryCount
+                retryIntervalSeconds        = $retryIntervalSeconds
+            }
+            if ($PSBoundParameters.ContainsKey("httpRequestTimeoutSeconds")) {
+                $downloadFolderParams["httpRequestTimeoutSeconds"] = $httpRequestTimeoutSeconds
+            }
+            $versionAndPath = New-FolderStructure @downloadFolderParams
 
             Write-Verbose "New version: $($versionAndPath.releaseTag) at path: $($versionAndPath.path)"
 

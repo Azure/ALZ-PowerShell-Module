@@ -1,4 +1,4 @@
-####################################
+﻿####################################
 # Invoke-GitHubApiRequest.ps1     #
 ####################################
 # Version: 0.1.0
@@ -65,6 +65,9 @@ function Invoke-GitHubApiRequest {
         [Parameter(Mandatory = $false, HelpMessage = "If specified, downloads the response to this file path.")]
         [string] $OutputFile,
 
+        [Parameter(Mandatory = $false, HelpMessage = "Timeout in seconds for the HTTP request.")]
+        [int] $TimeoutSec,
+
         [Parameter(Mandatory = $false, HelpMessage = "If specified, does not throw on HTTP error status codes.")]
         [switch] $SkipHttpErrorCheck
     )
@@ -87,49 +90,46 @@ function Invoke-GitHubApiRequest {
         Write-Verbose "GitHub CLI is not installed. Proceeding without authentication."
     }
 
-    $isDownload = -not [string]::IsNullOrEmpty($OutputFile)
-    $transientStatusCodes = @(408, 429, 500, 502, 503, 504)
-    $maxAttempts = $MaxRetryCount + 1
+    # Build parameters for the generic retry cmdlet
+    $retryParams = @{
+        Uri                  = $Uri
+        Method               = $Method
+        MaxRetryCount        = $MaxRetryCount
+        RetryIntervalSeconds = $RetryIntervalSeconds
+    }
 
-    for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
-        try {
-            if ($isDownload) {
-                Invoke-WebRequest -Uri $Uri -Method $Method -Headers $headers -OutFile $OutputFile -ErrorAction Stop
-                return
-            }
+    if ($PSBoundParameters.ContainsKey("TimeoutSec")) {
+        $retryParams["TimeoutSec"] = $TimeoutSec
+    }
 
-            if ($SkipHttpErrorCheck) {
-                $result = Invoke-RestMethod -Uri $Uri -Method $Method -Headers $headers -SkipHttpErrorCheck -StatusCodeVariable "responseStatusCode"
+    if ($headers.Count -gt 0) {
+        $retryParams["Headers"] = $headers
+    }
 
-                $code = [int]$responseStatusCode
+    # File download — delegate directly
+    if (-not [string]::IsNullOrEmpty($OutputFile)) {
+        Invoke-HttpRequestWithRetry @retryParams -OutFile $OutputFile
+        return
+    }
 
-                if ($code -in $transientStatusCodes -and $attempt -lt $maxAttempts) {
-                    Write-Warning "Request to $Uri returned status $code (attempt $attempt of $maxAttempts). Retrying in $RetryIntervalSeconds seconds..."
-                    Start-Sleep -Seconds $RetryIntervalSeconds
-                    continue
-                }
+    # API call with SkipHttpErrorCheck — parse JSON and return Result/StatusCode hashtable
+    if ($SkipHttpErrorCheck) {
+        $response = Invoke-HttpRequestWithRetry @retryParams -SkipHttpErrorCheck -ReturnStatusCode
 
-                return @{
-                    Result     = $result
-                    StatusCode = $code
-                }
-            }
-
-            return (Invoke-RestMethod -Uri $Uri -Method $Method -Headers $headers -ErrorAction Stop)
-        } catch {
-            $responseCode = $null
-            if ($_.Exception.Response) {
-                $responseCode = [int]$_.Exception.Response.StatusCode
-            }
-
-            $isTransient = $responseCode -in $transientStatusCodes
-
-            if ($isTransient -and $attempt -lt $maxAttempts) {
-                Write-Warning "Request to $Uri failed with status $responseCode (attempt $attempt of $maxAttempts). Retrying in $RetryIntervalSeconds seconds..."
-                Start-Sleep -Seconds $RetryIntervalSeconds
-            } else {
-                throw
-            }
+        $parsed = $null
+        if (-not [string]::IsNullOrWhiteSpace($response.Result.Content)) {
+            $parsed = $response.Result.Content | ConvertFrom-Json
         }
+
+        return @{
+            Result     = $parsed
+            StatusCode = $response.StatusCode
+        }
+    }
+
+    # Standard API call — parse JSON and return the object
+    $response = Invoke-HttpRequestWithRetry @retryParams
+    if (-not [string]::IsNullOrWhiteSpace($response.Content)) {
+        return ($response.Content | ConvertFrom-Json)
     }
 }
