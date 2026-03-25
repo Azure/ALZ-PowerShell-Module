@@ -5,6 +5,7 @@ function Test-AzureDevOpsCli {
     $results = @()
     $hasFailure = $false
 
+    Write-ToConsoleLog "Checking Azure CLI installation for Azure DevOps..."
     Write-Verbose "Checking Azure CLI installation for Azure DevOps"
     $azCliPath = Get-Command az -ErrorAction SilentlyContinue
 

@@ -5,6 +5,7 @@ function Test-GitInstallation {
     $results = @()
     $hasFailure = $false
 
+    Write-ToConsoleLog "Checking Git installation..."
     Write-Verbose "Checking Git installation"
     $gitPath = Get-Command git -ErrorAction SilentlyContinue
 

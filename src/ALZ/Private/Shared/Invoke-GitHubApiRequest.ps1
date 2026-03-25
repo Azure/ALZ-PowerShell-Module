@@ -65,6 +65,9 @@ function Invoke-GitHubApiRequest {
         [Parameter(Mandatory = $false, HelpMessage = "If specified, downloads the response to this file path.")]
         [string] $OutputFile,
 
+        [Parameter(Mandatory = $false, HelpMessage = "Timeout in seconds for the HTTP request.")]
+        [int] $TimeoutSec,
+
         [Parameter(Mandatory = $false, HelpMessage = "If specified, does not throw on HTTP error status codes.")]
         [switch] $SkipHttpErrorCheck
     )
@@ -93,6 +96,10 @@ function Invoke-GitHubApiRequest {
         Method               = $Method
         MaxRetryCount        = $MaxRetryCount
         RetryIntervalSeconds = $RetryIntervalSeconds
+    }
+
+    if ($PSBoundParameters.ContainsKey("TimeoutSec")) {
+        $retryParams["TimeoutSec"] = $TimeoutSec
     }
 
     if ($headers.Count -gt 0) {

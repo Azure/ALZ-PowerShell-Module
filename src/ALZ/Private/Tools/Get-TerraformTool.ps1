@@ -4,13 +4,27 @@ function Get-TerraformTool {
         [Parameter(Mandatory = $false)]
         [string]$version = "latest",
         [Parameter(Mandatory = $false)]
-        [string]$toolsPath = ".\terraform"
+        [string]$toolsPath = ".\terraform",
+        [Parameter(Mandatory = $false)]
+        [int]$maxRetryCount = 10,
+        [Parameter(Mandatory = $false)]
+        [int]$retryIntervalSeconds = 3,
+        [Parameter(Mandatory = $false)]
+        [int]$httpRequestTimeoutSeconds
     )
 
     $release = $null
 
     if($version -eq "latest") {
-        $versionResponse = Invoke-HttpRequestWithRetry -Uri "https://api.releases.hashicorp.com/v1/releases/terraform?limit=20"
+        $httpParams = @{
+            Uri                  = "https://api.releases.hashicorp.com/v1/releases/terraform?limit=20"
+            MaxRetryCount        = $maxRetryCount
+            RetryIntervalSeconds = $retryIntervalSeconds
+        }
+        if ($PSBoundParameters.ContainsKey("httpRequestTimeoutSeconds")) {
+            $httpParams["TimeoutSec"] = $httpRequestTimeoutSeconds
+        }
+        $versionResponse = Invoke-HttpRequestWithRetry @httpParams
         if($versionResponse.StatusCode -ne "200") {
             throw "Unable to query Terraform version, please check your internet connection and try again..."
         }
@@ -19,7 +33,15 @@ function Get-TerraformTool {
         $version = $releases[0].version
         Write-Verbose "Latest version of Terraform is $version"
     } else {
-        $versionResponse = Invoke-HttpRequestWithRetry -Uri "https://api.releases.hashicorp.com/v1/releases/terraform/$($version)"
+        $httpParams = @{
+            Uri                  = "https://api.releases.hashicorp.com/v1/releases/terraform/$($version)"
+            MaxRetryCount        = $maxRetryCount
+            RetryIntervalSeconds = $retryIntervalSeconds
+        }
+        if ($PSBoundParameters.ContainsKey("httpRequestTimeoutSeconds")) {
+            $httpParams["TimeoutSec"] = $httpRequestTimeoutSeconds
+        }
+        $versionResponse = Invoke-HttpRequestWithRetry @httpParams
         if($versionResponse.StatusCode -ne "200") {
             throw "Unable to query Terraform version, please check the supplied version and try again..."
         }
@@ -55,7 +77,16 @@ function Get-TerraformTool {
             New-Item -ItemType Directory -Path $toolsPath| Out-String | Write-Verbose
         }
 
-        Invoke-HttpRequestWithRetry -Uri $url -OutFile "$zipfilePath" | Out-String | Write-Verbose
+        $downloadParams = @{
+            Uri                  = $url
+            OutFile              = "$zipfilePath"
+            MaxRetryCount        = $maxRetryCount
+            RetryIntervalSeconds = $retryIntervalSeconds
+        }
+        if ($PSBoundParameters.ContainsKey("httpRequestTimeoutSeconds")) {
+            $downloadParams["TimeoutSec"] = $httpRequestTimeoutSeconds
+        }
+        Invoke-HttpRequestWithRetry @downloadParams | Out-String | Write-Verbose
 
         Expand-Archive -Path $zipfilePath -DestinationPath $unzipdir
 

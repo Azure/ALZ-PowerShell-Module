@@ -26,7 +26,13 @@ function New-FolderStructure {
         [switch] $replaceFiles,
 
         [Parameter(Mandatory = $false)]
-        [int] $maxRetryCount = 10
+        [int] $maxRetryCount = 10,
+
+        [Parameter(Mandatory = $false)]
+        [int] $retryIntervalSeconds = 3,
+
+        [Parameter(Mandatory = $false)]
+        [int] $httpRequestTimeoutSeconds
     )
 
     if ($PSCmdlet.ShouldProcess("ALZ-Terraform module configuration", "modify")) {
@@ -54,7 +60,20 @@ function New-FolderStructure {
             }
 
         } else {
-            $releaseTag = Get-GithubRelease -githubRepoUrl $url -targetDirectory $targetDirectory -moduleSourceFolder $sourceFolder -moduleTargetFolder $targetFolder -release $release -releaseArtifactName $releaseArtifactName -maxRetryCount $maxRetryCount
+            $releaseParams = @{
+                githubRepoUrl        = $url
+                targetDirectory      = $targetDirectory
+                moduleSourceFolder   = $sourceFolder
+                moduleTargetFolder   = $targetFolder
+                release              = $release
+                releaseArtifactName  = $releaseArtifactName
+                maxRetryCount        = $maxRetryCount
+                retryIntervalSeconds = $retryIntervalSeconds
+            }
+            if ($PSBoundParameters.ContainsKey("httpRequestTimeoutSeconds")) {
+                $releaseParams["httpRequestTimeoutSeconds"] = $httpRequestTimeoutSeconds
+            }
+            $releaseTag = Get-GithubRelease @releaseParams
             $path = Join-Path $targetDirectory $targetFolder $releaseTag
         }
 

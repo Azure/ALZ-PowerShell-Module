@@ -33,7 +33,15 @@ function Get-GithubReleaseTag {
 
         [Parameter(Mandatory = $false, HelpMessage = "Maximum number of retries for transient GitHub API errors.")]
         [int]
-        $maxRetryCount = 10
+        $maxRetryCount = 10,
+
+        [Parameter(Mandatory = $false, HelpMessage = "Seconds to wait between retries for transient HTTP request errors.")]
+        [int]
+        $retryIntervalSeconds = 3,
+
+        [Parameter(Mandatory = $false, HelpMessage = "Timeout in seconds for HTTP requests.")]
+        [int]
+        $httpRequestTimeoutSeconds
     )
 
     # Split Repo URL into parts
@@ -48,7 +56,16 @@ function Get-GithubReleaseTag {
     }
 
     # Query the GitHub API
-    $response = Invoke-GitHubApiRequest -Uri $repoReleaseUrl -SkipHttpErrorCheck -MaxRetryCount $maxRetryCount -RetryIntervalSeconds 3
+    $apiParams = @{
+        Uri                  = $repoReleaseUrl
+        SkipHttpErrorCheck   = $true
+        MaxRetryCount        = $maxRetryCount
+        RetryIntervalSeconds = $retryIntervalSeconds
+    }
+    if ($PSBoundParameters.ContainsKey("httpRequestTimeoutSeconds")) {
+        $apiParams["TimeoutSec"] = $httpRequestTimeoutSeconds
+    }
+    $response = Invoke-GitHubApiRequest @apiParams
     $releaseData = $response.Result
     $statusCode = $response.StatusCode
 

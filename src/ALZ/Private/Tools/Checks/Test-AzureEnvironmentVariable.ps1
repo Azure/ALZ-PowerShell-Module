@@ -6,6 +6,7 @@ function Test-AzureEnvironmentVariable {
     $hasFailure = $false
     $envVarsValid = $false
 
+    Write-ToConsoleLog "Checking Azure environment variables..."
     Write-Verbose "Checking Azure environment variables"
     $nonAzCliEnvVars = @(
         "ARM_CLIENT_ID",

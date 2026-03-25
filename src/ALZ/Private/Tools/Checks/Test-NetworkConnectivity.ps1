@@ -5,6 +5,9 @@ function Test-NetworkConnectivity {
     $results = @()
     $hasFailure = $false
 
+    Write-ToConsoleLog "Checking network connectivity to required endpoints..."
+    Write-Verbose "Checking network connectivity to required endpoints"
+
     $endpoints = @(
         @{ Uri = "https://api.github.com";             Description = "GitHub API (release lookups)" },
         @{ Uri = "https://github.com";                 Description = "GitHub (module downloads)" },

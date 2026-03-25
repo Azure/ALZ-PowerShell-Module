@@ -10,6 +10,7 @@ function Test-AzureCli {
     $azCliInstalledButNotLoggedIn = $false
 
     # Check if Azure CLI is installed
+    Write-ToConsoleLog "Checking Azure CLI installation..."
     Write-Verbose "Checking Azure CLI installation"
     $azCliPath = Get-Command az -ErrorAction SilentlyContinue
     if ($azCliPath) {

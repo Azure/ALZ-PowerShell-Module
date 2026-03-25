@@ -11,6 +11,9 @@ function Test-AlzModule {
     $hasFailure = $false
     $currentScope = "CurrentUser"
 
+    Write-ToConsoleLog "Checking ALZ module installation..."
+    Write-Verbose "Checking ALZ module installation"
+
     $importedModule = Get-Module -Name ALZ
     $isDevelopmentModule = ($null -ne $importedModule -and $importedModule.Version -eq "0.1.0")
 
