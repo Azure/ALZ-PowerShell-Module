@@ -1,6 +1,15 @@
 function Test-NetworkConnectivity {
     [CmdletBinding()]
-    param()
+    param(
+        [Parameter(Mandatory = $false)]
+        [int] $HttpRequestMaxRetryCount = 0,
+
+        [Parameter(Mandatory = $false)]
+        [int] $HttpRequestRetryIntervalSeconds = 3,
+
+        [Parameter(Mandatory = $false)]
+        [int] $HttpRequestTimeoutSeconds = 10
+    )
 
     $results = @()
     $hasFailure = $false
@@ -21,9 +30,9 @@ function Test-NetworkConnectivity {
         Write-Verbose "Testing network connectivity to $($endpoint.Uri)"
         try {
             if ($endpoint.Uri -eq "https://api.github.com") {
-                Invoke-GitHubApiRequest -Uri $endpoint.Uri -Method Head -SkipHttpErrorCheck -MaxRetryCount 0 | Out-Null
+                Invoke-GitHubApiRequest -Uri $endpoint.Uri -Method Head -SkipHttpErrorCheck -MaxRetryCount $HttpRequestMaxRetryCount -RetryIntervalSeconds $HttpRequestRetryIntervalSeconds -TimeoutSec $HttpRequestTimeoutSeconds | Out-Null
             } else {
-                Invoke-HttpRequestWithRetry -Uri $endpoint.Uri -Method Head -TimeoutSec 10 -SkipHttpErrorCheck -MaxRetryCount 0 | Out-Null
+                Invoke-HttpRequestWithRetry -Uri $endpoint.Uri -Method Head -TimeoutSec $HttpRequestTimeoutSeconds -SkipHttpErrorCheck -MaxRetryCount $HttpRequestMaxRetryCount -RetryIntervalSeconds $HttpRequestRetryIntervalSeconds | Out-Null
             }
             $results += @{
                 message = "Network connectivity to $($endpoint.Description) ($($endpoint.Uri)) is available."

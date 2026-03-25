@@ -280,7 +280,16 @@ function Deploy-Accelerator {
         if (-not $skip_internet_checks.IsPresent) {
             $checks += "NetworkConnectivity"
         }
-        $toolingResult = Test-Tooling -Checks $checks -destroy:$destroy.IsPresent
+        $toolingParams = @{
+            Checks                          = $checks
+            destroy                         = $destroy.IsPresent
+            HttpRequestMaxRetryCount        = $http_request_max_retry_count
+            HttpRequestRetryIntervalSeconds = $http_request_retry_interval_seconds
+        }
+        if ($PSBoundParameters.ContainsKey("http_request_timeout_seconds")) {
+            $toolingParams["HttpRequestTimeoutSeconds"] = $http_request_timeout_seconds
+        }
+        $toolingResult = Test-Tooling @toolingParams
     }
 
     # If az cli is installed but not logged in, prompt for tenant ID and login with device code

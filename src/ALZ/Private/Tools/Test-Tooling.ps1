@@ -5,7 +5,16 @@ function Test-Tooling {
         [ValidateSet("PowerShell", "Git", "AzureCli", "AzureEnvVars", "AzureCliOrEnvVars", "AzureLogin", "AlzModule", "AlzModuleVersion", "YamlModule", "YamlModuleAutoInstall", "GitHubCli", "AzureDevOpsCli", "NetworkConnectivity")]
         [string[]]$Checks = @("PowerShell", "Git", "AzureCliOrEnvVars", "AzureLogin", "AlzModule", "AlzModuleVersion"),
         [Parameter(Mandatory = $false)]
-        [switch]$destroy
+        [switch]$destroy,
+
+        [Parameter(Mandatory = $false)]
+        [int]$HttpRequestMaxRetryCount = 0,
+
+        [Parameter(Mandatory = $false)]
+        [int]$HttpRequestRetryIntervalSeconds = 3,
+
+        [Parameter(Mandatory = $false)]
+        [int]$HttpRequestTimeoutSeconds = 10
     )
 
     $checkResults = @()
@@ -93,7 +102,7 @@ function Test-Tooling {
 
     # Check Network Connectivity
     if ($Checks -contains "NetworkConnectivity") {
-        $result = Test-NetworkConnectivity
+        $result = Test-NetworkConnectivity -HttpRequestMaxRetryCount $HttpRequestMaxRetryCount -HttpRequestRetryIntervalSeconds $HttpRequestRetryIntervalSeconds -HttpRequestTimeoutSeconds $HttpRequestTimeoutSeconds
         $checkResults += $result.Results
         if ($result.HasFailure) { $hasFailure = $true }
     }
