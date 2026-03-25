@@ -10,7 +10,8 @@ function Test-NetworkConnectivity {
         @{ Uri = "https://github.com";                 Description = "GitHub (module downloads)" },
         @{ Uri = "https://api.releases.hashicorp.com"; Description = "HashiCorp Releases API (Terraform version)" },
         @{ Uri = "https://releases.hashicorp.com";     Description = "HashiCorp Releases (Terraform binary download)" },
-        @{ Uri = "https://management.azure.com";       Description = "Azure Management API" }
+        @{ Uri = "https://management.azure.com";       Description = "Azure Management API" },
+        @{ Uri = "https://www.powershellgallery.com";  Description = "PowerShell Gallery (module installs/updates)" }
     )
 
     foreach ($endpoint in $endpoints) {

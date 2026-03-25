@@ -37,9 +37,9 @@ InModuleScope 'ALZ' {
                 }
             }
 
-            It 'returns one result per endpoint (5 total)' {
+            It 'returns one result per endpoint (6 total)' {
                 $result = Test-NetworkConnectivity
-                $result.Results.Count | Should -Be 5
+                $result.Results.Count | Should -Be 6
             }
         }
 
@@ -74,7 +74,7 @@ InModuleScope 'ALZ' {
             It 'still returns Success results for the reachable endpoints' {
                 $result = Test-NetworkConnectivity
                 $successResults = @($result.Results | Where-Object { $_.result -eq "Success" })
-                $successResults.Count | Should -Be 4
+                $successResults.Count | Should -Be 5
             }
         }
 
@@ -97,14 +97,14 @@ InModuleScope 'ALZ' {
                 }
             }
 
-            It 'returns one result per endpoint (5 total)' {
+            It 'returns one result per endpoint (6 total)' {
                 $result = Test-NetworkConnectivity
-                $result.Results.Count | Should -Be 5
+                $result.Results.Count | Should -Be 6
             }
 
             It 'checks all endpoints and does not stop at the first failure' {
                 $result = Test-NetworkConnectivity
-                Should -Invoke -CommandName Invoke-WebRequest -Times 5 -Scope It
+                Should -Invoke -CommandName Invoke-WebRequest -Times 6 -Scope It
             }
         }
     }

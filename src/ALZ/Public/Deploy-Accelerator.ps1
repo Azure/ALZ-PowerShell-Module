@@ -250,6 +250,9 @@ function Deploy-Accelerator {
                 $checks += "YamlModuleAutoInstall"
             }
         }
+        if (-not $skip_internet_checks.IsPresent) {
+            $checks += "NetworkConnectivity"
+        }
         $toolingResult = Test-Tooling -Checks $checks -destroy:$destroy.IsPresent
     }
 
