@@ -89,6 +89,7 @@ function New-ModuleSetup {
         $shouldDownload = $false
 
         if($isAutoVersion -and $upgrade.IsPresent -and $null -eq $latestReleaseTag) {
+            Write-ToConsoleLog "Cannot perform upgrade to latest version of '$targetFolder' as unable to determine latest release from GitHub. Current version: $currentVersion" -IsError
             throw "Cannot perform upgrade to latest version as unable to determine latest release from GitHub."
         }
 

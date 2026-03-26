@@ -26,6 +26,7 @@ function Get-TerraformTool {
         }
         $versionResponse = Invoke-HttpRequestWithRetry @httpParams
         if($versionResponse.StatusCode -ne "200") {
+            Write-ToConsoleLog "Unable to query latest Terraform version from HashiCorp API. HTTP status code: $($versionResponse.StatusCode)" -IsError
             throw "Unable to query Terraform version, please check your internet connection and try again..."
         }
         $releases = ($versionResponse).Content | ConvertFrom-Json | Where-Object -Property is_prerelease -EQ $false
@@ -43,6 +44,7 @@ function Get-TerraformTool {
         }
         $versionResponse = Invoke-HttpRequestWithRetry @httpParams
         if($versionResponse.StatusCode -ne "200") {
+            Write-ToConsoleLog "Unable to query Terraform version '$version' from HashiCorp API. HTTP status code: $($versionResponse.StatusCode)" -IsError
             throw "Unable to query Terraform version, please check the supplied version and try again..."
         }
         $release = ($versionResponse).Content

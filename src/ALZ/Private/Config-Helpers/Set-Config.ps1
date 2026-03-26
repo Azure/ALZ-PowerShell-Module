@@ -78,7 +78,7 @@ function Set-Config {
                         if($inputConfigItemValue.Length -le $index) {
                             Write-Verbose "Input config item $($inputConfigName) does not have an index of $index."
                             if($index -eq 0) {
-                                Write-Error "At least one value is required for input config item $($inputConfigName)."
+                                Write-ToConsoleLog "At least one value is required for input config item $($inputConfigName)." -IsError
                                 throw "At least one value is required for input config item $($inputConfigName)."
                             }
                         } else {
@@ -87,7 +87,7 @@ function Set-Config {
                             } catch {
                                 Write-Verbose "Error accessing index $index for input config item $($inputConfigName): $_"
                                 if($index -eq 0) {
-                                    Write-Error "At least one value is required for input config item $($inputConfigName)."
+                                    Write-ToConsoleLog "At least one value is required for input config item $($inputConfigName)." -IsError
                                     throw "At least one value is required for input config item $($inputConfigName)."
                                 }
                             }
@@ -98,7 +98,7 @@ function Set-Config {
                             } else {
                                 Write-Verbose "Input config item $($inputConfigName) with index $index is null."
                                 if($index -eq 0) {
-                                    Write-Error "At least one value is required for input config item $($inputConfigName)."
+                                    Write-ToConsoleLog "At least one value is required for input config item $($inputConfigName)." -IsError
                                     throw "At least one value is required for input config item $($inputConfigName)."
                                 }
                             }
@@ -111,7 +111,7 @@ function Set-Config {
                             $mapItem = $inputConfigItemValue.PsObject.Properties | Where-Object { $_.Name -eq $indexString }
                         } catch {
                             Write-Verbose "Error accessing map item $indexString for input config item $($inputConfigName): $_"
-                            Write-Error "At least one value is required for input config item $($inputConfigName)."
+                            Write-ToConsoleLog "At least one value is required for input config item $($inputConfigName)." -IsError
                             throw "At least one value is required for input config item $($inputConfigName)."
                         }
                         if($null -ne $mapItem) {
@@ -121,17 +121,17 @@ function Set-Config {
                                 continue
                             } else {
                                 Write-Verbose "Input config item $($inputConfigName) with index $indexString is null."
-                                Write-Error "At least one value is required for input config item $($inputConfigName)."
+                                Write-ToConsoleLog "At least one value is required for input config item $($inputConfigName)." -IsError
                                 throw "At least one value is required for input config item $($inputConfigName)."
                             }
                         } else {
                             Write-Verbose "Input config item $($inputConfigName) does not have an index of $indexString."
-                            Write-Error "At least one value is required for input config item $($inputConfigName)."
+                            Write-ToConsoleLog "At least one value is required for input config item $($inputConfigName)." -IsError
                             throw "At least one value is required for input config item $($inputConfigName)."
                         }
                     }
                 } else {
-                    Write-Error "Input config item $($inputConfigName) not found."
+                    Write-ToConsoleLog "Input config item $($inputConfigName) not found." -IsError
                     throw "Input config item $($inputConfigName) not found."
                 }
             }

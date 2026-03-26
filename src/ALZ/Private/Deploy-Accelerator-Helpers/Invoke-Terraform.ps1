@@ -46,7 +46,7 @@ function Invoke-Terraform {
             }
 
             if ($null -eq $subscriptionId -or $subscriptionId -eq "") {
-                Write-Error "Subscription ID not found. Please ensure you are logged in to Azure and have selected a subscription, or provide bootstrap_subscription_id. Use 'az account show' to check."
+                Write-ToConsoleLog "Subscription ID not found. Please ensure you are logged in to Azure and have selected a subscription, or provide bootstrap_subscription_id. Use 'az account show' to check." -IsError
                 return
             }
             $env:ARM_SUBSCRIPTION_ID = $subscriptionId

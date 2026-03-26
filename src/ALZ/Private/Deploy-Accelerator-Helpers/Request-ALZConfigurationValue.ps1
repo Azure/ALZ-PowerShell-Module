@@ -170,7 +170,7 @@ function Request-ALZConfigurationValue {
         # Load the schema file
         $schemaPath = Join-Path $PSScriptRoot "AcceleratorInputSchema.json"
         if (-not (Test-Path $schemaPath)) {
-            Write-Warning "Schema file not found at $schemaPath. Proceeding without descriptions."
+            Write-ToConsoleLog "Schema file not found at $schemaPath. Proceeding without descriptions." -IsWarning
             $schema = $null
         } else {
             $schema = Get-Content -Path $schemaPath -Raw | ConvertFrom-Json

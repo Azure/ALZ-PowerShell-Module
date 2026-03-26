@@ -45,6 +45,7 @@ function Edit-ALZConfigurationFilesInPlace {
                     if ($bicepConfigNode -is [array]) {
                         # If this is an array - use the property as an array index...
                         if ($propertyNames[$index] -match "[0-9]+" -eq $false) {
+                            Write-ToConsoleLog "Configuration specifies an array, but the index value '${$propertyNames[$index]}' is not a number. Property path: $($propertyNames -join '.')" -IsError
                             throw "Configuration specifies an array, but the index value '${$propertyNames[$index]}' is not a number"
                         }
 

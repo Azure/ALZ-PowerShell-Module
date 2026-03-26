@@ -58,7 +58,7 @@ Grant-SubscriptionCreatorRole -servicePrincipalObjectId "bd42568a-7dd8-489b-bbbb
 
     if($null -eq $servicePrincipalObjectId -or $servicePrincipalObjectId -eq "") {
         $errorMessage = "The 'Service Principal Object ID' parameter is required. Please provide a valid value and try again."
-        Write-Error $errorMessage
+        Write-ToConsoleLog $errorMessage -IsError
         throw $errorMessage
     }
 
@@ -79,7 +79,7 @@ Grant-SubscriptionCreatorRole -servicePrincipalObjectId "bd42568a-7dd8-489b-bbbb
         Write-ToConsoleLog "Billing Resource ID or required parameters provided..." -IsSuccess
     } else {
         $errorMessage = "No Billing Resource ID or required parameters provided."
-        Write-Error $errorMessage
+        Write-ToConsoleLog $errorMessage -IsError
         throw $errorMessage
     }
 
@@ -90,7 +90,7 @@ Grant-SubscriptionCreatorRole -servicePrincipalObjectId "bd42568a-7dd8-489b-bbbb
 
     if ($null -eq $getbillingResourceID) {
         $errorMessage = "The specified billing account resource ID '$($billingResourceID)' does not exist or you do not have access to it. Please check the value and try again. Also ensure you are logged in as the Account Owner for the specified billing account."
-        Write-Error $errorMessage
+        Write-ToConsoleLog $errorMessage -IsError
         throw $errorMessage
     } else {
         Write-ToConsoleLog "The specified billing account ID '$($billingResourceID)' exists. Continuing..." -IsSuccess
@@ -103,7 +103,7 @@ Grant-SubscriptionCreatorRole -servicePrincipalObjectId "bd42568a-7dd8-489b-bbbb
 
     if ($null -eq $getexistingSpnMiObjectId) {
         $errorMessage = "The specified service principal 'Object ID' '$($existingSpnMiObjectId)' does not exist. Please check the value and try again."
-        Write-Error $errorMessage
+        Write-ToConsoleLog $errorMessage -IsError
         throw $errorMessage
     } else {
         $finalSpnMiObjectId = $getexistingSpnMiObjectId.id
@@ -138,7 +138,7 @@ Grant-SubscriptionCreatorRole -servicePrincipalObjectId "bd42568a-7dd8-489b-bbbb
 
     if ($null -eq $grantRbac) {
         $errorMessage = "The 'SubscriptionCreator' role could not be granted to the service principal. Please check the error message above and try again."
-        Write-Error $errorMessage
+        Write-ToConsoleLog $errorMessage -IsError
         throw $errorMessage
     } else {
         Write-ToConsoleLog "The 'SubscriptionCreator' role has been granted to the service principal." -IsSuccess
