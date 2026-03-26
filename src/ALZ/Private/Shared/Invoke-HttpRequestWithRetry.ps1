@@ -168,7 +168,7 @@ function Invoke-HttpRequestWithRetry {
 
             $isTransient = $responseCode -in $transientStatusCodes
 
-            Write-Verbose "HTTP $Method $Uri - Error on attempt $attempt: Status=$responseCode, Message=$($_.Exception.Message)"
+            Write-Verbose "HTTP $Method $Uri - Error on attempt ${attempt}: Status=$responseCode, Message=$($_.Exception.Message)"
 
             if ($isTransient -and $attempt -lt $maxAttempts) {
                 Write-ToConsoleLog "Request to $Uri failed with status $responseCode (attempt $attempt of $maxAttempts). Retrying in $RetryIntervalSeconds seconds..." -IsWarning
@@ -191,7 +191,7 @@ function Invoke-HttpRequestWithRetry {
                             }
                         }
                     } catch {
-                        # Ignore errors reading response body
+                        Write-Verbose "Failed to read response body: $($_.Exception.Message)"
                     }
                 }
                 Write-ToConsoleLog $errorDetails -IsError
