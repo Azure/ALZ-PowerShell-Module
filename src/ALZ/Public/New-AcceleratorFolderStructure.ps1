@@ -47,9 +47,11 @@ function New-AcceleratorFolderStructure {
                 try {
                     Remove-Item -Recurse -Force -Path $targetFolderPath -ErrorAction Stop | Write-Verbose | Out-Null
                 } catch {
+                    Write-ToConsoleLog "Failed to remove existing folder at '$targetFolderPath'. Error: $($_.Exception.Message)" -IsError
                     throw "Failed to remove existing folder at '$targetFolderPath'. The folder may be locked by another process or you may not have permission to remove it. Please close any applications that may be using files in this folder and try again. Error: $($_.Exception.Message)"
                 }
             } else {
+                Write-ToConsoleLog "Target folder '$targetFolderPath' already exists and the -Force flag was not set. Please specify a different folder path or remove the existing folder." -IsError
                 throw "Target folder $targetFolderPath already exists. Please specify a different folder path or remove the existing folder."
             }
         }

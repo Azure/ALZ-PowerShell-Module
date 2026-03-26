@@ -9,7 +9,7 @@ function Get-ALZConfig {
     )
 
     if (!(Test-Path $configFilePath)) {
-        Write-Error "The config file does not exist at $configFilePath"
+        Write-ToConsoleLog "The config file does not exist at $configFilePath" -IsError
         throw "The config file does not exist at $configFilePath"
     }
 
@@ -25,7 +25,7 @@ function Get-ALZConfig {
             $config = [PSCustomObject](Get-Content -Path $configFilePath | ConvertFrom-Yaml -Ordered)
         } catch {
             $errorMessage = "Failed to parse YAML inputs. Please check the YAML file for errors and try again. $_"
-            Write-Error $errorMessage
+            Write-ToConsoleLog $errorMessage -IsError
             throw $errorMessage
         }
 
@@ -34,7 +34,7 @@ function Get-ALZConfig {
             $config = [PSCustomObject](Get-Content -Path $configFilePath | ConvertFrom-Json)
         } catch {
             $errorMessage = "Failed to parse JSON inputs. Please check the JSON file for errors and try again. $_"
-            Write-Error $errorMessage
+            Write-ToConsoleLog $errorMessage -IsError
             throw $errorMessage
         }
     } elseif ($extension -eq ".tfvars") {
@@ -42,10 +42,11 @@ function Get-ALZConfig {
             $config = [PSCustomObject](& $hclParserToolPath $configFilePath | ConvertFrom-Json)
         } catch {
             $errorMessage = "Failed to parse HCL inputs. Please check the HCL file for errors and try again. $_"
-            Write-Error $errorMessage
+            Write-ToConsoleLog $errorMessage -IsError
             throw $errorMessage
         }
     } else {
+        Write-ToConsoleLog "Unsupported config file extension '$extension' for file '$configFilePath'. Supported extensions: .json, .yml, .yaml, .tfvars" -IsError
         throw "The config file must be a json, yaml/yml or tfvars file"
     }
 

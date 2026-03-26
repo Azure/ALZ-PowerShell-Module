@@ -72,11 +72,12 @@ function Get-GithubReleaseTag {
     Write-Verbose "Status code: $statusCode"
 
     if ($statusCode -eq 404) {
-        Write-Error "The release $release does not exist in the GitHub repository $githubRepoUrl - $repoReleaseUrl"
+        Write-ToConsoleLog "The release $release does not exist in the GitHub repository $githubRepoUrl - $repoReleaseUrl. HTTP status code: $statusCode" -IsError
         throw "The release $release does not exist in the GitHub repository $githubRepoUrl - $repoReleaseUrl"
     }
 
     if ($statusCode -ne 200) {
+        Write-ToConsoleLog "Unable to query repository version from $repoReleaseUrl. HTTP status code: $statusCode" -IsError
         throw "Unable to query repository version, please check your internet connection and try again..."
     }
 

@@ -34,7 +34,7 @@ function Get-OSArchitecture {
     )
 
     if($supportedOsAndArchitectures -notcontains $osAndArchitecture) {
-        Write-Error "Unsupported OS and architecture combination: $osAndArchitecture"
+        Write-ToConsoleLog "Unsupported OS and architecture combination: $osAndArchitecture" -IsError
         return
     }
 

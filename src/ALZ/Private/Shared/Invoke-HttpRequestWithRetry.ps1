@@ -124,10 +124,14 @@ function Invoke-HttpRequestWithRetry {
         $commonParams["Headers"] = $Headers
     }
 
+    Write-Verbose "HTTP $Method $Uri (MaxRetries=$MaxRetryCount, RetryInterval=${RetryIntervalSeconds}s$(if ($PSBoundParameters.ContainsKey('TimeoutSec')) { ", Timeout=${TimeoutSec}s" })$(if ($isDownload) { ", OutFile=$OutFile" }))"
+
     for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
+        Write-Verbose "HTTP $Method $Uri - Attempt $attempt of $maxAttempts"
         try {
             if ($isDownload) {
                 Invoke-WebRequest @commonParams -OutFile $OutFile
+                Write-Verbose "HTTP $Method $Uri - Download complete (saved to $OutFile)"
                 return
             }
 
@@ -137,10 +141,13 @@ function Invoke-HttpRequestWithRetry {
                 $code = [int]$response.StatusCode
 
                 if ($code -in $transientStatusCodes -and $attempt -lt $maxAttempts) {
-                    Write-Warning "Request to $Uri returned status $code (attempt $attempt of $maxAttempts). Retrying in $RetryIntervalSeconds seconds..."
+                    Write-Verbose "HTTP $Method $Uri - Transient status $code on attempt $attempt"
+                    Write-ToConsoleLog "Request to $Uri returned status $code (attempt $attempt of $maxAttempts). Retrying in $RetryIntervalSeconds seconds..." -IsWarning
                     Start-Sleep -Seconds $RetryIntervalSeconds
                     continue
                 }
+
+                Write-Verbose "HTTP $Method $Uri - Completed with status $code"
 
                 if ($ReturnStatusCode) {
                     return @{
@@ -161,10 +168,33 @@ function Invoke-HttpRequestWithRetry {
 
             $isTransient = $responseCode -in $transientStatusCodes
 
+            Write-Verbose "HTTP $Method $Uri - Error on attempt ${attempt}: Status=$responseCode, Message=$($_.Exception.Message)"
+
             if ($isTransient -and $attempt -lt $maxAttempts) {
-                Write-Warning "Request to $Uri failed with status $responseCode (attempt $attempt of $maxAttempts). Retrying in $RetryIntervalSeconds seconds..."
+                Write-ToConsoleLog "Request to $Uri failed with status $responseCode (attempt $attempt of $maxAttempts). Retrying in $RetryIntervalSeconds seconds..." -IsWarning
                 Start-Sleep -Seconds $RetryIntervalSeconds
             } else {
+                $errorDetails = "HTTP $Method $Uri failed after $attempt attempt(s)."
+                if ($null -ne $responseCode) {
+                    $errorDetails += " Status code: $responseCode."
+                }
+                $errorDetails += " Error: $($_.Exception.Message)"
+                if ($_.Exception.Response) {
+                    try {
+                        $stream = $_.Exception.Response.GetResponseStream()
+                        if ($null -ne $stream) {
+                            $reader = [System.IO.StreamReader]::new($stream)
+                            $responseBody = $reader.ReadToEnd()
+                            $reader.Dispose()
+                            if (-not [string]::IsNullOrWhiteSpace($responseBody)) {
+                                $errorDetails += " Response body: $responseBody"
+                            }
+                        }
+                    } catch {
+                        Write-Verbose "Failed to read response body: $($_.Exception.Message)"
+                    }
+                }
+                Write-ToConsoleLog $errorDetails -IsError
                 throw
             }
         }

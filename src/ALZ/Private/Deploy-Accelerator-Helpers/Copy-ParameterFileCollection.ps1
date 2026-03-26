@@ -21,7 +21,7 @@ function Copy-ParametersFileCollection {
                 Copy-Item -Path $sourcePath -Destination $destinationPath -Recurse -Force | Out-String | Write-Verbose
             }
         } else {
-            Write-Warning "The file $sourcePath does not exist."
+            Write-ToConsoleLog "The file $sourcePath does not exist." -IsWarning
         }
     }
 }
