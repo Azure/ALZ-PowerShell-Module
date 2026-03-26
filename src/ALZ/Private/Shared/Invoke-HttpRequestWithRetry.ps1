@@ -142,7 +142,7 @@ function Invoke-HttpRequestWithRetry {
 
                 if ($code -in $transientStatusCodes -and $attempt -lt $maxAttempts) {
                     Write-Verbose "HTTP $Method $Uri - Transient status $code on attempt $attempt"
-                    Write-Warning "Request to $Uri returned status $code (attempt $attempt of $maxAttempts). Retrying in $RetryIntervalSeconds seconds..."
+                    Write-ToConsoleLog "Request to $Uri returned status $code (attempt $attempt of $maxAttempts). Retrying in $RetryIntervalSeconds seconds..." -IsWarning
                     Start-Sleep -Seconds $RetryIntervalSeconds
                     continue
                 }
@@ -171,9 +171,30 @@ function Invoke-HttpRequestWithRetry {
             Write-Verbose "HTTP $Method $Uri - Error on attempt $attempt: Status=$responseCode, Message=$($_.Exception.Message)"
 
             if ($isTransient -and $attempt -lt $maxAttempts) {
-                Write-Warning "Request to $Uri failed with status $responseCode (attempt $attempt of $maxAttempts). Retrying in $RetryIntervalSeconds seconds..."
+                Write-ToConsoleLog "Request to $Uri failed with status $responseCode (attempt $attempt of $maxAttempts). Retrying in $RetryIntervalSeconds seconds..." -IsWarning
                 Start-Sleep -Seconds $RetryIntervalSeconds
             } else {
+                $errorDetails = "HTTP $Method $Uri failed after $attempt attempt(s)."
+                if ($null -ne $responseCode) {
+                    $errorDetails += " Status code: $responseCode."
+                }
+                $errorDetails += " Error: $($_.Exception.Message)"
+                if ($_.Exception.Response) {
+                    try {
+                        $stream = $_.Exception.Response.GetResponseStream()
+                        if ($null -ne $stream) {
+                            $reader = [System.IO.StreamReader]::new($stream)
+                            $responseBody = $reader.ReadToEnd()
+                            $reader.Dispose()
+                            if (-not [string]::IsNullOrWhiteSpace($responseBody)) {
+                                $errorDetails += " Response body: $responseBody"
+                            }
+                        }
+                    } catch {
+                        # Ignore errors reading response body
+                    }
+                }
+                Write-ToConsoleLog $errorDetails -IsError
                 throw
             }
         }
