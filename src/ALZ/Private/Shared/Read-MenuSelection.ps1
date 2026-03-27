@@ -74,6 +74,12 @@ function Read-MenuSelection {
         [switch] $AllowManualEntry,
 
         [Parameter(Mandatory = $false)]
+        [string] $ManualEntryLabel = "Enter manually",
+
+        [Parameter(Mandatory = $false)]
+        [switch] $DefaultToManualEntry,
+
+        [Parameter(Mandatory = $false)]
         [string] $ManualEntryPrompt = "Enter value",
 
         [Parameter(Mandatory = $false)]
@@ -331,7 +337,12 @@ function Read-MenuSelection {
 
     # Show manual entry option if allowed
     if ($AllowManualEntry.IsPresent) {
-        Write-ToConsoleLog "[0] Enter manually" -IsSelection -IndentLevel 1
+        $manualEntryMarker = if ($DefaultToManualEntry.IsPresent) { " (current)" } else { "" }
+        if ($DefaultToManualEntry.IsPresent) {
+            Write-ToConsoleLog "[0] $ManualEntryLabel$manualEntryMarker" -IsSelection -Color Green -IndentLevel 1
+        } else {
+            Write-ToConsoleLog "[0] $ManualEntryLabel" -IsSelection -IndentLevel 1
+        }
     }
 
     # Build prompt text
@@ -340,7 +351,11 @@ function Read-MenuSelection {
     if ($AllowManualEntry.IsPresent) {
         $promptText += ", 0 for manual entry"
     }
-    $promptText += ", default: $($DefaultIndex + 1))"
+    if ($DefaultToManualEntry.IsPresent) {
+        $promptText += ", default: 0)"
+    } else {
+        $promptText += ", default: $($DefaultIndex + 1))"
+    }
 
     # Get selection
     $result = $null
@@ -348,8 +363,13 @@ function Read-MenuSelection {
         $selection = Read-InputValue -Prompt $promptText -Sensitive $IsSensitive.IsPresent
 
         if ([string]::IsNullOrWhiteSpace($selection)) {
-            # Use default
-            $result = Get-OptionValue -Option $Options[$DefaultIndex]
+            if ($DefaultToManualEntry.IsPresent) {
+                # Default to manual entry - return DefaultValue (empty string)
+                $result = if ($null -ne $DefaultValue) { $DefaultValue } else { "" }
+            } else {
+                # Use default option
+                $result = Get-OptionValue -Option $Options[$DefaultIndex]
+            }
         } elseif ($AllowManualEntry.IsPresent -and $selection -eq "0") {
             # Manual entry
             do {

@@ -28,8 +28,8 @@
           "type": "object",
           "required": true,
           "properties": {
-            "management": {
-              "description": "The subscription ID for the Management subscription where logging, monitoring, and automation resources will be deployed",
+            "connectivity": {
+              "description": "The subscription ID for the Connectivity subscription where networking resources like hubs, firewalls, and DNS will be deployed",
               "type": "guid",
               "required": true,
               "source": "subscription"
@@ -37,11 +37,11 @@
             "identity": {
               "description": "The subscription ID for the Identity subscription where identity resources like domain controllers will be deployed",
               "type": "guid",
-              "required": true,
+              "required": false,
               "source": "subscription"
             },
-            "connectivity": {
-              "description": "The subscription ID for the Connectivity subscription where networking resources like hubs, firewalls, and DNS will be deployed",
+            "management": {
+              "description": "The subscription ID for the Management subscription where logging, monitoring, and automation resources will be deployed",
               "type": "guid",
               "required": true,
               "source": "subscription"
@@ -49,7 +49,7 @@
             "security": {
               "description": "The subscription ID for the Security subscription where security monitoring and governance resources will be deployed",
               "type": "guid",
-              "required": true,
+              "required": false,
               "source": "subscription"
             }
           }
