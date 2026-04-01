@@ -161,17 +161,8 @@ function Request-AcceleratorConfigurationInput {
 
             # Prompt for scenario number (Terraform only)
             if ($selectedIacType -eq "terraform") {
-                $scenarioOptions = @(
-                    @{ label = "1 - Full Multi-Region - Hub and Spoke VNet"; value = 1 },
-                    @{ label = "2 - Full Multi-Region - Virtual WAN"; value = 2 },
-                    @{ label = "3 - Full Multi-Region NVA - Hub and Spoke VNet"; value = 3 },
-                    @{ label = "4 - Full Multi-Region NVA - Virtual WAN"; value = 4 },
-                    @{ label = "5 - Management Only"; value = 5 },
-                    @{ label = "6 - Full Single-Region - Hub and Spoke VNet"; value = 6 },
-                    @{ label = "7 - Full Single-Region - Virtual WAN"; value = 7 },
-                    @{ label = "8 - Full Single-Region NVA - Hub and Spoke VNet"; value = 8 },
-                    @{ label = "9 - Full Single-Region NVA - Virtual WAN"; value = 9 }
-                )
+                $scenariosJsonPath = Join-Path $PSScriptRoot "TerraformScenarios.json"
+                $scenarioOptions = Get-Content -Path $scenariosJsonPath -Raw | ConvertFrom-Json
 
                 $selectedScenarioNumber = Read-MenuSelection `
                     -Title "Select the Terraform scenario (see https://aka.ms/alz/acc/scenarios):" `

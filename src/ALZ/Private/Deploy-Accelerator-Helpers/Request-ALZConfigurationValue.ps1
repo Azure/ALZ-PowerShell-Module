@@ -127,6 +127,11 @@ function Request-ALZConfigurationValue {
             $menuParams.ManualEntryPrompt = "Enter subscription ID"
             $menuParams.RequiredMessage = "This field is required. Please select a subscription."
             $menuParams.EmptyMessage = "No subscriptions found in Azure context."
+            if (-not $isRequired) {
+                $menuParams.ManualEntryLabel = "Enter manually or don't supply"
+                $menuParams.DefaultToManualEntry = $true
+                $menuParams.DefaultValue = ""
+            }
         } elseif ($source -eq "managementGroup") {
             $menuParams.OptionsTitle = "Available management groups:"
             $menuParams.Options = $AzureContext.ManagementGroups
@@ -252,15 +257,13 @@ function Request-ALZConfigurationValue {
                         continue
                     }
 
-                    foreach ($subKey in @($currentValue.Keys)) {
-                        $subCurrentValue = $currentValue[$subKey]
-                        $subSchemaInfo = $null
-
-                        if ($nestedSchema.PSObject.Properties.Name -contains $subKey) {
-                            $subSchemaInfo = $nestedSchema.$subKey
-                        } else {
+                    # Iterate using schema property order to ensure consistent display ordering
+                    foreach ($subKey in @($nestedSchema.PSObject.Properties.Name)) {
+                        if (-not $currentValue.Contains($subKey)) {
                             continue
                         }
+                        $subCurrentValue = $currentValue[$subKey]
+                        $subSchemaInfo = $nestedSchema.$subKey
 
                         $result = Read-InputValue -Key $subKey -CurrentValue $subCurrentValue -SchemaInfo $subSchemaInfo -DefaultDescription "$key - $subKey" -AzureContext $AzureContext
                         $subNewValue = $result.Value
