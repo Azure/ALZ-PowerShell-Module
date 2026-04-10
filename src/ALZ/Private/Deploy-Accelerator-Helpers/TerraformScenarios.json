@@ -1,13 +1,13 @@
 [
-    { "label": "1 - Full Multi-Region - Hub and Spoke VNet", "value": 1, "path": "full-multi-region/hub-and-spoke-vnet.tfvars" },
-    { "label": "2 - Full Multi-Region - Virtual WAN", "value": 2, "path": "full-multi-region/virtual-wan.tfvars" },
-    { "label": "3 - Full Multi-Region NVA - Hub and Spoke VNet", "value": 3, "path": "full-multi-region-nva/hub-and-spoke-vnet.tfvars" },
-    { "label": "4 - Full Multi-Region NVA - Virtual WAN", "value": 4, "path": "full-multi-region-nva/virtual-wan.tfvars" },
-    { "label": "5 - Management Only", "value": 5, "path": "management-only/management.tfvars" },
-    { "label": "6 - Full Single-Region - Hub and Spoke VNet", "value": 6, "path": "full-single-region/hub-and-spoke-vnet.tfvars" },
-    { "label": "7 - Full Single-Region - Virtual WAN", "value": 7, "path": "full-single-region/virtual-wan.tfvars" },
-    { "label": "8 - Full Single-Region NVA - Hub and Spoke VNet", "value": 8, "path": "full-single-region-nva/hub-and-spoke-vnet.tfvars" },
-    { "label": "9 - Full Single-Region NVA - Virtual WAN", "value": 9, "path": "full-single-region-nva/virtual-wan.tfvars" },
-    { "label": "10 - SMB Single-Region - Hub and Spoke VNet", "value": 10, "path": "smb-single-region/hub-and-spoke-vnet.tfvars" },
-    { "label": "11 - SMB Single-Region - Virtual WAN", "value": 11, "path": "smb-single-region/virtual-wan.tfvars" }
+    { "label": "Full Multi-Region - Hub and Spoke VNet", "value": 1, "path": "full-multi-region/hub-and-spoke-vnet.tfvars" },
+    { "label": "Full Multi-Region - Virtual WAN", "value": 2, "path": "full-multi-region/virtual-wan.tfvars" },
+    { "label": "Full Multi-Region NVA - Hub and Spoke VNet", "value": 3, "path": "full-multi-region-nva/hub-and-spoke-vnet.tfvars" },
+    { "label": "Full Multi-Region NVA - Virtual WAN", "value": 4, "path": "full-multi-region-nva/virtual-wan.tfvars" },
+    { "label": "Management Only", "value": 5, "path": "management-only/management.tfvars" },
+    { "label": "Full Single-Region - Hub and Spoke VNet", "value": 6, "path": "full-single-region/hub-and-spoke-vnet.tfvars" },
+    { "label": "Full Single-Region - Virtual WAN", "value": 7, "path": "full-single-region/virtual-wan.tfvars" },
+    { "label": "Full Single-Region NVA - Hub and Spoke VNet", "value": 8, "path": "full-single-region-nva/hub-and-spoke-vnet.tfvars" },
+    { "label": "Full Single-Region NVA - Virtual WAN", "value": 9, "path": "full-single-region-nva/virtual-wan.tfvars" },
+    { "label": "SMB Single-Region - Hub and Spoke VNet", "value": 10, "path": "smb-single-region/hub-and-spoke-vnet.tfvars" },
+    { "label": "SMB Single-Region - Virtual WAN", "value": 11, "path": "smb-single-region/virtual-wan.tfvars" }
 ]
