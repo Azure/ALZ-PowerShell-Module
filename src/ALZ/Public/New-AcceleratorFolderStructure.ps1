@@ -130,16 +130,11 @@ function New-AcceleratorFolderStructure {
 
         # Copy the platform landing zone configuration files based on scenario number or specific file path
         if ($repo.hasScenarios) {
-            $scenarios = @{
-                1 = "full-multi-region/hub-and-spoke-vnet.tfvars"
-                2 = "full-multi-region/virtual-wan.tfvars"
-                3 = "full-multi-region-nva/hub-and-spoke-vnet.tfvars"
-                4 = "full-multi-region-nva/virtual-wan.tfvars"
-                5 = "management-only/management.tfvars"
-                6 = "full-single-region/hub-and-spoke-vnet.tfvars"
-                7 = "full-single-region/virtual-wan.tfvars"
-                8 = "full-single-region-nva/hub-and-spoke-vnet.tfvars"
-                9 = "full-single-region-nva/virtual-wan.tfvars"
+            $scenariosJsonPath = Join-Path $PSScriptRoot ".." "Private" "Deploy-Accelerator-Helpers" "TerraformScenarios.json"
+            $scenarioOptions = Get-Content -Path $scenariosJsonPath -Raw | ConvertFrom-Json
+            $scenarios = @{}
+            foreach ($scenario in $scenarioOptions) {
+                $scenarios[[int]$scenario.value] = $scenario.path
             }
 
             Write-ToConsoleLog "Copying platform landing zone configuration file for scenario $scenarioNumber to $($targetFolderPath)/config/platform-landing-zone.tfvars"
