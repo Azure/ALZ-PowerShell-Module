@@ -18,18 +18,19 @@ function Test-NetworkConnectivity {
     Write-Verbose "Checking network connectivity to required endpoints"
 
     $endpoints = @(
-        @{ Uri = "https://api.github.com";             Description = "GitHub API (release lookups)" },
-        @{ Uri = "https://github.com";                 Description = "GitHub (module downloads)" },
-        @{ Uri = "https://api.releases.hashicorp.com"; Description = "HashiCorp Releases API (Terraform version)" },
-        @{ Uri = "https://releases.hashicorp.com";     Description = "HashiCorp Releases (Terraform binary download)" },
-        @{ Uri = "https://management.azure.com";       Description = "Azure Management API" },
-        @{ Uri = "https://www.powershellgallery.com";  Description = "PowerShell Gallery (module installs/updates)" }
+        @{ Uri = "https://api.github.com";                                                           Description = "GitHub API (root)" },
+        @{ Uri = "https://api.github.com/repos/Azure/accelerator-bootstrap-modules/releases/latest"; Description = "GitHub API (accelerator-bootstrap-modules latest release)" },
+        @{ Uri = "https://github.com";                                                               Description = "GitHub (module downloads)" },
+        @{ Uri = "https://api.releases.hashicorp.com";                                               Description = "HashiCorp Releases API (Terraform version)" },
+        @{ Uri = "https://releases.hashicorp.com";                                                   Description = "HashiCorp Releases (Terraform binary download)" },
+        @{ Uri = "https://management.azure.com";                                                     Description = "Azure Management API" },
+        @{ Uri = "https://www.powershellgallery.com";                                                Description = "PowerShell Gallery (module installs/updates)" }
     )
 
     foreach ($endpoint in $endpoints) {
         Write-Verbose "Testing network connectivity to $($endpoint.Uri)"
         try {
-            if ($endpoint.Uri -eq "https://api.github.com") {
+            if ($endpoint.Uri.StartsWith("https://api.github.com")) {
                 $response = Invoke-GitHubApiRequest -Uri $endpoint.Uri -Method Head -SkipHttpErrorCheck -MaxRetryCount $HttpRequestMaxRetryCount -RetryIntervalSeconds $HttpRequestRetryIntervalSeconds -TimeoutSec $HttpRequestTimeoutSeconds
                 $statusCode = $null
                 if ($null -ne $response) {

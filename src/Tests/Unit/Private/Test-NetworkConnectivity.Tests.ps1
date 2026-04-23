@@ -40,9 +40,9 @@ InModuleScope 'ALZ' {
                 }
             }
 
-            It 'returns one result per endpoint (6 total)' {
+            It 'returns one result per endpoint (7 total)' {
                 $result = Test-NetworkConnectivity
-                $result.Results.Count | Should -Be 6
+                $result.Results.Count | Should -Be 7
             }
         }
 
@@ -64,7 +64,7 @@ InModuleScope 'ALZ' {
             It 'returns a Failure result for the unreachable endpoint' {
                 $result = Test-NetworkConnectivity
                 $failureResults = @($result.Results | Where-Object { $_.result -eq "Failure" })
-                $failureResults.Count | Should -Be 1
+                $failureResults.Count | Should -Be 2
             }
 
             It 'includes the error message in the Failure result' {
@@ -103,15 +103,15 @@ InModuleScope 'ALZ' {
                 }
             }
 
-            It 'returns one result per endpoint (6 total)' {
+            It 'returns one result per endpoint (7 total)' {
                 $result = Test-NetworkConnectivity
-                $result.Results.Count | Should -Be 6
+                $result.Results.Count | Should -Be 7
             }
 
             It 'checks all endpoints and does not stop at the first failure' {
                 $result = Test-NetworkConnectivity
                 Should -Invoke -CommandName Invoke-HttpRequestWithRetry -Times 5 -Scope It
-                Should -Invoke -CommandName Invoke-GitHubApiRequest -Times 1 -Scope It
+                Should -Invoke -CommandName Invoke-GitHubApiRequest -Times 2 -Scope It
             }
         }
     }
