@@ -4,6 +4,7 @@ Write-Verbose "Discovering Public & Private src."
 $itemSplat = @{
     Filter      = '*.ps1'
     Recurse     = $true
+    Force       = $true
     ErrorAction = 'Stop'
 }
 try {

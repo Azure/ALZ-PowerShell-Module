@@ -15,12 +15,12 @@ function Edit-ALZConfigurationFilesInPlace {
 
     foreach ($location in $locations) {
         $bicepModules = Join-Path $alzEnvironmentDestination $location
-        $files += @(Get-ChildItem -Path $bicepModules -Recurse -Filter *.parameters.*.json)
+        $files += @(Get-ChildItem -Path $bicepModules -Recurse -Filter *.parameters.*.json -Force)
     }
 
     foreach ($file in $files) {
         Write-Verbose "Checking Bicep parameter file: $($file.Name)"
-        $bicepConfiguration = Get-Content $file.FullName | ConvertFrom-Json -AsHashtable
+        $bicepConfiguration = Get-Content $file.FullName -Force | ConvertFrom-Json -AsHashtable
         $modified = $false
 
         foreach ($configKey in $configuration.PsObject.Properties) {

@@ -162,7 +162,7 @@ function Request-AcceleratorConfigurationInput {
             # Prompt for scenario number (Terraform only)
             if ($selectedIacType -eq "terraform") {
                 $scenariosJsonPath = Join-Path $PSScriptRoot "TerraformScenarios.json"
-                $scenarioOptions = Get-Content -Path $scenariosJsonPath -Raw | ConvertFrom-Json
+                $scenarioOptions = Get-Content -Path $scenariosJsonPath -Raw -Force | ConvertFrom-Json
 
                 $selectedScenarioNumber = Read-MenuSelection `
                     -Title "Select the Terraform scenario (see https://aka.ms/alz/acc/scenarios):" `

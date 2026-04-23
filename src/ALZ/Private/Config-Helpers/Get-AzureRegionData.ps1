@@ -49,7 +49,7 @@ function Get-AzureRegionData {
 
     Invoke-Terraform -moduleFolderPath $regionFolder -autoApprove -output "regions_and_zones" -outputFilePath $outputFilePath -silent
 
-    $json = Get-Content $outputFilePath
+    $json = Get-Content $outputFilePath -Force
     $regionsAndZones = ConvertFrom-Json $json
 
     $zonesSupport = @()

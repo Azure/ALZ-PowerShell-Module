@@ -17,7 +17,7 @@ function Set-ModuleVersionData {
 
         # Load existing data or create new
         if (Test-Path $dataFilePath) {
-            $data = Get-Content $dataFilePath | ConvertFrom-Json
+            $data = Get-Content $dataFilePath -Force | ConvertFrom-Json
         } else {
             $data = [PSCustomObject]@{
                 bootstrapVersion = $null
