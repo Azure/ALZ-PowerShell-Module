@@ -12,7 +12,7 @@ function Get-ModuleVersionData {
     $dataFilePath = Join-Path $targetDirectory ".alz-version-data.json"
 
     if (Test-Path $dataFilePath) {
-        $data = Get-Content $dataFilePath | ConvertFrom-Json
+        $data = Get-Content $dataFilePath -Force | ConvertFrom-Json
         $versionKey = "$($moduleType)Version"
         return $data.$versionKey
     }

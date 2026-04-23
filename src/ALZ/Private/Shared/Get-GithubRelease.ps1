@@ -101,7 +101,7 @@ function Get-GithubRelease {
 
     Write-Verbose "===> Checking if any content exists inside of $targetVersionPath"
 
-    $contentTargetVersionPath = Get-ChildItem -Path $targetVersionPath -Recurse -ErrorAction SilentlyContinue
+    $contentTargetVersionPath = Get-ChildItem -Path $targetVersionPath -Recurse -Force -ErrorAction SilentlyContinue
 
     if ($null -eq $contentTargetVersionPath) {
         Write-Verbose "===> Pulling and extracting release $releaseTag into $targetVersionPath"
@@ -139,7 +139,7 @@ function Get-GithubRelease {
 
         $extractedSubFolder = $targetPathForExtractedZip
         if($releaseArtifactName -eq "") {
-            $extractedSubFolder = (Get-ChildItem -Path $targetPathForExtractedZip -Directory).FullName
+            $extractedSubFolder = (Get-ChildItem -Path $targetPathForExtractedZip -Directory -Force).FullName
         }
 
         Write-Verbose "===> Copying all extracted contents into $targetVersionPath from $($extractedSubFolder)/$moduleSourceFolder/*."
@@ -157,7 +157,7 @@ function Get-GithubRelease {
     $envFilePath = Join-Path -Path $parentDirectory -ChildPath ".env"
     if (Test-Path $envFilePath) {
         Write-Verbose "===> Replacing the .env file release version with $releaseTag"
-        (Get-Content $envFilePath) -replace "UPSTREAM_RELEASE_VERSION=.*", "UPSTREAM_RELEASE_VERSION=$releaseTag" | Set-Content $envFilePath
+        (Get-Content $envFilePath -Force) -replace "UPSTREAM_RELEASE_VERSION=.*", "UPSTREAM_RELEASE_VERSION=$releaseTag" | Set-Content $envFilePath -Force
     }
 
     return $releaseTag

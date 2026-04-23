@@ -18,11 +18,11 @@ function Get-ALZConfig {
     }
 
     # Import the config and transform it to a PowerShell object
-    $extension = (Get-Item -Path $configFilePath).Extension.ToLower()
+    $extension = (Get-Item -Path $configFilePath -Force).Extension.ToLower()
     $config = $null
     if ($extension -eq ".yml" -or $extension -eq ".yaml") {
         try {
-            $config = [PSCustomObject](Get-Content -Path $configFilePath | ConvertFrom-Yaml -Ordered)
+            $config = [PSCustomObject](Get-Content -Path $configFilePath -Force | ConvertFrom-Yaml -Ordered)
         } catch {
             $errorMessage = "Failed to parse YAML inputs. Please check the YAML file for errors and try again. $_"
             Write-ToConsoleLog $errorMessage -IsError
@@ -31,7 +31,7 @@ function Get-ALZConfig {
 
     } elseif ($extension -eq ".json") {
         try {
-            $config = [PSCustomObject](Get-Content -Path $configFilePath | ConvertFrom-Json)
+            $config = [PSCustomObject](Get-Content -Path $configFilePath -Force | ConvertFrom-Json)
         } catch {
             $errorMessage = "Failed to parse JSON inputs. Please check the JSON file for errors and try again. $_"
             Write-ToConsoleLog $errorMessage -IsError

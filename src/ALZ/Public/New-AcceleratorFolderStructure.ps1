@@ -131,7 +131,7 @@ function New-AcceleratorFolderStructure {
         # Copy the platform landing zone configuration files based on scenario number or specific file path
         if ($repo.hasScenarios) {
             $scenariosJsonPath = Join-Path $PSScriptRoot ".." "Private" "Deploy-Accelerator-Helpers" "TerraformScenarios.json"
-            $scenarioOptions = Get-Content -Path $scenariosJsonPath -Raw | ConvertFrom-Json
+            $scenarioOptions = Get-Content -Path $scenariosJsonPath -Raw -Force | ConvertFrom-Json
             $scenarios = @{}
             foreach ($scenario in $scenarioOptions) {
                 $scenarios[[int]$scenario.value] = $scenario.path

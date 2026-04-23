@@ -40,11 +40,11 @@ function Get-AzureContext {
 
     # Check if valid cache exists
     if (Test-Path $cacheFilePath) {
-        $cacheFile = Get-Item $cacheFilePath
+        $cacheFile = Get-Item $cacheFilePath -Force
         $cacheAge = (Get-Date) - $cacheFile.LastWriteTime
         if ($cacheAge.TotalHours -lt $cacheExpirationHours) {
             try {
-                $cachedContext = Get-Content -Path $cacheFilePath -Raw | ConvertFrom-Json -AsHashtable
+                $cachedContext = Get-Content -Path $cacheFilePath -Raw -Force | ConvertFrom-Json -AsHashtable
                 Write-ToConsoleLog "Using cached Azure context (cached $([math]::Round($cacheAge.TotalMinutes)) minutes ago). Use -clearCache to refresh."
                 Write-ToConsoleLog "Found $($cachedContext.ManagementGroups.Count) management groups, $($cachedContext.Subscriptions.Count) subscriptions, and $($cachedContext.Regions.Count) regions"
                 return $cachedContext
@@ -60,7 +60,7 @@ function Get-AzureContext {
         Regions          = @()
     }
 
-    Write-ToConsoleLog "Querying Azure for management groups, subscriptions, and regions..."
+    Write-ToConsoleLog "Querying Azure for management groups, subscriptions, and regions... (this can take up to 30 seconds)"
 
     try {
         # Get the current tenant ID

@@ -74,6 +74,7 @@ function Invoke-GitHubApiRequest {
 
     # Build auth headers from gh CLI if available
     $headers = @{}
+    $usedGhToken = $false
     $ghCommand = Get-Command "gh" -ErrorAction SilentlyContinue
     if ($null -ne $ghCommand) {
         $null = & gh auth status 2>&1
@@ -81,6 +82,7 @@ function Invoke-GitHubApiRequest {
             $token = & gh auth token 2>&1
             if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($token)) {
                 $headers["Authorization"] = "Bearer $($token.Trim())"
+                $usedGhToken = $true
                 Write-Verbose "GitHub CLI authentication token found. Using authenticated requests."
             }
         } else {
@@ -106,15 +108,48 @@ function Invoke-GitHubApiRequest {
         $retryParams["Headers"] = $headers
     }
 
+    # If the gh CLI token is rejected (401/403), the token is likely expired or
+    # has insufficient scopes. Drop the Authorization header so the next attempt
+    # is anonymous (subject to lower rate limits) and warn the user to refresh
+    # their gh credentials with `gh auth login`.
+    function Disable-AuthAndWarn {
+        param([int] $StatusCode)
+        Write-ToConsoleLog "GitHub API request to $Uri was rejected with status $StatusCode while using the GitHub CLI authentication token. The token may be expired or have insufficient scopes. Retrying without authentication. To resolve this permanently, run 'gh auth login' (or 'gh auth logout' followed by 'gh auth login') to refresh your GitHub CLI credentials." -IsWarning
+        $retryParams.Remove("Headers")
+    }
+
+    function Get-StatusCodeFromError {
+        param($ErrorRecord)
+        if ($ErrorRecord.Exception.Response) {
+            return [int]$ErrorRecord.Exception.Response.StatusCode
+        }
+        return $null
+    }
+
     # File download — delegate directly
     if (-not [string]::IsNullOrEmpty($OutputFile)) {
-        Invoke-HttpRequestWithRetry @retryParams -OutFile $OutputFile
+        try {
+            Invoke-HttpRequestWithRetry @retryParams -OutFile $OutputFile
+        } catch {
+            $statusCode = Get-StatusCodeFromError $_
+            if ($usedGhToken -and ($statusCode -eq 401 -or $statusCode -eq 403)) {
+                Disable-AuthAndWarn -StatusCode $statusCode
+                Invoke-HttpRequestWithRetry @retryParams -OutFile $OutputFile
+            } else {
+                throw
+            }
+        }
         return
     }
 
     # API call with SkipHttpErrorCheck — parse JSON and return Result/StatusCode hashtable
     if ($SkipHttpErrorCheck) {
         $response = Invoke-HttpRequestWithRetry @retryParams -SkipHttpErrorCheck -ReturnStatusCode
+
+        if ($usedGhToken -and ($response.StatusCode -eq 401 -or $response.StatusCode -eq 403)) {
+            Disable-AuthAndWarn -StatusCode $response.StatusCode
+            $response = Invoke-HttpRequestWithRetry @retryParams -SkipHttpErrorCheck -ReturnStatusCode
+        }
 
         $parsed = $null
         if (-not [string]::IsNullOrWhiteSpace($response.Result.Content)) {
@@ -128,7 +163,17 @@ function Invoke-GitHubApiRequest {
     }
 
     # Standard API call — parse JSON and return the object
-    $response = Invoke-HttpRequestWithRetry @retryParams
+    try {
+        $response = Invoke-HttpRequestWithRetry @retryParams
+    } catch {
+        $statusCode = Get-StatusCodeFromError $_
+        if ($usedGhToken -and ($statusCode -eq 401 -or $statusCode -eq 403)) {
+            Disable-AuthAndWarn -StatusCode $statusCode
+            $response = Invoke-HttpRequestWithRetry @retryParams
+        } else {
+            throw
+        }
+    }
     if (-not [string]::IsNullOrWhiteSpace($response.Content)) {
         return ($response.Content | ConvertFrom-Json)
     }

@@ -177,7 +177,7 @@ function New-ModuleSetup {
 
             if (!$firstRun) {
                 Write-Verbose "Checking for state files at: $previousStatePath"
-                $previousStateFiles = Get-ChildItem $previousVersionPath -Filter "terraform.tfstate" -Recurse | Select-Object -First 1 | ForEach-Object { $_.FullName }
+                $previousStateFiles = Get-ChildItem $previousVersionPath -Filter "terraform.tfstate" -Recurse -Force | Select-Object -First 1 | ForEach-Object { $_.FullName }
 
                 if ($previousStateFiles.Count -gt 0) {
                     foreach ($stateFile in $previousStateFiles) {

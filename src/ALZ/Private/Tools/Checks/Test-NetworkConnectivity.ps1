@@ -30,7 +30,19 @@ function Test-NetworkConnectivity {
         Write-Verbose "Testing network connectivity to $($endpoint.Uri)"
         try {
             if ($endpoint.Uri -eq "https://api.github.com") {
-                Invoke-GitHubApiRequest -Uri $endpoint.Uri -Method Head -SkipHttpErrorCheck -MaxRetryCount $HttpRequestMaxRetryCount -RetryIntervalSeconds $HttpRequestRetryIntervalSeconds -TimeoutSec $HttpRequestTimeoutSeconds | Out-Null
+                $response = Invoke-GitHubApiRequest -Uri $endpoint.Uri -Method Head -SkipHttpErrorCheck -MaxRetryCount $HttpRequestMaxRetryCount -RetryIntervalSeconds $HttpRequestRetryIntervalSeconds -TimeoutSec $HttpRequestTimeoutSeconds
+                $statusCode = $null
+                if ($null -ne $response) {
+                    $statusCode = $response.StatusCode
+                }
+                if ($statusCode -eq 401 -or $statusCode -eq 403) {
+                    $results += @{
+                        message = "GitHub API ($($endpoint.Uri)) returned HTTP $statusCode. This is most often caused by an expired or invalid GitHub CLI authentication token, or by GitHub API rate limiting. If you have the GitHub CLI (gh) installed, run 'gh auth login' (or 'gh auth logout' followed by 'gh auth login') to refresh your credentials. Otherwise wait a few minutes for the rate limit to reset before retrying."
+                        result  = "Failure"
+                    }
+                    $hasFailure = $true
+                    continue
+                }
             } else {
                 Invoke-HttpRequestWithRetry -Uri $endpoint.Uri -Method Head -TimeoutSec $HttpRequestTimeoutSeconds -SkipHttpErrorCheck -MaxRetryCount $HttpRequestMaxRetryCount -RetryIntervalSeconds $HttpRequestRetryIntervalSeconds | Out-Null
             }

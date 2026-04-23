@@ -76,6 +76,12 @@ function Get-GithubReleaseTag {
         throw "The release $release does not exist in the GitHub repository $githubRepoUrl - $repoReleaseUrl"
     }
 
+    if ($statusCode -eq 401 -or $statusCode -eq 403) {
+        $message = "Unable to query repository version from $repoReleaseUrl. HTTP status code: $statusCode (Forbidden/Unauthorized). This is most often caused by an expired or invalid GitHub CLI authentication token, or by GitHub API rate limiting on anonymous requests. If you have the GitHub CLI (gh) installed, run 'gh auth login' (or 'gh auth logout' followed by 'gh auth login') to refresh your credentials, then re-run the command. If you do not use the GitHub CLI, wait a few minutes for the rate limit to reset before retrying."
+        Write-ToConsoleLog $message -IsError
+        throw $message
+    }
+
     if ($statusCode -ne 200) {
         Write-ToConsoleLog "Unable to query repository version from $repoReleaseUrl. HTTP status code: $statusCode" -IsError
         throw "Unable to query repository version, please check your internet connection and try again..."

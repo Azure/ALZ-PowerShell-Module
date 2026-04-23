@@ -67,7 +67,7 @@ function Get-AcceleratorFolderConfiguration {
 
     # Try to read and validate inputs.yaml
     try {
-        $inputsContent = Get-Content -Path $inputsYamlPath -Raw
+        $inputsContent = Get-Content -Path $inputsYamlPath -Raw -Force
         $inputsYaml = $inputsContent | ConvertFrom-Yaml
 
         $result.InputsContent = $inputsContent

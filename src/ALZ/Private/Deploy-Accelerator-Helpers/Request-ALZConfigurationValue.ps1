@@ -178,7 +178,7 @@ function Request-ALZConfigurationValue {
             Write-ToConsoleLog "Schema file not found at $schemaPath. Proceeding without descriptions." -IsWarning
             $schema = $null
         } else {
-            $schema = Get-Content -Path $schemaPath -Raw | ConvertFrom-Json
+            $schema = Get-Content -Path $schemaPath -Raw -Force | ConvertFrom-Json
         }
 
         # Define the configuration files to process
@@ -192,7 +192,7 @@ function Request-ALZConfigurationValue {
             Write-ToConsoleLog "For more information, see: https://aka.ms/alz/acc/phase0"
 
             # Read the raw content to preserve comments and ordering
-            $inputsYamlContent = Get-Content -Path $inputsYamlPath -Raw
+            $inputsYamlContent = Get-Content -Path $inputsYamlPath -Raw -Force
             $inputsConfig = $inputsYamlContent | ConvertFrom-Yaml -Ordered
             $inputsUpdated = $false
             $sensitiveEnvVars = @{}

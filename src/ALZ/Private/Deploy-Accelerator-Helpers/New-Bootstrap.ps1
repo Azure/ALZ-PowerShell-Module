@@ -132,7 +132,7 @@ function New-Bootstrap {
         $bootstrapParameters = [PSCustomObject]@{}
 
         Write-Verbose "Getting the bootstrap configuration..."
-        $terraformFiles = Get-ChildItem -Path $bootstrapModulePath -Filter "*.tf" -File
+        $terraformFiles = Get-ChildItem -Path $bootstrapModulePath -Filter "*.tf" -File -Force
         foreach ($terraformFile in $terraformFiles) {
             $bootstrapParameters = Convert-HCLVariablesToInputConfig -targetVariableFile $terraformFile.FullName -hclParserToolPath $hclParserToolPath -appendToObject $bootstrapParameters
         }
@@ -145,7 +145,7 @@ function New-Bootstrap {
         if ($hasStarter) {
             Write-Verbose "Getting the starter configuration..."
             if ($iac -eq "terraform") {
-                $terraformFiles = Get-ChildItem -Path $starterRootModuleFolderPath -Filter "*.tf" -File
+                $terraformFiles = Get-ChildItem -Path $starterRootModuleFolderPath -Filter "*.tf" -File -Force
                 foreach ($terraformFile in $terraformFiles) {
                     $starterParameters = Convert-HCLVariablesToInputConfig -targetVariableFile $terraformFile.FullName -hclParserToolPath $hclParserToolPath -appendToObject $starterParameters
                 }
@@ -215,7 +215,7 @@ function New-Bootstrap {
         if ($iac -eq "terraform") {
             if ($starterFoldersToRetain.Length -gt 0) {
                 Write-Verbose "Removing unwanted folders from the starter module..."
-                $folders = Get-ChildItem -Path $starterModulePath -Directory
+                $folders = Get-ChildItem -Path $starterModulePath -Directory -Force
                 foreach ($folder in $folders) {
                     if ($starterFoldersToRetain -notcontains $folder.Name) {
                         Write-Verbose "Removing folder: $($folder.FullName)"
