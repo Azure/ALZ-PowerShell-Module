@@ -47,7 +47,7 @@ function Get-TerraformTool {
             Write-ToConsoleLog "Unable to query Terraform version '$version' from HashiCorp API. HTTP status code: $($versionResponse.StatusCode)" -IsError
             throw "Unable to query Terraform version, please check the supplied version and try again..."
         }
-        $release = ($versionResponse).Content
+        $release = ($versionResponse).Content | ConvertFrom-Json
     }
 
     Write-Verbose "Required version of Terraform is $version"

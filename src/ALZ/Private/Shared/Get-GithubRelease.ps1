@@ -81,73 +81,77 @@ function Get-GithubRelease {
         return $releaseTag
     }
 
-    # Check if directory exists
-    Write-Verbose "=====> Checking if directory for releases exists: $targetPath"
-
-    if (!(Test-Path $targetPath)) {
-        Write-Verbose "Directory does not exist for releases, will now create: $targetPath"
-        New-Item -ItemType Directory -Path $targetPath | Out-String | Write-Verbose
-    }
-
-    # Check the directory for this release
+    # Determine the target version path (do not create it yet - we only create it after a successful download/extract)
     $targetVersionPath = Join-Path $targetPath $releaseTag
 
     Write-Verbose "===> Checking if directory for release version exists: $targetVersionPath"
 
-    if (!(Test-Path $targetVersionPath)) {
-        Write-Verbose "Directory does not exist for release $releaseTag, will now create: $targetVersionPath"
-        New-Item -ItemType Directory -Path $targetVersionPath | Out-String | Write-Verbose
+    $contentTargetVersionPath = $null
+    if (Test-Path $targetVersionPath) {
+        $contentTargetVersionPath = Get-ChildItem -Path $targetVersionPath -Recurse -Force -ErrorAction SilentlyContinue
     }
 
-    Write-Verbose "===> Checking if any content exists inside of $targetVersionPath"
-
-    $contentTargetVersionPath = Get-ChildItem -Path $targetVersionPath -Recurse -Force -ErrorAction SilentlyContinue
-
     if ($null -eq $contentTargetVersionPath) {
-        Write-Verbose "===> Pulling and extracting release $releaseTag into $targetVersionPath"
-        New-Item -ItemType Directory -Path "$targetVersionPath/tmp" | Out-String | Write-Verbose
-        $targetPathForZip = "$targetVersionPath/tmp/$releaseTag.zip"
+        # Stage the download and extraction in a temp location under the outputs folder so a failure
+        # does not leave behind empty release/version folders. We always clean it up in `finally`.
+        $stagingRoot = Join-Path $targetDirectory "temp/downloads/$([System.Guid]::NewGuid().ToString("N"))"
+        New-Item -ItemType Directory -Path $stagingRoot -Force | Out-String | Write-Verbose
+        $targetPathForZip = Join-Path $stagingRoot "$releaseTag.zip"
+        $targetPathForExtractedZip = Join-Path $stagingRoot "extracted"
 
-        # Get the artifact url
-        if($releaseArtifactName -ne "") {
-            $releaseArtifactUrl = $releaseData.assets | Where-Object { $_.name -eq $releaseArtifactName } | Select-Object -ExpandProperty browser_download_url
-        } else {
-            $releaseArtifactUrl = $releaseData.zipball_url
+        try {
+            # Get the artifact url
+            if($releaseArtifactName -ne "") {
+                $releaseArtifactUrl = $releaseData.assets | Where-Object { $_.name -eq $releaseArtifactName } | Select-Object -ExpandProperty browser_download_url
+            } else {
+                $releaseArtifactUrl = $releaseData.zipball_url
+            }
+
+            Write-Verbose "===> Downloading the release artifact $releaseArtifactUrl from the GitHub repository $repoOrgPlusRepo to staging location $targetPathForZip"
+
+            $downloadParams = @{
+                Uri                  = $releaseArtifactUrl
+                OutputFile           = $targetPathForZip
+                MaxRetryCount        = $maxRetryCount
+                RetryIntervalSeconds = $retryIntervalSeconds
+            }
+            if ($PSBoundParameters.ContainsKey("httpRequestTimeoutSeconds")) {
+                $downloadParams["TimeoutSec"] = $httpRequestTimeoutSeconds
+            }
+            Invoke-GitHubApiRequest @downloadParams
+
+            if(!(Test-Path $targetPathForZip)) {
+                Write-ToConsoleLog "Failed to download the release $releaseTag from the GitHub repository $repoOrgPlusRepo" -IsError
+                throw "Failed to download the release $releaseTag from the GitHub repository $repoOrgPlusRepo"
+            }
+
+            Expand-Archive -Path $targetPathForZip -DestinationPath $targetPathForExtractedZip | Out-String | Write-Verbose
+
+            $extractedSubFolder = $targetPathForExtractedZip
+            if($releaseArtifactName -eq "") {
+                $extractedSubFolder = (Get-ChildItem -Path $targetPathForExtractedZip -Directory -Force).FullName
+            }
+
+            # Only now (after a successful download and extract) do we create the target folders
+            # and copy the content in.
+            if (!(Test-Path $targetPath)) {
+                Write-Verbose "Directory does not exist for releases, will now create: $targetPath"
+                New-Item -ItemType Directory -Path $targetPath | Out-String | Write-Verbose
+            }
+
+            Write-Verbose "Directory does not exist for release $releaseTag, will now create: $targetVersionPath"
+            New-Item -ItemType Directory -Path $targetVersionPath | Out-String | Write-Verbose
+
+            Write-Verbose "===> Copying all extracted contents into $targetVersionPath from $($extractedSubFolder)/$moduleSourceFolder/*."
+
+            Copy-Item -Path "$($extractedSubFolder)/$moduleSourceFolder/*" -Destination "$targetVersionPath" -Recurse -Force | Out-String | Write-Verbose
+
+            Write-ToConsoleLog "The directory for $targetVersionPath has been created and populated." -IsSuccess
+        } finally {
+            if (Test-Path $stagingRoot) {
+                Remove-Item -Path $stagingRoot -Force -Recurse -ErrorAction SilentlyContinue
+            }
         }
-
-        Write-Verbose "===> Downloading the release artifact $releaseArtifactUrl from the GitHub repository $repoOrgPlusRepo"
-
-        $downloadParams = @{
-            Uri                  = $releaseArtifactUrl
-            OutputFile           = $targetPathForZip
-            MaxRetryCount        = $maxRetryCount
-            RetryIntervalSeconds = $retryIntervalSeconds
-        }
-        if ($PSBoundParameters.ContainsKey("httpRequestTimeoutSeconds")) {
-            $downloadParams["TimeoutSec"] = $httpRequestTimeoutSeconds
-        }
-        Invoke-GitHubApiRequest @downloadParams
-
-        if(!(Test-Path $targetPathForZip)) {
-            Write-ToConsoleLog "Failed to download the release $releaseTag from the GitHub repository $repoOrgPlusRepo" -IsError
-            throw
-        }
-
-        $targetPathForExtractedZip = "$targetVersionPath/tmp/extracted"
-
-        Expand-Archive -Path $targetPathForZip -DestinationPath $targetPathForExtractedZip | Out-String | Write-Verbose
-
-        $extractedSubFolder = $targetPathForExtractedZip
-        if($releaseArtifactName -eq "") {
-            $extractedSubFolder = (Get-ChildItem -Path $targetPathForExtractedZip -Directory -Force).FullName
-        }
-
-        Write-Verbose "===> Copying all extracted contents into $targetVersionPath from $($extractedSubFolder)/$moduleSourceFolder/*."
-
-        Copy-Item -Path "$($extractedSubFolder)/$moduleSourceFolder/*" -Destination "$targetVersionPath" -Recurse -Force | Out-String | Write-Verbose
-
-        Remove-Item -Path "$targetVersionPath/tmp" -Force -Recurse
-        Write-ToConsoleLog "The directory for $targetVersionPath has been created and populated." -IsSuccess
     } else {
         Write-ToConsoleLog "The directory for $targetVersionPath already exists and has content in it, so we are not overwriting it." -IsSuccess
         Write-Verbose "===> Content already exists in $releaseDirectory. Skipping"
