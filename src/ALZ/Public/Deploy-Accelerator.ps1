@@ -221,7 +221,15 @@ function Deploy-Accelerator {
         )]
         [Alias("hrts")]
         [Alias("httpRequestTimeoutSeconds")]
-        [int] $http_request_timeout_seconds
+        [int] $http_request_timeout_seconds,
+
+        [Parameter(
+            Mandatory = $false,
+            HelpMessage = "[OPTIONAL] The version of Terraform to download and use. Defaults to '1.14.9'. Specify 'latest' to download the latest stable release. Environment variable: ALZ_terraform_version. Config file input: terraform_version."
+        )]
+        [Alias("tv")]
+        [Alias("terraformVersion")]
+        [string] $terraform_version = "1.14.9"
     )
 
     $ProgressPreference = "SilentlyContinue"
@@ -355,9 +363,9 @@ function Deploy-Accelerator {
         if ($skipInternetChecks) {
             Write-ToConsoleLog "Skipping Terraform tool check as you used the skipInternetCheck parameter. Please ensure you have the most recent version of Terraform installed" -IsWarning
         } else {
-            Write-ToConsoleLog "Checking you have the latest version of Terraform installed..." -IsSuccess
+            Write-ToConsoleLog "Checking you have the correct version of Terraform installed..." -IsSuccess
             $terraformToolParams = @{
-                version              = "latest"
+                version              = $terraform_version
                 toolsPath            = $toolsPath
                 maxRetryCount        = $http_request_max_retry_count
                 retryIntervalSeconds = $http_request_retry_interval_seconds
