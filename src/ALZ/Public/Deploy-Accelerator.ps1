@@ -376,7 +376,7 @@ function Deploy-Accelerator {
             Get-TerraformTool @terraformToolParams
 
             $hclParserToolParams = @{
-                toolVersion          = "v0.6.0"
+                toolVersion          = "v0.6.9"
                 toolsPath            = $toolsPath
                 maxRetryCount        = $http_request_max_retry_count
                 retryIntervalSeconds = $http_request_retry_interval_seconds
