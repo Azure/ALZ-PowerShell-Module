@@ -45,6 +45,14 @@ function Get-AzureContext {
         if ($cacheAge.TotalHours -lt $cacheExpirationHours) {
             try {
                 $cachedContext = Get-Content -Path $cacheFilePath -Raw -Force | ConvertFrom-Json -AsHashtable
+                $currentSubscriptionId = az account show --query "id" -o tsv 2>$null
+                if ($LASTEXITCODE -eq 0 -and $currentSubscriptionId) {
+                    $cachedContext.CurrentSubscriptionId = $currentSubscriptionId.Trim()
+                }
+                $currentTenantId = az account show --query "tenantId" -o tsv 2>$null
+                if ($LASTEXITCODE -eq 0 -and $currentTenantId) {
+                    $cachedContext.CurrentTenantId = $currentTenantId.Trim()
+                }
                 Write-ToConsoleLog "Using cached Azure context (cached $([math]::Round($cacheAge.TotalMinutes)) minutes ago). Use -clearCache to refresh."
                 Write-ToConsoleLog "Found $($cachedContext.ManagementGroups.Count) management groups, $($cachedContext.Subscriptions.Count) subscriptions, and $($cachedContext.Regions.Count) regions"
                 return $cachedContext
@@ -58,14 +66,19 @@ function Get-AzureContext {
         ManagementGroups = @()
         Subscriptions    = @()
         Regions          = @()
+        CurrentSubscriptionId = $null
+        CurrentTenantId  = $null
     }
 
     Write-ToConsoleLog "Querying Azure for management groups, subscriptions, and regions... (this can take up to 30 seconds)"
 
     try {
         # Get the current tenant ID
-        $tenantResult = az account show --query "tenantId" -o tsv 2>$null
-        $currentTenantId = if ($LASTEXITCODE -eq 0 -and $tenantResult) { $tenantResult.Trim() } else { $null }
+        $accountResult = az account show --query "{tenantId:tenantId, subscriptionId:id}" -o json 2>$null
+        $account = if ($LASTEXITCODE -eq 0 -and $accountResult) { $accountResult | ConvertFrom-Json } else { $null }
+        $currentTenantId = $account.tenantId
+        $azureContext.CurrentSubscriptionId = $account.subscriptionId
+        $azureContext.CurrentTenantId = $currentTenantId
 
         # Get management groups
         $mgResult = az account management-group list --query "[].{id:name, displayName:displayName}" -o json 2>$null
