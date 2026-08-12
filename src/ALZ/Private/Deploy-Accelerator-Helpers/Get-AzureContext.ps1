@@ -63,11 +63,11 @@ function Get-AzureContext {
     }
 
     $azureContext = @{
-        ManagementGroups = @()
-        Subscriptions    = @()
-        Regions          = @()
+        ManagementGroups      = @()
+        Subscriptions         = @()
+        Regions               = @()
         CurrentSubscriptionId = $null
-        CurrentTenantId  = $null
+        CurrentTenantId       = $null
     }
 
     Write-ToConsoleLog "Querying Azure for management groups, subscriptions, and regions... (this can take up to 30 seconds)"
