@@ -37,6 +37,12 @@ function Get-AcceleratorConfigPath {
         }
         "bicep" {
             $inputConfigFilePaths += "$ConfigFolderPath/platform-landing-zone.yaml"
+            foreach ($folderName in @("templates", ".config")) {
+                $folderPath = "$ConfigFolderPath/$folderName"
+                if (Test-Path $folderPath -PathType Container) {
+                    $starterAdditionalFiles += $folderPath
+                }
+            }
         }
         # bicep-classic and others just use inputs.yaml
     }
