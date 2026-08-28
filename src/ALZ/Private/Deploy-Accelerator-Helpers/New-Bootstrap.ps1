@@ -241,20 +241,6 @@ function New-Bootstrap {
                 }
             }
 
-            # Copy additional files
-            foreach ($additionalFile in $starterAdditionalFiles) {
-                if (Test-Path $additionalFile -PathType Container) {
-                    $folderName = ([System.IO.DirectoryInfo]::new($additionalFile)).Name
-                    $destination = Join-Path -Path $starterRootModuleFolderPath -ChildPath $folderName
-                    Write-Verbose "Copying folder $additionalFile to $destination"
-                    Copy-Item -Path "$additionalFile/*" -Destination $destination -Recurse -Force
-                } else {
-                    $fileName = [System.IO.Path]::GetFileName($additionalFile)
-                    $destination = Join-Path -Path $starterRootModuleFolderPath -ChildPath $fileName
-                    Write-Verbose "Copying file $additionalFile to $destination"
-                    Copy-Item -Path $additionalFile -Destination $destination -Force
-                }
-            }
         }
 
         if ($iac -like "bicep*") {
@@ -280,6 +266,21 @@ function New-Bootstrap {
             $subFoldersOrFilesToRemove = $starterConfig.starter_modules.Value.$($inputConfig.starter_module_name.Value).subfolders_or_files_to_remove
 
             Remove-UnrequiredFileSet -path $starterModulePath -foldersOrFilesToRetain $foldersOrFilesToRetain -subFoldersOrFilesToRemove $subFoldersOrFilesToRemove -writeVerboseLogs:$writeVerboseLogs.IsPresent
+        }
+
+        # Copy additional files
+        foreach ($additionalFile in $starterAdditionalFiles) {
+            if (Test-Path $additionalFile -PathType Container) {
+                $folderName = ([System.IO.DirectoryInfo]::new($additionalFile)).Name
+                $destination = Join-Path -Path $starterRootModuleFolderPath -ChildPath $folderName
+                Write-Verbose "Copying folder $additionalFile to $destination"
+                Copy-Item -Path "$additionalFile/*" -Destination $destination -Recurse -Force
+            } else {
+                $fileName = [System.IO.Path]::GetFileName($additionalFile)
+                $destination = Join-Path -Path $starterRootModuleFolderPath -ChildPath $fileName
+                Write-Verbose "Copying file $additionalFile to $destination"
+                Copy-Item -Path $additionalFile -Destination $destination -Force
+            }
         }
 
         # Running terraform init and apply

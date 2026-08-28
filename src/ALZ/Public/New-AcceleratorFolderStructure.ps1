@@ -83,12 +83,12 @@ function New-AcceleratorFolderStructure {
 
             "bicep"         = @{
                 repoName                    = "alz-bicep-accelerator"
-                folderToClone               = ""
-                libraryFolderPath           = ""
+                folderToClone               = "/"
+                libraryFolderPath           = "templates"
                 exampleFolderPath           = "examples"
                 bootstrapExampleFolderPath  = "bootstrap"
                 hasScenarios                = $false
-                hasLibrary                  = $false
+                hasLibrary                  = $true
                 platformLandingZoneFilePath = "platform-landing-zone.yaml"
             }
 
