@@ -38,6 +38,9 @@ function Request-ALZConfigurationValue {
         [switch] $AzureContextClearCache,
 
         [Parameter(Mandatory = $false)]
+        [int] $ScenarioNumber = 0,
+
+        [Parameter(Mandatory = $false)]
         [switch] $SensitiveOnly
     )
 
@@ -68,6 +71,10 @@ function Request-ALZConfigurationValue {
         $schemaType = Get-SchemaProperty -SchemaInfo $SchemaInfo -PropertyName "type" -Default "string"
         $isRequired = Get-SchemaProperty -SchemaInfo $SchemaInfo -PropertyName "required" -Default $false
         $source = Get-SchemaProperty -SchemaInfo $SchemaInfo -PropertyName "source"
+
+        if ($Key -in @("management", "connectivity", "identity", "security")) {
+            $description = $description -replace "\b$([regex]::Escape($Key))(?=\s+subscription\b)", "$([char]27)[33m`$&$([char]27)[0m"
+        }
 
         # For sensitive inputs, check if value is set via environment variable
         $envVarValue = $null
@@ -101,6 +108,7 @@ function Request-ALZConfigurationValue {
 
         # Determine effective default (don't use placeholders as defaults)
         $effectiveDefault = if ($isPlaceholder) { "" } elseif ($isArray -and $hasPlaceholderItems) { @() } else { $CurrentValue }
+        $hasEffectiveDefault = $null -ne $effectiveDefault -and -not [string]::IsNullOrWhiteSpace($effectiveDefault)
 
         # Build base parameters for Read-MenuSelection
         $menuParams = @{
@@ -109,7 +117,7 @@ function Request-ALZConfigurationValue {
             Options           = @()
             DefaultValue      = $effectiveDefault
             AllowManualEntry  = $true
-            ManualEntryPrompt = "Enter value (press enter to accept default)"
+            ManualEntryPrompt = if ($hasEffectiveDefault) { "Enter value (press enter to accept default)" } else { "Enter value" }
             Type              = $schemaType
             IsRequired        = $isRequired
             RequiredMessage   = "This field is required. Please enter a value."
@@ -127,7 +135,42 @@ function Request-ALZConfigurationValue {
             $menuParams.ManualEntryPrompt = "Enter subscription ID"
             $menuParams.RequiredMessage = "This field is required. Please select a subscription."
             $menuParams.EmptyMessage = "No subscriptions found in Azure context."
-            if (-not $isRequired) {
+            $menuParams.DefaultOptionMarker = ""
+            if ($Key -eq "bootstrap_subscription_id" -and -not [string]::IsNullOrWhiteSpace($AzureContext.CurrentSubscriptionId)) {
+                $menuParams.DefaultValue = $AzureContext.CurrentSubscriptionId
+                $menuParams.DefaultOptionMarker = "current"
+            } elseif ($Key -in @("management", "connectivity", "identity", "security") -and [string]::IsNullOrWhiteSpace($effectiveDefault)) {
+                $subscriptionsWithNames = @($AzureContext.Subscriptions | ForEach-Object {
+                        $subscriptionName = if ($_.PSObject.Properties.Name -contains "name") {
+                            $_.name
+                        } else {
+                            $_.label -replace '\s+\([^)]+\)$', ''
+                        }
+                        [PSCustomObject]@{
+                            Name  = $subscriptionName
+                            Value = $_.value
+                        }
+                    })
+                # Prefer a friendly name match for workload-style keys like "management" or
+                # "connectivity" so the user is not forced to choose manually when the answer is obvious.
+                $exactMatches = @($subscriptionsWithNames | Where-Object { $_.Name -ieq $Key })
+                $wordMatchPattern = "(?<!\w)$([regex]::Escape($Key))(?!\w)"
+                $wordMatches = @($subscriptionsWithNames | Where-Object { $_.Name -match $wordMatchPattern })
+                if ($exactMatches.Count -eq 1) {
+                    $menuParams.DefaultValue = $exactMatches[0].Value
+                    $menuParams.DefaultOptionMarker = "matched"
+                } elseif ($wordMatches.Count -eq 1) {
+                    $menuParams.DefaultValue = $wordMatches[0].Value
+                    $menuParams.DefaultOptionMarker = "matched"
+                }
+                # Optional values can legitimately be skipped, so a no-match result falls back to
+                # manual entry instead of forcing a selection before the user decides to leave it blank.
+                if (-not $isRequired -and [string]::IsNullOrWhiteSpace($menuParams.DefaultValue)) {
+                    $menuParams.ManualEntryLabel = "Enter manually or don't supply"
+                    $menuParams.DefaultToManualEntry = $true
+                    $menuParams.DefaultValue = ""
+                }
+            } elseif (-not $isRequired -and [string]::IsNullOrWhiteSpace($effectiveDefault)) {
                 $menuParams.ManualEntryLabel = "Enter manually or don't supply"
                 $menuParams.DefaultToManualEntry = $true
                 $menuParams.DefaultValue = ""
@@ -138,12 +181,22 @@ function Request-ALZConfigurationValue {
             $menuParams.ManualEntryPrompt = "Enter management group ID"
             $menuParams.RequiredMessage = "This field is required. Please select a management group."
             $menuParams.EmptyMessage = "No management groups found in Azure context."
+            if ($Key -eq "root_parent_management_group_id" -and [string]::IsNullOrWhiteSpace($effectiveDefault) -and -not [string]::IsNullOrWhiteSpace($AzureContext.CurrentTenantId)) {
+                $menuParams.DefaultValue = $AzureContext.CurrentTenantId
+            }
         } elseif ($source -eq "azureRegion") {
             $menuParams.OptionsTitle = "Available regions (AZ = Availability Zone support):"
             $menuParams.Options = $AzureContext.Regions
             $menuParams.ManualEntryPrompt = "Enter region name (e.g., uksouth, eastus)"
             $menuParams.RequiredMessage = "This field is required. Please select a region."
             $menuParams.EmptyMessage = "No regions found in Azure context."
+            $azureDefaultRegion = [System.Environment]::GetEnvironmentVariable("AZURE_DEFAULTS_REGION")
+            if ([string]::IsNullOrWhiteSpace($effectiveDefault) -and -not [string]::IsNullOrWhiteSpace($azureDefaultRegion)) {
+                $regionOption = $AzureContext.Regions | Where-Object { $_.value -ieq $azureDefaultRegion } | Select-Object -First 1
+                if ($null -ne $regionOption) {
+                    $menuParams.DefaultValue = $regionOption.value
+                }
+            }
         } elseif ($schemaType -eq "boolean") {
             $menuParams.ManualEntryPrompt = "Enter value (true/false) (press enter to accept default)"
             $menuParams.DefaultValue = $effectiveDefault.ToString().ToLower()
@@ -264,6 +317,12 @@ function Request-ALZConfigurationValue {
                         }
                         $subCurrentValue = $currentValue[$subKey]
                         $subSchemaInfo = $nestedSchema.$subKey
+
+                        # For management-only scenario, only management is required
+                        if ($key -eq "subscription_ids" -and $ScenarioNumber -eq 5 -and $subKey -ne "management") {
+                            $subSchemaInfo = $subSchemaInfo.PSObject.Copy()
+                            $subSchemaInfo | Add-Member -MemberType NoteProperty -Name "required" -Value $false -Force
+                        }
 
                         $result = Read-InputValue -Key $subKey -CurrentValue $subCurrentValue -SchemaInfo $subSchemaInfo -DefaultDescription "$key - $subKey" -AzureContext $AzureContext
                         $subNewValue = $result.Value
@@ -407,9 +466,23 @@ function Request-ALZConfigurationValue {
                 # Walk original file lines, merge comments with serialized values
                 $originalLines = $inputsYamlContent -split "`n"
                 $resultLines = @()
+                $pendingSubKeys = @()
+                $currentParentKey = $null
 
                 foreach ($originalLine in $originalLines) {
                     $trimmedLine = $originalLine.TrimStart()
+
+                    # Flush pending sub-keys before any non-indented-data line
+                    if ($pendingSubKeys.Count -gt 0 -and -not ($originalLine -match '^\s+([\w_][\w_\-]*):')) {
+                        $parentSchemaInfo = Get-InputSchemaInfo -Key $currentParentKey -BootstrapSchema $bootstrapSchema -VcsSchema $vcsSchema
+                        $schemaOrder = @(($parentSchemaInfo.properties.PSObject.Properties.Name))
+                        foreach ($orderedKey in $schemaOrder) {
+                            $match = $pendingSubKeys | Where-Object { $_.KeyName -eq $orderedKey } | Select-Object -First 1
+                            if ($match) { $resultLines += $match.Line }
+                        }
+                        $pendingSubKeys = @()
+                        $currentParentKey = $null
+                    }
 
                     # Preserve blank lines, comment-only lines, and YAML document markers
                     if ([string]::IsNullOrWhiteSpace($originalLine) -or $trimmedLine.StartsWith('#') -or $trimmedLine -eq '---') {
@@ -422,6 +495,35 @@ function Request-ALZConfigurationValue {
                         $indent = $Matches[1]
                         $keyName = $Matches[2]
                         $lookupKey = "${indent}${keyName}"
+
+                        # Track parent key for nested values
+                        if ($indent -eq "") {
+                            $currentParentKey = if ($inputsConfig.Contains($keyName) -and $inputsConfig[$keyName] -is [System.Collections.IDictionary]) { $keyName } else { $null }
+                        }
+
+                        # Buffer nested keys for schema-order output
+                        if ($indent.Length -gt 0 -and $null -ne $currentParentKey) {
+                            $hashtableValue = $null
+                            foreach ($pKey in $inputsConfig.Keys) {
+                                if ($inputsConfig[$pKey] -is [System.Collections.IDictionary] -and $inputsConfig[$pKey].Contains($keyName)) {
+                                    $hashtableValue = $inputsConfig[$pKey][$keyName]
+                                    break
+                                }
+                            }
+
+                            # Comment out subscription_ids sub-keys with empty values
+                            if ($currentParentKey -eq "subscription_ids" -and $hashtableValue -is [string] -and [string]::IsNullOrEmpty($hashtableValue)) {
+                                $pendingSubKeys += @{ KeyName = $keyName; Line = "${indent}# ${keyName}: `"`"" }
+                            } else {
+                                $formattedValue = Format-YamlInlineValue -Value $hashtableValue
+                                $inlineComment = $null
+                                if ($originalLine -match '\S\s{2,}(#.*)$') { $inlineComment = $Matches[1] }
+                                $newLine = "${indent}${keyName}: $formattedValue"
+                                if ($inlineComment) { $newLine = "$newLine  $inlineComment" }
+                                $pendingSubKeys += @{ KeyName = $keyName; Line = $newLine }
+                            }
+                            continue
+                        }
 
                         # Extract inline comment from the original line
                         $inlineComment = $null
@@ -436,14 +538,6 @@ function Request-ALZConfigurationValue {
                             $hashtableValue = $null
                             if ($indent -eq "" -and $inputsConfig.Contains($keyName)) {
                                 $hashtableValue = $inputsConfig[$keyName]
-                            } elseif ($indent.Length -gt 0) {
-                                # Nested value - find the parent key
-                                foreach ($parentKey in $inputsConfig.Keys) {
-                                    if ($inputsConfig[$parentKey] -is [System.Collections.IDictionary] -and $inputsConfig[$parentKey].Contains($keyName)) {
-                                        $hashtableValue = $inputsConfig[$parentKey][$keyName]
-                                        break
-                                    }
-                                }
                             }
 
                             # Use the formatted value for the line
@@ -463,6 +557,16 @@ function Request-ALZConfigurationValue {
                     } else {
                         # Non-key data line (shouldn't normally happen), keep as-is
                         $resultLines += $originalLine
+                    }
+                }
+
+                # Flush any trailing pending sub-keys
+                if ($currentParentKey -and $pendingSubKeys.Count -gt 0) {
+                    $parentSchemaInfo = Get-InputSchemaInfo -Key $currentParentKey -BootstrapSchema $bootstrapSchema -VcsSchema $vcsSchema
+                    $schemaOrder = @(($parentSchemaInfo.properties.PSObject.Properties.Name))
+                    foreach ($orderedKey in $schemaOrder) {
+                        $match = $pendingSubKeys | Where-Object { $_.KeyName -eq $orderedKey } | Select-Object -First 1
+                        if ($match) { $resultLines += $match.Line }
                     }
                 }
 
