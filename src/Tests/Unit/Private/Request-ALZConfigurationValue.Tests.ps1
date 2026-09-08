@@ -27,10 +27,10 @@ InModuleScope 'ALZ' {
                 @'
 ---
 subscription_ids:
-  management: "management-id"
-  connectivity: ""
-  identity: ""
-  security: ""
+    management: "management-id"
+    connectivity: ""
+    identity: ""
+    security: ""
 '@ | Set-Content -Path $inputsYamlPath
 
                 Mock Get-AzureContext {
@@ -132,10 +132,10 @@ subscription_ids:
                 @'
 ---
 subscription_ids:
-  management: "management-id"
-  connectivity: "existing-connectivity-id"
-  identity: "existing-identity-id"
-  security: "existing-security-id"
+    management: "management-id"
+    connectivity: "existing-connectivity-id"
+    identity: "existing-identity-id"
+    security: "existing-security-id"
 '@ | Set-Content -Path $inputsYamlPath
 
                 Mock Get-AzureContext {
@@ -227,10 +227,10 @@ subscription_ids:
                 @'
 ---
 subscription_ids:
-  management: "management-id"
-  connectivity: "existing-connectivity-id"
-  identity: "existing-identity-id"
-  security: "existing-security-id"
+    management: "management-id"
+    connectivity: "existing-connectivity-id"
+    identity: "existing-identity-id"
+    security: "existing-security-id"
 '@ | Set-Content -Path $inputsYamlPath
 
                 Mock Get-AzureContext {
