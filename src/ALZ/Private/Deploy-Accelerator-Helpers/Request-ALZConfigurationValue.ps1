@@ -61,7 +61,8 @@ function Request-ALZConfigurationValue {
             $SchemaInfo,
             $Indent = "",
             $DefaultDescription = "No description available",
-            $AzureContext
+            $AzureContext,
+            [switch]$SkipSubscriptionDefault
         )
 
         # Use pre-fetched Azure context data from parent scope
@@ -139,7 +140,7 @@ function Request-ALZConfigurationValue {
             if ($Key -eq "bootstrap_subscription_id" -and -not [string]::IsNullOrWhiteSpace($AzureContext.CurrentSubscriptionId)) {
                 $menuParams.DefaultValue = $AzureContext.CurrentSubscriptionId
                 $menuParams.DefaultOptionMarker = "current"
-            } elseif ($Key -in @("management", "connectivity", "identity", "security") -and [string]::IsNullOrWhiteSpace($effectiveDefault)) {
+            } elseif ($Key -in @("management", "connectivity", "identity", "security") -and [string]::IsNullOrWhiteSpace($effectiveDefault) -and -not $SkipSubscriptionDefault) {
                 $subscriptionsWithNames = @($AzureContext.Subscriptions | ForEach-Object {
                         $subscriptionName = if ($_.PSObject.Properties.Name -contains "name") {
                             $_.name
@@ -318,14 +319,26 @@ function Request-ALZConfigurationValue {
                         $subCurrentValue = $currentValue[$subKey]
                         $subSchemaInfo = $nestedSchema.$subKey
 
+                        $skipSubscriptionDefault = (
+                            $key -eq "subscription_ids" `
+                                -and $ScenarioNumber -eq 5 `
+                                -and $subKey -ne "management"
+                        )
+
                         # For management-only scenario, only management is required
-                        if ($key -eq "subscription_ids" -and $ScenarioNumber -eq 5 -and $subKey -ne "management") {
+                        if ($skipSubscriptionDefault) {
                             $subSchemaInfo = $subSchemaInfo.PSObject.Copy()
                             $subSchemaInfo | Add-Member -MemberType NoteProperty -Name "required" -Value $false -Force
                         }
 
-                        $result = Read-InputValue -Key $subKey -CurrentValue $subCurrentValue -SchemaInfo $subSchemaInfo -DefaultDescription "$key - $subKey" -AzureContext $AzureContext
+                        $result = Read-InputValue -Key $subKey -CurrentValue $subCurrentValue -SchemaInfo $subSchemaInfo -DefaultDescription "$key - $subKey" -AzureContext $AzureContext -SkipSubscriptionDefault:$skipSubscriptionDefault
                         $subNewValue = $result.Value
+
+                        if ($skipSubscriptionDefault -and [string]::IsNullOrWhiteSpace($subNewValue)) {
+                            $currentValue.Remove($subKey)
+                            $inputsUpdated = $true
+                            continue
+                        }
 
                         if ($subNewValue -ne $subCurrentValue) {
                             $currentValue[$subKey] = [string]$subNewValue
@@ -511,17 +524,12 @@ function Request-ALZConfigurationValue {
                                 }
                             }
 
-                            # Comment out subscription_ids sub-keys with empty values
-                            if ($currentParentKey -eq "subscription_ids" -and $hashtableValue -is [string] -and [string]::IsNullOrEmpty($hashtableValue)) {
-                                $pendingSubKeys += @{ KeyName = $keyName; Line = "${indent}# ${keyName}: `"`"" }
-                            } else {
-                                $formattedValue = Format-YamlInlineValue -Value $hashtableValue
-                                $inlineComment = $null
-                                if ($originalLine -match '\S\s{2,}(#.*)$') { $inlineComment = $Matches[1] }
-                                $newLine = "${indent}${keyName}: $formattedValue"
-                                if ($inlineComment) { $newLine = "$newLine  $inlineComment" }
-                                $pendingSubKeys += @{ KeyName = $keyName; Line = $newLine }
-                            }
+                            $formattedValue = Format-YamlInlineValue -Value $hashtableValue
+                            $inlineComment = $null
+                            if ($originalLine -match '\S\s{2,}(#.*)$') { $inlineComment = $Matches[1] }
+                            $newLine = "${indent}${keyName}: $formattedValue"
+                            if ($inlineComment) { $newLine = "$newLine  $inlineComment" }
+                            $pendingSubKeys += @{ KeyName = $keyName; Line = $newLine }
                             continue
                         }
 
