@@ -224,6 +224,24 @@ InModuleScope 'ALZ' {
             $result.ArchitectureFilePath | Should -Be 'lib/architecture_definitions/contoso.alz_architecture_definition.yaml'
         }
 
+        It 'ignores architecture names inside heredoc strings in the starter code' {
+            Add-TestFile -Path (Join-Path $starterPath 'variables.docs.tf') -Content "variable `"example`" {`n  description = <<DESCRIPTION`n  Example:`n  architecture_name = `"old`"`n  DESCRIPTION`n  type = string`n}"
+            Add-TestFile -Path (Join-Path $userLibPath 'architecture_definitions/contoso.alz_architecture_definition.yaml') -Content 'name: alz_custom'
+
+            $result = Resolve-TerraformArchitectureFile -starterModulePath $starterPath -starterAdditionalFiles @($userLibPath) -defaultArchitectureFilePath $defaultPath
+
+            $result.ArchitectureFilePath | Should -Be 'lib/architecture_definitions/contoso.alz_architecture_definition.yaml'
+        }
+
+        It 'counts destinations that differ only in letter case as separate files' {
+            $commonLibPath = Join-Path $root 'common/lib'
+            Add-TestFile -Path (Join-Path $commonLibPath 'architecture_definitions/Contoso.alz_architecture_definition.yaml') -Content 'name: alz_custom'
+            Add-TestFile -Path (Join-Path $userLibPath 'architecture_definitions/contoso.alz_architecture_definition.yaml') -Content 'name: alz_custom'
+
+            { Resolve-TerraformArchitectureFile -starterModulePath $starterPath -starterAdditionalFiles @($commonLibPath, $userLibPath) -defaultArchitectureFilePath $defaultPath } |
+                Should -Throw '*more than one architecture definition file*'
+        }
+
         It 'warns when the default file is missing and nothing replaces it' {
             Remove-Item -Path $starterDefaultFile -Force
 

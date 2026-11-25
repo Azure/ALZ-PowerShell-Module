@@ -78,9 +78,9 @@ function Resolve-TerraformArchitectureFile {
         return Complete-WithoutChange
     }
 
-    $copiedArchitectureFiles = [ordered]@{}
+    $copiedArchitectureFiles = [System.Collections.Specialized.OrderedDictionary]::new([System.StringComparer]::Ordinal)
     foreach ($userArchitectureFile in $userArchitectureFiles) {
-        $copiedArchitectureFiles[$userArchitectureFile.DestinationPath.ToLowerInvariant()] = $userArchitectureFile
+        $copiedArchitectureFiles[$userArchitectureFile.DestinationPath] = $userArchitectureFile
     }
     $userArchitectureFiles = @($copiedArchitectureFiles.Values)
 
@@ -96,7 +96,11 @@ function Resolve-TerraformArchitectureFile {
 
     $defaultDefinition = if ($defaultFileExists) { Get-ArchitectureDefinition -path $defaultFileFullPath } else { $null }
 
-    $starterTerraform = @(Get-ChildItem -LiteralPath $starterModulePath -Filter '*.tf' -File -ErrorAction SilentlyContinue | ForEach-Object { [regex]::Replace((Get-Content -LiteralPath $_.FullName -Raw), '(?s)/\*.*?\*/', '') })
+    $starterTerraform = @(Get-ChildItem -LiteralPath $starterModulePath -Filter '*.tf' -File -ErrorAction SilentlyContinue | ForEach-Object {
+            $terraform = Get-Content -LiteralPath $_.FullName -Raw
+            $terraform = [regex]::Replace($terraform, '(?ms)<<-?\s*([A-Za-z_][A-Za-z0-9_]*)\s*$.*?^\s*\1\s*$', '')
+            [regex]::Replace($terraform, '(?s)/\*.*?\*/', '')
+        })
     $fixedNames = @($starterTerraform | ForEach-Object { [regex]::Matches($_, '(?m)^\s*architecture_name\s*=\s*"([^"$]+)"\s*(#.*|//.*)?$') } | ForEach-Object { $_.Groups[1].Value } | Select-Object -Unique)
     $optionalDefaultNames = @($starterTerraform | ForEach-Object { [regex]::Matches($_, '(?m)^\s*architecture_name\s*=\s*optional\(\s*string\s*,\s*"([^"$]+)"\s*\)') } | ForEach-Object { $_.Groups[1].Value } | Select-Object -Unique)
 
