@@ -193,11 +193,23 @@ function New-Bootstrap {
                 $architectureName = $inputConfig.management_group_settings.Value.architecture_name
             }
 
+            $existingRootManagementGroupId = ""
+            $bootstrapStatePath = Join-Path -Path $bootstrapModulePath -ChildPath "terraform.tfstate"
+            if (Test-Path -LiteralPath $bootstrapStatePath) {
+                try {
+                    $bootstrapState = Get-Content -LiteralPath $bootstrapStatePath -Raw | ConvertFrom-Json
+                    $existingRootManagementGroupId = @($bootstrapState.resources | Where-Object { $_.type -eq "azapi_resource" -and $_.name -eq "intermediate_root_management_group" } | ForEach-Object { $_.instances } | ForEach-Object { $_.attributes.name }) | Select-Object -First 1
+                } catch {
+                    Write-Verbose "Could not read the bootstrap state at ${bootstrapStatePath}: $_"
+                }
+            }
+
             $architectureFile = Resolve-TerraformArchitectureFile `
                 -starterModulePath $starterRootModuleFolderPath `
                 -starterAdditionalFiles $starterAdditionalFiles `
                 -defaultArchitectureFilePath $bootstrapParameters.$architectureFilePathInputName.DefaultValue `
-                -architectureName $architectureName
+                -architectureName $architectureName `
+                -existingRootManagementGroupId $existingRootManagementGroupId
 
             if ($null -ne $architectureFile.ArchitectureFilePath) {
                 $inputConfig | Add-Member -NotePropertyName $architectureFilePathInputName -NotePropertyValue @{

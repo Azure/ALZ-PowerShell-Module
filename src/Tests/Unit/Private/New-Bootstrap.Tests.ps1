@@ -125,5 +125,48 @@ InModuleScope 'ALZ' {
             (Get-Content $bootstrapTfvarsPath -Raw | ConvertFrom-Json).terraform_architecture_file_path | Should -Be 'lib/architecture_definitions/contoso.alz_architecture_definition.yaml'
             Test-Path $starterDefaultFile | Should -BeFalse
         }
+
+        It 'keeps the default when the architecture file path is set as a TF_VAR environment variable' {
+            Add-TestFile -Path (Join-Path $userLibPath 'architecture_definitions/contoso.alz_architecture_definition.yaml') -Content 'name: alz_custom'
+            $env:TF_VAR_terraform_architecture_file_path = 'lib/architecture_definitions/explicit.alz_architecture_definition.yaml'
+            try {
+                Invoke-TestBootstrap -InputConfig (Get-TestInputConfig)
+            } finally {
+                Remove-Item -Path Env:\TF_VAR_terraform_architecture_file_path
+            }
+
+            (Get-Content $bootstrapTfvarsPath -Raw | ConvertFrom-Json).PSObject.Properties.Name | Should -Not -Contain 'terraform_architecture_file_path'
+            Test-Path $starterDefaultFile | Should -BeTrue
+        }
+
+        It 'uses the starter default architecture name when the inputs omit it' {
+            Add-TestFile -Path (Join-Path $userLibPath 'architecture_definitions/contoso.alz_architecture_definition.yaml') -Content 'name: alz_custom'
+            $inputConfig = Get-TestInputConfig
+            $inputConfig | Add-Member -NotePropertyName 'management_group_settings' -NotePropertyValue @{ Value = [PSCustomObject]@{ location = 'uksouth' }; Source = '.tfvars'; Sensitive = $false }
+
+            Invoke-TestBootstrap -InputConfig $inputConfig
+
+            (Get-Content $bootstrapTfvarsPath -Raw | ConvertFrom-Json).terraform_architecture_file_path | Should -Be 'lib/architecture_definitions/contoso.alz_architecture_definition.yaml'
+        }
+
+        It 'stops before deleting anything when two user files declare the same architecture' {
+            Add-TestFile -Path (Join-Path $userLibPath 'architecture_definitions/contoso.alz_architecture_definition.yaml') -Content 'name: alz_custom'
+            Add-TestFile -Path (Join-Path $userLibPath 'architecture_definitions/fabrikam.alz_architecture_definition.yaml') -Content 'name: alz_custom'
+
+            { Invoke-TestBootstrap -InputConfig (Get-TestInputConfig) } | Should -Throw '*more than one architecture definition file*'
+
+            Test-Path $starterDefaultFile | Should -BeTrue
+            Should -Invoke -CommandName Invoke-Terraform -Times 0
+        }
+
+        It 'keeps the default when the bootstrap state manages a different root management group' {
+            Add-TestFile -Path (Join-Path $userLibPath 'architecture_definitions/contoso.alz_architecture_definition.yaml') -Content "name: alz_custom`nmanagement_groups:`n  - id: contoso`n    parent_id: null"
+            Add-TestFile -Path (Join-Path $bootstrapTargetPath 'v1.0.0/alz/local/terraform.tfstate') -Content '{ "version": 4, "resources": [ { "module": "module.azure[0]", "mode": "managed", "type": "azapi_resource", "name": "intermediate_root_management_group", "instances": [ { "index_key": 0, "attributes": { "name": "alz" } } ] } ] }'
+
+            Invoke-TestBootstrap -InputConfig (Get-TestInputConfig)
+
+            (Get-Content $bootstrapTfvarsPath -Raw | ConvertFrom-Json).terraform_architecture_file_path | Should -Be 'lib/architecture_definitions/alz_custom.alz_architecture_definition.yaml'
+            Test-Path $starterDefaultFile | Should -BeTrue
+        }
     }
 }
