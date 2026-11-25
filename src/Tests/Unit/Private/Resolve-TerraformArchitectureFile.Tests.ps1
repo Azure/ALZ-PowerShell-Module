@@ -30,7 +30,7 @@ InModuleScope 'ALZ' {
             $userLibPath = Join-Path $root 'config/lib'
             $starterDefaultFile = Join-Path $starterPath $defaultPath
             Add-TestFile -Path $starterDefaultFile -Content "name: alz_custom`nmanagement_groups:`n  - id: alz`n    parent_id: null"
-            Add-TestFile -Path (Join-Path $starterPath 'variables.management.tf') -Content 'variable "management_group_settings" { type = object({ architecture_name = optional(string, "alz_custom") }) }'
+            Add-TestFile -Path (Join-Path $starterPath 'variables.management.tf') -Content "variable `"management_group_settings`" {`n  type = object({`n    architecture_name = optional(string, `"alz_custom`")`n  })`n}"
             New-Item -Path $userLibPath -ItemType Directory -Force | Out-Null
         }
 
@@ -149,16 +149,13 @@ InModuleScope 'ALZ' {
             $result.ArchitectureFilePath | Should -BeNullOrEmpty
         }
 
-        It 'compares the default path with the case rules of the file system' {
+        It 'treats a default path in another letter case as the default path' {
             Add-TestFile -Path (Join-Path $userLibPath 'architecture_definitions/ALZ_custom.alz_architecture_definition.yaml') -Content 'name: alz_custom'
 
             $result = Resolve-TerraformArchitectureFile -starterModulePath $starterPath -starterAdditionalFiles @($userLibPath) -defaultArchitectureFilePath $defaultPath
 
-            if ($IsWindows) {
-                $result.ArchitectureFilePath | Should -BeNullOrEmpty
-            } else {
-                $result.ArchitectureFilePath | Should -Be 'lib/architecture_definitions/ALZ_custom.alz_architecture_definition.yaml'
-            }
+            $result.ArchitectureFilePath | Should -BeNullOrEmpty
+            $result.DefaultFileToRemove | Should -BeNullOrEmpty
         }
 
         It 'skips files that cannot be read or whose name is not text' {
@@ -199,6 +196,32 @@ InModuleScope 'ALZ' {
 
             $result.ArchitectureFilePath | Should -Be 'lib/architecture_definitions/contoso.alz_architecture_definition.yaml'
             $result.DefaultFileToRemove | Should -Be $starterDefaultFile
+        }
+
+        It 'stops when neither the selected file nor the default uses the root management group in the bootstrap state' {
+            Add-TestFile -Path (Join-Path $userLibPath 'architecture_definitions/contoso.alz_architecture_definition.yaml') -Content "name: alz_custom`nmanagement_groups:`n  - id: fabrikam`n    parent_id: null"
+
+            { Resolve-TerraformArchitectureFile -starterModulePath $starterPath -starterAdditionalFiles @($userLibPath) -defaultArchitectureFilePath $defaultPath -existingRootManagementGroupId 'contoso' } |
+                Should -Throw "*manages the intermediate root management group 'contoso'*'fabrikam'*terraform_architecture_file_path*"
+        }
+
+        It 'ignores architecture names in comments and expressions in the starter code' {
+            Add-TestFile -Path (Join-Path $starterPath 'main.tf') -Content "/*`n  architecture_name = `"old`"`n*/`nlocals {`n  architecture_name = `"old`" == var.variant ? `"contoso`" : `"alz_custom`"`n}"
+            Add-TestFile -Path (Join-Path $userLibPath 'architecture_definitions/contoso.alz_architecture_definition.yaml') -Content 'name: alz_custom'
+
+            $result = Resolve-TerraformArchitectureFile -starterModulePath $starterPath -starterAdditionalFiles @($userLibPath) -defaultArchitectureFilePath $defaultPath
+
+            $result.ArchitectureFilePath | Should -Be 'lib/architecture_definitions/contoso.alz_architecture_definition.yaml'
+        }
+
+        It 'counts a file once when two lib folders copy it to the same destination' {
+            $commonLibPath = Join-Path $root 'common/lib'
+            Add-TestFile -Path (Join-Path $commonLibPath 'architecture_definitions/contoso.alz_architecture_definition.yaml') -Content 'name: alz_custom'
+            Add-TestFile -Path (Join-Path $userLibPath 'architecture_definitions/contoso.alz_architecture_definition.yaml') -Content 'name: alz_custom'
+
+            $result = Resolve-TerraformArchitectureFile -starterModulePath $starterPath -starterAdditionalFiles @($commonLibPath, $userLibPath) -defaultArchitectureFilePath $defaultPath
+
+            $result.ArchitectureFilePath | Should -Be 'lib/architecture_definitions/contoso.alz_architecture_definition.yaml'
         }
 
         It 'warns when the default file is missing and nothing replaces it' {

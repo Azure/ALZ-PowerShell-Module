@@ -22,7 +22,7 @@ function Resolve-TerraformArchitectureFile {
         DefaultFileToRemove  = $null
     }
 
-    $pathComparison = if ($IsWindows) { [System.StringComparison]::OrdinalIgnoreCase } else { [System.StringComparison]::Ordinal }
+    $pathComparison = [System.StringComparison]::OrdinalIgnoreCase
     $defaultArchitectureFilePath = $defaultArchitectureFilePath.Replace('\', '/')
     $libraryFolderName = $defaultArchitectureFilePath.Split('/')[0]
     $defaultFileFullPath = Join-Path -Path $starterModulePath -ChildPath $defaultArchitectureFilePath
@@ -60,7 +60,7 @@ function Resolve-TerraformArchitectureFile {
             continue
         }
         $folderName = ([System.IO.DirectoryInfo]::new($additionalFile)).Name
-        if (-not [string]::Equals($folderName, $libraryFolderName, $pathComparison)) {
+        if ($folderName -cne $libraryFolderName) {
             continue
         }
         $folderPath = (Resolve-Path -LiteralPath $additionalFile).Path
@@ -78,6 +78,12 @@ function Resolve-TerraformArchitectureFile {
         return Complete-WithoutChange
     }
 
+    $copiedArchitectureFiles = [ordered]@{}
+    foreach ($userArchitectureFile in $userArchitectureFiles) {
+        $copiedArchitectureFiles[$userArchitectureFile.DestinationPath.ToLowerInvariant()] = $userArchitectureFile
+    }
+    $userArchitectureFiles = @($copiedArchitectureFiles.Values)
+
     if (@($userArchitectureFiles | Where-Object { [string]::Equals($_.DestinationPath, $defaultArchitectureFilePath, $pathComparison) }).Count -gt 0) {
         return $result
     }
@@ -90,9 +96,9 @@ function Resolve-TerraformArchitectureFile {
 
     $defaultDefinition = if ($defaultFileExists) { Get-ArchitectureDefinition -path $defaultFileFullPath } else { $null }
 
-    $starterArchitectureNames = @(Get-ChildItem -LiteralPath $starterModulePath -Filter '*.tf' -File -ErrorAction SilentlyContinue | ForEach-Object { Get-Content -LiteralPath $_.FullName -Raw })
-    $fixedNames = @($starterArchitectureNames | ForEach-Object { [regex]::Matches($_, '(?m)^\s*architecture_name\s*=\s*"([^"$]+)"') } | ForEach-Object { $_.Groups[1].Value } | Select-Object -Unique)
-    $optionalDefaultNames = @($starterArchitectureNames | ForEach-Object { [regex]::Matches($_, 'architecture_name\s*=\s*optional\(\s*string\s*,\s*"([^"$]+)"\s*\)') } | ForEach-Object { $_.Groups[1].Value } | Select-Object -Unique)
+    $starterTerraform = @(Get-ChildItem -LiteralPath $starterModulePath -Filter '*.tf' -File -ErrorAction SilentlyContinue | ForEach-Object { [regex]::Replace((Get-Content -LiteralPath $_.FullName -Raw), '(?s)/\*.*?\*/', '') })
+    $fixedNames = @($starterTerraform | ForEach-Object { [regex]::Matches($_, '(?m)^\s*architecture_name\s*=\s*"([^"$]+)"\s*(#.*|//.*)?$') } | ForEach-Object { $_.Groups[1].Value } | Select-Object -Unique)
+    $optionalDefaultNames = @($starterTerraform | ForEach-Object { [regex]::Matches($_, '(?m)^\s*architecture_name\s*=\s*optional\(\s*string\s*,\s*"([^"$]+)"\s*\)') } | ForEach-Object { $_.Groups[1].Value } | Select-Object -Unique)
 
     $targetArchitectureName = $null
     if ($fixedNames.Count -eq 1) {
@@ -139,6 +145,11 @@ function Resolve-TerraformArchitectureFile {
     $selected = $candidates[0]
 
     if (-not [string]::IsNullOrWhiteSpace($existingRootManagementGroupId) -and $selected.RootManagementGroupId -cne $existingRootManagementGroupId) {
+        if ($null -eq $defaultDefinition -or $defaultDefinition.RootManagementGroupId -cne $existingRootManagementGroupId) {
+            $message = "Your bootstrap manages the intermediate root management group '$existingRootManagementGroupId', but '$($selected.DestinationPath)' uses '$($selected.RootManagementGroupId)' and '$defaultArchitectureFilePath' does not use it either. Set 'terraform_architecture_file_path' in your inputs to choose the architecture file for the bootstrap."
+            Write-ToConsoleLog $message -IsError
+            throw $message
+        }
         Write-ToConsoleLog "Your bootstrap manages the intermediate root management group '$existingRootManagementGroupId'. Using '$($selected.DestinationPath)' would change it to '$($selected.RootManagementGroupId)', so the bootstrap will keep using '$defaultArchitectureFilePath'. Set 'terraform_architecture_file_path' in your inputs to switch." -IsWarning
         return Complete-WithoutChange
     }

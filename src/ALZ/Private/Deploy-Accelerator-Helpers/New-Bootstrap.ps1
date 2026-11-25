@@ -186,38 +186,50 @@ function New-Bootstrap {
         if ($iac -eq "terraform" -and $hasStarter -and
             $bootstrapParameters.PSObject.Properties.Name -contains $architectureFilePathInputName -and
             $inputConfig.PSObject.Properties.Name -notcontains $architectureFilePathInputName -and
-            $null -eq [Environment]::GetEnvironmentVariable("TF_VAR_$architectureFilePathInputName")) {
+            $null -eq [Environment]::GetEnvironmentVariable("TF_VAR_$architectureFilePathInputName") -and
+            $null -eq [Environment]::GetEnvironmentVariable("TF_VAR_management_group_settings")) {
 
             $architectureName = ""
             if ($inputConfig.PSObject.Properties.Name -contains "management_group_settings" -and $null -ne $inputConfig.management_group_settings.Value.architecture_name) {
                 $architectureName = $inputConfig.management_group_settings.Value.architecture_name
             }
 
-            $existingRootManagementGroupId = ""
+            $existingRootManagementGroupIds = @()
+            $bootstrapStateReadable = $true
             $bootstrapStatePath = Join-Path -Path $bootstrapModulePath -ChildPath "terraform.tfstate"
             if (Test-Path -LiteralPath $bootstrapStatePath) {
                 try {
                     $bootstrapState = Get-Content -LiteralPath $bootstrapStatePath -Raw | ConvertFrom-Json
-                    $existingRootManagementGroupId = @($bootstrapState.resources | Where-Object { $_.type -eq "azapi_resource" -and $_.name -eq "intermediate_root_management_group" } | ForEach-Object { $_.instances } | ForEach-Object { $_.attributes.name }) | Select-Object -First 1
+                    $existingRootManagementGroupIds = @($bootstrapState.resources |
+                            Where-Object { $_.mode -eq "managed" -and $_.type -eq "azapi_resource" -and $_.name -eq "intermediate_root_management_group" } |
+                            ForEach-Object { $_.instances } |
+                            Where-Object { $null -eq $_.PSObject.Properties["deposed"] } |
+                            ForEach-Object { $_.attributes.name } |
+                            Select-Object -Unique)
                 } catch {
                     Write-Verbose "Could not read the bootstrap state at ${bootstrapStatePath}: $_"
+                    $bootstrapStateReadable = $false
                 }
             }
 
-            $architectureFile = Resolve-TerraformArchitectureFile `
-                -starterModulePath $starterRootModuleFolderPath `
-                -starterAdditionalFiles $starterAdditionalFiles `
-                -defaultArchitectureFilePath $bootstrapParameters.$architectureFilePathInputName.DefaultValue `
-                -architectureName $architectureName `
-                -existingRootManagementGroupId $existingRootManagementGroupId
+            if (-not $bootstrapStateReadable -or $existingRootManagementGroupIds.Count -gt 1) {
+                Write-ToConsoleLog "Could not tell which intermediate root management group the bootstrap state at $bootstrapStatePath manages, so the bootstrap will use '$($bootstrapParameters.$architectureFilePathInputName.DefaultValue)'. Set '$architectureFilePathInputName' in your inputs to choose an architecture file." -IsWarning
+            } else {
+                $architectureFile = Resolve-TerraformArchitectureFile `
+                    -starterModulePath $starterRootModuleFolderPath `
+                    -starterAdditionalFiles $starterAdditionalFiles `
+                    -defaultArchitectureFilePath $bootstrapParameters.$architectureFilePathInputName.DefaultValue `
+                    -architectureName $architectureName `
+                    -existingRootManagementGroupId ($existingRootManagementGroupIds | Select-Object -First 1)
 
-            if ($null -ne $architectureFile.ArchitectureFilePath) {
-                $inputConfig | Add-Member -NotePropertyName $architectureFilePathInputName -NotePropertyValue @{
-                    Value     = $architectureFile.ArchitectureFilePath
-                    Source    = "calculated"
-                    Sensitive = $false
+                if ($null -ne $architectureFile.ArchitectureFilePath) {
+                    $inputConfig | Add-Member -NotePropertyName $architectureFilePathInputName -NotePropertyValue @{
+                        Value     = $architectureFile.ArchitectureFilePath
+                        Source    = "calculated"
+                        Sensitive = $false
+                    }
+                    $architectureFileToRemove = $architectureFile.DefaultFileToRemove
                 }
-                $architectureFileToRemove = $architectureFile.DefaultFileToRemove
             }
         }
 
