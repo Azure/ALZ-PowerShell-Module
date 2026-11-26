@@ -194,42 +194,20 @@ function New-Bootstrap {
                 $architectureName = $inputConfig.management_group_settings.Value.architecture_name
             }
 
-            $existingRootManagementGroupIds = @()
-            $bootstrapStateReadable = $true
-            $bootstrapStatePath = Join-Path -Path $bootstrapModulePath -ChildPath "terraform.tfstate"
-            if (Test-Path -LiteralPath $bootstrapStatePath) {
-                try {
-                    $bootstrapState = Get-Content -LiteralPath $bootstrapStatePath -Raw | ConvertFrom-Json
-                    $existingRootManagementGroupIds = @($bootstrapState.resources |
-                            Where-Object { $_.mode -eq "managed" -and $_.type -eq "azapi_resource" -and $_.name -eq "intermediate_root_management_group" } |
-                            ForEach-Object { $_.instances } |
-                            Where-Object { $null -eq $_.PSObject.Properties["deposed"] } |
-                            ForEach-Object { $_.attributes.name } |
-                            Select-Object -Unique)
-                } catch {
-                    Write-Verbose "Could not read the bootstrap state at ${bootstrapStatePath}: $_"
-                    $bootstrapStateReadable = $false
-                }
-            }
+            $architectureFile = Resolve-TerraformArchitectureFile `
+                -starterModulePath $starterRootModuleFolderPath `
+                -starterAdditionalFiles $starterAdditionalFiles `
+                -defaultArchitectureFilePath $bootstrapParameters.$architectureFilePathInputName.DefaultValue `
+                -architectureName $architectureName `
+                -bootstrapStatePath (Join-Path -Path $bootstrapModulePath -ChildPath "terraform.tfstate")
 
-            if (-not $bootstrapStateReadable -or $existingRootManagementGroupIds.Count -gt 1) {
-                Write-ToConsoleLog "Could not tell which intermediate root management group the bootstrap state at $bootstrapStatePath manages, so the bootstrap will use '$($bootstrapParameters.$architectureFilePathInputName.DefaultValue)'. Set '$architectureFilePathInputName' in your inputs to choose an architecture file." -IsWarning
-            } else {
-                $architectureFile = Resolve-TerraformArchitectureFile `
-                    -starterModulePath $starterRootModuleFolderPath `
-                    -starterAdditionalFiles $starterAdditionalFiles `
-                    -defaultArchitectureFilePath $bootstrapParameters.$architectureFilePathInputName.DefaultValue `
-                    -architectureName $architectureName `
-                    -existingRootManagementGroupId ($existingRootManagementGroupIds | Select-Object -First 1)
-
-                if ($null -ne $architectureFile.ArchitectureFilePath) {
-                    $inputConfig | Add-Member -NotePropertyName $architectureFilePathInputName -NotePropertyValue @{
-                        Value     = $architectureFile.ArchitectureFilePath
-                        Source    = "calculated"
-                        Sensitive = $false
-                    }
-                    $architectureFileToRemove = $architectureFile.DefaultFileToRemove
+            if ($null -ne $architectureFile.ArchitectureFilePath) {
+                $inputConfig | Add-Member -NotePropertyName $architectureFilePathInputName -NotePropertyValue @{
+                    Value     = $architectureFile.ArchitectureFilePath
+                    Source    = "calculated"
+                    Sensitive = $false
                 }
+                $architectureFileToRemove = $architectureFile.DefaultFileToRemove
             }
         }
 
@@ -335,9 +313,9 @@ function New-Bootstrap {
             }
         }
 
-        if ($null -ne $architectureFileToRemove -and (Test-Path $architectureFileToRemove)) {
+        if ($null -ne $architectureFileToRemove -and (Test-Path -LiteralPath $architectureFileToRemove)) {
             Write-ToConsoleLog "Removing the starter architecture file $architectureFileToRemove because your file '$($inputConfig.terraform_architecture_file_path.Value)' defines the same architecture."
-            Remove-Item -Path $architectureFileToRemove -Force
+            Remove-Item -LiteralPath $architectureFileToRemove -Force
         }
 
         # Running terraform init and apply

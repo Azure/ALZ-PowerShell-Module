@@ -139,7 +139,7 @@ InModuleScope 'ALZ' {
             Test-Path $starterDefaultFile | Should -BeTrue
         }
 
-        It 'uses the starter default architecture name when the inputs omit it' {
+        It 'uses the default architecture file name when the inputs omit the architecture name' {
             Add-TestFile -Path (Join-Path $userLibPath 'architecture_definitions/contoso.alz_architecture_definition.yaml') -Content 'name: alz_custom'
             $inputConfig = Get-TestInputConfig
             $inputConfig | Add-Member -NotePropertyName 'management_group_settings' -NotePropertyValue @{ Value = [PSCustomObject]@{ location = 'uksouth' }; Source = '.tfvars'; Sensitive = $false }
@@ -186,6 +186,40 @@ InModuleScope 'ALZ' {
 
             (Get-Content $bootstrapTfvarsPath -Raw | ConvertFrom-Json).terraform_architecture_file_path | Should -Be 'lib/architecture_definitions/alz_custom.alz_architecture_definition.yaml'
             Should -Invoke -CommandName Write-ToConsoleLog -ParameterFilter { $IsWarning -and "$Messages" -like '*Could not tell which intermediate root management group*' }
+        }
+
+        It 'keeps the default and warns when the bootstrap state cannot be read' {
+            Add-TestFile -Path (Join-Path $userLibPath 'architecture_definitions/contoso.alz_architecture_definition.yaml') -Content "name: alz_custom`nmanagement_groups:`n  - id: contoso`n    parent_id: null"
+            Add-TestFile -Path (Join-Path $bootstrapTargetPath 'v1.0.0/alz/local/terraform.tfstate') -Content '{ "version": 4, "resources": ['
+
+            Invoke-TestBootstrap -InputConfig (Get-TestInputConfig)
+
+            (Get-Content $bootstrapTfvarsPath -Raw | ConvertFrom-Json).terraform_architecture_file_path | Should -Be 'lib/architecture_definitions/alz_custom.alz_architecture_definition.yaml'
+            Test-Path $starterDefaultFile | Should -BeTrue
+            Should -Invoke -CommandName Write-ToConsoleLog -ParameterFilter { $IsWarning -and "$Messages" -like '*Could not tell which intermediate root management group*' }
+            Should -Invoke -CommandName Invoke-Terraform -Times 1
+        }
+
+        It 'keeps the default and warns when the bootstrap state is empty' {
+            Add-TestFile -Path (Join-Path $userLibPath 'architecture_definitions/contoso.alz_architecture_definition.yaml') -Content "name: alz_custom`nmanagement_groups:`n  - id: contoso`n    parent_id: null"
+            New-Item -Path (Join-Path $bootstrapTargetPath 'v1.0.0/alz/local/terraform.tfstate') -ItemType File -Force | Out-Null
+
+            Invoke-TestBootstrap -InputConfig (Get-TestInputConfig)
+
+            (Get-Content $bootstrapTfvarsPath -Raw | ConvertFrom-Json).terraform_architecture_file_path | Should -Be 'lib/architecture_definitions/alz_custom.alz_architecture_definition.yaml'
+            Test-Path $starterDefaultFile | Should -BeTrue
+            Should -Invoke -CommandName Write-ToConsoleLog -ParameterFilter { $IsWarning -and "$Messages" -like '*Could not tell which intermediate root management group*' }
+        }
+
+        It 'does not read the bootstrap state when the user lib has no architecture file' {
+            Add-TestFile -Path (Join-Path $userLibPath 'archetype_definitions/root_custom.alz_archetype_override.yaml') -Content 'name: root_custom'
+            Add-TestFile -Path (Join-Path $bootstrapTargetPath 'v1.0.0/alz/local/terraform.tfstate') -Content '{ "version": 4, "resources": ['
+
+            Invoke-TestBootstrap -InputConfig (Get-TestInputConfig)
+
+            (Get-Content $bootstrapTfvarsPath -Raw | ConvertFrom-Json).terraform_architecture_file_path | Should -Be 'lib/architecture_definitions/alz_custom.alz_architecture_definition.yaml'
+            Test-Path $starterDefaultFile | Should -BeTrue
+            Should -Invoke -CommandName Write-ToConsoleLog -Times 0 -ParameterFilter { $IsWarning }
         }
 
         It 'keeps the default when management_group_settings is set as a TF_VAR environment variable' {

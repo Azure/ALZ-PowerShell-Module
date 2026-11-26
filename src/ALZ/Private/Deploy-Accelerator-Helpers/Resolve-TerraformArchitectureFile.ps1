@@ -14,7 +14,7 @@ function Resolve-TerraformArchitectureFile {
         [string] $architectureName = "",
 
         [Parameter(Mandatory = $false)]
-        [string] $existingRootManagementGroupId = ""
+        [string] $bootstrapStatePath = ""
     )
 
     $result = [PSCustomObject]@{
@@ -49,7 +49,7 @@ function Resolve-TerraformArchitectureFile {
 
     function Complete-WithoutChange {
         if (-not $defaultFileExists) {
-            Write-ToConsoleLog "The bootstrap will read '$defaultArchitectureFilePath', but it is missing from the starter module at $starterModulePath. If an earlier run removed it, run again with -replaceFiles or set 'terraform_architecture_file_path' in your inputs." -IsWarning
+            Write-ToConsoleLog "The bootstrap will read '$defaultArchitectureFilePath', but it is missing from the starter module at $starterModulePath. If an earlier run removed it, add your architecture file to your lib folder at '$defaultArchitectureFilePath' or set 'terraform_architecture_file_path' in your inputs." -IsWarning
         }
         return $result
     }
@@ -147,6 +147,34 @@ function Resolve-TerraformArchitectureFile {
     }
 
     $selected = $candidates[0]
+
+    $existingRootManagementGroupIds = @()
+    if (-not [string]::IsNullOrWhiteSpace($bootstrapStatePath) -and (Test-Path -LiteralPath $bootstrapStatePath -PathType Leaf)) {
+        try {
+            $existingRootManagementGroupIds = & {
+                $ErrorActionPreference = 'Stop'
+                $bootstrapState = Get-Content -LiteralPath $bootstrapStatePath -Raw | ConvertFrom-Json -AsHashtable
+                if ($bootstrapState -isnot [hashtable]) {
+                    throw "The bootstrap state is empty or not a JSON object."
+                }
+                , @($bootstrapState.resources |
+                        Where-Object { $_.mode -eq "managed" -and $_.type -eq "azapi_resource" -and $_.name -eq "intermediate_root_management_group" } |
+                        ForEach-Object { $_.instances } |
+                        Where-Object { -not $_.ContainsKey("deposed") } |
+                        ForEach-Object { $_.attributes.name } |
+                        Select-Object -Unique)
+            }
+        } catch {
+            Write-Verbose "Could not read the bootstrap state at ${bootstrapStatePath}: $_"
+            $existingRootManagementGroupIds = $null
+        }
+    }
+
+    if ($null -eq $existingRootManagementGroupIds -or $existingRootManagementGroupIds.Count -gt 1) {
+        Write-ToConsoleLog "Could not tell which intermediate root management group the bootstrap state at $bootstrapStatePath manages, so the bootstrap will use '$defaultArchitectureFilePath'. Set 'terraform_architecture_file_path' in your inputs to choose an architecture file." -IsWarning
+        return Complete-WithoutChange
+    }
+    $existingRootManagementGroupId = $existingRootManagementGroupIds | Select-Object -First 1
 
     if (-not [string]::IsNullOrWhiteSpace($existingRootManagementGroupId) -and $selected.RootManagementGroupId -cne $existingRootManagementGroupId) {
         if ($null -eq $defaultDefinition -or $defaultDefinition.RootManagementGroupId -cne $existingRootManagementGroupId) {

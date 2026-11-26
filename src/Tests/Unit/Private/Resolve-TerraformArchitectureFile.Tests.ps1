@@ -21,6 +21,11 @@ InModuleScope 'ALZ' {
                 New-Item -Path (Split-Path $Path -Parent) -ItemType Directory -Force | Out-Null
                 Set-Content -Path $Path -Value $Content
             }
+
+            function Add-TestBootstrapState {
+                param([string] $Path, [string] $RootManagementGroupId)
+                Add-TestFile -Path $Path -Content "{ `"version`": 4, `"resources`": [ { `"mode`": `"managed`", `"type`": `"azapi_resource`", `"name`": `"intermediate_root_management_group`", `"instances`": [ { `"attributes`": { `"name`": `"$RootManagementGroupId`" } } ] } ] }"
+            }
         }
 
         BeforeEach {
@@ -29,6 +34,7 @@ InModuleScope 'ALZ' {
             $starterPath = Join-Path $root 'starter'
             $userLibPath = Join-Path $root 'config/lib'
             $starterDefaultFile = Join-Path $starterPath $defaultPath
+            $statePath = Join-Path $root 'bootstrap/terraform.tfstate'
             Add-TestFile -Path $starterDefaultFile -Content "name: alz_custom`nmanagement_groups:`n  - id: alz`n    parent_id: null"
             Add-TestFile -Path (Join-Path $starterPath 'variables.management.tf') -Content "variable `"management_group_settings`" {`n  type = object({`n    architecture_name = optional(string, `"alz_custom`")`n  })`n}"
             New-Item -Path $userLibPath -ItemType Directory -Force | Out-Null
@@ -181,8 +187,9 @@ InModuleScope 'ALZ' {
 
         It 'keeps the default when the existing bootstrap manages a different root management group' {
             Add-TestFile -Path (Join-Path $userLibPath 'architecture_definitions/contoso.alz_architecture_definition.yaml') -Content "name: alz_custom`nmanagement_groups:`n  - id: contoso`n    parent_id: null"
+            Add-TestBootstrapState -Path $statePath -RootManagementGroupId 'alz'
 
-            $result = Resolve-TerraformArchitectureFile -starterModulePath $starterPath -starterAdditionalFiles @($userLibPath) -defaultArchitectureFilePath $defaultPath -existingRootManagementGroupId 'alz'
+            $result = Resolve-TerraformArchitectureFile -starterModulePath $starterPath -starterAdditionalFiles @($userLibPath) -defaultArchitectureFilePath $defaultPath -bootstrapStatePath $statePath
 
             $result.ArchitectureFilePath | Should -BeNullOrEmpty
             $result.DefaultFileToRemove | Should -BeNullOrEmpty
@@ -191,8 +198,9 @@ InModuleScope 'ALZ' {
 
         It 'switches when the existing bootstrap manages the same root management group' {
             Add-TestFile -Path (Join-Path $userLibPath 'architecture_definitions/contoso.alz_architecture_definition.yaml') -Content "name: alz_custom`nmanagement_groups:`n  - id: alz`n    parent_id: null"
+            Add-TestBootstrapState -Path $statePath -RootManagementGroupId 'alz'
 
-            $result = Resolve-TerraformArchitectureFile -starterModulePath $starterPath -starterAdditionalFiles @($userLibPath) -defaultArchitectureFilePath $defaultPath -existingRootManagementGroupId 'alz'
+            $result = Resolve-TerraformArchitectureFile -starterModulePath $starterPath -starterAdditionalFiles @($userLibPath) -defaultArchitectureFilePath $defaultPath -bootstrapStatePath $statePath
 
             $result.ArchitectureFilePath | Should -Be 'lib/architecture_definitions/contoso.alz_architecture_definition.yaml'
             $result.DefaultFileToRemove | Should -Be $starterDefaultFile
@@ -200,8 +208,9 @@ InModuleScope 'ALZ' {
 
         It 'stops when neither the selected file nor the default uses the root management group in the bootstrap state' {
             Add-TestFile -Path (Join-Path $userLibPath 'architecture_definitions/contoso.alz_architecture_definition.yaml') -Content "name: alz_custom`nmanagement_groups:`n  - id: fabrikam`n    parent_id: null"
+            Add-TestBootstrapState -Path $statePath -RootManagementGroupId 'contoso'
 
-            { Resolve-TerraformArchitectureFile -starterModulePath $starterPath -starterAdditionalFiles @($userLibPath) -defaultArchitectureFilePath $defaultPath -existingRootManagementGroupId 'contoso' } |
+            { Resolve-TerraformArchitectureFile -starterModulePath $starterPath -starterAdditionalFiles @($userLibPath) -defaultArchitectureFilePath $defaultPath -bootstrapStatePath $statePath } |
                 Should -Throw "*manages the intermediate root management group 'contoso'*'fabrikam'*terraform_architecture_file_path*"
         }
 
@@ -248,7 +257,8 @@ InModuleScope 'ALZ' {
             $result = Resolve-TerraformArchitectureFile -starterModulePath $starterPath -starterAdditionalFiles @($userLibPath) -defaultArchitectureFilePath $defaultPath
 
             $result.ArchitectureFilePath | Should -BeNullOrEmpty
-            Should -Invoke -CommandName Write-ToConsoleLog -Times 1 -ParameterFilter { $IsWarning -and "$Messages" -like '*-replaceFiles*' }
+            Should -Invoke -CommandName Write-ToConsoleLog -Times 1 -ParameterFilter { $IsWarning -and "$Messages" -like "*add your architecture file to your lib folder at '$defaultPath'*terraform_architecture_file_path*" }
+            Should -Invoke -CommandName Write-ToConsoleLog -Times 0 -ParameterFilter { "$Messages" -like '*-replaceFiles*' }
         }
     }
 }
