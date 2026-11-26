@@ -18,6 +18,8 @@ function Read-MenuSelection {
     The zero-based index of the default option (default: 0).
     .PARAMETER DefaultValue
     Alternative to DefaultIndex - specify the default value directly. If both are provided, DefaultValue takes precedence.
+    .PARAMETER DefaultOptionMarker
+    Text appended to the default option. Set to an empty string to omit the marker.
     .PARAMETER AllowManualEntry
     When set, adds an option [0] to allow manual entry.
     .PARAMETER ManualEntryPrompt
@@ -69,6 +71,9 @@ function Read-MenuSelection {
 
         [Parameter(Mandatory = $false)]
         $DefaultValue = $null,
+
+        [Parameter(Mandatory = $false)]
+        [string] $DefaultOptionMarker = "current",
 
         [Parameter(Mandatory = $false)]
         [switch] $AllowManualEntry,
@@ -212,7 +217,8 @@ function Read-MenuSelection {
         }
     }
 
-    # Helper function to get the value from an option (handles both simple values and label/value objects)
+    # Object options render a friendly label to the user while returning the underlying value,
+    # which keeps the prompt readable without changing the saved configuration data.
     function Get-OptionValue {
         param($Option)
         if ($Option -is [hashtable] -and $Option.ContainsKey('value')) {
@@ -237,7 +243,8 @@ function Read-MenuSelection {
     # Determine if we have options to display
     $hasOptions = $null -ne $Options -and $Options.Count -gt 0
 
-    # If DefaultValue is provided and we have options, find its index
+    # DefaultValue takes precedence over DefaultIndex because an existing configuration value
+    # should remain stable even when the option ordering changes or the user re-runs the prompt.
     if ($null -ne $DefaultValue -and $hasOptions) {
         for ($i = 0; $i -lt $Options.Count; $i++) {
             if ((Get-OptionValue -Option $Options[$i]) -eq $DefaultValue) {
@@ -262,7 +269,7 @@ function Read-MenuSelection {
     # Display default value and required status
     if ($null -ne $DefaultValue -and -not [string]::IsNullOrWhiteSpace($DefaultValue)) {
         $displayDefault = if ($IsSensitive.IsPresent) { Get-MaskedValue -Value $DefaultValue } else { $DefaultValue }
-        Write-ToConsoleLog "Default: $displayDefault" -Color Cyan -IsSelection
+        Write-ToConsoleLog "Default: $displayDefault" -Color Green -IsSelection
     }
     if ($IsRequired.IsPresent) {
         Write-ToConsoleLog "Required: Yes" -Color Yellow -IsSelection
@@ -326,7 +333,7 @@ function Read-MenuSelection {
         $label = Get-OptionLabel -Option $option
         $value = Get-OptionValue -Option $option
         $isCurrent = ($null -ne $DefaultValue -and $value -eq $DefaultValue) -or ($null -eq $DefaultValue -and $i -eq $DefaultIndex)
-        $currentMarker = if ($isCurrent) { " (current)" } else { "" }
+        $currentMarker = if ($isCurrent -and -not [string]::IsNullOrWhiteSpace($DefaultOptionMarker)) { " ($DefaultOptionMarker)" } else { "" }
 
         if ($isCurrent) {
             Write-ToConsoleLog "[$($i + 1)] $label$currentMarker" -IsSelection -Color Green -IndentLevel 1
@@ -337,7 +344,7 @@ function Read-MenuSelection {
 
     # Show manual entry option if allowed
     if ($AllowManualEntry.IsPresent) {
-        $manualEntryMarker = if ($DefaultToManualEntry.IsPresent) { " (current)" } else { "" }
+        $manualEntryMarker = if ($DefaultToManualEntry.IsPresent -and -not [string]::IsNullOrWhiteSpace($DefaultOptionMarker)) { " ($DefaultOptionMarker)" } else { "" }
         if ($DefaultToManualEntry.IsPresent) {
             Write-ToConsoleLog "[0] $ManualEntryLabel$manualEntryMarker" -IsSelection -Color Green -IndentLevel 1
         } else {

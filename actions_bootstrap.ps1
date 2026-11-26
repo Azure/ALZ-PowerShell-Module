@@ -30,6 +30,12 @@ $null = $modulesToInstall.Add(([PSCustomObject]@{
             ModuleVersion = '0.12.0'
         }))
 
+# https://github.com/cloudbase/powershell-yaml
+$null = $modulesToInstall.Add(([PSCustomObject]@{
+            ModuleName    = 'powershell-yaml'
+            ModuleVersion = '0.4.12'
+        }))
+
 'Installing PowerShell Modules'
 foreach ($module in $modulesToInstall) {
     $installSplat = @{
