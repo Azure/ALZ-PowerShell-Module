@@ -49,7 +49,7 @@ function Resolve-TerraformArchitectureFile {
 
     function Complete-WithoutChange {
         if (-not $defaultFileExists) {
-            Write-ToConsoleLog "The bootstrap will read '$defaultArchitectureFilePath', but it is missing from the starter module at $starterModulePath. If an earlier run removed it, add your architecture file to your lib folder at '$defaultArchitectureFilePath' or set 'terraform_architecture_file_path' in your inputs." -IsWarning
+            Write-ToConsoleLog "The bootstrap will read '$defaultArchitectureFilePath', but it is missing from the starter module at $starterModulePath. If an earlier run removed it, move your architecture file to '$($defaultArchitectureFilePath.Substring($defaultArchitectureFilePath.IndexOf('/') + 1))' inside your $libraryFolderName folder, so that only one file declares the architecture, or set 'terraform_architecture_file_path' in your inputs." -IsWarning
         }
         return $result
     }
@@ -149,7 +149,7 @@ function Resolve-TerraformArchitectureFile {
     $selected = $candidates[0]
 
     $existingRootManagementGroupIds = @()
-    if (-not [string]::IsNullOrWhiteSpace($bootstrapStatePath) -and (Test-Path -LiteralPath $bootstrapStatePath -PathType Leaf)) {
+    if (-not [string]::IsNullOrWhiteSpace($bootstrapStatePath) -and (Test-Path -LiteralPath $bootstrapStatePath)) {
         try {
             $existingRootManagementGroupIds = & {
                 $ErrorActionPreference = 'Stop'

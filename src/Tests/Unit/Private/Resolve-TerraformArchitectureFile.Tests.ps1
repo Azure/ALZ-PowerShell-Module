@@ -257,7 +257,7 @@ InModuleScope 'ALZ' {
             $result = Resolve-TerraformArchitectureFile -starterModulePath $starterPath -starterAdditionalFiles @($userLibPath) -defaultArchitectureFilePath $defaultPath
 
             $result.ArchitectureFilePath | Should -BeNullOrEmpty
-            Should -Invoke -CommandName Write-ToConsoleLog -Times 1 -ParameterFilter { $IsWarning -and "$Messages" -like "*add your architecture file to your lib folder at '$defaultPath'*terraform_architecture_file_path*" }
+            Should -Invoke -CommandName Write-ToConsoleLog -Times 1 -ParameterFilter { $IsWarning -and "$Messages" -like "*move your architecture file to 'architecture_definitions/alz_custom.alz_architecture_definition.yaml' inside your lib folder*terraform_architecture_file_path*" }
             Should -Invoke -CommandName Write-ToConsoleLog -Times 0 -ParameterFilter { "$Messages" -like '*-replaceFiles*' }
         }
     }
