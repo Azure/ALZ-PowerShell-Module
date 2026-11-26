@@ -181,6 +181,36 @@ function New-Bootstrap {
             }
         }
 
+        $architectureFileToRemove = $null
+        $architectureFilePathInputName = "terraform_architecture_file_path"
+        if ($iac -eq "terraform" -and $hasStarter -and
+            $bootstrapParameters.PSObject.Properties.Name -contains $architectureFilePathInputName -and
+            $inputConfig.PSObject.Properties.Name -notcontains $architectureFilePathInputName -and
+            $null -eq [Environment]::GetEnvironmentVariable("TF_VAR_$architectureFilePathInputName") -and
+            $null -eq [Environment]::GetEnvironmentVariable("TF_VAR_management_group_settings")) {
+
+            $architectureName = ""
+            if ($inputConfig.PSObject.Properties.Name -contains "management_group_settings" -and $null -ne $inputConfig.management_group_settings.Value.architecture_name) {
+                $architectureName = $inputConfig.management_group_settings.Value.architecture_name
+            }
+
+            $architectureFile = Resolve-TerraformArchitectureFile `
+                -starterModulePath $starterRootModuleFolderPath `
+                -starterAdditionalFiles $starterAdditionalFiles `
+                -defaultArchitectureFilePath $bootstrapParameters.$architectureFilePathInputName.DefaultValue `
+                -architectureName $architectureName `
+                -bootstrapStatePath (Join-Path -Path $bootstrapModulePath -ChildPath "terraform.tfstate")
+
+            if ($null -ne $architectureFile.ArchitectureFilePath) {
+                $inputConfig | Add-Member -NotePropertyName $architectureFilePathInputName -NotePropertyValue @{
+                    Value     = $architectureFile.ArchitectureFilePath
+                    Source    = "calculated"
+                    Sensitive = $false
+                }
+                $architectureFileToRemove = $architectureFile.DefaultFileToRemove
+            }
+        }
+
         Write-Verbose "Final Input config: $(ConvertTo-Json $inputConfig -Depth 100)"
 
         # Getting the input for the bootstrap module
@@ -281,6 +311,11 @@ function New-Bootstrap {
                 Write-Verbose "Copying file $additionalFile to $destination"
                 Copy-Item -Path $additionalFile -Destination $destination -Force
             }
+        }
+
+        if ($null -ne $architectureFileToRemove -and (Test-Path -LiteralPath $architectureFileToRemove)) {
+            Write-ToConsoleLog "Removing the starter architecture file $architectureFileToRemove because your file '$($inputConfig.terraform_architecture_file_path.Value)' defines the same architecture."
+            Remove-Item -LiteralPath $architectureFileToRemove -Force
         }
 
         # Running terraform init and apply
