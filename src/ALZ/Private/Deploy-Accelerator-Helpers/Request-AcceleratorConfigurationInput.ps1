@@ -212,7 +212,8 @@ function Request-AcceleratorConfigurationInput {
                 -IacType $selectedIacType `
                 -VersionControl $selectedVersionControl `
                 -AzureContextOutputDirectory $outputFolderPath `
-                -AzureContextClearCache:$ClearCache.IsPresent
+                -AzureContextClearCache:$ClearCache.IsPresent `
+                -ScenarioNumber $selectedScenarioNumber
         } else {
             Write-ToConsoleLog "Checking for sensitive inputs that need to be provided..." -IsWarning
 
@@ -222,6 +223,7 @@ function Request-AcceleratorConfigurationInput {
                 -VersionControl $selectedVersionControl `
                 -AzureContextOutputDirectory $outputFolderPath `
                 -AzureContextClearCache:$ClearCache.IsPresent `
+                -ScenarioNumber $selectedScenarioNumber `
                 -SensitiveOnly
         }
 
@@ -246,8 +248,18 @@ function Request-AcceleratorConfigurationInput {
                 -ManualEntryPrompt "Enter '[y]es' to open or '[n]o' to continue without opening"
 
             if ($openInVsCodeResponse) {
-                Write-ToConsoleLog "Opening config folder in $vsCodeName..." -IsSuccess
-                & $vsCodeCommand $configFolderPath
+                $configFilesToOpen = @(
+                    Join-Path $configFolderPath "inputs.yaml"
+                )
+                if ($selectedIacType -eq "terraform") {
+                    $configFilesToOpen += Join-Path $configFolderPath "platform-landing-zone.tfvars"
+                } elseif ($selectedIacType -eq "bicep") {
+                    $configFilesToOpen += Join-Path $configFolderPath "platform-landing-zone.yaml"
+                }
+                $configFilesToOpen = @($configFilesToOpen | Where-Object { Test-Path -Path $_ })
+
+                Write-ToConsoleLog "Opening config folder and configuration files in $vsCodeName..." -IsSuccess
+                & $vsCodeCommand --reuse-window $configFolderPath $configFilesToOpen
             }
         }
 
